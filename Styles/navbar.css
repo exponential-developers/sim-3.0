@@ -15,7 +15,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-color: transparent !important;
+  background-color: transparent;
   outline: 0;
   cursor: pointer;
   border-radius: 50%;
@@ -26,63 +26,38 @@
   box-shadow: 0 0 0.6rem 0.05rem rgb(2, 145, 255), inset 0 0 0.4rem 0.03rem rgb(2, 145, 255);
   scale: 1.1;
 }
+
 .settings {
   --inline-padding: min(10vw, 5rem);
   padding: 2rem var(--inline-padding);
-  background-color: rgb(13, 15, 131);
-  color: white;
-  border: 0.1rem solid white;
+  background-color: var(--dialog-bg);
+  color: var(--dialog-f-clr);
+  border: 0.1rem solid var(--dialog-f-clr);
   border-radius: 0.5rem;
   top: 50%;
   left: 50%;
   translate: -50% -50%;
   overflow: hidden;
 }
-.settings::backdrop,
-.boughtVars::backdrop {
-  background-color: black;
-  opacity: 0.6;
-}
-.settingsCloseBtn {
-  border-radius: 50%;
-  width: 1.5rem;
-  aspect-ratio: 1;
-  background-color: red !important;
-  color: white !important;
-  font-weight: bold;
-  font-size: 0.8rem;
-  font-style: italic;
-  font-family: "Luicida Handwriting";
-  cursor: pointer;
-  transition: scale 100ms;
-  position: absolute;
-  right: 7%;
-  top: 10%;
-  outline: 0.1em solid white;
-}
-.settingsCloseBtn:hover {
-  scale: 1.2;
-}
-.settings input {
-  outline: 0;
-}
-.settings input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
-}
-
 .instructions {
   --inline-padding: min(10vw, 5rem);
   padding: 2rem var(--inline-padding);
-  background-color: rgb(13, 15, 131);
-  color: white;
-  border: 0.1rem solid white;
+  background-color: var(--dialog-bg);
+  color: var(--dialog-f-clr);
+  border: 0.1rem solid var(--dialog-f-clr);
   border-radius: 0.5rem;
   top: 50%;
   left: 50%;
   translate: -50% -50%;
   overflow: auto;
 }
+.settings::backdrop,
+.instructions::backdrop,
+.boughtVars::backdrop {
+  background-color: var(--dialog-backdrop-clr);
+  opacity: 0.6;
+}
+.settingsCloseBtn,
 .instructionsCloseBtn {
   border-radius: 50%;
   width: 1.5rem;
@@ -100,98 +75,20 @@
   top: 10%;
   outline: 0.1em solid white;
 }
+.settingsCloseBtn:hover,
 .instructionsCloseBtn:hover {
   scale: 1.2;
+}
+.settings input {
+  outline: 0;
+}
+.settings input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
 }
 
 
 .font-color {
   transition: color 100ms ease-in-out;
   color: var(--other-font-clr);
-}
-
-
-@media screen and (max-width: 500px) {
-  :root {
-    font-size: calc(0.5vw + 0.8rem + 0.5vh);
-  }
-  .controls:nth-of-type(1) {
-    display: grid;
-    grid-template-columns: repeat(3, auto);
-    gap: 0.5rem 1rem;
-  }
-  .button-wrapper {
-    display: grid;
-    grid-template-columns: repeat(2, auto);
-    gap: 0.5rem 1rem;
-  }
-  .settings {
-    width: 95%;
-    --inline-padding: 1.2rem;
-  }
-  .settingsButtons {
-    font-size: 0.8rem;
-  }
-  .settings input[type="range"] {
-    appearance: none;
-    width: 5rem;
-  }
-  .settings input[type="range"]::-webkit-slider-runnable-track {
-    height: 0.4rem;
-  }
-  .settings input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    height: 0.8rem;
-    width: 0.45rem;
-    margin-top: -0.2rem;
-    background-color: red;
-    outline: 1px solid green;
-  }
-  .content-wrapper {
-    padding: 1rem;
-  }
-  .controls:nth-of-type(2) {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    white-space: nowrap;
-  }
-  .description {
-    display: block;
-  }
-  .simAllInputs button {
-    font-size: 0.6rem;
-  }
-  .simAllInputs input {
-    width: 0.7rem;
-    height: 0.7rem;
-  }
-  .output {
-    min-width: 80vw !important;
-  }
-  .saveDist::before {
-    content: "Saved!";
-    position: absolute;
-    inset: 0;
-    transition: opacity 500ms;
-    color: white;
-    font-size: 0.7rem;
-    opacity: 0;
-    top: -90%;
-  }
-  .extraInputs {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .simAllInputs {
-    width: max-content;
-  }
-  .boughtVars table,
-  .boughtVars tr,
-  .boughtVars td {
-    border-collapse: collapse;
-    padding: 0.3rem;
-    text-align: center;
-    font-size: 0.63rem;
-  }
 }

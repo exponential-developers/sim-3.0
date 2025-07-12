@@ -2,22 +2,16 @@
 .simTable th,
 .simTable td,
 .simTable tr {
-  background-color: var(--table-bg) !important;
-  color: var(--table-f-clr) !important;
-  border: 1px solid var(--table-f-clr) !important;
+  background-color: var(--table-bg);
+  color: var(--table-f-clr);
+  border: 1px solid var(--table-f-clr);
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-}
-
-.simTable table,
-.simTable th,
-.simTable td {
   position: relative;
-  background: white;
-  color: black;
   height: fit-content;
   white-space: nowrap;
   text-align: left;
 }
+
 
 .small td {
   padding-inline: 0.2rem;
@@ -41,9 +35,9 @@
 
 .boughtVars {
   padding: 5rem 0 5rem 1rem;
-  background-color: rgb(13, 15, 131);
-  color: white;
-  border: 0.1rem solid white;
+  background-color: var(--dialog-bg);
+  color: var(--dialog-f-clr);
+  border: 0.1rem solid var(--dialog-f-clr);
   border-radius: 0.5rem;
   top: 50%;
   left: 50%;
@@ -54,7 +48,7 @@
 }
 
 .boughtVars table tr td.highlighted {
-  background-color: rgb(197, 100, 62);
+  background-color: var(--highlight-clr-1);
 }
 
 .boughtVars table,
@@ -68,24 +62,24 @@
   text-align: center;
   font-size: 0.9rem;
 }
-.boughtVars > div > table > thead > tr,
-.timeDiffTable > thead > tr {
-  border-bottom: 2px solid white;
+.boughtVars thead tr,
+.timeDiffTable thead tr {
+  border-bottom: 2px solid var(--dialog-f-clr);
 }
-.boughtVars tr ~ tr,
-.timeDiffTable tr ~ tr {
-  border-top: 2px solid white;
+.boughtVars tbody tr,
+.timeDiffTable tbody tr {
+  border-top: 2px solid var(--dialog-f-clr);
 }
 .boughtVars td ~ td,
 .timeDiffTable td ~ td {
-  border-left: 1px solid white;
+  border-left: 1px solid var(--dialog-f-clr);
 }
 .boughtVarsCloseBtn {
   border-radius: 50%;
   width: 1.5rem;
   aspect-ratio: 1;
-  background-color: red !important;
-  color: white !important;
+  background-color: red;
+  color: white;
   font-weight: bold;
   font-size: 0.8rem;
   font-style: italic;
