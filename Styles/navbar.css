@@ -7,6 +7,7 @@
   min-width: max-content;
   color: inherit;
 }
+
 .settingsBtn {
   background: url(../settings.png);
   width: 2.25rem;
@@ -37,18 +38,6 @@
   translate: -50% -50%;
   overflow: hidden;
 }
-.instructions {
-  --inline-padding: min(10vw, 5rem);
-  padding: 2rem var(--inline-padding);
-  background-color: rgb(13, 15, 131);
-  color: white;
-  border: 0.1rem solid white;
-  border-radius: 0.5rem;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  overflow: auto;
-}
 .settings::backdrop,
 .boughtVars::backdrop {
   background-color: black;
@@ -74,12 +63,32 @@
 .settingsCloseBtn:hover {
   scale: 1.2;
 }
+.settings input {
+  outline: 0;
+}
+.settings input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+}
+
+.instructions {
+  --inline-padding: min(10vw, 5rem);
+  padding: 2rem var(--inline-padding);
+  background-color: rgb(13, 15, 131);
+  color: white;
+  border: 0.1rem solid white;
+  border-radius: 0.5rem;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  overflow: auto;
+}
 .instructionsCloseBtn {
   border-radius: 50%;
   width: 1.5rem;
   aspect-ratio: 1;
-  background-color: red !important;
-  color: white !important;
+  background-color: red;
+  color: white;
   font-weight: bold;
   font-size: 0.8rem;
   font-style: italic;
@@ -94,13 +103,13 @@
 .instructionsCloseBtn:hover {
   scale: 1.2;
 }
-.settings input {
-  outline: 0;
+
+
+.font-color {
+  transition: color 100ms ease-in-out;
+  color: var(--other-font-clr);
 }
-.settings input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
-}
+
 
 @media screen and (max-width: 500px) {
   :root {

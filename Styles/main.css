@@ -40,24 +40,12 @@ button {
   user-select: none;
   white-space: nowrap;
   cursor: pointer;
-  background-color: var(--button-bg) !important;
-  color: var(--button-f-clr) !important;
+  background-color: var(--button-bg);
+  color: var(--button-f-clr);
   border: none;
   outline: 1px solid var(--border-clr);
   border-radius: 0.2rem;
   padding: 0.3em;
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out, transform 0.1s;
 }
-.simTable,
-.simTable th,
-.simTable td,
-.simTable tr {
-  background-color: var(--table-bg) !important;
-  color: var(--table-f-clr) !important;
-  border: 1px solid var(--table-f-clr) !important;
-  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
-}
-.font-color {
-  transition: color 100ms ease-in-out;
-  color: var(--other-font-clr);
-}
+

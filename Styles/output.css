@@ -1,34 +1,13 @@
-.content-wrapper {
-  padding: min(3vw, 1.5rem * 0.85);
+.simTable,
+.simTable th,
+.simTable td,
+.simTable tr {
+  background-color: var(--table-bg) !important;
+  color: var(--table-f-clr) !important;
+  border: 1px solid var(--table-f-clr) !important;
+  transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
 }
-.controls {
-  display: grid;
-  grid-template-columns: repeat(5, auto);
-  width: fit-content;
-  gap: min(2vw, 2rem);
-}
-.controls ~ .controls {
-  margin-top: 1.5rem;
-}
-.controls input,
-.controls select {
-  font-size: 0.75rem;
-}
-.button-wrapper {
-  display: grid;
-  grid-template-columns: repeat(5, auto);
-  gap: 1rem;
-  width: fit-content;
-  margin-block: 2rem 1rem;
-}
-.button-wrapper button {
-  font-size: 0.8rem;
-  padding: 0.1em 0.2em;
-  cursor: pointer;
-}
-.button-wrapper button:hover {
-  transform: scale(1.1);
-}
+
 .simTable table,
 .simTable th,
 .simTable td {
@@ -39,6 +18,7 @@
   white-space: nowrap;
   text-align: left;
 }
+
 .small td {
   padding-inline: 0.2rem;
   font-size: 0.8rem;
@@ -57,73 +37,6 @@
 }
 .simTable {
   margin-block-start: 2.5rem;
-}
-.inputMode::before {
-  content: attr(data-value);
-  top: min(-300%, -2vw);
-  left: 50%;
-  transform: translateX(-50%);
-  position: absolute;
-  color: white;
-  white-space: nowrap;
-}
-.hardCap::before {
-  content: "Hard Cap?";
-  top: min(-70%, -1.3vw);
-  left: 50%;
-  transform: translateX(-50%);
-  position: absolute;
-  color: white;
-  white-space: nowrap;
-  font-size: 0.7rem;
-}
-.timeDiffWrapper {
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.timeDiffWrapper input {
-  width: 20rem;
-}
-.simAllInputs {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 1rem 0.5rem;
-  margin-right: 2rem;
-  place-items: center;
-}
-.simAllInputs button:hover {
-  cursor: pointer;
-  transform: scale(1.1);
-}
-.simAllInputs input[type="checkbox"] {
-  width: 0.8rem;
-  height: 0.8rem;
-}
-.saveDist {
-  position: relative;
-}
-.saveDist::before {
-  content: "Saved!";
-  position: absolute;
-  inset: 0;
-  transition: opacity 500ms;
-  color: white;
-  font-size: 1rem;
-  opacity: 0;
-  top: -150%;
-}
-.saveDist.animate::before {
-  opacity: 1;
-}
-textarea {
-  resize: none;
-  width: 6rem;
-  height: 1.8em;
-  padding: 0.2em;
-  font-size: 0.7rem;
-}
-textarea::placeholder {
-  font-size: 0.6rem;
 }
 
 .boughtVars {
