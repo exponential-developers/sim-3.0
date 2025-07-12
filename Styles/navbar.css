@@ -23,7 +23,7 @@
   translate: 0 20%;
 }
 .settingsBtn:hover {
-  box-shadow: 0 0 0.6rem 0.05rem rgb(2, 145, 255), inset 0 0 0.4rem 0.03rem rgb(2, 145, 255);
+  box-shadow: 0 0 0.6rem 0.05rem var(--settings-btn-shadow-clr), inset 0 0 0.4rem 0.03rem var(--settings-btn-shadow-clr);
   scale: 1.1;
 }
 
@@ -62,8 +62,8 @@
   border-radius: 50%;
   width: 1.5rem;
   aspect-ratio: 1;
-  background-color: red;
-  color: white;
+  background-color: var(--close-btn-bg);
+  color: var(--close-btn-fg);
   font-weight: bold;
   font-size: 0.8rem;
   font-style: italic;
@@ -73,7 +73,7 @@
   position: absolute;
   right: 7%;
   top: 10%;
-  outline: 0.1em solid white;
+  outline: 0.1em solid var(--close-btn-fg);
 }
 .settingsCloseBtn:hover,
 .instructionsCloseBtn:hover {
@@ -88,7 +88,7 @@
 }
 
 
-.font-color {
+.nav-title {
   transition: color 100ms ease-in-out;
-  color: var(--other-font-clr);
+  color: var(--title-clr);
 }

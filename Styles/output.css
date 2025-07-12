@@ -78,8 +78,8 @@
   border-radius: 50%;
   width: 1.5rem;
   aspect-ratio: 1;
-  background-color: red;
-  color: white;
+  background-color: var(--close-btn-bg);
+  color: var(--close-btn-fg);
   font-weight: bold;
   font-size: 0.8rem;
   font-style: italic;
@@ -89,17 +89,17 @@
   position: fixed;
   right: 10%;
   top: 5%;
-  outline: 0.1em solid white;
+  outline: 0.1em solid var(--close-btn-fg);
 }
 .boughtVars > div::-webkit-scrollbar {
   width: 1rem;
 }
 .boughtVars > div::-webkit-scrollbar-thumb {
-  background-color: rgb(21, 69, 137);
-  border: 1px solid rgb(11, 210, 241);
+  background-color: var(--scrollbar-thumb-bg);
+  border: 1px solid var(--scrollbar-thumb-border);
   border-radius: 0.5rem;
 }
 .boughtVars > div::-webkit-scrollbar-track {
-  background-color: rgb(8, 7, 77);
+  background-color: var(--scrollbar-track-bg);
   border-radius: 0.5rem;
 }
