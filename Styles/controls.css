@@ -28,17 +28,6 @@
   transform: scale(1.1);
 }
 
-.hardCap::before {
-  content: "Hard Cap?";
-  top: min(-70%, -1.3vw);
-  left: 50%;
-  transform: translateX(-50%);
-  position: absolute;
-  color: var(--font-clr);
-  white-space: nowrap;
-  font-size: 0.7rem;
-}
-
 .timeDiffWrapper {
   flex-direction: column;
   gap: 0.3rem;
