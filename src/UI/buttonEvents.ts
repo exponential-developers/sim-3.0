@@ -41,16 +41,20 @@ function createImage(mode: string) {
   );
 }
 
-const saveDist = qs(".saveDist");
+const saveDist = <HTMLButtonElement>qs(".saveDist");
 const getDist = qs(".getDist");
 const loadSave = qs(".loadSave");
 const modeInput = <HTMLTextAreaElement>qs("textarea");
 
 event(saveDist, "pointerdown", () => {
   if (modeInput.value.replace(" ", "").length === 0) return;
-  saveDist.classList.add("animate");
-  setTimeout(() => saveDist.classList.remove("animate"), 550);
+  saveDist.disabled = true;
+  saveDist.innerHTML = "Saved!"
   localStorage.setItem("savedDistribution", modeInput.value);
+  setTimeout(() => {
+    saveDist.disabled = false;
+    saveDist.innerHTML = "Save distribution"
+  }, 1500);
 });
 event(getDist, "pointerdown", () => {
   modeInput.value = localStorage.getItem("savedDistribution") ?? modeInput.value;

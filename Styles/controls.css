@@ -55,19 +55,6 @@
 .saveDist {
   position: relative;
 }
-.saveDist::before {
-  content: "Saved!";
-  position: absolute;
-  inset: 0;
-  transition: opacity 500ms;
-  color: var(--font-clr);
-  font-size: 1rem;
-  opacity: 0;
-  top: -150%;
-}
-.saveDist.animate::before {
-  opacity: 1;
-}
 
 textarea {
   resize: none;
