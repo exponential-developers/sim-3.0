@@ -1,5 +1,5 @@
 .nav {
-  background-color: var(--bg-clr-dark-0);
+  background-color: var(--bg-accent-0);
   padding: 0.4em 1rem;
   display: grid;
   grid-template-columns: auto 1fr;

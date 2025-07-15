@@ -27,7 +27,7 @@
     </script>
     <script defer type="module" src="./build/bundle.js"></script>
   </head>
-  <body>
+  <body style="display:none;">
     <div class="nav">
       <div style="margin-top: auto; margin-bottom: 0.2rem">
         <span style="font-size: 0.9rem">v3.0.0 (Alpha)</span>
@@ -121,6 +121,7 @@
       </div>
       <span>Show a2 and a3 lvl in EFAI strat output: </span> <input type="checkbox" class="a23" /><br /><br /><br />
       <span>Show unofficial CTs: </span> <input type="checkbox" class="unofficials" /><br /><br /><br />
+      <span>Theme: </span> <select class="themeSelector"></select><br /><br /><br />
       <span style="display: none">Copies current sim state to clipboard and local storage.</span><br /><br />
       <button class="setState settingsButtons" style="display: none">Set Sim State</button><br /><br />
       <span style="display: none">Replaces the current sim state with the saved state.</span><br /><br />

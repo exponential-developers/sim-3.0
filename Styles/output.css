@@ -4,7 +4,7 @@
 .simTable tr {
   background-color: var(--table-bg);
   color: var(--table-f-clr);
-  border: 1px solid var(--table-f-clr);
+  border: 0px solid var(--table-f-clr);
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
   position: relative;
   height: fit-content;
@@ -21,6 +21,10 @@
   padding-inline: 0.9rem;
   font-size: 0.85rem;
 }
+.small tbody tr:nth-child(2n+1),
+.small tbody tr:nth-child(2n+1) td {
+  background-color: var(--table-bg-alt);
+}
 .big th {
   padding-inline: 0.3em;
   font-size: 0.8rem;
@@ -29,6 +33,11 @@
   padding-inline: 0.3em;
   font-size: 0.7rem;
 }
+.big tbody tr:nth-child(2n+1),
+.big tbody tr:nth-child(2n+1) td:not([rowspan]) {
+  background-color: var(--table-bg-alt);
+}
+
 .simTable {
   margin-block-start: 2.5rem;
 }

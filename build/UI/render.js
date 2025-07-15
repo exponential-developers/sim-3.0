@@ -1,5 +1,6 @@
 import { qs, qsa, event, ce, findIndex } from "../Utils/helpers.js";
 import data from "../Data/data.json" assert { type: "json" };
+import themes from "../Data/themes.json" assert { type: "json" };
 import { updateTimeDiffTable } from "../Sim/parsers.js";
 import { global } from "../Sim/main.js";
 import { getSimState } from "./simState.js";
@@ -13,6 +14,7 @@ const hardCap = qs(".hardCapWrapper");
 const semi_idle = qs(".semi-idle");
 const hard_active = qs(".hard-active");
 const timeDiffInputs = qsa(".timeDiffInput");
+const themeSelector = qs(".themeSelector");
 //Other containers/elements
 const extraInputs = qs(".extraInputs");
 const timeDiffWrapper = qs(".timeDiffWrapper");
@@ -21,8 +23,19 @@ const simAllInputs = qs(".simAllInputs");
 const modeInputDescription = qs(".extraInputDescription");
 //Renders theories, strats and modes options on page load
 const theories = Object.keys(data.theories);
+const themesArr = Object.keys(themes);
 window.onload = () => {
     var _a;
+    for (let i = 0; i < themesArr.length; i++) {
+        const option = ce("option");
+        option.value = themesArr[i];
+        option.textContent = themesArr[i];
+        themeSelector.appendChild(option);
+    }
+    getSimState();
+    themeUpdate();
+    document.body.style.display = "block";
+    event(themeSelector, "change", themeUpdate);
     for (let i = 0; i < theories.length; i++) {
         if (data.theories[theories[i]].UI_visible === false && !global.showUnofficials)
             continue;
@@ -55,7 +68,6 @@ window.onload = () => {
             updateTimeDiffTable();
         });
     }
-    getSimState();
 };
 export function modeUpdate() {
     singleInput.style.display = "none";
@@ -108,4 +120,12 @@ export function theoryUpdate() {
         option.textContent = strats[i];
         strat.appendChild(option);
     }
+}
+export function themeUpdate() {
+    var _a;
+    const theme = (_a = themes[themeSelector.value]) !== null && _a !== void 0 ? _a : themes["classic"];
+    const root = document.documentElement;
+    Object.entries(theme).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+    });
 }
