@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="./Styles/output.css" />
     <link rel="stylesheet" href="./Styles/narrow.css" />
     <link rel="stylesheet" href="./Styles/terminal.css" />
+    <link rel="stylesheet" href="./Styles/themes.css" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7TELWBF6QQ"></script>
     <script>
       if (window.location.href === "https://tredec.github.io/sim-3.0/") {
@@ -25,9 +26,14 @@
         gtag("config", "G-7TELWBF6QQ");
       }
     </script>
+    <script>
+      const state = JSON.parse(localStorage.getItem("simState") ?? `{}`);
+      const theme = state.settings.theme ?? "classic";
+      document.documentElement.setAttribute("theme", theme);
+    </script>
     <script defer type="module" src="./build/bundle.js"></script>
   </head>
-  <body style="display:none;">
+  <body>
     <div class="nav">
       <div style="margin-top: auto; margin-bottom: 0.2rem">
         <span style="font-size: 0.9rem">v3.0.0 (Alpha)</span>

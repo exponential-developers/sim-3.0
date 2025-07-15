@@ -1,6 +1,5 @@
 import { qs, qsa, event, ce, findIndex } from "../Utils/helpers.js";
 import data from "../Data/data.json" assert { type: "json" };
-import themes from "../Data/themes.json" assert { type: "json" };
 import { updateTimeDiffTable } from "../Sim/parsers.js";
 import { global } from "../Sim/main.js";
 import { getSimState } from "./simState.js";
@@ -27,20 +26,17 @@ const modeInputDescription = qs(".extraInputDescription");
 //Renders theories, strats and modes options on page load
 
 const theories = Object.keys(data.theories) as Array<theoryType>;
-const themesArr = Object.keys(themes);
 
 window.onload = () => {
-  for (let i = 0; i < themesArr.length; i++) {
+  for (let i = 0; i < data.themes.length; i++) {
     const option = ce<HTMLSelectElement>("option");
-    option.value = themesArr[i];
-    option.textContent = themesArr[i];
+    option.value = data.themes[i];
+    option.textContent = data.themes[i];
     themeSelector.appendChild(option);
   }
-
-  getSimState();
-  themeUpdate();
-  document.body.style.display = "block";
   event(themeSelector, "change", themeUpdate);
+  
+  getSimState();
 
   for (let i = 0; i < theories.length; i++) {
     if ((data.theories[theories[i]] as unknown as Record<"UI_visible", boolean>).UI_visible === false && !global.showUnofficials) continue;
@@ -128,10 +124,6 @@ export function theoryUpdate() {
 }
 
 export function themeUpdate() {
-  const theme = themes[themeSelector.value as keyof typeof themes] ?? themes["classic"];
   const root = document.documentElement;
-
-  Object.entries(theme).forEach(([key, value]) => {
-    root.style.setProperty(key, value);
-  })
+  root.setAttribute("theme", themeSelector.value);
 }
