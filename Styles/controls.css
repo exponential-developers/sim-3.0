@@ -10,6 +10,14 @@
 .controls input,
 .controls select {
   font-size: 0.75rem;
+  background-color: var(--input-bg);
+  color: var(--input-f-clr);
+  border-color: var(--btn-border-clr);
+}
+
+.controls input[type="text"] {
+  border: none;
+  outline: 1px solid var(--btn-border-clr);
 }
 
 .button-wrapper {
@@ -62,6 +70,8 @@ textarea {
   height: 1.8em;
   padding: 0.2em;
   font-size: 0.7rem;
+  background-color: var(--input-bg);
+  color: var(--input-f-clr)
 }
 textarea::placeholder {
   font-size: 0.6rem;

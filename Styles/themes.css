@@ -27,37 +27,37 @@
 
     --scrollbar-thumb-bg: rgb(21, 69, 137);
     --scrollbar-thumb-border: rgb(11, 210, 241);
-    --scrollbar-track-bg: rgb(8, 7, 77);
+    --scrollbar-track-bg: rgb(8, 7, 65);
 }
 
 :root[theme="dark"] {
     --bg-accent-0: rgb(35, 35, 35); /* nav */
     --bg-accent-1: rgb(0, 0, 0); /* body */
 
-    --font-clr: rgb(212, 194, 191);
+    --font-clr: rgb(233, 233, 244);
 
-    --input-bg: white;
-    --input-f-clr: black;
+    --input-bg: rgb(35, 35, 35);
+    --input-f-clr: rgb(233, 233, 244);
 
-    --button-bg: white;
-    --button-f-clr: black;
-    --btn-border-clr: rgb(161, 161, 161); /* button border */
+    --button-bg: rgb(48, 48, 48);
+    --button-f-clr: rgb(244, 244, 255);
+    --btn-border-clr: rgb(88, 88, 88); /* button border */
 
-    --table-bg: white;
-    --table-bg-alt: rgb(230,230,230);
-    --table-f-clr: black;
+    --table-bg: rgb(19, 19, 19);
+    --table-bg-alt: rgb(40, 40, 40);
+    --table-f-clr: rgb(244, 244, 255);
 
-    --dialog-bg: rgb(13, 15, 131);
+    --dialog-bg: rgb(3, 3, 40);
     --dialog-f-clr: white;
     --dialog-backdrop-clr: black;
-    --highlight-clr-1: rgb(197, 100, 62);
+    --highlight-clr-1: rgb(102, 44, 21);
 
     --title-clr: white;
     --settings-btn-shadow-clr: rgb(2, 145, 255);
     --close-btn-bg: red;
     --close-btn-fg: white;
 
-    --scrollbar-thumb-bg: rgb(21, 69, 137);
-    --scrollbar-thumb-border: rgb(11, 210, 241);
-    --scrollbar-track-bg: rgb(8, 7, 77);
+    --scrollbar-thumb-bg: rgb(15, 52, 112);
+    --scrollbar-thumb-border: rgb(11, 174, 191);
+    --scrollbar-track-bg: rgb(0, 0, 27);
 }
