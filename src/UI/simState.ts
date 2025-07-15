@@ -1,4 +1,4 @@
-import { qs } from "../Utils/helpers.js";
+import { qs, round } from "../Utils/helpers.js";
 import { modeUpdate } from "./render.js";
 
 //Inputs
@@ -16,8 +16,12 @@ const output = qs(".output");
 const table = qs(".simTable");
 
 //Setting Inputs
+const dtSlider = <HTMLInputElement>qs(".dt");
 const dtOtp = qs(".dtOtp");
+
+const ddtSlider = <HTMLInputElement>qs(".ddt");
 const ddtOtp = qs(".ddtOtp");
+
 const showA23 = <HTMLInputElement>qs(".a23");
 const showUnofficials = <HTMLInputElement>qs(".unofficials");
 
@@ -27,7 +31,7 @@ export function setSimState() {
   localStorage.setItem(
     "simState",
     JSON.stringify({
-      controls1: {
+      /*controls1: {
         theory: { value: theory.value, innerHTML: theory.innerHTML },
         strat: { value: strat.value, innerHTML: strat.innerHTML },
         sigma: sigma.value,
@@ -46,7 +50,7 @@ export function setSimState() {
         ],
       },
       output: output.textContent,
-      table: table.innerHTML,
+      table: table.innerHTML,*/
       settings: {
         dt: dtOtp.textContent,
         ddt: ddtOtp.textContent,
@@ -58,7 +62,7 @@ export function setSimState() {
 }
 export function getSimState() {
   const state = JSON.parse(localStorage.getItem("simState") ?? defaultState);
-  theory.innerHTML = state.controls1.theory.innerHTML;
+  /*theory.innerHTML = state.controls1.theory.innerHTML;
   theory.value = state.controls1.theory.value;
   strat.innerHTML = state.controls1.strat.innerHTML;
   strat.value = state.controls1.strat.value;
@@ -73,16 +77,16 @@ export function getSimState() {
   (<HTMLInputElement>qs(".timeDiffWrapper").children[1]).value = state.controls2.timeDiffInputs[1];
   (<HTMLInputElement>qs(".timeDiffWrapper").children[2]).value = state.controls2.timeDiffInputs[2];
   output.textContent = state.output;
-  table.innerHTML = state.table;
+  table.innerHTML = state.table;*/
   dtOtp.textContent = state.settings.dt;
   ddtOtp.textContent = state.settings.ddt;
   showA23.checked = state.settings.showA23;
   showUnofficials.checked = state.settings.showUnofficials ?? false;
-  (<HTMLInputElement>qs(".dt")).value = "8.1943";
-  (<HTMLInputElement>qs(".ddt")).value = "2.71233";
-  modeUpdate();
+  dtSlider.value = String(round(Math.log2((state.settings.dt - 0.15) / (4.9 / (1 + 2 ** parseFloat(dtSlider.max)))), 4));
+  ddtSlider.value = String(round(Math.log((state.settings.ddt - 1) / (0.3 / 3 ** parseFloat(ddtSlider.max))) / Math.log(3), 4));
+  /*modeUpdate();
   table.classList.remove("big");
   table.classList.remove("small");
   if (state.controls2.mode !== "All") table.classList.add("small");
-  else table.classList.add("big");
+  else table.classList.add("big");*/
 }

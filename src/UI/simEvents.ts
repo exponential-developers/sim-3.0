@@ -48,7 +48,7 @@ const tableHeaders = {
 thead.innerHTML = tableHeaders.all;
 table.classList.add("big");
 
-if (localStorage.getItem("autoSave") === "true") setTimeout(() => getSimState(), 500);
+//if (localStorage.getItem("autoSave") === "true") setTimeout(() => getSimState(), 500);
 
 event(showUnofficials, "click", async () => {
   if (global.showUnofficials != showUnofficials.checked)

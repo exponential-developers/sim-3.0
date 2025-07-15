@@ -61,4 +61,4 @@ event(qs(".resetSettings"), "pointerdown", () => {
   ddtOtp.textContent = "1.0001";
 });
 
-// if(autoState)setTimeout(() => getSimState(), 500);
+// setTimeout(() => getSimState(), 200);

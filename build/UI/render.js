@@ -2,6 +2,7 @@ import { qs, qsa, event, ce, findIndex } from "../Utils/helpers.js";
 import data from "../Data/data.json" assert { type: "json" };
 import { updateTimeDiffTable } from "../Sim/parsers.js";
 import { global } from "../Sim/main.js";
+import { getSimState } from "./simState.js";
 //Inputs
 const theory = qs(".theory");
 const strat = qs(".strat");
@@ -54,6 +55,7 @@ window.onload = () => {
             updateTimeDiffTable();
         });
     }
+    getSimState();
 };
 export function modeUpdate() {
     singleInput.style.display = "none";
