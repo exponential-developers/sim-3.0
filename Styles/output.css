@@ -32,7 +32,7 @@
 }
 .big td {
   padding-inline: 0.3em;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 .big tbody tr:nth-child(2n+1) td:not([rowspan]) {
   background-color: var(--table-bg-alt);
