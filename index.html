@@ -167,30 +167,35 @@
       <h1 style="margin-bottom: 1.5rem">Instructions</h1>
       <button class="instructionsCloseBtn">X</button>
       <h2>About the sim:</h2>
+      <br>&nbsp;
       <ul>
         <li>
           <strong>Mode:</strong> You can select from different modes allowing you to do more varied inputs. Each mode is described below:
           <ul>
             <li>
-              <strong>All:</strong> This will give you an input field where you can enter all of the values of your theories. The input order for your values will be Sigma T1 T2 ...T7 T8 WSP SL EF CS2. If you
-              don't want to sim a theory, enter 0. <br />
-              <br /> You also have the option to put an "r" or "m" at the end of each value. R means that it is a rho value, and will not be affected by rho/tau conversion. M means that the value is the total
-              multiplier (make sure to have maximum possible levels of r9 bought, because this will affect the result)  , and it will be automatically converted to rho. By default, all values are expected as tau.
-              <br /> <br /> Optionally you can put a "y" at the end, this will include harder to execute strats, for example T3Play, T6AI and T8PlaySolarswap. (By default it is off)
+              <strong>All:</strong> This will give you an input field where you can enter all of the values of your theories. The input order for your values will be : <br>
+              Sigma T1 T2 ... T7 T8 WSP SL ... BaP.<br> 
+              If you don't want to sim a theory, enter 0. <br /><br />
+              You also have the option to put an "r" or "m" at the end of each value. "r" means that it is a rho value, and will not be affected by rho/tau conversion. "m" means that the value is the total
+              multiplier (make sure to have maximum possible levels of r9 bought, because this will affect the result), and it will be automatically converted to rho. By default, all values are expected as tau.
               <br />
-              <br /> Example: 95 230 50m 250 300 300 70m 250 200 7e100r y
+              <br /> Example: 95 230 50m 250 300 300 70m 250 200 7e100r
+              <br>&nbsp;
             </li>
             <li>
-              <strong>Single:</strong> You will sim one publish for a single theory using a single (or let it automatically find the best) strategy. (Cap will not affect this mode.)
+              <strong>Single:</strong> You will sim one publish for a single theory using a single (or let it automatically find the best) strategy.
+              <br>&nbsp;
             </li>
             <li>
               <strong>Chain:</strong> For Chain Sims, you are required to enter a value for "Cap." This sims every publish until it gets to your desired tau/rho. <br /> Hard Cap?: This button hard caps the
               tau/rho to the cap you placed instead of simming the entire publication.
+              <br>&nbsp;
             </li>
             <li>
               <strong>Step:</strong> A Variant of Chain that will sim in steps of n x tau/rho where n is any number.
+              <br>&nbsp;
             </li>
-            <li>
+            <!--li>
               <strong>Amount:</strong> A Variant of Chain where you can select the number of publications you want the sim to do. (Cap will not affect this mode.)
             </li>
             <li>
@@ -204,7 +209,7 @@
               <br />
               The 3rd input is sigma for both distributions respectively, ct's (y/n) and idle strats (y/n). By default they are off. Example for 215 and 200 sigma, normal theories and idle strats only: <br />
               215 200 n y
-            </li>
+            </li-->
           </ul>
         </li>
         <li>
