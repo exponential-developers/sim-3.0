@@ -11,6 +11,7 @@ event(settingsBtn, "pointerdown", () => {
 });
 
 event(settingsCloseBtn, "pointerdown", () => {
+  setSimState();
   settingsModal.close();
   document.body.style.overflow = "auto";
 });

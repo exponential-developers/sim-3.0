@@ -27,8 +27,9 @@
       }
     </script>
     <script>
+      const defaultTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "classic";
       const state = JSON.parse(localStorage.getItem("simState") ?? `{}`);
-      const theme = state.settings.theme ?? "classic";
+      const theme = (state && state.settings && state.settings.theme) ? state.settings.theme : defaultTheme
       document.documentElement.setAttribute("theme", theme);
     </script>
     <script defer type="module" src="./build/bundle.js"></script>
