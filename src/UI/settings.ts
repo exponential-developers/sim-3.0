@@ -61,5 +61,3 @@ event(qs(".resetSettings"), "pointerdown", () => {
   ddtSlider.value = "2.71233";
   ddtOtp.textContent = "1.0001";
 });
-
-// setTimeout(() => getSimState(), 200);
