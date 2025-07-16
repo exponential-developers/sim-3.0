@@ -3,7 +3,7 @@
 .simTable td {
   background-color: var(--table-bg);
   color: var(--table-f-clr);
-  border: 0px solid var(--table-f-clr);
+  border: var(--sim-table-border) solid var(--table-f-clr);
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out;
   position: relative;
   height: fit-content;

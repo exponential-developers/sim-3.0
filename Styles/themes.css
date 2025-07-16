@@ -28,9 +28,18 @@
     --scrollbar-thumb-bg: rgb(21, 69, 137);
     --scrollbar-thumb-border: rgb(11, 210, 241);
     --scrollbar-track-bg: rgb(8, 7, 65);
+
+    --sim-table-border: 0px;
 }
 
-:root[theme="dark"] {
+:root[theme="classic-borders"] {
+    --sim-table-border: 1px;
+    --table-bg-alt: white;
+}
+
+:root[theme="dark"],
+:root[theme="ocean"],
+:root[theme="math-criminal"] {
     --bg-accent-0: rgb(35, 35, 35); /* nav */
     --bg-accent-1: rgb(0, 0, 0); /* body */
 
@@ -60,4 +69,38 @@
     --scrollbar-thumb-bg: rgb(15, 52, 112);
     --scrollbar-thumb-border: rgb(11, 174, 191);
     --scrollbar-track-bg: rgb(0, 0, 27);
+}
+
+:root[theme="ocean"] {
+    --bg-accent-1: rgb(14, 9, 48);
+    --table-bg-alt: rgb(35, 35, 52);
+}
+
+:root[theme="math-criminal"] {
+    --input-bg: rgb(55, 13, 80);
+    --input-f-clr: rgb(244, 233, 244);
+
+    --button-bg: rgb(55, 13, 80);
+    --button-f-clr: rgb(244, 233, 244);
+
+    --table-bg-alt: rgb(55, 13, 80);
+}
+
+:root[theme="zalut-sky"] {
+    --bg-accent-0: rgb(84, 124, 203);
+    --bg-accent-1: rgb(135, 206, 235);
+
+    --input-bg: rgb(84, 124, 203);
+    --input-f-clr: white;
+
+    --button-bg: rgb(60, 99, 176);
+    --button-f-clr: white;
+    --btn-border-clr: rgb(84, 124, 203);
+
+    --font-clr: black;
+
+    --table-bg-alt: rgb(166, 222, 234);
+}
+:root[theme="zalut-sky"] ::placeholder {
+    color: white;
 }

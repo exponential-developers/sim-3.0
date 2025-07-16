@@ -568,6 +568,10 @@
     ],
     "themes": [
         "classic",
-        "dark"
+        "dark",
+        "classic-borders",
+        "ocean",
+        "math-criminal",
+        "zalut-sky"
     ]
 }
