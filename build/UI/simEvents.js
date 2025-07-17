@@ -36,6 +36,7 @@ const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
 const showA23 = qs(".a23");
 const showUnofficials = qs(".unofficials");
+const skipCompletedCTs = qs(".skipcompletedcts");
 const theories = Object.keys(jsondata.theories);
 let prevMode = "All";
 const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
@@ -68,6 +69,7 @@ event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function*
     global.dt = parseFloat((_a = dtOtp.textContent) !== null && _a !== void 0 ? _a : "1.5");
     global.ddt = parseFloat((_b = ddtOtp.textContent) !== null && _b !== void 0 ? _b : "1.0001");
     global.stratFilter = true;
+    global.skipCompletedCTs = skipCompletedCTs.checked;
     global.showA23 = showA23.checked;
     localStorage.setItem("simAllSettings", JSON.stringify([semi_idle.checked, hard_active.checked]));
     const data = {

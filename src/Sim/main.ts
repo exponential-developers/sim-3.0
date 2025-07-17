@@ -32,6 +32,7 @@ export const global = {
   forcedPubTime: Infinity,
   showA23: false,
   showUnofficials: false,
+  skipCompletedCTs: false,
   varBuy: <Array<[number, Array<varBuy>]>>[[0, [{ variable: "var", level: 0, cost: 0, timeStamp: 0 }]]],
   customVal: null,
 };

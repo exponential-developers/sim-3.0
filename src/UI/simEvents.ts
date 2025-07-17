@@ -32,6 +32,7 @@ const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
 const showA23 = <HTMLInputElement>qs(".a23");
 const showUnofficials = <HTMLInputElement>qs(".unofficials");
+const skipCompletedCTs = <HTMLInputElement>qs(".skipcompletedcts")
 
 const theories = Object.keys(jsondata.theories) as Array<theoryType>;
 
@@ -68,6 +69,7 @@ event(simulateButton, "click", async () => {
   global.dt = parseFloat(dtOtp.textContent ?? "1.5");
   global.ddt = parseFloat(ddtOtp.textContent ?? "1.0001");
   global.stratFilter = true;
+  global.skipCompletedCTs = skipCompletedCTs.checked;
   global.showA23 = showA23.checked;
   localStorage.setItem("simAllSettings", JSON.stringify([semi_idle.checked, hard_active.checked]));
   const data: inputData = {
