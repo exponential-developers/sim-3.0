@@ -24,5 +24,5 @@ declare global {
     recursionValue: null | number | Array<number>;
   }
 
-  type simResult = [string, number, string, string, string, string, string, number, string, [number, number]];
+  type simResult = [string, number, string, string, string, string, string, number, string, [number, number], Array<varBuy>];
 }

@@ -241,10 +241,9 @@ class t4Sim extends theoryClass {
                 this.ticks++;
             }
             this.pubMulti = Math.pow(10, (this.getTotMult(this.pubRho) - this.totMult));
-            const result = createResult(this, ["T4C3d66", "T4C3coast"].includes(this.strat) ? ` q1:${this.variables[6].level} q2:${this.variables[7].level}` : "");
             while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
                 this.boughtVars.pop();
-            global.varBuy.push([result[7], this.boughtVars]);
+            const result = createResult(this, ["T4C3d66", "T4C3coast"].includes(this.strat) ? ` q1:${this.variables[6].level} q2:${this.variables[7].level}` : "");
             return result;
         });
     }

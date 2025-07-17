@@ -400,10 +400,9 @@ class rzSim extends theoryClass {
             if (this.maxW1 !== Infinity) {
                 stratExtra += ` w1: ${this.maxW1}`;
             }
-            const result = createResult(this, stratExtra);
             while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
                 this.boughtVars.pop();
-            global.varBuy.push([result[7], this.boughtVars]);
+            const result = createResult(this, stratExtra);
             return result;
         });
     }

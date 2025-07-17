@@ -89,6 +89,7 @@ event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function*
     for (const element of timeDiffInputs) {
         data.timeDiffInputs.push(element.value);
     }
+    updateTablePreprocess();
     output.textContent = "";
     simulateButton.textContent = "Stop simulating";
     yield sleep();
@@ -103,7 +104,7 @@ event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function*
     global.simulating = false;
     setSimState();
 }));
-function updateTable(arr) {
+function updateTablePreprocess() {
     if (prevMode !== mode.value)
         clearTable();
     prevMode = mode.value;
@@ -117,17 +118,20 @@ function updateTable(arr) {
         if (global.simAllStrats !== "all") {
             thead.children[0].removeChild(thead.children[0].children[2]);
         }
-        thead.children[0].children[0].innerHTML = arr[arr.length - 1][0].toString() + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
-        arr.pop();
     }
     else {
         table.classList.remove("big");
         table.classList.add("small");
         thead.innerHTML = tableHeaders.single;
     }
-    if ((tbody.children.length > 1 && (arr.length > 1 || tbody.children[tbody.children.length - 1].children[0].innerHTML === "")) || mode.value === "All")
+    if (mode.value !== "Single sim")
         clearTable();
+}
+function updateTable(arr) {
     if (mode.value == "All") {
+        const thead = qs(".simTable > thead");
+        thead.children[0].children[0].innerHTML = arr[arr.length - 1][0].toString() + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
+        arr.pop();
         for (let i = 0; i < arr.length; i++) {
             if (global.simAllStrats == "all") {
                 const rowActive = ce("tr");
@@ -195,19 +199,27 @@ function updateTable(arr) {
 }
 function resetVarBuy() {
     tbody = qs(".simTable > tbody");
-    for (let i = 0; i < global.varBuy.length; i++) {
-        for (let j = 0; j < (tbody === null || tbody === void 0 ? void 0 : tbody.children.length); j++) {
-            const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[j];
-            if (parseFloat(row === null || row === void 0 ? void 0 : row.children[7].innerHTML) === global.varBuy[i][0]) {
-                const val = global.varBuy[i][1];
-                (row === null || row === void 0 ? void 0 : row.children[8]).onclick = () => {
-                    openVarModal(val);
-                };
-                (row === null || row === void 0 ? void 0 : row.children[8]).style.cursor = "pointer";
-            }
-        }
+    const max = Math.min(global.varBuy.length, tbody === null || tbody === void 0 ? void 0 : tbody.children.length);
+    for (let i = 0; i < max; i++) {
+        const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[i];
+        const val = global.varBuy[i];
+        (row === null || row === void 0 ? void 0 : row.lastChild).onclick = () => {
+            openVarModal(val);
+        };
+        (row === null || row === void 0 ? void 0 : row.lastChild).style.cursor = "pointer";
     }
-    global.varBuy = [];
+    /*for (let i = 0; i < global.varBuy.length; i++) {
+      for (let j = 0; j < tbody?.children.length; j++) {
+        const row = tbody?.children[j];
+        if (parseFloat(row?.children[7].innerHTML) === global.varBuy[i][0]) {
+          const val = global.varBuy[i][1];
+          (<HTMLElement>row?.children[8]).onclick = () => {
+            openVarModal(val);
+          };
+          (<HTMLElement>row?.children[8]).style.cursor = "pointer";
+        }
+      }
+    }*/
 }
 function highlightResetCells() {
     const cells = document.querySelectorAll('.boughtVars tr td:nth-child(1)');
@@ -261,6 +273,7 @@ event(qs(".boughtVarsCloseBtn"), "pointerdown", () => {
     document.body.style.overflow = "auto";
 });
 function clearTable() {
+    global.varBuy = [];
     while (tbody.firstChild)
         tbody.firstChild.remove();
 }

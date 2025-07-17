@@ -41,7 +41,7 @@ export const global = {
     showUnofficials: false,
     simAllStrats: "all",
     skipCompletedCTs: false,
-    varBuy: [[0, [{ variable: "var", level: 0, cost: 0, timeStamp: 0 }]]],
+    varBuy: [],
     customVal: null,
 };
 const cache = {
@@ -62,13 +62,15 @@ export function simulate(simData) {
             global.simulating = true;
             switch (pData.mode) {
                 case "Single sim":
-                    res = [(yield singleSim(pData)).map((v) => v.toString())];
+                    const simres = yield singleSim(pData);
+                    global.varBuy.push(simres[10]);
+                    res = [simres.slice(0, -1).map((v) => v.toString())];
                     break;
                 case "Chain":
                     res = yield chainSim(pData);
                     break;
                 case "Steps":
-                    res = (yield stepSim(pData)).map((i) => i.map((v) => v.toString()));
+                    res = yield stepSim(pData);
                     break;
                 case "All":
                     res = yield simAll(pData);
@@ -158,7 +160,8 @@ function chainSim(data) {
                 break;
             if (typeof res[6] === "string")
                 cache.lastStrat = res[6].split(" ")[0];
-            result.push(res.map((v) => v.toString()));
+            global.varBuy.push(res[10]);
+            result.push(res.slice(0, -1).map((v) => v.toString()));
             lastPub = res[9][0];
             data.rho = lastPub;
             time += res[9][1];
@@ -187,7 +190,8 @@ function stepSim(data) {
                 break;
             if (typeof res[6] === "string")
                 cache.lastStrat = res[6].split(" ")[0];
-            result.push(res);
+            global.varBuy.push(res[10]);
+            result.push(res.slice(0, -1).map((v) => v.toString()));
             data.rho += data.modeInput;
         }
         cache.lastStrat = "";
@@ -265,7 +269,7 @@ function createSimAllOutput(arr) {
 function getBestStrat(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const strats = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
-        let bestSim = ["", 0, "", "", "", "", "", 0, "", [0, 0]];
+        let bestSim = ["", 0, "", "", "", "", "", 0, "", [0, 0], []];
         for (let i = 0; i < strats.length; i++) {
             data.strat = strats[i];
             const sim = yield singleSim(data);
