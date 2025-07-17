@@ -204,6 +204,7 @@ function simAll(data) {
         const values = data.modeInput.slice(1, data.modeInput.length);
         const res = [];
         const totalSimmed = Math.min(values.length, global.showUnofficials ? Infinity : 17);
+        let simRes;
         for (let i = 0; i < totalSimmed; i++) {
             if (values[i] === 0)
                 continue;
@@ -212,10 +213,10 @@ function simAll(data) {
             if (!global.simulating)
                 break;
             const modes = [];
-            if (global.simAllStrats !== "active")
-                modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle");
             if (global.simAllStrats !== "idle")
                 modes.push(data.simAllInputs[1] ? "Best Overall" : "Best Active");
+            if (global.simAllStrats !== "active")
+                modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle");
             const temp = [];
             for (let j = 0; j < modes.length; j++) {
                 const sendData = {
@@ -226,7 +227,9 @@ function simAll(data) {
                     cap: Infinity,
                     mode: "Single Sim",
                 };
-                temp.push(yield singleSim(sendData));
+                simRes = yield singleSim(sendData);
+                global.varBuy.push(simRes[10]);
+                temp.push(simRes.slice(0, -1).map((v) => v.toString()));
             }
             res.push(createSimAllOutput(temp));
         }
@@ -240,19 +243,19 @@ function createSimAllOutput(arr) {
         arr[0][2], // Input
     ];
     if (global.simAllStrats === "all") {
-        res.push(formatNumber(arr[1][7] / arr[0][7], 4), // Ratio
-        arr[1][7], // Active tau/h
-        arr[0][7], // Passive tau/h
-        arr[1][5], // Multi Active
-        arr[0][5], // Multi Idle
-        arr[1][6], // Strat Active
-        arr[0][6], // Strat Idle
-        arr[1][8], // Time Active
-        arr[0][8], // Time Idle
-        arr[1][4], // dTau Active
-        arr[0][4], // dTau Idle
-        arr[1][3], // Pub Rho Active
-        arr[0][3] // Pub Rho Passive
+        res.push(formatNumber(parseFloat(arr[1][7]) / parseFloat(arr[0][7]), 4), // Ratio
+        arr[0][7], // Active tau/h
+        arr[1][7], // Passive tau/h
+        arr[0][5], // Multi Active
+        arr[1][5], // Multi Idle
+        arr[0][6], // Strat Active
+        arr[1][6], // Strat Idle
+        arr[0][8], // Time Active
+        arr[1][8], // Time Idle
+        arr[0][4], // dTau Active
+        arr[1][4], // dTau Idle
+        arr[0][3], // Pub Rho Active
+        arr[1][3] // Pub Rho Passive
         );
     }
     else {
@@ -264,7 +267,7 @@ function createSimAllOutput(arr) {
         arr[0][3] // Pub Rho
         );
     }
-    return res.map((v) => v.toString());
+    return res;
 }
 function getBestStrat(data) {
     return __awaiter(this, void 0, void 0, function* () {

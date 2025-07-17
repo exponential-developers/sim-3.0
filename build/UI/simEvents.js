@@ -194,32 +194,25 @@ function updateTable(arr) {
             }
             tbody.appendChild(row);
         }
-        resetVarBuy();
     }
+    resetVarBuy();
 }
 function resetVarBuy() {
     tbody = qs(".simTable > tbody");
-    const max = Math.min(global.varBuy.length, tbody === null || tbody === void 0 ? void 0 : tbody.children.length);
-    for (let i = 0; i < max; i++) {
-        const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[i];
+    let i = 0;
+    let j = 0;
+    while (i < global.varBuy.length && j < (tbody === null || tbody === void 0 ? void 0 : tbody.children.length)) {
+        const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[j];
+        j++;
+        if (row.children.length < 3)
+            continue;
         const val = global.varBuy[i];
         (row === null || row === void 0 ? void 0 : row.lastChild).onclick = () => {
             openVarModal(val);
         };
         (row === null || row === void 0 ? void 0 : row.lastChild).style.cursor = "pointer";
+        i++;
     }
-    /*for (let i = 0; i < global.varBuy.length; i++) {
-      for (let j = 0; j < tbody?.children.length; j++) {
-        const row = tbody?.children[j];
-        if (parseFloat(row?.children[7].innerHTML) === global.varBuy[i][0]) {
-          const val = global.varBuy[i][1];
-          (<HTMLElement>row?.children[8]).onclick = () => {
-            openVarModal(val);
-          };
-          (<HTMLElement>row?.children[8]).style.cursor = "pointer";
-        }
-      }
-    }*/
 }
 function highlightResetCells() {
     const cells = document.querySelectorAll('.boughtVars tr td:nth-child(1)');

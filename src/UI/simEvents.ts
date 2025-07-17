@@ -206,32 +206,24 @@ function updateTable(arr: Array<Array<string>>): void {
       }
       tbody.appendChild(row);
     }
-    resetVarBuy();
   }
+  resetVarBuy();
 }
 function resetVarBuy() {
   tbody = qs(".simTable > tbody");
-  const max = Math.min(global.varBuy.length, tbody?.children.length);
-  for (let i = 0; i < max; i++) {
-    const row = tbody?.children[i];
+  let i = 0;
+  let j = 0;
+  while (i < global.varBuy.length && j < tbody?.children.length) {
+    const row = tbody?.children[j];
+    j++;
+    if (row.children.length < 3) continue;
     const val = global.varBuy[i];
     (<HTMLElement>row?.lastChild).onclick = () => {
       openVarModal(val);
     };
     (<HTMLElement>row?.lastChild).style.cursor = "pointer";
+    i++;
   }
-  /*for (let i = 0; i < global.varBuy.length; i++) {
-    for (let j = 0; j < tbody?.children.length; j++) {
-      const row = tbody?.children[j];
-      if (parseFloat(row?.children[7].innerHTML) === global.varBuy[i][0]) {
-        const val = global.varBuy[i][1];
-        (<HTMLElement>row?.children[8]).onclick = () => {
-          openVarModal(val);
-        };
-        (<HTMLElement>row?.children[8]).style.cursor = "pointer";
-      }
-    }
-  }*/
 }
 
 function highlightResetCells() {
