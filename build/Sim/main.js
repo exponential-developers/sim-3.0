@@ -39,6 +39,7 @@ export const global = {
     forcedPubTime: Infinity,
     showA23: false,
     showUnofficials: false,
+    simAllStrats: "all",
     skipCompletedCTs: false,
     varBuy: [[0, [{ variable: "var", level: 0, cost: 0, timeStamp: 0 }]]],
     customVal: null,
@@ -206,7 +207,11 @@ function simAll(data) {
             yield sleep();
             if (!global.simulating)
                 break;
-            const modes = [data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle", data.simAllInputs[1] ? "Best Overall" : "Best Active"];
+            const modes = [];
+            if (global.simAllStrats !== "active")
+                modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle");
+            if (global.simAllStrats !== "idle")
+                modes.push(data.simAllInputs[1] ? "Best Overall" : "Best Active");
             const temp = [];
             for (let j = 0; j < modes.length; j++) {
                 const sendData = {
@@ -226,23 +231,36 @@ function simAll(data) {
     });
 }
 function createSimAllOutput(arr) {
-    return [
+    const res = [
         arr[0][0],
-        arr[0][2],
-        formatNumber(arr[1][7] / arr[0][7], 4),
-        arr[1][7],
-        arr[0][7],
-        arr[1][5],
-        arr[0][5],
-        arr[1][6],
-        arr[0][6],
-        arr[1][8],
-        arr[0][8],
-        arr[1][4],
-        arr[0][4],
-        arr[1][3],
-        arr[0][3], // Pub Rho Passive
-    ].map((v) => v.toString());
+        arr[0][2], // Input
+    ];
+    if (global.simAllStrats === "all") {
+        res.push(formatNumber(arr[1][7] / arr[0][7], 4), // Ratio
+        arr[1][7], // Active tau/h
+        arr[0][7], // Passive tau/h
+        arr[1][5], // Multi Active
+        arr[0][5], // Multi Idle
+        arr[1][6], // Strat Active
+        arr[0][6], // Strat Idle
+        arr[1][8], // Time Active
+        arr[0][8], // Time Idle
+        arr[1][4], // dTau Active
+        arr[0][4], // dTau Idle
+        arr[1][3], // Pub Rho Active
+        arr[0][3] // Pub Rho Passive
+        );
+    }
+    else {
+        res.push(arr[0][7], // tau/h
+        arr[0][5], // Multi
+        arr[0][6], // Strat
+        arr[0][8], // Time
+        arr[0][4], // dTau
+        arr[0][3] // Pub Rho
+        );
+    }
+    return res.map((v) => v.toString());
 }
 function getBestStrat(data) {
     return __awaiter(this, void 0, void 0, function* () {

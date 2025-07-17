@@ -30,9 +30,10 @@ const simulateButton = qs(".simulate");
 //Setting Inputs
 const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
+const simAllStrats = <HTMLSelectElement>qs(".simallstrats");
+const skipCompletedCTs = <HTMLInputElement>qs(".skipcompletedcts");
 const showA23 = <HTMLInputElement>qs(".a23");
 const showUnofficials = <HTMLInputElement>qs(".unofficials");
-const skipCompletedCTs = <HTMLInputElement>qs(".skipcompletedcts")
 
 const theories = Object.keys(jsondata.theories) as Array<theoryType>;
 
@@ -43,8 +44,8 @@ const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
 
 const tableHeaders = {
   current: "All",
-  single: `<th style="padding-inline: 0.5rem !important">Theory</th><th><span style="font-size:0.9rem;">&sigma;</span><sub>t</sub></th><th>Last Pub</th><th>Max Rho</th><th>&Delta;${tau}</th><th>Multi</th><th>Strat</th><th>${tau}/h</th><th>Pub Time</th>`,
-  all: `<th>&emsp;</th><th>Input</th><th>Ratio</th><th>${tau}/h</th><th>Multi</th><th>Strat</th><th>Time</th><th>&Delta;${tau}</th><th>Pub ${rho}</th>`,
+  single: `<tr><th style="padding-inline: 0.5rem !important">Theory</th><th><span style="font-size:0.9rem;">&sigma;</span><sub>t</sub></th><th>Last Pub</th><th>Max Rho</th><th>&Delta;${tau}</th><th>Multi</th><th>Strat</th><th>${tau}/h</th><th>Pub Time</th></tr>`,
+  all: `<tr><th>&emsp;</th><th>Input</th><th>Ratio</th><th>${tau}/h</th><th>Multi</th><th>Strat</th><th>Time</th><th>&Delta;${tau}</th><th>Pub ${rho}</th></tr>`,
 };
 thead.innerHTML = tableHeaders.all;
 table.classList.add("big");
@@ -69,6 +70,7 @@ event(simulateButton, "click", async () => {
   global.dt = parseFloat(dtOtp.textContent ?? "1.5");
   global.ddt = parseFloat(ddtOtp.textContent ?? "1.0001");
   global.stratFilter = true;
+  global.simAllStrats = simAllStrats.value;
   global.skipCompletedCTs = skipCompletedCTs.checked;
   global.showA23 = showA23.checked;
   localStorage.setItem("simAllSettings", JSON.stringify([semi_idle.checked, hard_active.checked]));
@@ -109,6 +111,9 @@ function updateTable(arr: Array<Array<string>>): void {
     table.classList.add("big");
     table.classList.remove("small");
     thead.innerHTML = tableHeaders.all;
+    if (global.simAllStrats !== "all") {
+      thead.children[0].removeChild(thead.children[0].children[2]);
+    }
     thead.children[0].children[0].innerHTML = arr[arr.length - 1][0].toString() + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
     arr.pop();
   } else {
@@ -120,40 +125,53 @@ function updateTable(arr: Array<Array<string>>): void {
 
   if(mode.value == "All") {
     for (let i = 0; i < arr.length; i++) {
-      const rowActive = <HTMLTableRowElement>ce("tr");
-      const rowPassive = <HTMLTableRowElement>ce("tr");
+      if (global.simAllStrats == "all") {
+        const rowActive = <HTMLTableRowElement>ce("tr");
+        const rowPassive = <HTMLTableRowElement>ce("tr");
 
-      // Theory name cell:
-      const theoryName = ce("td");
-      theoryName.innerHTML = String(arr[i][0]);
-      theoryName.setAttribute("rowspan", "2");
-      rowActive.appendChild(theoryName);
+        // Theory name cell:
+        const theoryName = ce("td");
+        theoryName.innerHTML = String(arr[i][0]);
+        theoryName.setAttribute("rowspan", "2");
+        rowActive.appendChild(theoryName);
 
-      // Input cell:
-      const inputValue = ce("td");
-      inputValue.innerHTML = String(arr[i][1]);
-      inputValue.setAttribute("rowspan", "2");
-      rowActive.appendChild(inputValue);
+        // Input cell:
+        const inputValue = ce("td");
+        inputValue.innerHTML = String(arr[i][1]);
+        inputValue.setAttribute("rowspan", "2");
+        rowActive.appendChild(inputValue);
 
-      // Ratio cell:
-      const ratio = ce("td");
-      ratio.innerHTML = String(arr[i][2]);
-      ratio.setAttribute("rowspan", "2");
-      rowActive.appendChild(ratio);
+        // Ratio cell:
+        const ratio = ce("td");
+        ratio.innerHTML = String(arr[i][2]);
+        ratio.setAttribute("rowspan", "2");
+        rowActive.appendChild(ratio);
 
 
-      for (let j = 3; j < arr[i].length; j += 2) {
-        const cellActive = ce("td");
-        cellActive.innerHTML = String(arr[i][j]);
-        rowActive.appendChild(cellActive);
+        for (let j = 3; j < arr[i].length; j += 2) {
+          const cellActive = ce("td");
+          cellActive.innerHTML = String(arr[i][j]);
+          rowActive.appendChild(cellActive);
 
-        const cellPassive = ce("td");
-        cellPassive.innerHTML = String(arr[i][j + 1]);
-        rowPassive.appendChild(cellPassive);
+          const cellPassive = ce("td");
+          cellPassive.innerHTML = String(arr[i][j + 1]);
+          rowPassive.appendChild(cellPassive);
+        }
+
+        tbody.appendChild(rowActive);
+        tbody.appendChild(rowPassive);
+      } 
+      else {
+        const row = <HTMLTableRowElement>ce("tr");
+
+        for (let j = 0; j < arr[i].length; j++) {
+          const cell = ce("td");
+          cell.innerHTML = String(arr[i][j]);
+          row.appendChild(cell);
+        }
+
+        tbody.appendChild(row);
       }
-
-      tbody.appendChild(rowActive);
-      tbody.appendChild(rowPassive);
 
       // Buffer between main theories and CTs
 

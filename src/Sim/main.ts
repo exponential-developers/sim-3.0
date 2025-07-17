@@ -32,6 +32,7 @@ export const global = {
   forcedPubTime: Infinity,
   showA23: false,
   showUnofficials: false,
+  simAllStrats: "all",
   skipCompletedCTs: false,
   varBuy: <Array<[number, Array<varBuy>]>>[[0, [{ variable: "var", level: 0, cost: 0, timeStamp: 0 }]]],
   customVal: null,
@@ -208,7 +209,9 @@ async function simAll(data: parsedData): Promise<Array<Array<string>>> {
     output.innerText = `Simulating ${getTheoryFromIndex(i)}/${getTheoryFromIndex(totalSimmed - 1)}`;
     await sleep();
     if (!global.simulating) break;
-    const modes = [data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle", data.simAllInputs[1] ? "Best Overall" : "Best Active"];
+    const modes = [];
+    if (global.simAllStrats !== "active") modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle")
+    if (global.simAllStrats !== "idle") modes.push(data.simAllInputs[1] ? "Best Overall" : "Best Active")
     const temp: Array<simResult> = [];
     for (let j = 0; j < modes.length; j++) {
       const sendData = {
@@ -227,23 +230,39 @@ async function simAll(data: parsedData): Promise<Array<Array<string>>> {
   return res;
 }
 function createSimAllOutput(arr: Array<simResult>): Array<string> {
-  return [
+  const res: Array<any> = [
     arr[0][0], // Theory name
     arr[0][2], // Input
-    formatNumber(arr[1][7] / arr[0][7], 4), // Ratio
-    arr[1][7], // Active tau/h
-    arr[0][7], // Passive tau/h
-    arr[1][5], // Multi Active
-    arr[0][5], // Multi Idle
-    arr[1][6], // Strat Active
-    arr[0][6], // Strat Idle
-    arr[1][8], // Time Active
-    arr[0][8], // Time Idle
-    arr[1][4], // dTau Active
-    arr[0][4], // dTau Idle
-    arr[1][3], // Pub Rho Active
-    arr[0][3], // Pub Rho Passive
-  ].map((v) => v.toString());
+  ]
+  if (global.simAllStrats === "all") {
+    res.push(
+      formatNumber(arr[1][7] / arr[0][7], 4), // Ratio
+      arr[1][7], // Active tau/h
+      arr[0][7], // Passive tau/h
+      arr[1][5], // Multi Active
+      arr[0][5], // Multi Idle
+      arr[1][6], // Strat Active
+      arr[0][6], // Strat Idle
+      arr[1][8], // Time Active
+      arr[0][8], // Time Idle
+      arr[1][4], // dTau Active
+      arr[0][4], // dTau Idle
+      arr[1][3], // Pub Rho Active
+      arr[0][3] // Pub Rho Passive
+    ) 
+  }
+  else {
+    res.push(
+      arr[0][7], // tau/h
+      arr[0][5], // Multi
+      arr[0][6], // Strat
+      arr[0][8], // Time
+      arr[0][4], // dTau
+      arr[0][3] // Pub Rho
+    )
+  }
+  
+  return res.map((v) => v.toString());
 }
 async function getBestStrat(data: Omit<parsedData, "simAllInputs">): Promise<simResult> {
   const strats: Array<string> = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
