@@ -52,6 +52,26 @@
         4341.41
     ],
     "rzdSpecificZeros": [],
+    "rzRewind": [
+        2448.12,
+        3100.36,
+        4478.52,
+        6726.54
+    ],
+    "rzRewindBoundaries": [
+        {
+            "toRho": 1100, "from": 0, "to": 4000
+        },
+        {
+            "toRho": 1325, "from": 0, "to": 6000
+        },
+        {
+            "toRho": 1425, "from": 3000, "to": 99999999
+        },
+        {
+            "toRho": 9999999999, "from": 4000, "to": 99999999
+        }
+    ],
     "rzIdleBHBoundaries": [
         {
             "toRho": 750, "from": 0, "to": 1000
