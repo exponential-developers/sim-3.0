@@ -32,7 +32,9 @@ export const global = {
   forcedPubTime: Infinity,
   showA23: false,
   showUnofficials: false,
-  varBuy: <Array<[number, Array<varBuy>]>>[[0, [{ variable: "var", level: 0, cost: 0, timeStamp: 0 }]]],
+  simAllStrats: "all",
+  skipCompletedCTs: false,
+  varBuy: <Array<Array<varBuy>>>[],
   customVal: null,
 };
 
@@ -78,13 +80,15 @@ export async function simulate(simData: inputData): Promise<string | null | Arra
     global.simulating = true;
     switch (pData.mode) {
       case "Single sim":
-        res = [(await singleSim(pData)).map((v) => v.toString())];
+        const simres = await singleSim(pData);
+        global.varBuy.push(simres[10])
+        res = [simres.slice(0, -1).map((v) => v.toString())];
         break;
       case "Chain":
         res = await chainSim(pData);
         break;
       case "Steps":
-        res = (await stepSim(pData)).map((i) => i.map((v) => v.toString()));
+        res = await stepSim(pData);
         break;
       case "All":
         res = await simAll(pData);
@@ -166,7 +170,8 @@ async function chainSim(data: parsedData): Promise<Array<Array<string>>> {
     const res = await singleSim({ ...data });
     if (!global.simulating) break;
     if (typeof res[6] === "string") cache.lastStrat = res[6].split(" ")[0];
-    result.push(res.map((v) => v.toString()));
+    global.varBuy.push(res[10]);
+    result.push(res.slice(0, -1).map((v) => v.toString()));
     lastPub = res[9][0];
     data.rho = lastPub;
     time += res[9][1];
@@ -177,8 +182,8 @@ async function chainSim(data: parsedData): Promise<Array<Array<string>>> {
   result.push(["", "", "", "", logToExp(dtau, 2), "", "", formatNumber(dtau / (time / 3600), 5), convertTime(time)]);
   return result;
 }
-async function stepSim(data: parsedData): Promise<Array<simResult>> {
-  const result: Array<simResult> = [];
+async function stepSim(data: parsedData): Promise<Array<Array<string>>> {
+  const result: Array<Array<string>> = [];
   const stopOtp = logToExp(data.cap);
   let lastLog = 0;
   while (data.rho < data.cap + 0.00001) {
@@ -191,7 +196,8 @@ async function stepSim(data: parsedData): Promise<Array<simResult>> {
     const res = await singleSim({ ...data });
     if (!global.simulating) break;
     if (typeof res[6] === "string") cache.lastStrat = res[6].split(" ")[0];
-    result.push(res);
+    global.varBuy.push(res[10]);
+    result.push(res.slice(0, -1).map((v) => v.toString()));
     data.rho += <number>data.modeInput;
   }
   cache.lastStrat = "";
@@ -202,13 +208,16 @@ async function simAll(data: parsedData): Promise<Array<Array<string>>> {
   const values = (<Array<number>>data.modeInput).slice(1, (<Array<number>>data.modeInput).length);
   const res: Array<Array<string>> = [];
   const totalSimmed = Math.min(values.length, global.showUnofficials ? Infinity : 17);
+  let simRes:simResult | null;
   for (let i = 0; i < totalSimmed; i++) {
     if (values[i] === 0) continue;
     output.innerText = `Simulating ${getTheoryFromIndex(i)}/${getTheoryFromIndex(totalSimmed - 1)}`;
     await sleep();
     if (!global.simulating) break;
-    const modes = [data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle", data.simAllInputs[1] ? "Best Overall" : "Best Active"];
-    const temp: Array<simResult> = [];
+    const modes = [];
+    if (global.simAllStrats !== "idle") modes.push(data.simAllInputs[1] ? "Best Overall" : "Best Active")
+    if (global.simAllStrats !== "active") modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle")
+    const temp: Array<Array<string>> = [];
     for (let j = 0; j < modes.length; j++) {
       const sendData = {
         theory: getTheoryFromIndex(i),
@@ -218,35 +227,53 @@ async function simAll(data: parsedData): Promise<Array<Array<string>>> {
         cap: Infinity,
         mode: "Single Sim",
       };
-      temp.push(await singleSim(sendData));
+      simRes = await singleSim(sendData);
+      global.varBuy.push(simRes[10]);
+      temp.push(simRes.slice(0,-1).map((v) => v.toString()));
     }
     res.push(createSimAllOutput(temp));
   }
   res.push([sigma.toString()]);
   return res;
 }
-function createSimAllOutput(arr: Array<simResult>): Array<string> {
-  return [
+function createSimAllOutput(arr: Array<Array<string>>): Array<string> {
+  const res: Array<any> = [
     arr[0][0], // Theory name
     arr[0][2], // Input
-    formatNumber(arr[1][7] / arr[0][7], 4), // Ratio
-    arr[1][7], // Active tau/h
-    arr[0][7], // Passive tau/h
-    arr[1][5], // Multi Active
-    arr[0][5], // Multi Idle
-    arr[1][6], // Strat Active
-    arr[0][6], // Strat Idle
-    arr[1][8], // Time Active
-    arr[0][8], // Time Idle
-    arr[1][4], // dTau Active
-    arr[0][4], // dTau Idle
-    arr[1][3], // Pub Rho Active
-    arr[0][3], // Pub Rho Passive
-  ].map((v) => v.toString());
+  ]
+  if (global.simAllStrats === "all") {
+    res.push(
+      formatNumber(parseFloat(arr[0][7]) / parseFloat(arr[1][7]), 4), // Ratio
+      arr[0][7], // Active tau/h
+      arr[1][7], // Passive tau/h
+      arr[0][5], // Multi Active
+      arr[1][5], // Multi Idle
+      arr[0][6], // Strat Active
+      arr[1][6], // Strat Idle
+      arr[0][8], // Time Active
+      arr[1][8], // Time Idle
+      arr[0][4], // dTau Active
+      arr[1][4], // dTau Idle
+      arr[0][3], // Pub Rho Active
+      arr[1][3] // Pub Rho Passive
+    ) 
+  }
+  else {
+    res.push(
+      arr[0][7], // tau/h
+      arr[0][5], // Multi
+      arr[0][6], // Strat
+      arr[0][8], // Time
+      arr[0][4], // dTau
+      arr[0][3] // Pub Rho
+    )
+  }
+  
+  return res;
 }
 async function getBestStrat(data: Omit<parsedData, "simAllInputs">): Promise<simResult> {
   const strats: Array<string> = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
-  let bestSim: simResult = ["", 0, "", "", "", "", "", 0, "", [0, 0]];
+  let bestSim: simResult = ["", 0, "", "", "", "", "", 0, "", [0, 0], []];
   for (let i = 0; i < strats.length; i++) {
     data.strat = strats[i];
     const sim = await singleSim(data);

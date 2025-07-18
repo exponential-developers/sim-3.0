@@ -320,10 +320,8 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    const result = createResult(this, "");
-
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    global.varBuy.push([result[7], this.boughtVars]);
+    const result = createResult(this, "");
 
     return result;
   }

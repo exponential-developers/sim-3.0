@@ -1,5 +1,6 @@
 import { getTheoryFromIndex, parseLog10String } from "../Utils/helpers.js";
 import jsonData from "../Data/data.json" assert { type: "json" };
+import { global } from "./main.js";
 import { qs, qsa } from "../Utils/helpers.js";
 import { inputData, parsedData } from "./main.js";
 
@@ -172,12 +173,18 @@ function parseSimAll(input: string): Array<number> {
     throw `Invalid value ${split[Object.keys(jsonData.theories).length + 1]} does not match any theory.`;
   //parse students
   const res: Array<number> = [];
+  let value = 0;
   if (isInt(split[0])) res.push(parseInt(split[0]));
   else throw `Invalid student value ${split[0]}.`;
   //parse and check if all values are valid
   for (let i = 1; i < split.length; i++) {
-    res.push(parseCurrencyValue(split[i], getTheoryFromIndex(i - 1), res[0], "t"));
+    value = parseCurrencyValue(split[i], getTheoryFromIndex(i - 1), res[0], "t");
+    if (global.skipCompletedCTs && i > 8 && value * jsonData.theories[getTheoryFromIndex(i - 1)].tauFactor >= 600) {
+      value = 0;
+    }
+    res.push(value);
   }
+  if (res.length - res.filter(item => item == 0).length < 2) throw "Student count and at least one theory value that is not 0 is required.";
   return res;
 }
 

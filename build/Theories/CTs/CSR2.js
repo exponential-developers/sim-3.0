@@ -188,12 +188,10 @@ class csr2Sim extends theoryClass {
                 const costIncs = [5, 128, 16, Math.pow(2, (Math.log2(256) * 3.346)), Math.pow(10, 5.65)];
                 lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
             }
-            const result = createResult(this, this.strat === "CSR2XL" ? " " + Math.min(this.pubMulti, Math.pow(10, (this.getTotMult(lastBuy) - this.totMult))).toFixed(2) : "");
-            if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL") {
+            if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
                 while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
                     this.boughtVars.pop();
-                global.varBuy.push([result[7], this.boughtVars]);
-            }
+            const result = createResult(this, this.strat === "CSR2XL" ? " " + Math.min(this.pubMulti, Math.pow(10, (this.getTotMult(lastBuy) - this.totMult))).toFixed(2) : "");
             return result;
         });
     }

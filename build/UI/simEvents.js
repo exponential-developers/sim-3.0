@@ -34,6 +34,8 @@ const simulateButton = qs(".simulate");
 //Setting Inputs
 const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
+const simAllStrats = qs(".simallstrats");
+const skipCompletedCTs = qs(".skipcompletedcts");
 const showA23 = qs(".a23");
 const showUnofficials = qs(".unofficials");
 const theories = Object.keys(jsondata.theories);
@@ -42,8 +44,8 @@ const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
 const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
 const tableHeaders = {
     current: "All",
-    single: `<th style="padding-inline: 0.5rem !important">Theory</th><th><span style="font-size:0.9rem;">&sigma;</span><sub>t</sub></th><th>Last Pub</th><th>Max Rho</th><th>&Delta;${tau}</th><th>Multi</th><th>Strat</th><th>${tau}/h</th><th>Pub Time</th>`,
-    all: `<th>&emsp;</th><th>Input</th><th>Ratio</th><th>${tau}/h</th><th>Multi</th><th>Strat</th><th>Time</th><th>&Delta;${tau}</th><th>Pub ${rho}</th>`,
+    single: `<tr><th style="padding-inline: 0.5rem !important">Theory</th><th><span style="font-size:0.9rem;">&sigma;</span><sub>t</sub></th><th>Last Pub</th><th>Max Rho</th><th>&Delta;${tau}</th><th>Multi</th><th>Strat</th><th>${tau}/h</th><th>Pub Time</th></tr>`,
+    all: `<tr><th>&emsp;</th><th>Input</th><th>Ratio</th><th>${tau}/h</th><th>Multi</th><th>Strat</th><th>Time</th><th>&Delta;${tau}</th><th>Pub ${rho}</th></tr>`,
 };
 thead.innerHTML = tableHeaders.all;
 table.classList.add("big");
@@ -68,6 +70,8 @@ event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function*
     global.dt = parseFloat((_a = dtOtp.textContent) !== null && _a !== void 0 ? _a : "1.5");
     global.ddt = parseFloat((_b = ddtOtp.textContent) !== null && _b !== void 0 ? _b : "1.0001");
     global.stratFilter = true;
+    global.simAllStrats = simAllStrats.value;
+    global.skipCompletedCTs = skipCompletedCTs.checked;
     global.showA23 = showA23.checked;
     localStorage.setItem("simAllSettings", JSON.stringify([semi_idle.checked, hard_active.checked]));
     const data = {
@@ -85,6 +89,7 @@ event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function*
     for (const element of timeDiffInputs) {
         data.timeDiffInputs.push(element.value);
     }
+    updateTablePreprocess();
     output.textContent = "";
     simulateButton.textContent = "Stop simulating";
     yield sleep();
@@ -99,7 +104,7 @@ event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function*
     global.simulating = false;
     setSimState();
 }));
-function updateTable(arr) {
+function updateTablePreprocess() {
     if (prevMode !== mode.value)
         clearTable();
     prevMode = mode.value;
@@ -110,45 +115,62 @@ function updateTable(arr) {
         table.classList.add("big");
         table.classList.remove("small");
         thead.innerHTML = tableHeaders.all;
-        thead.children[0].children[0].innerHTML = arr[arr.length - 1][0].toString() + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
-        arr.pop();
+        if (global.simAllStrats !== "all") {
+            thead.children[0].removeChild(thead.children[0].children[2]);
+        }
     }
     else {
         table.classList.remove("big");
         table.classList.add("small");
         thead.innerHTML = tableHeaders.single;
     }
-    if ((tbody.children.length > 1 && (arr.length > 1 || tbody.children[tbody.children.length - 1].children[0].innerHTML === "")) || mode.value === "All")
+    if (mode.value !== "Single sim")
         clearTable();
+}
+function updateTable(arr) {
     if (mode.value == "All") {
+        const thead = qs(".simTable > thead");
+        thead.children[0].children[0].innerHTML = arr[arr.length - 1][0].toString() + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
+        arr.pop();
         for (let i = 0; i < arr.length; i++) {
-            const rowActive = ce("tr");
-            const rowPassive = ce("tr");
-            // Theory name cell:
-            const theoryName = ce("td");
-            theoryName.innerHTML = String(arr[i][0]);
-            theoryName.setAttribute("rowspan", "2");
-            rowActive.appendChild(theoryName);
-            // Input cell:
-            const inputValue = ce("td");
-            inputValue.innerHTML = String(arr[i][1]);
-            inputValue.setAttribute("rowspan", "2");
-            rowActive.appendChild(inputValue);
-            // Ratio cell:
-            const ratio = ce("td");
-            ratio.innerHTML = String(arr[i][2]);
-            ratio.setAttribute("rowspan", "2");
-            rowActive.appendChild(ratio);
-            for (let j = 3; j < arr[i].length; j += 2) {
-                const cellActive = ce("td");
-                cellActive.innerHTML = String(arr[i][j]);
-                rowActive.appendChild(cellActive);
-                const cellPassive = ce("td");
-                cellPassive.innerHTML = String(arr[i][j + 1]);
-                rowPassive.appendChild(cellPassive);
+            if (global.simAllStrats == "all") {
+                const rowActive = ce("tr");
+                const rowPassive = ce("tr");
+                // Theory name cell:
+                const theoryName = ce("td");
+                theoryName.innerHTML = String(arr[i][0]);
+                theoryName.setAttribute("rowspan", "2");
+                rowActive.appendChild(theoryName);
+                // Input cell:
+                const inputValue = ce("td");
+                inputValue.innerHTML = String(arr[i][1]);
+                inputValue.setAttribute("rowspan", "2");
+                rowActive.appendChild(inputValue);
+                // Ratio cell:
+                const ratio = ce("td");
+                ratio.innerHTML = String(arr[i][2]);
+                ratio.setAttribute("rowspan", "2");
+                rowActive.appendChild(ratio);
+                for (let j = 3; j < arr[i].length; j += 2) {
+                    const cellActive = ce("td");
+                    cellActive.innerHTML = String(arr[i][j]);
+                    rowActive.appendChild(cellActive);
+                    const cellPassive = ce("td");
+                    cellPassive.innerHTML = String(arr[i][j + 1]);
+                    rowPassive.appendChild(cellPassive);
+                }
+                tbody.appendChild(rowActive);
+                tbody.appendChild(rowPassive);
             }
-            tbody.appendChild(rowActive);
-            tbody.appendChild(rowPassive);
+            else {
+                const row = ce("tr");
+                for (let j = 0; j < arr[i].length; j++) {
+                    const cell = ce("td");
+                    cell.innerHTML = String(arr[i][j]);
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            }
             // Buffer between main theories and CTs
             if (i < arr.length - 1 && arr[i][0].match(/T[1-8]/) && !arr[i + 1][0].match(/T[1-8]/)) {
                 const bufferRow1 = ce("tr");
@@ -172,24 +194,25 @@ function updateTable(arr) {
             }
             tbody.appendChild(row);
         }
-        resetVarBuy();
     }
+    resetVarBuy();
 }
 function resetVarBuy() {
     tbody = qs(".simTable > tbody");
-    for (let i = 0; i < global.varBuy.length; i++) {
-        for (let j = 0; j < (tbody === null || tbody === void 0 ? void 0 : tbody.children.length); j++) {
-            const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[j];
-            if (parseFloat(row === null || row === void 0 ? void 0 : row.children[7].innerHTML) === global.varBuy[i][0]) {
-                const val = global.varBuy[i][1];
-                (row === null || row === void 0 ? void 0 : row.children[8]).onclick = () => {
-                    openVarModal(val);
-                };
-                (row === null || row === void 0 ? void 0 : row.children[8]).style.cursor = "pointer";
-            }
-        }
+    let i = 0;
+    let j = 0;
+    while (i < global.varBuy.length && j < (tbody === null || tbody === void 0 ? void 0 : tbody.children.length)) {
+        const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[j];
+        j++;
+        if (row.children.length < 3)
+            continue;
+        const val = global.varBuy[i];
+        (row === null || row === void 0 ? void 0 : row.lastChild).onclick = () => {
+            openVarModal(val);
+        };
+        (row === null || row === void 0 ? void 0 : row.lastChild).style.cursor = "pointer";
+        i++;
     }
-    global.varBuy = [];
 }
 function highlightResetCells() {
     const cells = document.querySelectorAll('.boughtVars tr td:nth-child(1)');
@@ -243,6 +266,7 @@ event(qs(".boughtVarsCloseBtn"), "pointerdown", () => {
     document.body.style.overflow = "auto";
 });
 function clearTable() {
+    global.varBuy = [];
     while (tbody.firstChild)
         tbody.firstChild.remove();
 }

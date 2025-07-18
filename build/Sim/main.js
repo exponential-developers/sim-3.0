@@ -39,7 +39,9 @@ export const global = {
     forcedPubTime: Infinity,
     showA23: false,
     showUnofficials: false,
-    varBuy: [[0, [{ variable: "var", level: 0, cost: 0, timeStamp: 0 }]]],
+    simAllStrats: "all",
+    skipCompletedCTs: false,
+    varBuy: [],
     customVal: null,
 };
 const cache = {
@@ -60,13 +62,15 @@ export function simulate(simData) {
             global.simulating = true;
             switch (pData.mode) {
                 case "Single sim":
-                    res = [(yield singleSim(pData)).map((v) => v.toString())];
+                    const simres = yield singleSim(pData);
+                    global.varBuy.push(simres[10]);
+                    res = [simres.slice(0, -1).map((v) => v.toString())];
                     break;
                 case "Chain":
                     res = yield chainSim(pData);
                     break;
                 case "Steps":
-                    res = (yield stepSim(pData)).map((i) => i.map((v) => v.toString()));
+                    res = yield stepSim(pData);
                     break;
                 case "All":
                     res = yield simAll(pData);
@@ -156,7 +160,8 @@ function chainSim(data) {
                 break;
             if (typeof res[6] === "string")
                 cache.lastStrat = res[6].split(" ")[0];
-            result.push(res.map((v) => v.toString()));
+            global.varBuy.push(res[10]);
+            result.push(res.slice(0, -1).map((v) => v.toString()));
             lastPub = res[9][0];
             data.rho = lastPub;
             time += res[9][1];
@@ -185,7 +190,8 @@ function stepSim(data) {
                 break;
             if (typeof res[6] === "string")
                 cache.lastStrat = res[6].split(" ")[0];
-            result.push(res);
+            global.varBuy.push(res[10]);
+            result.push(res.slice(0, -1).map((v) => v.toString()));
             data.rho += data.modeInput;
         }
         cache.lastStrat = "";
@@ -198,6 +204,7 @@ function simAll(data) {
         const values = data.modeInput.slice(1, data.modeInput.length);
         const res = [];
         const totalSimmed = Math.min(values.length, global.showUnofficials ? Infinity : 17);
+        let simRes;
         for (let i = 0; i < totalSimmed; i++) {
             if (values[i] === 0)
                 continue;
@@ -205,7 +212,11 @@ function simAll(data) {
             yield sleep();
             if (!global.simulating)
                 break;
-            const modes = [data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle", data.simAllInputs[1] ? "Best Overall" : "Best Active"];
+            const modes = [];
+            if (global.simAllStrats !== "idle")
+                modes.push(data.simAllInputs[1] ? "Best Overall" : "Best Active");
+            if (global.simAllStrats !== "active")
+                modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle");
             const temp = [];
             for (let j = 0; j < modes.length; j++) {
                 const sendData = {
@@ -216,7 +227,9 @@ function simAll(data) {
                     cap: Infinity,
                     mode: "Single Sim",
                 };
-                temp.push(yield singleSim(sendData));
+                simRes = yield singleSim(sendData);
+                global.varBuy.push(simRes[10]);
+                temp.push(simRes.slice(0, -1).map((v) => v.toString()));
             }
             res.push(createSimAllOutput(temp));
         }
@@ -225,28 +238,41 @@ function simAll(data) {
     });
 }
 function createSimAllOutput(arr) {
-    return [
+    const res = [
         arr[0][0],
-        arr[0][2],
-        formatNumber(arr[1][7] / arr[0][7], 4),
-        arr[1][7],
-        arr[0][7],
-        arr[1][5],
-        arr[0][5],
-        arr[1][6],
-        arr[0][6],
-        arr[1][8],
-        arr[0][8],
-        arr[1][4],
-        arr[0][4],
-        arr[1][3],
-        arr[0][3], // Pub Rho Passive
-    ].map((v) => v.toString());
+        arr[0][2], // Input
+    ];
+    if (global.simAllStrats === "all") {
+        res.push(formatNumber(parseFloat(arr[0][7]) / parseFloat(arr[1][7]), 4), // Ratio
+        arr[0][7], // Active tau/h
+        arr[1][7], // Passive tau/h
+        arr[0][5], // Multi Active
+        arr[1][5], // Multi Idle
+        arr[0][6], // Strat Active
+        arr[1][6], // Strat Idle
+        arr[0][8], // Time Active
+        arr[1][8], // Time Idle
+        arr[0][4], // dTau Active
+        arr[1][4], // dTau Idle
+        arr[0][3], // Pub Rho Active
+        arr[1][3] // Pub Rho Passive
+        );
+    }
+    else {
+        res.push(arr[0][7], // tau/h
+        arr[0][5], // Multi
+        arr[0][6], // Strat
+        arr[0][8], // Time
+        arr[0][4], // dTau
+        arr[0][3] // Pub Rho
+        );
+    }
+    return res;
 }
 function getBestStrat(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const strats = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
-        let bestSim = ["", 0, "", "", "", "", "", 0, "", [0, 0]];
+        let bestSim = ["", 0, "", "", "", "", "", 0, "", [0, 0], []];
         for (let i = 0; i < strats.length; i++) {
             data.strat = strats[i];
             const sim = yield singleSim(data);

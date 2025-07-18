@@ -186,15 +186,12 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
       const costIncs = [5, 128, 16, 2 ** (Math.log2(256) * 3.346), 10 ** 5.65];
       lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
     }
+    if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
+      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
     const result = createResult(
       this,
       this.strat === "CSR2XL" ? " " + Math.min(this.pubMulti, 10 ** (this.getTotMult(lastBuy) - this.totMult)).toFixed(2) : ""
     );
-
-    if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL") {
-      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-      global.varBuy.push([result[7], this.boughtVars]);
-    }
 
     return result;
   }

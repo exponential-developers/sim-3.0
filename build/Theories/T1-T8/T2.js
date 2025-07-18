@@ -220,15 +220,14 @@ class t2Sim extends theoryClass {
             }
             this.pubMulti = Math.pow(10, (this.getTotMult(this.pubRho) - this.totMult));
             let result;
+            while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
+                this.boughtVars.pop();
             if (this.strat == "T2MCAlt3") {
                 result = createResult(this, ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}`);
             }
             else {
                 result = createResult(this, "");
             }
-            while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
-                this.boughtVars.pop();
-            global.varBuy.push([result[7], this.boughtVars]);
             return result;
         });
     }

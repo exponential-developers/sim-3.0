@@ -242,15 +242,13 @@ class efSim extends theoryClass {
                 this.ticks++;
             }
             this.pubMulti = Math.pow(10, (this.getTotMult(this.pubRho) - this.totMult));
+            if (!this.isEFAI || this.recursionValue[1] === 2)
+                while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
+                    this.boughtVars.pop();
             const result = createResult(this, this.isEFAI
                 ? ` q1: ${this.variables[1].level} q2: ${this.variables[2].level} a1: ${this.variables[7].level}` +
                     (global.showA23 ? ` a2: ${this.lastA23[0]} a3: ${this.lastA23[1]}` : "")
                 : "");
-            if (!this.isEFAI || this.recursionValue[1] === 2) {
-                while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
-                    this.boughtVars.pop();
-                global.varBuy.push([result[7], this.boughtVars]);
-            }
             return result;
         });
     }

@@ -100,5 +100,6 @@ export function createResult(data, stratExtra) {
         data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH * jsonData.theories[data.theory].tauFactor)),
         convertTime(Math.max(0, data.pubT - data.recovery.time)),
         [data.pubRho, data.recovery.recoveryTime ? data.recovery.time : Math.max(0, data.pubT - data.recovery.time)],
+        data.boughtVars
     ];
 }

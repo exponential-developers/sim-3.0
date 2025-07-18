@@ -126,16 +126,16 @@
         <span class="sliderOtp ddtOtp">1.0001</span><br /><br />
         <button class="resetSettings settingsButtons">Reset</button>
       </div>
-      <span>Show a2 and a3 lvl in EFAI strat output: </span> <input type="checkbox" class="a23" /><br /><br /><br />
-      <span>Show unofficial CTs: </span> <input type="checkbox" class="unofficials" /><br /><br /><br />
-      <span>Theme: </span> <select class="themeSelector"></select><br /><br /><br />
-      <span style="display: none">Copies current sim state to clipboard and local storage.</span><br /><br />
-      <button class="setState settingsButtons" style="display: none">Set Sim State</button><br /><br />
-      <span style="display: none">Replaces the current sim state with the saved state.</span><br /><br />
-      <button class="getState settingsButtons" style="display: none">Get Sim State</button>
-      <!-- <br /><br /> -->
-      <!-- <span>Automatically restore last state. (may conflict with sim updates): </span>
-      <input type="checkbox" class="autoState" /> -->
+      <span>Theme: </span> <select class="themeSelector"></select><br /><br />
+      <span>Strats simmed in "all" mode: </span> 
+      <select class="simallstrats">
+        <option value="all">Active and Idle</option>
+        <option value="active">Active only</option>
+        <option value="idle">Idle only</option>
+      </select><br /><br />
+      <span>Skip completed CTs in "all" mode: </span> <input type="checkbox" class="skipcompletedcts" /><br /><br />
+      <span>Show a2 and a3 lvl in EFAI strat output: </span> <input type="checkbox" class="a23" /><br /><br />
+      <span>Show unofficial CTs: </span> <input type="checkbox" class="unofficials" /><br /><br />
     </dialog>
     <dialog class="boughtVars">
       <button class="boughtVarsCloseBtn">X</button>

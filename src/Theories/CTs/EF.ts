@@ -233,6 +233,8 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
+    if (!this.isEFAI || this.recursionValue[1] === 2)
+      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
     const result = createResult(
       this,
       this.isEFAI
@@ -240,10 +242,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
             (global.showA23 ? ` a2: ${this.lastA23[0]} a3: ${this.lastA23[1]}` : "")
         : ""
     );
-    if (!this.isEFAI || this.recursionValue[1] === 2) {
-      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-      global.varBuy.push([result[7], this.boughtVars]);
-    }
     return result;
   }
   tick() {
