@@ -243,7 +243,7 @@ function createSimAllOutput(arr) {
         arr[0][2], // Input
     ];
     if (global.simAllStrats === "all") {
-        res.push(formatNumber(parseFloat(arr[1][7]) / parseFloat(arr[0][7]), 4), // Ratio
+        res.push(formatNumber(parseFloat(arr[0][7]) / parseFloat(arr[1][7]), 4), // Ratio
         arr[0][7], // Active tau/h
         arr[1][7], // Passive tau/h
         arr[0][5], // Multi Active
