@@ -1,4 +1,5 @@
 import { qs, round } from "../Utils/helpers.js";
+import { global } from "../Sim/main.js";
 //Inputs
 const theory = qs(".theory");
 const strat = qs(".strat");
@@ -45,6 +46,7 @@ export function getSimState() {
     skipCompletedCTs.checked = (_c = state.settings.skipCompletedCTs) !== null && _c !== void 0 ? _c : false;
     showA23.checked = state.settings.showA23;
     showUnofficials.checked = (_d = state.settings.showUnofficials) !== null && _d !== void 0 ? _d : false;
+    global.showUnofficials = showUnofficials.checked;
     // Determines the slider position based on the stored value (see settings.ts)
     dtSlider.value = String(round(Math.log2((state.settings.dt - 0.15) / (4.9 / (1 + Math.pow(2, parseFloat(dtSlider.max))))), 4));
     ddtSlider.value = String(round(Math.log((state.settings.ddt - 1) / (0.3 / Math.pow(3, parseFloat(ddtSlider.max)))) / Math.log(3), 4));
