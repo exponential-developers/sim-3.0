@@ -26,6 +26,9 @@ class VariableSValue extends BaseValue {
   recomputeValue(level: number): number {
     return this.getS(level);
   }
+  copy(): VariableSValue {
+    return new VariableSValue(this.varBase)
+  }
 }
 
 const stepwiseSum = (level: number, base: number, length: number) => {

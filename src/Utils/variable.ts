@@ -63,4 +63,18 @@ export default class Variable {
   reset() {
     this.init();
   }
+  copy(): Variable {
+    let varData = {
+      level: this.data.level,
+      cost: this.data.cost.copy(),
+      value: this.data.value,
+      valueScaling: this.data.valueScaling.copy(),
+    }
+    let copy = new Variable(varData);
+    copy.level = this.level;
+    copy.cost = this.cost;
+    copy.value = this.value;
+    copy.isZero = this.isZero;
+    return copy
+  }
 }

@@ -24,6 +24,9 @@ class VariableBcost extends BaseCost {
     getCost(level) {
         return [15, 45, 360, 810, 1050, 1200][level];
     }
+    copy() {
+        return new VariableBcost();
+    }
 }
 function mergeSortedLists(list1, list2) {
     let mergedList = [];

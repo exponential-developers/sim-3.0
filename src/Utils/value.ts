@@ -7,6 +7,7 @@ export abstract class BaseValue {
     }
     abstract computeNewValue(prevValue: number, currentLevel: number, isZero: boolean): number;
     abstract recomputeValue(level: number): number;
+    abstract copy(): BaseValue;
 }
 
 export class StepwisePowerSumValue extends BaseValue {
@@ -33,6 +34,9 @@ export class StepwisePowerSumValue extends BaseValue {
             return subPart;
         }
     }
+    copy(): StepwisePowerSumValue {
+        return new StepwisePowerSumValue(this.base, this.length, this.varBase);
+    }
 }
 
 export class ExponentialValue extends BaseValue {
@@ -41,6 +45,9 @@ export class ExponentialValue extends BaseValue {
     }
     recomputeValue(level: number): number {
         return Math.log10(this.varBase) * level;
+    }
+    copy(): ExponentialValue {
+        return new ExponentialValue(this.varBase);
     }
 }
 
@@ -55,5 +62,8 @@ export class LinearValue extends BaseValue {
     }
     recomputeValue(level: number): number {
         return this.offset + this.varBase * level;
+    }
+    copy(): LinearValue {
+        return new LinearValue(this.varBase, this.offset);
     }
 }

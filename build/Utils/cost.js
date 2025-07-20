@@ -20,6 +20,9 @@ export class CompositeCost extends BaseCost {
     getCost(level) {
         return level < this.cutoff ? this.cost1.getCost(level) : this.cost2.getCost(level - this.cutoff);
     }
+    copy() {
+        return new CompositeCost(this.cutoff, this.cost1.copy(), this.cost2.copy());
+    }
 }
 export class ExponentialCost extends BaseCost {
     /**
@@ -38,6 +41,13 @@ export class ExponentialCost extends BaseCost {
     getCost(level) {
         return this.cost + this.costInc * level;
     }
+    copy() {
+        let res = new ExponentialCost("10", "10", false);
+        // Dark hacks to make a copy of this one:
+        res.cost = this.cost;
+        res.costInc = this.costInc;
+        return res;
+    }
 }
 export class StepwiseCost extends BaseCost {
     constructor(stepLength, cost) {
@@ -48,6 +58,9 @@ export class StepwiseCost extends BaseCost {
     getCost(level) {
         return this.cost.getCost(Math.floor(level / this.stepLength));
     }
+    copy() {
+        return new StepwiseCost(this.stepLength, this.cost.copy());
+    }
 }
 export class ConstantCost extends BaseCost {
     constructor(base) {
@@ -56,6 +69,12 @@ export class ConstantCost extends BaseCost {
     }
     getCost(level) {
         return this.cost;
+    }
+    copy() {
+        // Dark hacks to make a copy of this one:
+        let res = new ConstantCost("10");
+        res.cost = this.cost;
+        return res;
     }
 }
 export class FirstFreeCost extends BaseCost {
@@ -68,5 +87,8 @@ export class FirstFreeCost extends BaseCost {
             return this.trueCost.getCost(0);
         }
         return this.trueCost.getCost(level - 1);
+    }
+    copy() {
+        return new FirstFreeCost(this.trueCost.copy());
     }
 }
