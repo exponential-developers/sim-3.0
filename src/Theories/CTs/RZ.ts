@@ -79,6 +79,10 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
     maxC1LevelActual: number;
     swapPointDelta: number;
     maxW1: number;
+    bhRewindStatus: number;
+    bhRewindT: number;
+    bhRewindNorm: number;
+    bhRewindDeriv: number;
 
     getBuyingConditions() {
         const activeStrat = [
@@ -257,10 +261,19 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
             if (this.variables[3].level < this.maxW1){
                 if (this.bhFoundZero === true){
-                    this.milestones[3] = 0;
-                    this.blackhole = false;
-                    this.bhSearchingRewind = true;
-                    this.bhFoundZero = false;
+                    if (this.bhRewindStatus === 0) {
+                        this.milestones[3] = 0;
+                        this.blackhole = false;
+                        this.bhSearchingRewind = true;
+                        this.bhFoundZero = false;
+                        this.bhRewindStatus = 1;
+                        this.offGrid = true;
+                        this.dt = 0.15;
+                    }
+                    else {
+                        this.bhRewindStatus = 2;
+                        this.dt = this.bhRewindT;
+                    }
                 }
                 else if (this.t_var > this.targetZero && !this.blackhole){
                     this.t_var = this.targetZero;
@@ -274,6 +287,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             else {
                 this.milestones[3] = 1;
                 this.blackhole = true;
+                this.bhRewindStatus = 3;
             }
         }
         else{
@@ -349,6 +363,10 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         this.maxC1LevelActual = -1;
         this.swapPointDelta = 0;
         this.maxW1 = Infinity;
+        this.bhRewindStatus = 0;
+        this.bhRewindT = 0;
+        this.bhRewindNorm = 0;
+        this.bhRewindDeriv = 0;
         this.varNames = ["c1", "c2", "b", "w1", "w2", "w3"/*, "b+"*/];
         this.variables = [
             new Variable({
@@ -458,7 +476,11 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         const c2Term = this.variables[1].value;
         const bTerm = this.variables[2].value;
 
-        if (!this.bhFoundZero){
+        if (this.bhRewindStatus == 2){
+            this.currencies[1] = add(this.currencies[1], l10(this.bhRewindDeriv) + w1Term + w2Term + w3Term + this.totMult);
+            this.currencies[0] = add(this.currencies[0], tTerm + c1Term + c2Term + w1Term + this.totMult + l10(this.bhRewindNorm));
+        }
+        else if (!this.bhFoundZero){
             const z = zeta(this.t_var, this.ticks, this.offGrid, lookups.zetaLookup);
             if (this.milestones[1]) {
                 const tmpZ = zeta(this.t_var + 1 / 100000, this.ticks, this.offGrid, lookups.zetaDerivLookup);
@@ -467,6 +489,9 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                 const derivTerm = l10(Math.sqrt(dr * dr + di * di) * 100000);
                 // derivCurrency.value += dTerm.pow(bTerm) * w1Term * w2Term * w3Term * bonus;
                 this.currencies[1] = add(this.currencies[1], derivTerm * bTerm + w1Term + w2Term + w3Term + bonus);
+                if (this.bhRewindStatus == 1) {
+                    this.bhRewindDeriv += this.dt * (Math.sqrt(dr * dr + di * di) * 100000) ** bTerm;
+                }
 
                 if (this.milestones[3]){
                     if (this.maxW1 === Infinity || this.variables[3].level >= this.maxW1){
@@ -481,6 +506,9 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             this.iCoord = z[1];
             this.zTerm = Math.abs(z[2]);
             this.currencies[0] = add(this.currencies[0], tTerm + c1Term + c2Term + w1Term + bonus - l10(this.zTerm / (2 ** bTerm) + 0.01));
+            if (this.bhRewindStatus == 1) {
+                this.bhRewindNorm += this.dt / (this.zTerm / (2 ** bTerm) + 0.01);
+            }
         }
         else {
             this.currencies[1] = add(this.currencies[1], this.bhdTerm * bTerm + w1Term + w2Term + w3Term + bonus);
@@ -489,13 +517,22 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
 
         // normCurrency.value += tTerm * c1Term * c2Term * w1Term * bonus / (zTerm / BigNumber.TWO.pow(bTerm) + bMarginTerm);
         
-        this.t += this.dt / 1.5;
-        this.dt *= this.ddt;
-        if (this.maxW1 !== Infinity && this.variables[3].level < this.maxW1 && this.t_var > this.targetZero - 5){
-            //console.log(`${this.t}; ${convertTime(this.t)}`)
+        if (this.maxW1 !== Infinity && this.variables[3].level < this.maxW1 && this.t_var > this.targetZero - 5 && this.bhRewindStatus < 2){
             this.offGrid = true;
             this.dt = 0.15;
+            this.t += this.dt / 1.5;
+            if (this.bhRewindStatus == 1){
+                this.bhRewindT += this.dt;
+            }
         }
+        else if (this.bhRewindStatus == 2) {
+            this.t += this.dt / 1.5;
+        }
+        else {
+            this.t += this.dt / 1.5;
+            this.dt *= this.ddt;
+        }
+        
         if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
         this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
         if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
@@ -524,6 +561,16 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                             vb.symbol = "delta";
                         }
                         this.boughtVars.push(vb);
+                    }
+                    if (i == 2 && this.bhRewindStatus == 2) {
+                        this.bhRewindT = 0;
+                        this.bhRewindNorm = 0;
+                        this.bhRewindDeriv = 0;
+                        this.milestones[3] = 0;
+                        this.blackhole = false;
+                        this.bhSearchingRewind = true;
+                        this.bhFoundZero = false;
+                        this.bhRewindStatus = 1;
                     }
                     this.variables[i].buy();
                 } else break;
