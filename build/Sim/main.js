@@ -30,6 +30,7 @@ import mf from "../Theories/CTs/MF.js";
 import bap from "../Theories/CTs/BaP.js";
 import bt from "../Theories/Unofficial-CTs/BT.js";
 import tc from "../Theories/Unofficial-CTs/TC";
+import de from "../Theories/Unofficial-CTs/DE";
 const output = qs(".output");
 export const global = {
     dt: 1.5,
@@ -136,6 +137,8 @@ function singleSim(data) {
                 return yield bt(sendData);
             case "TC":
                 return yield tc(sendData);
+            case "DE":
+                return yield de(sendData);
         }
     });
 }
