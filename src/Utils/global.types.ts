@@ -26,7 +26,6 @@ declare global {
 
   type combinedResult = [string, string, string];
 
-  //type simResult = [string, number, string, string, string, string, string, number, string, [number, number], Array<varBuy>];
   interface simResult {
     theory: string;
     sigma: number;

@@ -4,8 +4,6 @@ import { getSimState, setSimState } from "./simState.js";
 import jsondata from "../Data/data.json" assert { type: "json" };
 import { json } from "stream/consumers";
 import { theoryUpdate } from "./render.js";
-import { type } from "os";
-import { clearLine } from "readline";
 
 //Inputs
 const theory = qs<HTMLSelectElement>(".theory");
