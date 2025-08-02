@@ -219,7 +219,7 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
     if ((this.recursionValue === null || this.recursionValue === undefined) && ["T4C3d66", "T4C3coast"].includes(this.strat) && global.forcedPubTime === Infinity) {
       data.recursionValue = Number.MAX_VALUE;
       const tempSim = await new t4Sim(data).simulate(data);
-      this.recursionValue = tempSim[9][0];
+      this.recursionValue = tempSim.rawData.pubRho;
     }
     let pubCondition = false;
     while (!pubCondition) {

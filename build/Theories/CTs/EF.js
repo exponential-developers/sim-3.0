@@ -214,9 +214,9 @@ class efSim extends theoryClass {
             if (this.lastPub >= 10 && (data.recursionValue === null || data.recursionValue === undefined) && this.isEFAI) {
                 data.recursionValue = [Infinity, 0];
                 const res1 = yield ef(data);
-                data.recursionValue = [res1[9][0], 1];
+                data.recursionValue = [res1.rawData.pubRho, 1];
                 const res2 = yield ef(data);
-                this.recursionValue = [res2[9][0], 2];
+                this.recursionValue = [res2.rawData.pubRho, 2];
                 if (this.recursionValue[0] > 300 && this.recursionValue[0] < 301)
                     this.recursionValue[0] = 299.2;
                 if (this.recursionValue[0] > 325 && this.recursionValue[0] < 326)

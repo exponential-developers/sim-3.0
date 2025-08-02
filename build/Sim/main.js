@@ -41,7 +41,6 @@ export const global = {
     showUnofficials: false,
     simAllStrats: "all",
     skipCompletedCTs: false,
-    varBuy: [],
     customVal: null,
 };
 const cache = {
@@ -63,8 +62,7 @@ export function simulate(simData) {
             switch (pData.mode) {
                 case "Single sim":
                     const simres = yield singleSim(pData);
-                    global.varBuy.push(simres[10]);
-                    res = [simres.slice(0, -1).map((v) => v.toString())];
+                    res = [simres];
                     break;
                 case "Chain":
                     res = yield chainSim(pData);
@@ -158,18 +156,17 @@ function chainSim(data) {
             const res = yield singleSim(Object.assign({}, data));
             if (!global.simulating)
                 break;
-            if (typeof res[6] === "string")
-                cache.lastStrat = res[6].split(" ")[0];
-            global.varBuy.push(res[10]);
-            result.push(res.slice(0, -1).map((v) => v.toString()));
-            lastPub = res[9][0];
+            if (typeof res.strat === "string")
+                cache.lastStrat = res.strat.split(" ")[0];
+            result.push(res);
+            lastPub = res.rawData.pubRho;
             data.rho = lastPub;
-            time += res[9][1];
+            time += res.rawData.time;
         }
         cache.lastStrat = "";
-        result.push(["", "", "", "", "ΔTau Total", "", "", `Average <span style="font-size:0.9rem; font-style:italics">&tau;</span>/h`, "Total Time"]);
+        result.push(["ΔTau Total", `Average <span style="font-size:0.9rem; font-style:italics">&tau;</span>/h`, "Total Time"]);
         const dtau = (data.rho - start) * jsonData.theories[data.theory].tauFactor;
-        result.push(["", "", "", "", logToExp(dtau, 2), "", "", formatNumber(dtau / (time / 3600), 5), convertTime(time)]);
+        result.push([logToExp(dtau, 2), formatNumber(dtau / (time / 3600), 5), convertTime(time)]);
         return result;
     });
 }
@@ -188,10 +185,9 @@ function stepSim(data) {
             const res = yield singleSim(Object.assign({}, data));
             if (!global.simulating)
                 break;
-            if (typeof res[6] === "string")
-                cache.lastStrat = res[6].split(" ")[0];
-            global.varBuy.push(res[10]);
-            result.push(res.slice(0, -1).map((v) => v.toString()));
+            if (typeof res.strat === "string")
+                cache.lastStrat = res.strat.split(" ")[0];
+            result.push(res);
             data.rho += data.modeInput;
         }
         cache.lastStrat = "";
@@ -228,55 +224,47 @@ function simAll(data) {
                     mode: "Single Sim",
                 };
                 simRes = yield singleSim(sendData);
-                global.varBuy.push(simRes[10]);
-                temp.push(simRes.slice(0, -1).map((v) => v.toString()));
+                temp.push(simRes);
             }
             res.push(createSimAllOutput(temp));
         }
-        res.push([sigma.toString()]);
         return res;
     });
 }
 function createSimAllOutput(arr) {
-    const res = [
-        arr[0][0],
-        arr[0][2], // Input
-    ];
     if (global.simAllStrats === "all") {
-        res.push(formatNumber(parseFloat(arr[0][7]) / parseFloat(arr[1][7]), 4), // Ratio
-        arr[0][7], // Active tau/h
-        arr[1][7], // Passive tau/h
-        arr[0][5], // Multi Active
-        arr[1][5], // Multi Idle
-        arr[0][6], // Strat Active
-        arr[1][6], // Strat Idle
-        arr[0][8], // Time Active
-        arr[1][8], // Time Idle
-        arr[0][4], // dTau Active
-        arr[1][4], // dTau Idle
-        arr[0][3], // Pub Rho Active
-        arr[1][3] // Pub Rho Passive
-        );
+        return {
+            theory: arr[0].theory,
+            ratio: formatNumber(arr[0].tauH / arr[1].tauH, 4),
+            lastPub: arr[0].lastPub,
+            active: arr[0],
+            idle: arr[1]
+        };
     }
     else {
-        res.push(arr[0][7], // tau/h
-        arr[0][5], // Multi
-        arr[0][6], // Strat
-        arr[0][8], // Time
-        arr[0][4], // dTau
-        arr[0][3] // Pub Rho
-        );
+        return arr[0];
     }
-    return res;
 }
 function getBestStrat(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const strats = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
-        let bestSim = ["", 0, "", "", "", "", "", 0, "", [0, 0], []];
+        let bestSim = {
+            theory: "",
+            sigma: 0,
+            lastPub: "",
+            pubRho: "",
+            deltaTau: "",
+            pubMulti: "",
+            strat: "Result undefined",
+            tauH: 0,
+            time: "",
+            rawData: { pubRho: 0, time: 0 },
+            boughtVars: []
+        };
         for (let i = 0; i < strats.length; i++) {
             data.strat = strats[i];
             const sim = yield singleSim(data);
-            if (bestSim[7] < sim[7])
+            if (bestSim.tauH < sim.tauH)
                 bestSim = sim;
         }
         return bestSim;

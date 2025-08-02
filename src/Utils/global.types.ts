@@ -24,5 +24,30 @@ declare global {
     recursionValue: null | number | Array<number>;
   }
 
-  type simResult = [string, number, string, string, string, string, string, number, string, [number, number], Array<varBuy>];
+  type combinedResult = [string, string, string];
+
+  //type simResult = [string, number, string, string, string, string, string, number, string, [number, number], Array<varBuy>];
+  interface simResult {
+    theory: string;
+    sigma: number;
+    lastPub: string;
+    pubRho: string;
+    deltaTau: string;
+    pubMulti: string;
+    strat: string;
+    tauH: number;
+    time: string;
+    rawData: { pubRho: number; time: number };
+    boughtVars: Array<varBuy>;
+  }
+
+  interface simAllResult {
+    theory: string;
+    ratio: string;
+    lastPub: string;
+    active: simResult;
+    idle: simResult;
+  }
+
+  type generalResult = simResult | combinedResult | simAllResult;
 }

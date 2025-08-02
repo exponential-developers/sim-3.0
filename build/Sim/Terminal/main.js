@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 /*eslint-disable no-inner-declarations*/
-import { event, qs, sleep } from "../../Utils/helpers.js";
+import { event, qs, sleep, resultIsSimResult, resultIsCombinedResult } from "../../Utils/helpers.js";
 import { global, simulate } from "../main.js";
 import { parseSimParams } from "./parsers.js";
 import Terminal from "./terminal.js";
@@ -146,33 +146,63 @@ if (localStorage.getItem("dev") === "true") {
         });
     }
     function printSimResults(arr, data) {
-        if (data.mode === "Single sim") {
-            terminal.writeLine(`${arr[0][1]} | ${arr[0][2]} | ${arr[0][3]} | ${arr[0][5]} | ${arr[0][6]} | ${arr[0][7]} | ${arr[0][8]}`);
+        if (data.mode === "Single sim" && resultIsSimResult(arr[0])) {
+            terminal.writeLine(`${arr[0].sigma} | ${arr[0].lastPub} | ${arr[0].pubRho} | ${arr[0].pubMulti} | ${arr[0].strat} | ${arr[0].tauH} | ${arr[0].time}`);
         }
         else if (data.mode === "Chain") {
             const l = arr.length - 1;
-            terminal.writeLine(`${data.strat} | ${data.sigma} | ${data.rho} --> ${arr[l - 2][3]} | ${arr[l][4]} | ${arr[l][7]} | ${arr[l][8]}`);
+            const last = arr[l - 2];
+            const res = arr[l];
+            if (resultIsSimResult(last) && resultIsCombinedResult(res)) {
+                terminal.writeLine(`${data.strat} | ${data.sigma} | ${data.rho} --> ${last.pubRho} | ${res[0]} | ${res[1]} | ${res[2]}`);
+            }
         }
         else if (data.mode === "Steps") {
             let str = "";
-            for (let i = 0; i < arr.length; i++)
-                str += arr[i][7] + "\n";
+            for (let i = 0; i < arr.length; i++) {
+                let res = arr[i];
+                if (resultIsSimResult(res))
+                    str += res.tauH + "\n";
+            }
             navigator.clipboard.writeText(str);
             terminal.writeLine(`Copied ${arr.length} tau/h values to clipboard.`);
         }
         updateTable(arr);
     }
     function updateTable(arr) {
+        const addCell = (row, content) => {
+            const cell = document.createElement("td");
+            cell.innerHTML = String(content);
+            row.appendChild(cell);
+        };
         const thead = qs(".simTable > thead");
         const tbody = qs(".simTable > tbody");
         while (tbody.firstChild)
             tbody.firstChild.remove();
         for (let i = 0; i < arr.length; i++) {
+            const res = arr[i];
             const row = document.createElement("tr");
-            for (let j = 0; j < thead.children[0].children.length; j++) {
-                const cell = document.createElement("td");
-                cell.innerHTML = String(arr[i][j]);
-                row.appendChild(cell);
+            if (resultIsSimResult(res)) {
+                addCell(row, res.theory);
+                addCell(row, res.sigma);
+                addCell(row, res.lastPub);
+                addCell(row, res.pubRho);
+                addCell(row, res.deltaTau);
+                addCell(row, res.pubMulti);
+                addCell(row, res.strat);
+                addCell(row, res.tauH);
+                addCell(row, res.time);
+            }
+            else if (resultIsCombinedResult(res)) {
+                for (let i = 0; i < 4; i++) {
+                    addCell(row, "");
+                }
+                addCell(row, res[0]);
+                for (let i = 0; i < 2; i++) {
+                    addCell(row, "");
+                }
+                addCell(row, res[1]);
+                addCell(row, res[2]);
             }
             tbody.appendChild(row);
         }

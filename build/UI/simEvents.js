@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { simulate, global } from "../Sim/main.js";
-import { qs, event, sleep, ce, qsa, convertTime, logToExp } from "../Utils/helpers.js";
+import { qs, event, sleep, ce, qsa, convertTime, logToExp, resultIsSimResult, resultIsSimAllResult, resultIsCombinedResult } from "../Utils/helpers.js";
 import { setSimState } from "./simState.js";
 import jsondata from "../Data/data.json" assert { type: "json" };
 import { theoryUpdate } from "./render.js";
@@ -108,9 +108,6 @@ function updateTablePreprocess() {
     if (prevMode !== mode.value)
         clearTable();
     prevMode = mode.value;
-    table = qs(".simTable");
-    thead = qs(".simTable > thead");
-    tbody = qs(".simTable > tbody");
     if (mode.value === "All") {
         table.classList.add("big");
         table.classList.remove("small");
@@ -128,90 +125,116 @@ function updateTablePreprocess() {
         clearTable();
 }
 function updateTable(arr) {
+    const addCell = (row, content) => {
+        const cell = ce("td");
+        cell.innerHTML = String(content);
+        row.appendChild(cell);
+    };
+    const addCellRowspan = (row, content, rowspan) => {
+        const cell = ce("td");
+        cell.innerHTML = String(content);
+        cell.setAttribute("rowspan", rowspan);
+        row.appendChild(cell);
+    };
+    const bindVarBuy = (row, buys) => {
+        (row === null || row === void 0 ? void 0 : row.lastChild).onclick = () => {
+            openVarModal(buys);
+        };
+        (row === null || row === void 0 ? void 0 : row.lastChild).style.cursor = "pointer";
+    };
     if (mode.value == "All") {
-        const thead = qs(".simTable > thead");
-        thead.children[0].children[0].innerHTML = arr[arr.length - 1][0].toString() + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
-        arr.pop();
         for (let i = 0; i < arr.length; i++) {
-            if (global.simAllStrats == "all") {
+            let res = arr[i];
+            if (resultIsSimAllResult(res)) {
+                if (i == 0) {
+                    thead.children[0].children[0].innerHTML = String(res.active.sigma) + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
+                }
                 const rowActive = ce("tr");
                 const rowPassive = ce("tr");
                 // Theory name cell:
-                const theoryName = ce("td");
-                theoryName.innerHTML = String(arr[i][0]);
-                theoryName.setAttribute("rowspan", "2");
-                rowActive.appendChild(theoryName);
+                addCellRowspan(rowActive, res.theory, "2");
                 // Input cell:
-                const inputValue = ce("td");
-                inputValue.innerHTML = String(arr[i][1]);
-                inputValue.setAttribute("rowspan", "2");
-                rowActive.appendChild(inputValue);
+                addCellRowspan(rowActive, res.lastPub, "2");
                 // Ratio cell:
-                const ratio = ce("td");
-                ratio.innerHTML = String(arr[i][2]);
-                ratio.setAttribute("rowspan", "2");
-                rowActive.appendChild(ratio);
-                for (let j = 3; j < arr[i].length; j += 2) {
-                    const cellActive = ce("td");
-                    cellActive.innerHTML = String(arr[i][j]);
-                    rowActive.appendChild(cellActive);
-                    const cellPassive = ce("td");
-                    cellPassive.innerHTML = String(arr[i][j + 1]);
-                    rowPassive.appendChild(cellPassive);
-                }
+                addCellRowspan(rowActive, res.ratio, "2");
+                addCell(rowActive, res.active.tauH);
+                addCell(rowActive, res.active.pubMulti);
+                addCell(rowActive, res.active.strat);
+                addCell(rowActive, res.active.time);
+                addCell(rowActive, res.active.deltaTau);
+                addCell(rowActive, res.active.pubRho);
+                addCell(rowPassive, res.idle.tauH);
+                addCell(rowPassive, res.idle.pubMulti);
+                addCell(rowPassive, res.idle.strat);
+                addCell(rowPassive, res.idle.time);
+                addCell(rowPassive, res.idle.deltaTau);
+                addCell(rowPassive, res.idle.pubRho);
                 tbody.appendChild(rowActive);
                 tbody.appendChild(rowPassive);
+                bindVarBuy(rowActive, res.active.boughtVars);
+                bindVarBuy(rowPassive, res.idle.boughtVars);
             }
-            else {
-                const row = ce("tr");
-                for (let j = 0; j < arr[i].length; j++) {
-                    const cell = ce("td");
-                    cell.innerHTML = String(arr[i][j]);
-                    row.appendChild(cell);
+            else if (resultIsSimResult(res)) {
+                if (i == 0) {
+                    thead.children[0].children[0].innerHTML = String(res.sigma) + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
                 }
+                const row = ce("tr");
+                addCell(row, res.theory);
+                addCell(row, res.lastPub);
+                addCell(row, res.tauH);
+                addCell(row, res.pubMulti);
+                addCell(row, res.strat);
+                addCell(row, res.time);
+                addCell(row, res.deltaTau);
+                addCell(row, res.pubRho);
                 tbody.appendChild(row);
+                bindVarBuy(row, res.boughtVars);
             }
             // Buffer between main theories and CTs
-            if (i < arr.length - 1 && arr[i][0].match(/T[1-8]/) && !arr[i + 1][0].match(/T[1-8]/)) {
-                const bufferRow1 = ce("tr");
-                const bufferRow2 = ce("tr");
-                bufferRow1.style.display = "none";
-                const bufferText = ce("td");
-                bufferText.innerHTML = "---";
-                bufferRow2.appendChild(bufferText);
-                tbody.appendChild(bufferRow1);
-                tbody.appendChild(bufferRow2);
+            if (i < arr.length - 1) {
+                const next = arr[i + 1];
+                const lastTheory = (resultIsSimAllResult(res) ? res.active.theory : resultIsSimResult(res) ? res.theory : "");
+                const nextTheory = (resultIsSimAllResult(next) ? next.active.theory : resultIsSimResult(next) ? next.theory : "");
+                if (lastTheory.match(/T[1-8]/) && !nextTheory.match(/T[1-8]/)) {
+                    const bufferRow1 = ce("tr");
+                    const bufferRow2 = ce("tr");
+                    bufferRow1.style.display = "none";
+                    addCell(bufferRow2, "---");
+                    tbody.appendChild(bufferRow1);
+                    tbody.appendChild(bufferRow2);
+                }
             }
         }
     }
     else {
         for (let i = 0; i < arr.length; i++) {
+            const res = arr[i];
             const row = ce("tr");
-            for (let j = 0; j < thead.children[0].children.length; j++) {
-                const cell = ce("td");
-                cell.innerHTML = String(arr[i][j]);
-                row.appendChild(cell);
+            if (resultIsSimResult(res)) {
+                addCell(row, res.theory);
+                addCell(row, res.sigma);
+                addCell(row, res.lastPub);
+                addCell(row, res.pubRho);
+                addCell(row, res.deltaTau);
+                addCell(row, res.pubMulti);
+                addCell(row, res.strat);
+                addCell(row, res.tauH);
+                addCell(row, res.time);
+                bindVarBuy(row, res.boughtVars);
+            }
+            else if (resultIsCombinedResult(res)) {
+                for (let i = 0; i < 4; i++) {
+                    addCell(row, "");
+                }
+                addCell(row, res[0]);
+                for (let i = 0; i < 2; i++) {
+                    addCell(row, "");
+                }
+                addCell(row, res[1]);
+                addCell(row, res[2]);
             }
             tbody.appendChild(row);
         }
-    }
-    resetVarBuy();
-}
-function resetVarBuy() {
-    tbody = qs(".simTable > tbody");
-    let i = 0;
-    let j = 0;
-    while (i < global.varBuy.length && j < (tbody === null || tbody === void 0 ? void 0 : tbody.children.length)) {
-        const row = tbody === null || tbody === void 0 ? void 0 : tbody.children[j];
-        j++;
-        if (row.children.length < 3)
-            continue;
-        const val = global.varBuy[i];
-        (row === null || row === void 0 ? void 0 : row.lastChild).onclick = () => {
-            openVarModal(val);
-        };
-        (row === null || row === void 0 ? void 0 : row.lastChild).style.cursor = "pointer";
-        i++;
     }
 }
 function highlightResetCells() {
@@ -266,7 +289,6 @@ event(qs(".boughtVarsCloseBtn"), "pointerdown", () => {
     document.body.style.overflow = "auto";
 });
 function clearTable() {
-    global.varBuy = [];
     while (tbody.firstChild)
         tbody.firstChild.remove();
 }

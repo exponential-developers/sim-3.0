@@ -99,17 +99,29 @@ export function binarySearch(arr, target) {
     return l;
 }
 export function createResult(data, stratExtra) {
-    return [
-        data.theory,
-        data.sigma,
-        logToExp(data.lastPub, 2),
-        logToExp(data.pubRho, 2),
-        logToExp((data.pubRho - data.lastPub) * jsonData.theories[data.theory].tauFactor, 2),
-        formatNumber(data.pubMulti),
-        data.strat + stratExtra,
-        data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH * jsonData.theories[data.theory].tauFactor)),
-        convertTime(Math.max(0, data.pubT - data.recovery.time)),
-        [data.pubRho, data.recovery.recoveryTime ? data.recovery.time : Math.max(0, data.pubT - data.recovery.time)],
-        data.boughtVars
-    ];
+    return {
+        theory: data.theory,
+        sigma: data.sigma,
+        lastPub: logToExp(data.lastPub, 2),
+        pubRho: logToExp(data.pubRho, 2),
+        deltaTau: logToExp((data.pubRho - data.lastPub) * jsonData.theories[data.theory].tauFactor, 2),
+        pubMulti: formatNumber(data.pubMulti),
+        strat: data.strat + stratExtra,
+        tauH: data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH * jsonData.theories[data.theory].tauFactor)),
+        time: convertTime(Math.max(0, data.pubT - data.recovery.time)),
+        rawData: {
+            pubRho: data.pubRho,
+            time: data.recovery.recoveryTime ? data.recovery.time : Math.max(0, data.pubT - data.recovery.time)
+        },
+        boughtVars: data.boughtVars
+    };
+}
+export function resultIsSimResult(result) {
+    return "strat" in result;
+}
+export function resultIsSimAllResult(result) {
+    return "ratio" in result;
+}
+export function resultIsCombinedResult(result) {
+    return Array.isArray(result);
 }
