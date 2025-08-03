@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, binarySearch, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, binarySearch, getBestResult, defaultResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { theoryClass } from "../theory.js";
@@ -378,8 +378,8 @@ class mfSim extends theoryClass {
         }
         return cost;
     }
-    getGoalBundle() {
-        let goalBundle = [...this.resetBundle];
+    getGoalBundle(bundle = this.resetBundle) {
+        let goalBundle = [...bundle];
         let bundleCost = this.calcBundleCost(goalBundle);
         while (this.variables[5].getCostForLevel(this.variables[5].level + goalBundle[0]) < bundleCost) {
             goalBundle[0]++;
@@ -417,6 +417,20 @@ class mfSim extends theoryClass {
                 this.buyVariables();
                 //console.log(`Reset ${this.goalBundleCost}; ${this.goalBundle}; ${this.variables.slice(5).map(v => v.level)}`)
                 this.resetParticle();
+                if (this.strat == "MFd2SLOW" && this.lastPub - this.maxRho <= 25) {
+                    let fork;
+                    let forkres;
+                    fork = this.copy();
+                    fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]]);
+                    fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
+                    forkres = yield fork.simulate();
+                    this.bestRes = getBestResult(this.bestRes, forkres);
+                    fork = this.copy();
+                    fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]]);
+                    fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
+                    forkres = yield fork.simulate();
+                    this.bestRes = getBestResult(this.bestRes, forkres);
+                }
             }
         });
     }
@@ -459,12 +473,9 @@ class mfSimWrap extends theoryClass {
                 [0, 1, 0, 0],
                 [0, 1, 0, 1],
                 [0, 2, 0, 0],
-                [0, 2, 0, 1],
-                [0, 3, 0, 0],
-                [0, 3, 0, 1],
-                [0, 3, 0, 2],
+                [0, 2, 0, 1]
             ];
-            let bestRes = getBestResult(null, null);
+            let bestRes = defaultResult();
             for (const resetBundle of resetBundles) {
                 //for (const resetCombination of getAllCombinations(resetMulti, this.strat === "MFd2SLOW" ? true : false)) {
                 if (this._originalData.rho <= 100 && resetBundle[3] > 0) {
