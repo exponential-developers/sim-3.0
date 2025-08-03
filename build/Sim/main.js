@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import jsonData from "../Data/data.json" assert { type: "json" };
-import { qs, sleep, getTheoryFromIndex, logToExp, convertTime, formatNumber } from "../Utils/helpers.js";
+import { qs, sleep, getTheoryFromIndex, logToExp, convertTime, formatNumber, defaultResult } from "../Utils/helpers.js";
 import { parseData } from "./parsers.js";
 import { getStrats } from "./strats.js";
 import t1 from "../Theories/T1-T8/T1.js";
@@ -248,19 +248,7 @@ function createSimAllOutput(arr) {
 function getBestStrat(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const strats = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
-        let bestSim = {
-            theory: "",
-            sigma: 0,
-            lastPub: "",
-            pubRho: "",
-            deltaTau: "",
-            pubMulti: "",
-            strat: "Result undefined",
-            tauH: 0,
-            time: "",
-            rawData: { pubRho: 0, time: 0 },
-            boughtVars: []
-        };
+        let bestSim = defaultResult();
         for (let i = 0; i < strats.length; i++) {
             data.strat = strats[i];
             const sim = yield singleSim(data);

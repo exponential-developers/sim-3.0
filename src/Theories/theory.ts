@@ -77,4 +77,37 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.milestoneConditions = [];
     this.milestoneTree = [] as unknown as Array<milestoneType>;
   }
+
+  copyFrom(other: this): void {
+    this.cap = [...other.cap];
+    this.totMult = other.totMult;
+    this.dt = other.dt;
+    this.ddt = other.ddt;
+    this.t = other.t;
+    this.ticks = other.ticks;
+
+    this.maxRho = other.maxRho;
+    this.varNames = other.varNames;
+    this.variables = other.variables.map((v) => v.copy());
+    this.boughtVars = [...other.boughtVars];
+
+    this.tauH = other.tauH;
+    this.maxTauH = other.maxTauH;
+    this.pubT = other.pubT;
+    this.pubRho = other.pubRho;
+    
+    this.pubMulti = other.pubMulti;
+  }
+
+  getDataForCopy(): theoryData {
+    return {
+      theory: this.theory,
+      sigma: this.sigma,
+      rho: this.lastPub,
+      strat: this.strat as string,
+      recovery: { ...this.recovery },
+      cap: this.cap[0],
+      recursionValue: null,
+    };
+  }
 }

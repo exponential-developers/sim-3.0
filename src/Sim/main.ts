@@ -1,5 +1,5 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
-import { qs, sleep, getTheoryFromIndex, logToExp, convertTime, formatNumber } from "../Utils/helpers.js";
+import { qs, sleep, getTheoryFromIndex, logToExp, convertTime, formatNumber, defaultResult } from "../Utils/helpers.js";
 import { parseData } from "./parsers.js";
 import { getStrats } from "./strats.js";
 import t1 from "../Theories/T1-T8/T1.js";
@@ -245,19 +245,7 @@ function createSimAllOutput(arr: Array<simResult>): simResult | simAllResult {
 
 async function getBestStrat(data: Omit<parsedData, "simAllInputs">): Promise<simResult> {
   const strats: Array<string> = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
-  let bestSim: simResult = {
-    theory: "",
-    sigma: 0,
-    lastPub: "",
-    pubRho: "",
-    deltaTau: "",
-    pubMulti: "",
-    strat: "Result undefined",
-    tauH: 0,
-    time: "",
-    rawData: { pubRho: 0, time: 0 },
-    boughtVars: []
-  };
+  let bestSim: simResult = defaultResult();
   for (let i = 0; i < strats.length; i++) {
     data.strat = strats[i];
     const sim = await singleSim(data);

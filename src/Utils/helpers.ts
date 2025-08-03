@@ -149,3 +149,32 @@ export function resultIsSimAllResult(result: generalResult): result is simAllRes
 export function resultIsCombinedResult(result: generalResult): result is combinedResult {
   return Array.isArray(result);
 }
+
+export function defaultResult(): simResult {
+  return {
+      theory: "",
+      sigma: 0,
+      lastPub: "",
+      pubRho: "",
+      deltaTau: "",
+      pubMulti: "",
+      strat: "Result undefined",
+      tauH: 0,
+      time: "",
+      rawData: { pubRho: 0, time: 0 },
+      boughtVars: []
+    };
+}
+
+export function getBestResult(res1: simResult | null, res2: simResult | null): simResult {
+  if (res1 == null && res2 != null) {
+    return res2;
+  }
+  if (res2 == null && res1 != null) {
+    return res1;
+  }
+  if (res1 != null && res2 != null) {
+    return res1.tauH > res2.tauH ? res1 : res2;
+  }
+  return defaultResult();
+}

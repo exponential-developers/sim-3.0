@@ -125,3 +125,30 @@ export function resultIsSimAllResult(result) {
 export function resultIsCombinedResult(result) {
     return Array.isArray(result);
 }
+export function defaultResult() {
+    return {
+        theory: "",
+        sigma: 0,
+        lastPub: "",
+        pubRho: "",
+        deltaTau: "",
+        pubMulti: "",
+        strat: "Result undefined",
+        tauH: 0,
+        time: "",
+        rawData: { pubRho: 0, time: 0 },
+        boughtVars: []
+    };
+}
+export function getBestResult(res1, res2) {
+    if (res1 == null && res2 != null) {
+        return res2;
+    }
+    if (res2 == null && res1 != null) {
+        return res1;
+    }
+    if (res1 != null && res2 != null) {
+        return res1.tauH > res2.tauH ? res1 : res2;
+    }
+    return defaultResult();
+}
