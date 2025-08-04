@@ -368,13 +368,19 @@
       "tauFactor": 0.4,
       "strats": {
         "CSR2": {
-          "stratFilterCondition": "(Idle || Semi-Idle) || rho < 10"
+          "stratFilterCondition": "((Idle || Semi-Idle) || rho < 10) && (rho < 500 || rho >= 1499)"
+        },
+        "CSR2PT": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 500 && rho < 1499"
         },
         "CSR2d": {
           "stratFilterCondition": "Active && rho < 500"
         },
         "CSR2XL": {
-          "stratFilterCondition": "((Active && rho >= 500) || Very-Active) && rho >= 10"
+          "stratFilterCondition": "((Active && rho >= 500) || Very-Active) && rho >= 10 && (rho < 500 || rho >= 1499)"
+        },
+        "CSR2XLPT": {
+          "stratFilterCondition": "((Active && rho >= 500) || Very-Active) && rho >= 500 && rho < 1499"
         }
       }
     },

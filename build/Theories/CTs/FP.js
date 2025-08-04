@@ -334,6 +334,7 @@ class fpSim extends theoryClass {
             global.forcedPubTime !== Infinity ||
             (this.forcedPubRho !== Infinity && this.pubRho < this.forcedPubRho)) {
             if (this.maxTauH < this.tauH && this.maxRho >= 2000) {
+                this.coasting = new Array(this.variables.length).fill(false);
                 this.forcedPubRho = Infinity;
             }
             this.maxTauH = this.tauH;
