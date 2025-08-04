@@ -34,6 +34,7 @@ const simulateButton = qs(".simulate");
 //Setting Inputs
 const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
+const mfDepthOtp = qs(".mfDepthOtp");
 const simAllStrats = qs(".simallstrats");
 const skipCompletedCTs = qs(".skipcompletedcts");
 const showA23 = qs(".a23");
@@ -66,9 +67,10 @@ event(showUnofficials, "click", () => __awaiter(void 0, void 0, void 0, function
     }
 }));
 event(simulateButton, "click", () => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     global.dt = parseFloat((_a = dtOtp.textContent) !== null && _a !== void 0 ? _a : "1.5");
     global.ddt = parseFloat((_b = ddtOtp.textContent) !== null && _b !== void 0 ? _b : "1.0001");
+    global.mfResetDepth = parseInt((_c = mfDepthOtp.textContent) !== null && _c !== void 0 ? _c : "0");
     global.stratFilter = true;
     global.simAllStrats = simAllStrats.value;
     global.skipCompletedCTs = skipCompletedCTs.checked;

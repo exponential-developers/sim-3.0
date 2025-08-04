@@ -36,6 +36,9 @@ const dtOtp = qs(".dtOtp");
 const ddtSlider = <HTMLInputElement>qs(".ddt");
 const ddtOtp = qs(".ddtOtp");
 
+const mfDepthSlider = <HTMLInputElement>qs(".mfDepth");
+const mfDepthOpt = qs(".mfDepthOtp");
+
 event(
   dtSlider,
   "input",
@@ -49,9 +52,17 @@ event(
     (ddtOtp.textContent = ddtSlider.value === "0" ? "1" : ddtSlider.value === "10" ? "1.3" : String(round(1 + Number(formatNumber(3 ** parseFloat(ddtSlider.value) * (0.3 / 3 ** parseFloat(ddtSlider.max)), 2)), 7)))
 );
 
+event(
+  mfDepthSlider,
+  "input",
+  () => mfDepthOpt.textContent = mfDepthSlider.value
+)
+
 event(qs(".resetSettings"), "pointerdown", () => {
   dtSlider.value = "8.1943";
   dtOtp.textContent = "1.5";
   ddtSlider.value = "2.71233";
   ddtOtp.textContent = "1.0001";
+  mfDepthSlider.value = "0";
+  mfDepthOpt.textContent = "0";
 });

@@ -87,7 +87,7 @@ class mfSim extends theoryClass {
                     return false;
                 }
                 const dPower = [3.09152, 3.00238, 2.91940];
-                return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] * (this.variables[4].cost + l10(dPower[this.milestones[2]])));
+                return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
             },
             () => {
                 return !this.buyV;
@@ -137,7 +137,6 @@ class mfSim extends theoryClass {
             MF: idleStrat,
             MFd: activeStrat,
             MFd2: activeStrat2,
-            MFd2SLOW: activeStrat2,
             MFdPostRecovery0: makeMFdPostRecovery(0),
             MFdPostRecovery1: makeMFdPostRecovery(1),
             MFdPostRecovery2: makeMFdPostRecovery(2),
@@ -183,7 +182,6 @@ class mfSim extends theoryClass {
             MF: globalOptimalRoute,
             MFd: globalOptimalRoute,
             MFd2: globalOptimalRoute,
-            MFd2SLOW: globalOptimalRoute,
             MFdPostRecovery0: globalOptimalRoute,
             MFdPostRecovery1: globalOptimalRoute,
             MFdPostRecovery2: globalOptimalRoute,
@@ -224,7 +222,6 @@ class mfSim extends theoryClass {
         this.vz = Math.pow(10, (this.variables[7].value + this.variables[8].value - 18));
         this.vtot = Math.sqrt(this.vx * this.vx + this.vz * this.vz);
         this.resets++;
-        this.stratExtra = "";
         if (this.resets > 1) {
             this.boughtVars.push({
                 variable: 'Reset at V=' + this.variables[5].level + "," + this.variables[6].level + "," + this.variables[7].level + "," + this.variables[8].level,
@@ -233,10 +230,8 @@ class mfSim extends theoryClass {
                 timeStamp: this.t
             });
         }
-        this.currentBundle = [0, 0, 0, 0];
         this.goalBundle = this.getGoalBundle();
         this.goalBundleCost = this.calcBundleCost(this.goalBundle);
-        // console.log(this.strat + " vMaxBuy="+this.vMaxBuy+": "+(this.resets) + " resets ("+ parseFloat((this.t/3600).toFixed(2)).toFixed(2)+" hours & "+(10**(this.maxRho % 1)).toFixed(2)+'e'+Math.floor(this.maxRho) + " rho), "+"resetMulti= "+this.dynamicResetMulti+", v1="+this.variables[5].level+", v2="+this.variables[6].level+", v3="+this.variables[7].level+", v4="+this.variables[8].level)
         this.buyV = false;
     }
     updateC() {
@@ -258,16 +253,12 @@ class mfSim extends theoryClass {
         this.vtot = 0;
         this.resets = 0;
         this.varNames = ["c1", "c2", "a1", "a2", "δ", "v1", "v2", "v3", "v4"];
-        this.stratExtra = "";
         this.normalPubRho = -1;
         this.resetBundle = resetBundle;
         this.stopReset = false;
-        this.currentBundle = [0, 0, 0, 0];
         this.goalBundle = [0, 0, 0, 0];
         this.goalBundleCost = 0;
-        //this.dynamicResetMulti = resetCombination[0];
         this.buyV = true;
-        this.resetcond = false;
         this.bestRes = null;
         this.variables =
             [
@@ -299,15 +290,12 @@ class mfSim extends theoryClass {
         this.vz = other.vz;
         this.vtot = other.vtot;
         this.resets = other.resets;
-        this.stratExtra = other.stratExtra;
         this.normalPubRho = other.normalPubRho;
         this.resetBundle = other.resetBundle;
         this.stopReset = other.stopReset;
         this.goalBundle = [...other.goalBundle];
         this.goalBundleCost = other.goalBundleCost;
-        this.currentBundle = [...other.currentBundle];
         this.buyV = other.buyV;
-        this.resetcond = other.resetcond;
     }
     copy() {
         let newsim = new mfSim(super.getDataForCopy(), this.resetBundle);
@@ -328,14 +316,13 @@ class mfSim extends theoryClass {
                 this.updateMilestones();
                 this.buyVariables();
                 yield this.checkForReset();
-                //this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
                 pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.pubMulti > 3.5) && this.pubRho > this.pubUnlock;
                 this.ticks++;
             }
             this.pubMulti = Math.pow(10, (this.getTotMult(this.pubRho) - this.totMult));
             while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
                 this.boughtVars.pop();
-            const result = createResult(this, true ? " " + this.resetBundle : this.stratExtra);
+            const result = createResult(this, ` Depth: ${global.mfResetDepth}`);
             return getBestResult(result, this.bestRes);
         });
     }
@@ -380,17 +367,21 @@ class mfSim extends theoryClass {
     }
     getGoalBundle(bundle = this.resetBundle) {
         let goalBundle = [...bundle];
-        let bundleCost = this.calcBundleCost(goalBundle);
-        while (this.variables[5].getCostForLevel(this.variables[5].level + goalBundle[0]) < bundleCost) {
-            goalBundle[0]++;
+        if (this.maxRho <= 65) {
+            goalBundle[2] = 0;
+            goalBundle[3] = 0;
         }
-        bundleCost = this.calcBundleCost(goalBundle);
+        let bundleCost = this.calcBundleCost(goalBundle);
         while (this.variables[6].getCostForLevel(this.variables[6].level + goalBundle[1]) < bundleCost) {
             goalBundle[1]++;
         }
         bundleCost = this.calcBundleCost(goalBundle);
         while (this.variables[8].getCostForLevel(this.variables[8].level + goalBundle[3]) < bundleCost) {
             goalBundle[3]++;
+        }
+        bundleCost = this.calcBundleCost(goalBundle);
+        while (this.variables[5].getCostForLevel(this.variables[5].level + goalBundle[0]) < bundleCost) {
+            goalBundle[0]++;
         }
         bundleCost = this.calcBundleCost(goalBundle);
         while (this.variables[7].getCostForLevel(this.variables[7].level + goalBundle[2]) < bundleCost) {
@@ -406,30 +397,33 @@ class mfSim extends theoryClass {
             }
             if (this.rho >= this.goalBundleCost + 0.0001) {
                 if (this.maxRho >= this.lastPub) {
-                    //console.log(`Opened fork for ${this.goalBundleCost}`)
                     let fork = this.copy();
                     fork.stopReset = true;
                     const forkres = yield fork.simulate();
                     this.bestRes = getBestResult(this.bestRes, forkres);
-                    //console.log(`Fork closed; ${forkres.tauH}; ${this.bestRes != null ? this.bestRes.tauH : 'null'}`);
                 }
                 this.buyV = true;
                 this.buyVariables();
-                //console.log(`Reset ${this.goalBundleCost}; ${this.goalBundle}; ${this.variables.slice(5).map(v => v.level)}`)
                 this.resetParticle();
-                if (this.strat == "MFd2SLOW" && this.lastPub - this.maxRho <= 25) {
+                if (global.mfResetDepth > 0 && this.lastPub - this.maxRho <= 25) {
                     let fork;
                     let forkres;
-                    fork = this.copy();
-                    fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]]);
-                    fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
-                    forkres = yield fork.simulate();
-                    this.bestRes = getBestResult(this.bestRes, forkres);
-                    fork = this.copy();
-                    fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]]);
-                    fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
-                    forkres = yield fork.simulate();
-                    this.bestRes = getBestResult(this.bestRes, forkres);
+                    // extra v1 test
+                    if (this.lastPub - this.maxRho <= (global.mfResetDepth == 1 ? 8 : global.mfResetDepth == 2 ? 15 : 25)) {
+                        fork = this.copy();
+                        fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]]);
+                        fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
+                        forkres = yield fork.simulate();
+                        this.bestRes = getBestResult(this.bestRes, forkres);
+                    }
+                    // extra v2 test
+                    if (this.lastPub - this.maxRho <= (global.mfResetDepth == 1 ? 8 : global.mfResetDepth == 2 ? 15 : 25)) {
+                        fork = this.copy();
+                        fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]]);
+                        fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
+                        forkres = yield fork.simulate();
+                        this.bestRes = getBestResult(this.bestRes, forkres);
+                    }
                 }
             }
         });
@@ -437,9 +431,6 @@ class mfSim extends theoryClass {
     buyVariables() {
         for (let i = this.variables.length - 1; i >= 0; i--) {
             while (true) {
-                /*if ((!this.buyV) && (i >= 5 && (this.rho > (Math.max(this.variables[5].cost,this.variables[6].cost,this.variables[7].cost,this.variables[8].cost)+l10(2))))) {
-                  this.buyV = true;
-                }*/
                 if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
                     if (this.maxRho + 10 > this.lastPub) {
                         this.boughtVars.push({
@@ -448,9 +439,6 @@ class mfSim extends theoryClass {
                             cost: this.variables[i].cost,
                             timeStamp: this.t
                         });
-                    }
-                    if (i >= 5) {
-                        this.currentBundle[i - 5]++;
                     }
                     this.rho = subtract(this.rho, this.variables[i].cost);
                     this.variables[i].buy();
@@ -472,16 +460,13 @@ class mfSimWrap extends theoryClass {
             let resetBundles = [
                 [0, 1, 0, 0],
                 [0, 1, 0, 1],
-                [0, 2, 0, 0],
-                [0, 2, 0, 1]
+                [0, 2, 0, 0]
             ];
             let bestRes = defaultResult();
             for (const resetBundle of resetBundles) {
-                //for (const resetCombination of getAllCombinations(resetMulti, this.strat === "MFd2SLOW" ? true : false)) {
                 if (this._originalData.rho <= 100 && resetBundle[3] > 0) {
                     continue;
                 }
-                //console.log(`Started simulating ${resetBundle}`);
                 let sim = new mfSim(this._originalData, resetBundle);
                 let res = yield sim.simulate();
                 // Unnecessary additional coasting attempt
@@ -492,28 +477,9 @@ class mfSimWrap extends theoryClass {
                 //   bestSim = internalSim;
                 //   bestSimRes = res;
                 // }
-                if (bestRes.tauH < res.tauH) {
-                    bestRes = res;
-                }
-                //}
+                bestRes = getBestResult(bestRes, res);
             }
             return bestRes;
         });
     }
 }
-/*function getAllCombinations(resetMulti: number, slowMode: boolean) {
-  const values = slowMode === true ? [resetMulti, resetMulti + 0.3, resetMulti - 0.3].filter(val => val >= 1) : [resetMulti].filter(val => val >= 1);
-  const combinations: number[][] = [];
-
-  function combine(prefix:number[], array:number[]) {
-      if (prefix.length > 0) {
-          combinations.push([...prefix]);
-      }
-      for (let i = 0; i < array.length; i++) {
-          combine([...prefix, array[i]], array.slice(i + 1));
-      }
-  }
-
-  combine([resetMulti], values.slice(1));
-  return combinations;
-}*/

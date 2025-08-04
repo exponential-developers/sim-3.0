@@ -23,6 +23,9 @@ const dtOtp = qs(".dtOtp");
 const ddtSlider = <HTMLInputElement>qs(".ddt");
 const ddtOtp = qs(".ddtOtp");
 
+const mfDepthSlider = <HTMLInputElement>qs(".mfDepth");
+const mfDepthOpt = qs(".mfDepthOtp");
+
 const themeSelector = <HTMLSelectElement>qs(".themeSelector");
 
 const simAllStrats = <HTMLSelectElement>qs(".simallstrats");
@@ -40,6 +43,7 @@ export function setSimState() {
       settings: {
         dt: dtOtp.textContent,
         ddt: ddtOtp.textContent,
+        mfResetDepth: mfDepthOpt.textContent,
         simAllStrats: simAllStrats.value,
         skipCompletedCTs: skipCompletedCTs.checked,
         showA23: showA23.checked,
@@ -53,6 +57,7 @@ export function getSimState() {
   const state = JSON.parse(localStorage.getItem("simState") ?? defaultState);
   dtOtp.textContent = state.settings.dt;
   ddtOtp.textContent = state.settings.ddt;
+  mfDepthOpt.textContent = state.settings.mfResetDepth ?? "0";
   simAllStrats.value = state.settings.simAllStrats ?? "all";
   skipCompletedCTs.checked = state.settings.skipCompletedCTs ?? false;
   showA23.checked = state.settings.showA23;
@@ -61,5 +66,6 @@ export function getSimState() {
   // Determines the slider position based on the stored value (see settings.ts)
   dtSlider.value = String(round(Math.log2((state.settings.dt - 0.15) / (4.9 / (1 + 2 ** parseFloat(dtSlider.max)))), 4));
   ddtSlider.value = String(round(Math.log((state.settings.ddt - 1) / (0.3 / 3 ** parseFloat(ddtSlider.max))) / Math.log(3), 4));
+  mfDepthSlider.value = mfDepthOpt.textContent ?? "0";
   themeSelector.value = state.settings.theme ?? defaultTheme;
 }

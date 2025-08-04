@@ -34,6 +34,7 @@ const output = qs(".output");
 export const global = {
     dt: 1.5,
     ddt: 1.0001,
+    mfResetDepth: 0,
     stratFilter: true,
     simulating: false,
     forcedPubTime: Infinity,
