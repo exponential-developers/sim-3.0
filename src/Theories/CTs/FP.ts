@@ -1,7 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
+import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
@@ -48,6 +49,13 @@ interface milestones {
   expterm: number;
 }
 
+interface pubTable {
+  [key: string]: {
+    next: number;
+    t: number;
+  };
+}
+
 class fpSim extends theoryClass<theory, milestones> implements specificTheoryProps {
   curMult: number;
   pubUnlock: number;
@@ -62,6 +70,9 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
   prevN: number;
   updateN_flag: boolean;
   milestones: milestones;
+  forcedPubRho: number;
+  coasting: Array<boolean>;
+  bestRes: simResult | null;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -229,6 +240,9 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     this.n = 1;
     this.prevN = 1;
     this.updateN_flag = true;
+    this.forcedPubRho = Infinity;
+    this.coasting = new Array(this.variables.length).fill(false);
+    this.bestRes = null;
     //pub values
     this.milestones = { snexp: 0, fractals: 0, nboost: 0, snboost: 0, sterm: 0, expterm: 0 };
     this.conditions = this.getBuyingConditions();
@@ -236,8 +250,37 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
+  copyFrom(other: this): void {
+    super.copyFrom(other);
+
+    this.milestones = { ...other.milestones };
+    this.curMult = other.curMult;
+    this.rho = other.rho;
+    this.q = other.q;
+    this.r = other.r;
+    this.t_var = other.t_var;
+    this.T_n = other.T_n;
+    this.U_n = other.U_n;
+    this.S_n = other.S_n;
+    this.n = other.n;
+    this.prevN = other.prevN;
+    this.updateN_flag = other.updateN_flag;
+    this.forcedPubRho = other.forcedPubRho;
+    this.coasting = [...other.coasting];
+  }
+  copy(): fpSim {
+    let newsim = new fpSim(this.getDataForCopy());
+    newsim.copyFrom(this);
+    return newsim;
+  }
   async simulate() {
     let pubCondition = false;
+    if (this.lastPub >= 1200 && this.lastPub < 1990) {
+      let newpubtable: pubTable = pubtable.fpdata;
+      let pubseek = Math.round(this.lastPub * 8);
+      this.forcedPubRho = newpubtable[pubseek.toString()].next / 8;
+      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+    }
     while (!pubCondition) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
@@ -245,11 +288,16 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
-      this.buyVariables();
-      pubCondition =
+      await this.buyVariables();
+      if (this.forcedPubRho !== Infinity) {
+        pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 2000 || this.t > this.pubT * 2);
+      }
+      else {
+        pubCondition =
         (global.forcedPubTime !== Infinity
           ? this.t > global.forcedPubTime
           : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 10000) && this.pubRho > this.pubUnlock;
+      }
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -304,16 +352,41 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
 
     this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
+    if (
+      this.maxTauH < this.tauH || 
+      this.maxRho >= this.cap[0] - this.cap[1] || 
+      this.pubRho < this.pubUnlock || 
+      global.forcedPubTime !== Infinity ||
+      (this.forcedPubRho !== Infinity && this.pubRho < this.forcedPubRho)
+    ) {
+      if (this.maxTauH < this.tauH && this.maxRho >= 2000)
+      {
+        this.coasting = new Array(this.variables.length).fill(false);
+        this.forcedPubRho = Infinity;
+      }
       this.maxTauH = this.tauH;
       this.pubT = this.t;
       this.pubRho = this.maxRho;
     }
   }
-  buyVariables() {
+  async buyVariables() {
+    const lowbounds = [0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
+    const highbounds = [1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
+          if (this.forcedPubRho !== Infinity) {
+            if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
+              this.coasting[i] = true;
+              break;
+            }
+            if (this.forcedPubRho - this.variables[i].cost < highbounds[i]) {
+              let fork = this.copy();
+              fork.coasting[i] = true;
+              const forkres = await fork.simulate();
+              this.bestRes = getBestResult(this.bestRes, forkres);
+            }
+          }
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }
