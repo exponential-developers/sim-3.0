@@ -178,3 +178,12 @@ export function getBestResult(res1: simResult | null, res2: simResult | null): s
   }
   return defaultResult();
 }
+
+export function getLastLevel(variable: string, arr:Array<varBuy>): number {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i].variable == variable) {
+      return arr[i].level;
+    }
+  }
+  return 0;
+}

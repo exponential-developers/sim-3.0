@@ -371,7 +371,7 @@
                     "stratFilterCondition": "((Idle || Semi-Idle) || rho < 10) && (rho < 500 || rho >= 1499)"
                 },
                 "CSR2PT": {
-                    "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 500 && rho < 1499"
+                    "stratFilterCondition": "Semi-Idle && rho >= 500 && rho < 1499"
                 },
                 "CSR2d": {
                     "stratFilterCondition": "Active && rho < 500"
@@ -380,7 +380,7 @@
                     "stratFilterCondition": "((Active && rho >= 500) || Very-Active) && rho >= 10 && (rho < 500 || rho >= 1499)"
                 },
                 "CSR2XLPT": {
-                    "stratFilterCondition": "((Active && rho >= 500) || Very-Active) && rho >= 500 && rho < 1499"
+                    "stratFilterCondition": "(Active || Very-Active) && rho >= 500 && rho < 1499"
                 }
             }
         },
@@ -417,7 +417,10 @@
             "tauFactor": 0.3,
             "strats": {
                 "FP": {
-                    "stratFilterCondition": "Idle || Semi-Idle || rho <= 20"
+                    "stratFilterCondition": "Idle || (Semi-Idle && (rho < 1200 || rho >= 1990)) || rho <= 20"
+                },
+                "FPcoast": {
+                    "stratFilterCondition": "Semi-Idle && rho >= 1200 && rho < 1990"
                 },
                 "FPdMS": {
                     "stratFilterCondition": "Active || Very-Active"

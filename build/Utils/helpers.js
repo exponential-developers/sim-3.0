@@ -152,3 +152,11 @@ export function getBestResult(res1, res2) {
     }
     return defaultResult();
 }
+export function getLastLevel(variable, arr) {
+    for (let i = arr.length - 1; i >= 0; i--) {
+        if (arr[i].variable == variable) {
+            return arr[i].level;
+        }
+    }
+    return 0;
+}

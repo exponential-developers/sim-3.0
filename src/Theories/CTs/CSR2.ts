@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getBestResult, getLastLevel } from "../../Utils/helpers.js";
 import { LinearValue, ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import pubtable from "./helpers/CSR2pubtable.json" assert { type: "json" };
@@ -226,6 +226,7 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.lastPub < 500) this.updateMilestones();
       if (this.forcedPubRho !== Infinity) {
         pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > 10 && (this.pubRho <= 1500 || this.t > this.pubT * 2);
+        pubCondition ||= this.pubRho > this.cap[0];
       }
       else {
         pubCondition =
@@ -242,10 +243,14 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     }
     if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
       while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(
-      this,
-      this.strat === "CSR2XL" ? " " + Math.min(this.pubMulti, 10 ** (this.getTotMult(lastBuy) - this.totMult)).toFixed(2) : ""
-    );
+    let stratExtra = " ";
+    if (this.strat === "CSR2XL") {
+      stratExtra += Math.min(this.pubMulti, 10 ** (this.getTotMult(lastBuy) - this.totMult)).toFixed(2);
+    }
+    if (this.strat.includes("PT")) {
+      stratExtra += `q1: ${getLastLevel("q1", this.boughtVars)} q2: ${getLastLevel("q2", this.boughtVars)} c1: ${getLastLevel("c1", this.boughtVars)}`;
+    }
+    const result = createResult(this, stratExtra);
 
     return getBestResult(result, this.bestRes);
   }

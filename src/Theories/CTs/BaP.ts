@@ -232,6 +232,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
       if (this.forcedPubRho != -1)
       {
         pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 1500 || this.t > this.pubT * 2);
+        pubCondition ||= this.pubRho > this.cap[0];
       }
       else
       {

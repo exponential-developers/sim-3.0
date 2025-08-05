@@ -52,6 +52,7 @@ class fpSim extends theoryClass {
     getBuyingConditions() {
         const conditions = {
             FP: new Array(8).fill(true),
+            FPcoast: new Array(8).fill(true),
             FPdMS: [
                 true,
                 () => this.variables[1].cost + Math.log10((this.variables[1].level % 100) + 1) < this.variables[2].cost,
@@ -130,6 +131,7 @@ class fpSim extends theoryClass {
         ];
         const tree = {
             FP: globalOptimalRoute,
+            FPcoast: globalOptimalRoute,
             FPdMS: globalOptimalRoute,
             FPmodBurstC1MS: globalOptimalRoute,
         };
@@ -216,7 +218,6 @@ class fpSim extends theoryClass {
         this.U_n = 1;
         this.S_n = 0;
         this.n = 1;
-        this.prevN = 1;
         this.updateN_flag = true;
         this.forcedPubRho = Infinity;
         this.coasting = new Array(this.variables.length).fill(false);
@@ -240,7 +241,6 @@ class fpSim extends theoryClass {
         this.U_n = other.U_n;
         this.S_n = other.S_n;
         this.n = other.n;
-        this.prevN = other.prevN;
         this.updateN_flag = other.updateN_flag;
         this.forcedPubRho = other.forcedPubRho;
         this.coasting = [...other.coasting];
@@ -253,7 +253,7 @@ class fpSim extends theoryClass {
     simulate() {
         return __awaiter(this, void 0, void 0, function* () {
             let pubCondition = false;
-            if (this.lastPub >= 1200 && this.lastPub < 1990) {
+            if (this.lastPub >= 1200 && this.lastPub < 1990 && this.strat !== "FP") {
                 let newpubtable = pubtable.fpdata;
                 let pubseek = Math.round(this.lastPub * 8);
                 this.forcedPubRho = newpubtable[pubseek.toString()].next / 8;
@@ -273,6 +273,7 @@ class fpSim extends theoryClass {
                 yield this.buyVariables();
                 if (this.forcedPubRho !== Infinity) {
                     pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 2000 || this.t > this.pubT * 2);
+                    pubCondition || (pubCondition = this.pubRho > this.cap[0]);
                 }
                 else {
                     pubCondition =
@@ -286,12 +287,11 @@ class fpSim extends theoryClass {
             while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT)
                 this.boughtVars.pop();
             const result = createResult(this, "");
-            return result;
+            return getBestResult(result, this.bestRes);
         });
     }
     tick() {
         if (this.updateN_flag) {
-            this.prevN = this.n;
             const term2 = this.milestones.nboost > 0 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 30), 1, 35) * 2) : 0;
             const term3 = this.milestones.nboost > 1 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 69), 1, 30) * 2.4) : 0;
             this.n = Math.min(20000, 1 + stepwiseSum(this.variables[6].level, 1, 40) + term2 + term3);
@@ -344,8 +344,8 @@ class fpSim extends theoryClass {
     }
     buyVariables() {
         return __awaiter(this, void 0, void 0, function* () {
-            const lowbounds = [0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
-            const highbounds = [1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
+            const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
+            const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
             for (let i = this.variables.length - 1; i >= 0; i--)
                 while (true) {
                     if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {

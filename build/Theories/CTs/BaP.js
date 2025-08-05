@@ -215,6 +215,7 @@ class bapSim extends theoryClass {
                 this.buyVariables();
                 if (this.forcedPubRho != -1) {
                     pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 1500 || this.t > this.pubT * 2);
+                    pubCondition || (pubCondition = this.pubRho > this.cap[0]);
                 }
                 else {
                     pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > this.pubUnlock;
