@@ -256,7 +256,7 @@ class fpSim extends theoryClass {
             if (this.lastPub >= 1200 && this.lastPub < 1990 && this.strat !== "FP") {
                 let newpubtable = pubtable.fpdata;
                 let pubseek = Math.round(this.lastPub * 8);
-                this.forcedPubRho = newpubtable[pubseek.toString()].next / 8;
+                this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
                 if (this.forcedPubRho === undefined)
                     this.forcedPubRho = Infinity;
             }

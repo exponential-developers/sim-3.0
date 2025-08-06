@@ -14,12 +14,7 @@ export default async function csr2(data: theoryData): Promise<simResult> {
 
 type theory = "CSR2";
 
-interface pubTable {
-  [key: string]: {
-    next: number;
-    t: number;
-  };
-}
+type pubTable = {[key: string]: number};
 
 class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   recursionValue: Array<number>;
@@ -209,7 +204,7 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     if (this.strat.includes("PT") && this.lastPub >= 500 && this.lastPub < 1499.5) {
       let newpubtable: pubTable = pubtable.csr2data;
       let pubseek = Math.round(this.lastPub * 16);
-      this.forcedPubRho = newpubtable[pubseek.toString()].next / 16;
+      this.forcedPubRho = newpubtable[pubseek.toString()] / 16;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
     while (!pubCondition) {

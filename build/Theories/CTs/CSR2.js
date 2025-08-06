@@ -193,7 +193,7 @@ class csr2Sim extends theoryClass {
             if (this.strat.includes("PT") && this.lastPub >= 500 && this.lastPub < 1499.5) {
                 let newpubtable = pubtable.csr2data;
                 let pubseek = Math.round(this.lastPub * 16);
-                this.forcedPubRho = newpubtable[pubseek.toString()].next / 16;
+                this.forcedPubRho = newpubtable[pubseek.toString()] / 16;
                 if (this.forcedPubRho === undefined)
                     this.forcedPubRho = Infinity;
             }

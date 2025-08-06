@@ -49,12 +49,7 @@ interface milestones {
   expterm: number;
 }
 
-interface pubTable {
-  [key: string]: {
-    next: number;
-    t: number;
-  };
-}
+type pubTable = {[key: string]: number};
 
 class fpSim extends theoryClass<theory, milestones> implements specificTheoryProps {
   curMult: number;
@@ -277,7 +272,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     if (this.lastPub >= 1200 && this.lastPub < 1990 && this.strat !== "FP") {
       let newpubtable: pubTable = pubtable.fpdata;
       let pubseek = Math.round(this.lastPub * 8);
-      this.forcedPubRho = newpubtable[pubseek.toString()].next / 8;
+      this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
     while (!pubCondition) {
