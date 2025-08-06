@@ -561,7 +561,7 @@
             }
         },
         "DE": {
-            "tauFactor": 0.1,
+            "tauFactor": 0.4,
             "UI_visible": false,
             "strats": {
                 "DE": {

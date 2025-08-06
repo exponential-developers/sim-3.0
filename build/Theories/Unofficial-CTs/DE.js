@@ -12,7 +12,7 @@ import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js"
 import { BaseValue, ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value.js";
 import Variable from "../../Utils/variable.js";
 import { theoryClass } from "../theory.js";
-import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { BaseCost, CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 export default function de(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const sim = new deSim(data);
@@ -23,19 +23,29 @@ export default function de(data) {
 class StepwiseMulValue extends BaseValue {
     constructor(base, length, mul) {
         const model = new StepwisePowerSumValue(base, length);
-        super(model.varBase);
+        super();
         this.model = model;
         this.mul = mul;
     }
-    computeNewValue(prevValue, currentLevel, isZero) {
-        let toAdd = Math.log10(this.model.base) * Math.floor(currentLevel / this.model.length) + l10(this.mul);
-        return isZero ? toAdd : add(prevValue, toAdd);
+    computeNewValue(prevValue, currentLevel) {
+        return this.recomputeValue(currentLevel + 1);
     }
     recomputeValue(level) {
         return this.model.recomputeValue(level) + l10(this.mul);
     }
     copy() {
         return new StepwiseMulValue(this.model.base, this.model.length, this.mul);
+    }
+}
+class MaxXPermCapCost extends BaseCost {
+    getCost(level) {
+        if (level >= 7) {
+            return Infinity;
+        }
+        return [300, 400, 500, 700, 825, 1000, 1250][level];
+    }
+    copy() {
+        return new MaxXPermCapCost;
     }
 }
 class deSim extends theoryClass {
@@ -49,25 +59,30 @@ class deSim extends theoryClass {
     getMilestoneConditions() {
         const conditions = [
             () => true,
+            () => this.milestones[4] > 0,
             () => true,
             () => true,
             () => this.milestones[2] > 0,
-            () => false,
             () => true,
-            () => true,
-            () => this.variables[7].level < 3 //maxXPermCap
+            () => this.variables[6].level < 7 //maxXPermCap
         ];
         return conditions;
     }
     getTotMult(val) {
-        return Math.max(0, val * this.tauFactor * 1.6 - l10(4));
+        return Math.max(0, val * this.tauFactor * 0.4 - l10(4));
     }
     updateMilestones() {
         let stage = 0;
         const maxRho = Math.max(this.lastPub, this.maxRho);
-        const points = [20, 45, 70, 100, 125, 150, 175, 200, 225, 250, 400, 500];
-        const max = [6 + this.variables[7].level, 2, maxRho >= 80 ? 1 : 0, maxRho >= 150 ? 3 : 0, 1];
-        const priority = [1, 2, 5, 3, 4];
+        const points = [20, 45, 70, 100, 125, 150, 175, 200, 225, 250, 375, 475, 700, 825, 900, 950, 1000, 1100, 1250, 1400];
+        const max = [
+            this.variables[6].value,
+            2,
+            maxRho >= 80 ? 1 : 0,
+            maxRho >= 150 ? 3 : 0,
+            maxRho >= 200 ? 1 : 0
+        ];
+        const priority = [3, 5, 1, 2, 4];
         for (let i = 0; i < points.length; i++) {
             if (maxRho >= points[i])
                 stage = i + 1;
@@ -86,23 +101,19 @@ class deSim extends theoryClass {
         this.pubUnlock = l10(5e8);
         this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
         this.rho = 0;
-        this.varNames = ["n", "a0", "a1", "a2", "a3", "max x"];
+        this.varNames = ["n", "m", "a0", "a1", "a2", "max x", "perm"];
         this.variables = [
             new Variable({ cost: new ExponentialCost(200, 2.2), valueScaling: new ExponentialValue(Math.pow(2, 0.3)) }),
-            new Variable({ cost: new FirstFreeCost(new ExponentialCost(3, 1.4)), valueScaling: new StepwisePowerSumValue(2.2, 5) }),
+            new Variable({ cost: new ExponentialCost(1e200, 1000), valueScaling: new ExponentialValue(2) }),
+            new Variable({ cost: new FirstFreeCost(new CompositeCost(4377, new ExponentialCost(3, 1.4), new ExponentialCost("1e640", 5))), valueScaling: new StepwisePowerSumValue(2.2, 5) }),
             new Variable({ cost: new ExponentialCost(50, 1.74), valueScaling: new StepwisePowerSumValue(3, 7) }),
             new Variable({ cost: new ExponentialCost(1e85, 20), valueScaling: new StepwiseMulValue(1.5, 11, 1 / 10) }),
-            new Variable({ cost: new ExponentialCost(1e200, 80), valueScaling: new StepwiseMulValue(1.1, 11, 1 / 10) }),
             new Variable({ cost: new CompositeCost(26, new ExponentialCost(1e7, 12, true), new ExponentialCost(1e101, 19.5, true)), valueScaling: new LinearValue() }),
-            new Variable({ cost: new ExponentialCost(1e200, 1000), valueScaling: new ExponentialValue(2) }),
-            new Variable({ cost: new ExponentialCost("1e300", 1e100), valueScaling: new LinearValue(1, 6) }) // max X perm cap
+            new Variable({ cost: new MaxXPermCapCost, valueScaling: new LinearValue(1, 6) }) // max X perm cap
         ];
-        for (let i = 0; i < 3; i++) {
-            if (data.rho >= [300, 400, 500][i]) {
-                this.variables[7].buy();
-            }
+        while (this.lastPub >= this.variables[6].cost) {
+            this.variables[6].buy();
         }
-        this.variables[3].value = 1e-100;
         this.x = 1e-100;
         this.t_var = 1e-100;
         this.q = 0;
@@ -135,19 +146,22 @@ class deSim extends theoryClass {
         });
     }
     getCapX() {
-        return l10(1024) + this.variables[5].level * l10(this.milestones[0] >= 6 ? 15 + this.milestones[0] : 5 + 3 * this.milestones[0]);
+        const mslvl = this.milestones[0];
+        return l10(1024) + this.variables[5].level * l10(mslvl >= 10 ? 19.5 + mslvl / 2 : mslvl >= 6 ? 15 + mslvl : 5 + mslvl * 3);
     }
     tick() {
-        const va0 = this.variables[1].value * (1 + this.milestones[3]);
+        const va0 = this.variables[2].value * (1 + this.milestones[3]);
         const vn = this.variables[0].value * (1.2 - 0.6 * this.milestones[1]);
-        const rhodot = add(add(add(this.variables[1].value, l10(2) + this.variables[2].value + this.x), this.milestones[2] > 0 ? l10(3) * this.variables[3].value + 2 * this.x : 1e-50), 1e-50) + this.variables[0].value + (this.milestones[4] > 0 ? 0.1 * this.q : 0);
+        const vm = this.variables[1].value - 256 * l10(2);
+        const rhodot = add(add(this.variables[2].value, l10(2) + this.variables[3].value + this.x), this.milestones[2] > 0 ? l10(3) * this.variables[4].value + 2 * this.x : -Infinity)
+            + this.variables[0].value + (this.milestones[4] > 0 ? 0.1 * this.q : 0);
         this.rho = add(this.rho, rhodot + this.totMult + l10(this.dt));
         this.t_var = add(this.t_var, this.totMult + l10(this.dt));
         this.x = add(this.x, this.variables[0].value + l10(add(l10(Math.E), va0 - vn) * Math.log(10)) + l10(this.dt));
         const xcap = this.getCapX();
         this.x = this.x >= xcap ? xcap : this.x;
         if (this.milestones[4] > 0) {
-            this.q = add(this.q, this.variables[2].value + this.x + this.variables[6].value - 256 * l10(2) - add(0, this.t_var) + l10(this.dt));
+            this.q = add(this.q, this.variables[3].value + this.x + vm - add(0, this.t_var) + l10(this.dt));
         }
         this.t += this.dt / 1.5;
         this.dt *= this.ddt;
@@ -171,7 +185,7 @@ class deSim extends theoryClass {
                     this.variables[i].buy();
                     this.x = 1e-50;
                     this.t_var = 1e-50;
-                    if (i == 6) {
+                    if (i == 1) {
                         this.q = 0;
                     }
                 }
