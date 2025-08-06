@@ -111,7 +111,7 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 3.38 / 4, true)), valueScaling: new StepwisePowerSumValue()}),
       new Variable({ cost: new ExponentialCost(1000, 3.38 * 3, true), valueScaling: new ExponentialValue(2) }),
       new Variable({ cost: new ExponentialCost(20, 3.38, true), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost(50, 3.38 / 1.5, true), valueScaling: new StepwisePowerSumValue(2, 50)}),
+      new Variable({ cost: new ExponentialCost(50, 3.38 / 1.5, true), valueScaling: new StepwisePowerSumValue(2, 50, 1)}),
       new Variable({ cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;

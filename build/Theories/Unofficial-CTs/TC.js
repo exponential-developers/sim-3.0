@@ -55,8 +55,8 @@ class tcSim extends theoryClass {
                 stage = i + 1;
         }
         this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-        if (this.variables[0].valueScaling.varBase !== 2.75 + 0.125 * this.milestones[4]) {
-            this.variables[0].valueScaling.varBase = 2.75 + 0.125 * this.milestones[4];
+        if (this.variables[0].valueScaling instanceof ExponentialValue && this.variables[0].valueScaling.power !== 2.75 + 0.125 * this.milestones[4]) {
+            this.variables[0].valueScaling.power = 2.75 + 0.125 * this.milestones[4];
             this.variables[0].reCalculate();
         }
     }

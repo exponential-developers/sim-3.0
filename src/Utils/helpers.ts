@@ -72,7 +72,7 @@ export function add_old(value1: number, value2: number) {
 export function add(value1: number, value2: number) {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
-  return max + l10(1 + 10**(min-max));
+  return max != -Infinity ? max + l10(1 + 10**(min-max)) : max;
 }
 
 export function subtract_old(value1: number, value2: number) {
@@ -88,7 +88,7 @@ export function subtract_old(value1: number, value2: number) {
 export function subtract(value1: number, value2: number) {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
-  return max + l10(1 - 10**(min-max));
+  return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
 }
 
 export let l10 = Math.log10;

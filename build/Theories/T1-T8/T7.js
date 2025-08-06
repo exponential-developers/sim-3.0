@@ -148,7 +148,7 @@ class t7Sim extends theoryClass {
         this.varNames = ["q1", "c1", "c2", "c3", "c4", "c5", "c6"];
         this.variables = [
             new Variable({ cost: new FirstFreeCost(new ExponentialCost(500, 1.51572)), valueScaling: new StepwisePowerSumValue() }),
-            new Variable({ cost: new ExponentialCost(10, 1.275), value: 1, valueScaling: new StepwisePowerSumValue() }),
+            new Variable({ cost: new ExponentialCost(10, 1.275), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
             new Variable({ cost: new ExponentialCost(40, 8), valueScaling: new ExponentialValue(2) }),
             new Variable({ cost: new ExponentialCost(1e5, 63), valueScaling: new ExponentialValue(2) }),
             new Variable({ cost: new ExponentialCost(10, 2.82), valueScaling: new ExponentialValue(2) }),

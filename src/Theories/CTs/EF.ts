@@ -126,12 +126,12 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     }
     if (Math.max(this.lastPub, this.maxRho) >= 325) this.nextMilestoneCost = Infinity;
     this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-    if (this.variables[4].valueScaling.varBase !== 1.1 + 0.01 * this.milestones[3]) {
-      this.variables[4].valueScaling.varBase = 1.1 + 0.01 * this.milestones[3];
+    if (this.variables[4].valueScaling instanceof ExponentialValue && this.variables[4].valueScaling.power !== 1.1 + 0.01 * this.milestones[3]) {
+      this.variables[4].valueScaling.power = 1.1 + 0.01 * this.milestones[3];
       this.variables[4].reCalculate();
     }
-    if (this.variables[6].valueScaling.varBase !== 1.1 + 0.0125 * this.milestones[4]) {
-      this.variables[6].valueScaling.varBase = 1.1 + 0.0125 * this.milestones[4];
+    if (this.variables[6].valueScaling instanceof ExponentialValue && this.variables[6].valueScaling.power !== 1.1 + 0.0125 * this.milestones[4]) {
+      this.variables[6].valueScaling.power = 1.1 + 0.0125 * this.milestones[4];
       this.variables[6].reCalculate();
     }
   }
@@ -190,12 +190,12 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(1e6, 1e6), valueScaling: new ExponentialValue(10) }),
       new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ cost: new ExponentialCost(5, 60), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
       new Variable({ cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
       new Variable({ cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(2000, 2.2, true)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(500, 2.2, true), value: 1, valueScaling: new StepwisePowerSumValue(40, 10) }),
+      new Variable({ cost: new FirstFreeCost(new ExponentialCost(2000, 2.2, true)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
       new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.recursionValue = <Array<number>>data.recursionValue ?? [Infinity, 0];

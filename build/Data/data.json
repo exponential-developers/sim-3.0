@@ -189,7 +189,7 @@
             "tauFactor": 1,
             "strats": {
                 "T6": {
-                    "stratFilterCondition": "false"
+                    "stratFilterCondition": "rho < 25"
                 },
                 "T6C3": {
                     "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25"
@@ -198,13 +198,13 @@
                     "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 25 && rho < 100",
                     "forcedCondition": "rho >= 25"
                 },
-                "T6noC34": {
-                    "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 1100 && lastStrat !== \"T6noC1234\""
+                "T6C125": {
+                    "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 1100 && lastStrat !== \"T6C5\""
                 },
-                "T6noC345": {
-                    "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 750 && lastStrat !== \"T6noC34\" && lastStrat !== \"T6noC1234\""
+                "T6C12": {
+                    "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 750 && lastStrat !== \"T6C125\" && lastStrat !== \"T6C5\""
                 },
-                "T6noC1234": {
+                "T6C5": {
                     "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 800",
                     "forcedCondition": "rho >= 125"
                 },
@@ -218,17 +218,17 @@
                     "stratFilterCondition": "(Active || Very-Active) && rho >= 25 && rho < 100",
                     "forcedCondition": "rho >= 25"
                 },
-                "T6noC34d": {
-                    "stratFilterCondition": "Active && rho >= 100 && rho < 1100 && lastStrat !== \"T6noC1234\""
+                "T6C125d": {
+                    "stratFilterCondition": "Active && rho >= 100 && rho < 1100 && lastStrat !== \"T6C5d\""
                 },
-                "T6noC345d": {
-                    "stratFilterCondition": "Active && rho >= 100 && rho < 750 && lastStrat !== \"T6noC34\" && lastStrat !== \"T6noC1234\""
+                "T6C12d": {
+                    "stratFilterCondition": "Active && rho >= 100 && rho < 750 && lastStrat !== \"T6C125d\" && lastStrat !== \"T6C5d\""
                 },
-                "T6noC1234d": {
+                "T6C5d": {
                     "stratFilterCondition": "Active && rho >= 800",
                     "forcedCondition": "rho >= 125"
                 },
-                "T6noC1234dIdleRecovery": {
+                "T6C5dIdleRecovery": {
                     "stratFilterCondition": "false",
                     "forcedCondition": "rho >= 125"
                 },

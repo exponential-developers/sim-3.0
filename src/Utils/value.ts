@@ -1,11 +1,7 @@
 import { add, subtract } from "./helpers";
 
 export abstract class BaseValue {
-    varBase: number;
-    constructor(varBase: number = 10) {
-        this.varBase = varBase;
-    }
-    abstract computeNewValue(prevValue: number, currentLevel: number, isZero: boolean): number;
+    abstract computeNewValue(prevValue: number, currentLevel: number): number;
     abstract recomputeValue(level: number): number;
     abstract copy(): BaseValue;
 }
@@ -13,57 +9,71 @@ export abstract class BaseValue {
 export class StepwisePowerSumValue extends BaseValue {
     base: number;
     length: number;
-    constructor(base: number = 2, length: number = 10, varBase: number = -Infinity) {
-        super(varBase);
+    offset: number;
+    constructor(base: number = 2, length: number = 10, offset: number = 0) {
+        super();
         this.base = base;
         this.length = length;
+        this.offset = offset;
     }
-    computeNewValue(prevValue: number, currentLevel: number, isZero: boolean): number {
+    computeNewValue(prevValue: number, currentLevel: number): number {
         let toAdd = Math.log10(this.base) * Math.floor(currentLevel / this.length);
-        return isZero ? toAdd : add(prevValue, toAdd);
+        return add(prevValue, toAdd);
     }
     recomputeValue(level: number): number {
+        if (level === 0) {
+            return Math.log10(this.offset);
+        }
         const intPart = Math.floor(level / this.length);
         const modPart = level - intPart * this.length;
         const d = this.length / (this.base - 1);
         const subPart = subtract(Math.log10(d + modPart) + Math.log10(this.base) * intPart, Math.log10(d));
-        if (this.varBase !== -Infinity) {
-            return add(this.varBase, subPart);
+        if (this.offset !== -Infinity) {
+            return add(Math.log10(this.offset), subPart);
         }
         else {
             return subPart;
         }
     }
     copy(): StepwisePowerSumValue {
-        return new StepwisePowerSumValue(this.base, this.length, this.varBase);
+        return new StepwisePowerSumValue(this.base, this.length, this.offset);
     }
 }
 
 export class ExponentialValue extends BaseValue {
-    computeNewValue(prevValue: number, currentLevel: number, isZero: boolean): number {
-        return Math.log10(this.varBase) * (currentLevel + 1);
+    power: number;
+
+    constructor(power: number = 2) {
+        super();
+        this.power = power;
+    }
+
+    computeNewValue(prevValue: number, currentLevel: number): number {
+        return Math.log10(this.power) * (currentLevel + 1);
     }
     recomputeValue(level: number): number {
-        return Math.log10(this.varBase) * level;
+        return Math.log10(this.power) * level;
     }
     copy(): ExponentialValue {
-        return new ExponentialValue(this.varBase);
+        return new ExponentialValue(this.power);
     }
 }
 
 export class LinearValue extends BaseValue {
+    power: number;
     offset: number;
-    constructor(varBase: number = 10, offset: number = 0) {
-        super(varBase);
+    constructor(power: number = 10, offset: number = 0) {
+        super();
+        this.power = power;
         this.offset = offset;
     }
-    computeNewValue(prevValue: number, currentLevel: number, isZero: boolean): number {
-        return this.offset + this.varBase * (currentLevel + 1);
+    computeNewValue(prevValue: number, currentLevel: number): number {
+        return this.offset + this.power * (currentLevel + 1);
     }
     recomputeValue(level: number): number {
-        return this.offset + this.varBase * level;
+        return this.offset + this.power * level;
     }
     copy(): LinearValue {
-        return new LinearValue(this.varBase, this.offset);
+        return new LinearValue(this.power, this.offset);
     }
 }

@@ -21,14 +21,14 @@ class VariableSValue extends BaseValue {
     if (level < cutoffs[1]) return this.getS(cutoffs[0] - 1) + 0.15 + (level - cutoffs[0]) * 0.2;
     return this.getS(cutoffs[1] - 1) + 0.2 + (level - cutoffs[1]) * 0.15;
   }
-  computeNewValue(prevValue: number, currentLevel: number, isZero: boolean): number {
+  computeNewValue(prevValue: number, currentLevel: number): number {
     return this.getS(currentLevel + 1);
   }
   recomputeValue(level: number): number {
     return this.getS(level);
   }
   copy(): VariableSValue {
-    return new VariableSValue(this.varBase)
+    return new VariableSValue()
   }
 }
 
@@ -227,8 +227,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
         valueScaling: new StepwisePowerSumValue(2, 5)
       }),
       new Variable({ cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue(), value: 10 }),
-        // TODO: we are passing 10 here as log10(10) = 1 (this is a hack, should be fixed).
+      new Variable({ cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
     this.T_n = 1;
     this.U_n = 1;

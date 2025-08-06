@@ -163,7 +163,7 @@ class t2Sim extends theoryClass {
         this.totMult = this.getTotMult(data.rho);
         //currencies
         this.rho = 0;
-        this.q1 = 0;
+        this.q1 = -Infinity;
         this.q2 = 0;
         this.q3 = 0;
         this.q4 = 0;

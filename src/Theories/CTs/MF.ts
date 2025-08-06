@@ -249,7 +249,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
     super(data);
     this.pubUnlock = 8;
     this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
-    this.rho = 0;
+    this.rho = -Infinity;
     this.c = 0;
     this.x = 0;
     this.i = 0;
@@ -269,10 +269,10 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
     [
       new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
       new Variable({ cost: new ExponentialCost(1e3, 50), valueScaling: new ExponentialValue(2) }), // c2
-      new Variable({ cost: new ExponentialCost(1e3, 25), valueScaling: new StepwisePowerSumValue(2, 5), value: l10(3) }), // a1
+      new Variable({ cost: new ExponentialCost(1e3, 25), valueScaling: new StepwisePowerSumValue(2, 5, 3)}), // a1
       new Variable({ cost: new ExponentialCost(1e4, 100), valueScaling: new ExponentialValue(1.25) }), // a2
       new Variable({ cost: new ExponentialCost(1e50, 300), valueScaling: new ExponentialValue(1.1) }), // delta
-      new Variable({ cost: new ExponentialCost(80, 80), valueScaling: new StepwisePowerSumValue(), value: 0 }), // v1
+      new Variable({ cost: new ExponentialCost(80, 80), valueScaling: new StepwisePowerSumValue(2, 10, 1)}), // v1
       new Variable({ cost: new ExponentialCost(1e4, 10**4.5), valueScaling: new ExponentialValue(1.3) }), // v2
       new Variable({ cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
       new Variable({ cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4

@@ -206,7 +206,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(8**64, 64*Math.log2(8), true), valueScaling: new ExponentialValue(8) }), // c8
       new Variable({ cost: new ExponentialCost(9**81, 81*Math.log2(9), true), valueScaling: new ExponentialValue(9) }), // c9
       new Variable({ cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
-      new Variable({ cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16), value:1 }), // n
+      new Variable({ cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();

@@ -186,7 +186,7 @@ class bapSim extends theoryClass {
             new Variable({ cost: new ExponentialCost(Math.pow(8, 64), 64 * Math.log2(8), true), valueScaling: new ExponentialValue(8) }),
             new Variable({ cost: new ExponentialCost(Math.pow(9, 81), 81 * Math.log2(9), true), valueScaling: new ExponentialValue(9) }),
             new Variable({ cost: new ExponentialCost(Math.pow(10, 100), 100 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
-            new Variable({ cost: new ExponentialCost(Math.pow(10, 40), 60 * Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16), value: 1 }), // n
+            new Variable({ cost: new ExponentialCost(Math.pow(10, 40), 60 * Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1) }), // n
         ];
         this.conditions = this.getBuyingConditions();
         this.milestoneConditions = this.getMilestoneConditions();

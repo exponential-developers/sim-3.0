@@ -348,8 +348,7 @@ class rzSim extends theoryClass {
             // const getw1 = (level) => Utils.getStepwisePowerSum(level, 2, 8, 1);
             new Variable({
                 cost: new StepwiseCost(6, new ExponentialCost(12000, Math.pow(100, 1 / 3))),
-                value: 1,
-                valueScaling: new StepwisePowerSumValue(2, 8),
+                valueScaling: new StepwisePowerSumValue(2, 8, 1),
             }),
             // const w2Cost = new ExponentialCost(1e5, Math.log2(10));
             // const getw2 = (level) => BigNumber.TWO.pow(level);
