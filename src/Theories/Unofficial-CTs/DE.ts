@@ -39,7 +39,7 @@ class MaxXPermCapCost extends BaseCost {
     if (level >= 7) {
       return Infinity
     }
-    return [300, 400, 500, 700, 825, 1000, 1250][level];
+    return [400, 500, 650, 900, 1050, 1250, 1500][level];
   }
 
   copy() {
