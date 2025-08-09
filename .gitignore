@@ -1,4 +1,5 @@
 /node_modules
 /eslintrc.json
 node_modules
+build
 .idea
