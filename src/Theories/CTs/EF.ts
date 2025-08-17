@@ -1,27 +1,35 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getLastLevel, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
+import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function ef(data: theoryData): Promise<simResult> {
   const sim = new efSim(data);
-  const res = await sim.simulate(data);
+  const res = await sim.simulate();
   return res;
 }
 
 type theory = "EF";
 
+type pubTable = {[key: string]: number};
+
 class efSim extends theoryClass<theory> implements specificTheoryProps {
-  recursionValue: Array<number>;
+  pubUnlock: number;
   curMult: number;
   currencies: Array<number>;
   q: number;
   t_var: number;
-  lastA23: Array<number>;
   isEFAI: boolean;
   nextMilestoneCost: number;
+
+  forcedPubRho: number;
+  coasting: Array<boolean>;
+  bestRes: simResult | null;
+
+  depth: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -52,17 +60,14 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       ],
       EFAI: [
         /*tdot*/ true,
-        /*q1*/ () =>
-          this.variables[1].cost + l10(10 + (this.variables[1].level % 10)) < this.variables[2].cost &&
-          this.variables[1].cost + l10((this.variables[1].level % 10) + 5) < this.recursionValue[0],
-        /*q2*/ () => this.variables[2].cost + 0.2 < this.recursionValue[0],
+        /*q1*/ () => this.variables[1].cost + l10(10 + (this.variables[1].level % 10)) < this.variables[2].cost,
+        /*q2*/ true,
         /*b1*/ () => this.variables[3].cost + l10(5) < this.variables[8].cost || this.milestones[1] < 2 || this.curMult < 1,
         /*b2*/ () => this.variables[4].cost + l10(5) < this.variables[8].cost || this.milestones[1] < 2 || this.curMult < 1,
         /*c1*/ () => this.variables[5].cost + l10(5) < this.variables[9].cost || this.milestones[1] < 2 || this.curMult < 1,
         /*c2*/ () => this.variables[6].cost + l10(5) < this.variables[9].cost || this.milestones[1] < 2 || this.curMult < 1,
         /*a1*/ () =>
-          (this.variables[7].cost + l10(4 + (this.variables[7].level % 10) / 2) < this.variables[2].cost || this.variables[2].cost > this.recursionValue[0]) &&
-          this.variables[7].cost + l10((this.variables[7].level % 10) / 3) < this.recursionValue[0],
+          (this.variables[7].cost + l10(4 + (this.variables[7].level % 10) / 2) < this.variables[2].cost || this.coasting[2]),
         /*a2*/ true,
         /*a3*/ true,
       ],
@@ -72,14 +77,14 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   }
   getMilestoneConditions() {
     const conditions: Array<conditionFunction> = [
-      () => this.variables[0].level < 4 && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => true && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => true && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => this.milestones[0] > 0 && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => this.milestones[0] > 0 && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => this.milestones[0] > 1 && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => this.milestones[0] > 1 && this.maxRho + l10(5) < this.nextMilestoneCost,
-      () => this.milestones[1] > 0 && this.maxRho + l10(5) < this.nextMilestoneCost,
+      () => this.variables[0].level < 4,
+      () => true,
+      () => true,
+      () => this.milestones[0] > 0,
+      () => this.milestones[0] > 0,
+      () => this.milestones[0] > 1,
+      () => this.milestones[0] > 1,
+      () => this.milestones[1] > 0,
       () => this.milestones[1] > 1,
       () => this.milestones[1] > 2,
     ];
@@ -135,50 +140,9 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       this.variables[6].reCalculate();
     }
   }
-  evaluatePubConditions() {
-    if (!this.isEFAI) return false;
-    let totalMilestones = 0;
-    let initMilestones = 0;
-    const points = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) totalMilestones = i + 1;
-      if (this.lastPub >= points[i]) initMilestones = i + 1;
-    }
-    return (
-      (this.lastPub < 30 && this.maxRho > 32.4) ||
-      (this.lastPub < 40 && this.maxRho > 42) ||
-      (this.lastPub < 50 && this.maxRho > 55) ||
-      (this.lastPub < 70 && this.maxRho > 72) ||
-      (this.lastPub < 90 && this.maxRho > 92) ||
-      (this.lastPub < 110 && this.maxRho > 113) ||
-      (this.lastPub < 150 && this.maxRho > 153) ||
-      (this.lastPub < 130 && this.maxRho > 134) ||
-      (this.lastPub < 146 && this.lastPub > 145 && this.curMult > 2) ||
-      (this.lastPub < 126 && this.lastPub > 125 && this.curMult > 2) ||
-      (this.lastPub < 106 && this.lastPub > 105 && this.curMult > 3) ||
-      (this.lastPub < 87 && this.lastPub > 85 && this.curMult > 3) ||
-      (this.lastPub < 67 && this.lastPub > 65 && this.curMult > 3) ||
-      (this.lastPub < 46.4 && this.lastPub > 44.7 && this.curMult > 3) ||
-      (this.lastPub < 37 && this.lastPub > 36 && this.curMult > 3) ||
-      (this.lastPub < 27 && this.lastPub > 26 && this.curMult > 3) ||
-      (this.lastPub < 298.2 && this.maxRho > 300) ||
-      (this.lastPub < 323.2 && this.maxRho > 325) ||
-      (totalMilestones - initMilestones < 1 && this.curMult > 2.6 + (totalMilestones - initMilestones) && this.recursionValue[1] < 2 && this.isEFAI) ||
-      (this.recursionValue[1] === 2 &&
-        this.pubRho > this.variables[7].cost + l10(4) &&
-        this.variables[7].cost + l10((this.variables[7].level % 10) / 3) > this.recursionValue[0])
-    );
-  }
-  forcedPubConditions() {
-    if (!this.isEFAI) return true;
-    return (this.lastPub < 296 || this.pubRho > 300) && (this.lastPub < 321 || this.pubRho > 325);
-  }
-  evaluateTauHConditions() {
-    if (!this.isEFAI) return false;
-    return (this.lastPub < 298.2 && this.lastPub >= 296) || (this.lastPub >= 321 && this.lastPub < 323.2);
-  }
   constructor(data: theoryData) {
     super(data);
+    this.pubUnlock = 10;
     this.totMult = this.getTotMult(data.rho);
     this.curMult = 0;
     this.currencies = [0, 0, 0];
@@ -198,51 +162,78 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
       new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
-    this.recursionValue = <Array<number>>data.recursionValue ?? [Infinity, 0];
-    this.lastA23 = [0, 0];
+    this.forcedPubRho = Infinity;
+    this.coasting = new Array(this.variables.length).fill(false);
+    this.bestRes = null;
     this.isEFAI = this.strat === "EFAI";
-    this.nextMilestoneCost = 0;
+    this.depth = 0;
+    this.nextMilestoneCost = Infinity;
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
-  async simulate(data: theoryData) {
-    if (this.lastPub >= 10 && (data.recursionValue === null || data.recursionValue === undefined) && this.isEFAI) {
-      data.recursionValue = [Infinity, 0];
-      const res1 = await ef(data);
-      data.recursionValue = [res1.rawData.pubRho, 1];
-      const res2 = await ef(data);
-      this.recursionValue = [res2.rawData.pubRho, 2];
-      if (this.recursionValue[0] > 300 && this.recursionValue[0] < 301) this.recursionValue[0] = 299.2;
-      if (this.recursionValue[0] > 325 && this.recursionValue[0] < 326) this.recursionValue[0] = 324.2;
-    }
+  copyFrom(other: this): void {
+    super.copyFrom(other);
+
+    this.curMult = other.curMult;
+    this.currencies = [...other.currencies];
+    this.q = other.q;
+    this.t_var = other.t_var;
+    this.nextMilestoneCost = other.nextMilestoneCost;
+
+    this.forcedPubRho = other.forcedPubRho;
+    this.coasting = [...other.coasting];
+
+    this.depth = other.depth + 1;
+  }
+  copy(): efSim {
+    let newsim = new efSim(this.getDataForCopy());
+    newsim.copyFrom(this);
+    return newsim;
+  }
+  async simulate() {
     let pubCondition = false;
+    if (this.lastPub < 374 && this.strat !== "EF") {
+      let newpubtable: pubTable = pubtable.efdata;
+      let pubseek = Math.round(this.lastPub * 32);
+      this.forcedPubRho = newpubtable[pubseek.toString()] / 32;
+      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+    }
     while (!pubCondition) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
+      let prev_nextMilestoneCost = this.nextMilestoneCost;
       if (this.lastPub <= 325) this.updateMilestones();
+      if (this.nextMilestoneCost > prev_nextMilestoneCost) {
+        this.coasting.fill(false);
+      }
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
-      this.buyVariables();
-      pubCondition =
-        (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.evaluatePubConditions()) &&
-        this.pubRho > 10 &&
-        this.forcedPubConditions();
+      await this.buyVariables();
+      if (this.forcedPubRho != Infinity) {
+        pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 375 || this.t > this.pubT * 2);
+        pubCondition ||= this.pubRho > this.cap[0];
+      }
+      else {
+        pubCondition =
+        (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) &&
+        this.pubRho > this.pubUnlock;
+      }
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    if (!this.isEFAI || this.recursionValue[1] === 2)
-      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    const lastLevels = this.varNames.map((variable) => getLastLevel(variable, this.boughtVars));
     const result = createResult(
       this,
       this.isEFAI
-        ? ` q1: ${this.variables[1].level} q2: ${this.variables[2].level} a1: ${this.variables[7].level}` +
-            (global.showA23 ? ` a2: ${this.lastA23[0]} a3: ${this.lastA23[1]}` : "")
+        ? ` q1: ${lastLevels[1]} q2: ${lastLevels[2]} a1: ${lastLevels[7]}` +
+            (global.showA23 ? ` a2: ${lastLevels[8]} a3: ${lastLevels[9]}` : "")
         : ""
     );
-    return result;
+    return getBestResult(result, this.bestRes);
   }
   tick() {
     const logbonus = l10(this.dt) + this.totMult;
@@ -276,24 +267,48 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     }
 
     this.t += this.dt / 1.5;
-    this.dt *= this.isEFAI && this.recursionValue[1] < 2 ? Math.min(1.3, this.ddt * 50) : this.ddt;
-    //this.dt *= this.ddt;
+    this.dt *= this.ddt;
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
 
     this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 10 || global.forcedPubTime !== Infinity || this.evaluateTauHConditions()) {
+    if (
+      this.maxTauH < this.tauH || 
+      this.maxRho >= this.cap[0] - this.cap[1] || 
+      this.pubRho < 10 || 
+      global.forcedPubTime !== Infinity ||
+      (this.forcedPubRho !== Infinity && this.pubRho < this.forcedPubRho)
+    ) {
+      if (this.maxTauH < this.tauH && this.maxRho >= 375)
+      {
+        this.coasting.fill(false);
+        this.forcedPubRho = Infinity;
+      }
       this.maxTauH = this.tauH;
       this.pubT = this.t;
       this.pubRho = this.maxRho;
-      this.lastA23 = [this.variables[8].level, this.variables[9].level];
     }
   }
-  buyVariables() {
+  async buyVariables() {
+    const nextCoast = Math.min(this.forcedPubRho, this.nextMilestoneCost);
     const currencyIndicies = [0, 0, 0, 1, 1, 2, 2, 0, 1, 2];
+    const lowbounds = [0, 0.6, 0.2, 0, 0, 0, 0, 0.3, 0, 0];
+    const highbounds = [0, 1.8, 1.5, 0, 0, 0, 0, 1.5, 0, 0];
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
-          if (this.maxRho + 5 > this.lastPub && (!this.isEFAI || this.recursionValue[1] === 2)) {
+        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
+          if (nextCoast - this.variables[i].cost <= lowbounds[i]) {
+            this.coasting[i] = true;
+            break;
+          }
+          if (nextCoast - this.variables[i].cost < highbounds[i]) {
+            console.log(`Depth ${this.depth}, creating fork for ${this.varNames[i]} lvl ${this.variables[i].level} -> ${this.variables[i].level + 1}, cost: ${this.variables[i].cost}`)
+            let fork = this.copy();
+            fork.coasting[i] = true;
+            const forkres = await fork.simulate();
+            console.log(`Fork finished with t:${forkres.rawData.time}`)
+            this.bestRes = getBestResult(this.bestRes, forkres);
+          }
+          if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({
               variable: this.varNames[i],
               level: this.variables[i].level + 1,
