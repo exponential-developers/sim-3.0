@@ -50,10 +50,10 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
         true,
         () => this.variables[1].cost + 1 < this.variables[2].cost,
         true,
-        true,
-        true,
-        true,
-        true,
+        () => this.curMult < 1,
+        () => this.curMult < 1,
+        () => this.curMult < 1,
+        () => this.curMult < 1,
         () => this.variables[6].cost + l10(2.5) < this.variables[2].cost,
         true,
         true,
@@ -296,7 +296,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
         if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
-          if (nextCoast - this.variables[i].cost <= lowbounds[i]) {
+          if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
             this.coasting[i] = true;
             break;
           }
