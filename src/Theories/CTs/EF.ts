@@ -28,6 +28,8 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   coasting: Array<boolean>;
   bestRes: simResult | null;
 
+  depth: number;
+
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
       EF: new Array(10).fill(true),
@@ -180,8 +182,15 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.forcedPubRho = Infinity;
+    if (this.lastPub < 374 && this.strat !== "EF") {
+      let newpubtable: pubTable = pubtable.efdata;
+      let pubseek = Math.round(this.lastPub * 32);
+      this.forcedPubRho = newpubtable[pubseek.toString()] / 32;
+      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+    }
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
+    this.depth = 0;
     this.nextMilestoneCost = Infinity;
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
@@ -199,6 +208,8 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
 
     this.forcedPubRho = other.forcedPubRho;
     this.coasting = [...other.coasting];
+
+    this.depth = other.depth + 1;
   }
   copy(): efSim {
     let newsim = new efSim(this.getDataForCopy());
@@ -207,12 +218,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   }
   async simulate() {
     let pubCondition = false;
-    if (this.lastPub < 374 && this.strat !== "EF") {
-      let newpubtable: pubTable = pubtable.efdata;
-      let pubseek = Math.round(this.lastPub * 32);
-      this.forcedPubRho = newpubtable[pubseek.toString()] / 32;
-      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
-    }
     while (!pubCondition) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
@@ -315,9 +320,14 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
             break;
           }
           if (nextCoast - this.variables[i].cost < highbounds[i] || (doDynamicCoasting && this.getDynamicCoastingConditions()[i]())) {
+            console.log(`Depth ${this.depth}, creating fork for ${this.varNames[i]} lvl ${this.variables[i].level} -> ${this.variables[i].level + 1}, cost: ${this.variables[i].cost}`)
+            if (this.depth > 100) {
+              throw "Max depth allowed reached"
+            }
             let fork = this.copy();
             fork.coasting[i] = true;
             const forkres = await fork.simulate();
+            console.log(`Fork finished with t:${forkres.rawData.time}`)
             this.bestRes = getBestResult(this.bestRes, forkres);
           }
           if (this.maxRho + 5 > this.lastPub) {
