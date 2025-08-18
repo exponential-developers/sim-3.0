@@ -28,8 +28,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   coasting: Array<boolean>;
   bestRes: simResult | null;
 
-  depth: number;
-
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
       EF: new Array(10).fill(true),
@@ -184,7 +182,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
-    this.depth = 0;
     this.nextMilestoneCost = Infinity;
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
@@ -202,8 +199,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
 
     this.forcedPubRho = other.forcedPubRho;
     this.coasting = [...other.coasting];
-
-    this.depth = other.depth + 1;
   }
   copy(): efSim {
     let newsim = new efSim(this.getDataForCopy());
@@ -320,11 +315,9 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
             break;
           }
           if (nextCoast - this.variables[i].cost < highbounds[i] || (doDynamicCoasting && this.getDynamicCoastingConditions()[i]())) {
-            console.log(`Depth ${this.depth}, creating fork for ${this.varNames[i]} lvl ${this.variables[i].level} -> ${this.variables[i].level + 1}, cost: ${this.variables[i].cost}`)
             let fork = this.copy();
             fork.coasting[i] = true;
             const forkres = await fork.simulate();
-            console.log(`Fork finished with t:${forkres.rawData.time}`)
             this.bestRes = getBestResult(this.bestRes, forkres);
           }
           if (this.maxRho + 5 > this.lastPub) {
