@@ -320,14 +320,12 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
             break;
           }
           if (nextCoast - this.variables[i].cost < highbounds[i] || (doDynamicCoasting && this.getDynamicCoastingConditions()[i]())) {
-            console.log(`Depth ${this.depth}, creating fork for ${this.varNames[i]} lvl ${this.variables[i].level} -> ${this.variables[i].level + 1}, cost: ${this.variables[i].cost}`)
             if (this.depth > 100) {
-              throw "Max depth allowed reached"
+              throw "Max coasting research depth reached. Please contact the authors of the sim."
             }
             let fork = this.copy();
             fork.coasting[i] = true;
             const forkres = await fork.simulate();
-            console.log(`Fork finished with t:${forkres.rawData.time}`)
             this.bestRes = getBestResult(this.bestRes, forkres);
           }
           if (this.maxRho + 5 > this.lastPub) {
