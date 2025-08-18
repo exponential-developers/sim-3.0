@@ -22,7 +22,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   currencies: Array<number>;
   q: number;
   t_var: number;
-  isEFAI: boolean;
   nextMilestoneCost: number;
 
   forcedPubRho: number;
@@ -87,6 +86,26 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       () => this.milestones[1] > 0,
       () => this.milestones[1] > 1,
       () => this.milestones[1] > 2,
+    ];
+    return conditions;
+  }
+  getDynamicCoastingConditions() {
+    const conditions: Array<conditionFunction> = [
+      () => false,
+      () => this.curMult > 1.2,
+      () => this.curMult > 1.6,
+      ...new Array(4).fill(() => false),
+      () => this.curMult > 1.4,
+      () => false,
+      () => false,
+    ];
+    return conditions;
+  }
+  getForcedDynamicCoastingConditions() {
+    const conditions: Array<conditionFunction> = [
+      () => false,
+      () => this.coasting[2] || this.coasting[7],
+      ...new Array(8).fill(() => false)
     ];
     return conditions;
   }
@@ -165,7 +184,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
-    this.isEFAI = this.strat === "EFAI";
     this.depth = 0;
     this.nextMilestoneCost = Infinity;
     this.conditions = this.getBuyingConditions();
@@ -228,7 +246,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const lastLevels = this.varNames.map((variable) => getLastLevel(variable, this.boughtVars));
     const result = createResult(
       this,
-      this.isEFAI
+      this.strat !== "EF"
         ? ` q1: ${lastLevels[1]} q2: ${lastLevels[2]} a1: ${lastLevels[7]}` +
             (global.showA23 ? ` a2: ${lastLevels[8]} a3: ${lastLevels[9]}` : "")
         : ""
@@ -278,7 +296,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       global.forcedPubTime !== Infinity ||
       (this.forcedPubRho !== Infinity && this.pubRho < this.forcedPubRho)
     ) {
-      if (this.maxTauH < this.tauH && this.maxRho >= 375)
+      if (this.maxTauH < this.tauH && this.maxRho >= 375 && this.forcedPubRho != Infinity)
       {
         this.coasting.fill(false);
         this.forcedPubRho = Infinity;
@@ -293,14 +311,15 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const currencyIndicies = [0, 0, 0, 1, 1, 2, 2, 0, 1, 2];
     const lowbounds = [0, 0.6, 0.2, 0, 0, 0, 0, 0.3, 0, 0];
     const highbounds = [0, 1.8, 1.5, 0, 0, 0, 0, 1.5, 0, 0];
+    const doDynamicCoasting = this.forcedPubRho == Infinity && this.strat != "EF";
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
         if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
-          if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
+          if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[i]())) {
             this.coasting[i] = true;
             break;
           }
-          if (nextCoast - this.variables[i].cost < highbounds[i]) {
+          if (nextCoast - this.variables[i].cost < highbounds[i] || (doDynamicCoasting && this.getDynamicCoastingConditions()[i]())) {
             console.log(`Depth ${this.depth}, creating fork for ${this.varNames[i]} lvl ${this.variables[i].level} -> ${this.variables[i].level + 1}, cost: ${this.variables[i].cost}`)
             let fork = this.copy();
             fork.coasting[i] = true;
