@@ -354,7 +354,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     ) {
       if (this.maxTauH < this.tauH && this.maxRho >= 2000)
       {
-        this.coasting = new Array(this.variables.length).fill(false);
+        this.coasting.fill(false);
         this.forcedPubRho = Infinity;
       }
       this.maxTauH = this.tauH;
