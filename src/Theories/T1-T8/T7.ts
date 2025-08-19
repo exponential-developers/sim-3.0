@@ -137,6 +137,7 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
+    this.pubUnlock = 10;
     this.totMult = this.getTotMult(data.rho);
     this.rho = 0;
     this.rho2 = 0;
@@ -168,7 +169,7 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 10;
+      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);

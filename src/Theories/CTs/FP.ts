@@ -53,7 +53,6 @@ type pubTable = {[key: string]: number};
 
 class fpSim extends theoryClass<theory, milestones> implements specificTheoryProps {
   curMult: number;
-  pubUnlock: number;
   rho: number;
   q: number;
   r: number;

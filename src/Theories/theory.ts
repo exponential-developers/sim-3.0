@@ -21,6 +21,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   theory: theoryType;
   tauFactor: number;
   //theory
+  pubUnlock: number;
   cap: Array<number>;
   recovery: { value: number; time: number; recoveryTime: boolean };
   lastPub: number;
@@ -51,6 +52,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.theory = data.theory;
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     //theory
+    this.pubUnlock = 0;
     this.cap = typeof data.cap === "number" && data.cap > 0 ? [data.cap, 1] : [Infinity, 0];
     this.recovery = data.recovery ?? { value: 0, time: 0, recoveryTime: false };
     this.lastPub = data.rho;

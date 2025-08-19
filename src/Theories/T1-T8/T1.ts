@@ -82,6 +82,7 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
+    this.pubUnlock = 10;
     this.totMult = this.getTotMult(data.rho);
     this.rho = 0;
     this.varNames = ["q1", "q2", "c1", "c2", "c3", "c4"];
@@ -122,7 +123,7 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.strat !== "T1SolarXLII" || this.rho < coast || global.forcedPubTime !== Infinity) this.buyVariables();
       pubCondition =
         (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.strat === "T1SolarXLII" ? this.pubRho > pub : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) &&
-        this.pubRho > 10;
+        this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);

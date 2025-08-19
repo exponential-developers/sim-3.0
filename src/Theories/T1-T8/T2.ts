@@ -157,6 +157,7 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     //theory
+    this.pubUnlock = 15;
     this.curMult = 0;
     this.totMult = this.getTotMult(data.rho);
     //currencies
@@ -207,7 +208,7 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
         pubCondition = this.maxRho >= this.targetRho;
       }
       else {
-        pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 15;
+        pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > this.pubUnlock;
       }
       this.ticks++;
     }

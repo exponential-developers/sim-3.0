@@ -23,7 +23,6 @@ interface pubTable {
 
 class bapSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  pubUnlock: number;
   q: Array<number>;
   r: number;
   t_var: number;

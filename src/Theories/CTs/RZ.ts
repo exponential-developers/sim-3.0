@@ -61,23 +61,25 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
     curMult: number;
     currencies: Array<number>;
     t_var: number;
+    // Zeta parameters
     zTerm: number;
     rCoord: number;
     iCoord: number;
     offGrid: boolean;
-    pubUnlock: number;
+    // Pub parameters
+    normalPubRho: number;
+    maxC1Level: number;
+    maxC1LevelActual: number;
+    swapPointDelta: number;
+    // BH parameters
     targetZero: number;
-    maxTVar: number;
     blackhole: boolean;
     bhSearchingRewind: boolean;
     bhFoundZero: boolean;
     bhAtRecovery: boolean;
     bhzTerm: number;
     bhdTerm: number;
-    normalPubRho: number;
-    maxC1Level: number;
-    maxC1LevelActual: number;
-    swapPointDelta: number;
+    // RZdBHRewind control parameters
     maxW1: number;
     bhRewindStatus: number;
     bhRewindT: number;
@@ -357,7 +359,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         this.bhAtRecovery = false;
         this.bhzTerm = 0;
         this.bhdTerm = 0;
-        this.maxTVar = 0;
         this.normalPubRho = -1;
         this.maxC1Level = -1;
         this.maxC1LevelActual = -1;
@@ -538,7 +539,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             this.maxTauH = this.tauH;
             this.pubT = this.t;
             this.pubRho = this.maxRho;
-            this.maxTVar = this.t_var;
         }
         // this.outputResults += `${this.t},${this.t_var},${this.currencies[0]},${this.currencies[1]}<br>`;
     }
@@ -561,7 +561,9 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                         }
                         this.boughtVars.push(vb);
                     }
-                    if (i == 2 && this.bhRewindStatus == 2) {
+                    if (i == 2 && this.bhRewindStatus == 2) { 
+                        // Reset RZdBHRewind status when buying b
+                        // To make sure the cache is recomputed with the new b value
                         this.bhRewindT = 0;
                         this.bhRewindNorm = 0;
                         this.bhRewindDeriv = 0;

@@ -17,7 +17,6 @@ type theory = "EF";
 type pubTable = {[key: string]: number};
 
 class efSim extends theoryClass<theory> implements specificTheoryProps {
-  pubUnlock: number;
   curMult: number;
   currencies: Array<number>;
   q: number;

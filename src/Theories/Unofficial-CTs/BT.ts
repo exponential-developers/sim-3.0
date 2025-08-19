@@ -16,7 +16,6 @@ type theory = "BT";
 
 class btSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  pubUnlock: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {

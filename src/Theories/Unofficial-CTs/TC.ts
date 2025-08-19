@@ -29,8 +29,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   T: number;
   setPoint: number;
 
-  pubUnlock: number;
-
   getBuyingConditions() {
     const conditions = {
       TC: new Array(7).fill(true),

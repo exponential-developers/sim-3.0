@@ -109,6 +109,7 @@ class slSim extends theoryClass<theory> implements specificTheoryProps {
   };
   constructor(data: theoryData) {
     super(data);
+    this.pubUnlock = 10;
     this.totMult = this.getTotMult(data.rho);
     this.curMult = 0;
     this.rho = 0;
@@ -139,7 +140,7 @@ class slSim extends theoryClass<theory> implements specificTheoryProps {
       pubCondition =
         (global.forcedPubTime !== Infinity
           ? this.t > global.forcedPubTime
-          : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 15) && this.pubRho > 10;
+          : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 15) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);

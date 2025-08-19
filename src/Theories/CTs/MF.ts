@@ -21,7 +21,6 @@ type resetBundle = [number, number, number, number];
 
 class mfSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  pubUnlock: number;
   c: number
   x: number;
   i: number;

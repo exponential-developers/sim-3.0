@@ -14,7 +14,6 @@ export default async function fi(data: theoryData): Promise<simResult> {
 type theory = "FI";
 
 class fiSim extends theoryClass<theory> implements specificTheoryProps {
-  pubUnlock: number;
   rho: number;
   q: number;
   r: number;
