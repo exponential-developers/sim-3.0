@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -28,6 +28,8 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
   t_var: number;
 
   forcedPubRho: number;
+  doContinuityFork: boolean;
+  bestRes: simResult | null;
 
   getBuyingConditions() {
     const idlestrat = new Array(12).fill(true)
@@ -167,12 +169,8 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   getNextCoast(){
-    let nextCoast = Infinity;
+    let nextCoast = this.forcedPubRho;
     const rho = Math.max(this.maxRho, this.lastPub);
-    if (this.forcedPubRho != -1)
-    {
-      nextCoast = this.forcedPubRho;
-    }
     const coastPoints = [10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 140, 150, 180, 200, 240, 300, 400, 500, 600, 700, 1000];
     for (const point of coastPoints){
       if (nextCoast > point && rho < point)
@@ -191,7 +189,16 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     this.q = new Array(9).fill(-1e60)
     this.r = -1e60
     this.t_var = 0
-    this.forcedPubRho = -1;
+    this.forcedPubRho = Infinity;
+    this.doContinuityFork = true;
+    this.bestRes = null;
+    if (this.lastPub < 1480)
+    {
+      let newpubtable: pubTable = pubtable.bapdata;
+      let pubseek = this.lastPub < 100 ? Math.round(this.lastPub * 4) / 4 : Math.round(this.lastPub);
+      this.forcedPubRho = newpubtable[pubseek.toString()].next;
+      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+    }
     this.varNames = ["tdot", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "n"];
     this.variables = [
       new Variable({ cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot
@@ -211,31 +218,40 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     this.milestoneConditions = this.getMilestoneConditions();
     this.updateMilestones();
   }
+  copyFrom(other: this): void {
+    super.copyFrom(other);
+
+    this.rho = other.rho;
+    this.q = [...other.q];
+    this.r = other.r;
+    this.t_var = other.t_var;
+
+    this.forcedPubRho = other.forcedPubRho;
+  }
+  copy(): bapSim {
+    let newsim = new bapSim(this.getDataForCopy());
+    newsim.copyFrom(this);
+    return newsim;
+  }
   async simulate() {
-    let pubCondition = false;
-    if (this.lastPub < 1480)
-    {
-      let newpubtable: pubTable = pubtable.bapdata;
-      let pubseek = this.lastPub < 100 ? Math.round(this.lastPub * 4) / 4 : Math.round(this.lastPub);
-      this.forcedPubRho = newpubtable[pubseek.toString()].next;
-      if (this.forcedPubRho === undefined) this.forcedPubRho = -1;
+    if (this.forcedPubRho != Infinity) {
+      this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
-    while (!pubCondition) {
+    while (!this.doPublish(this.forcedPubRho == Infinity)) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      if (this.forcedPubRho != -1)
-      {
-        pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 1500 || this.t > this.pubT * 2);
-        pubCondition ||= this.pubRho > this.cap[0];
-      }
-      else
-      {
-        pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > this.pubUnlock;
+      if (this.forcedPubRho == 1500 && this.maxRho >= 1495 && this.doContinuityFork) {
+        this.doContinuityFork = false;
+        const fork = this.copy();
+        fork.forcedPubRho = Infinity;
+        const res = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, res);
       }
       this.ticks++;
     }
@@ -243,7 +259,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
     const result = createResult(this, "");
 
-    return result;
+    return getBestResult(result, this.bestRes);
   }
   tick() {
     this.t_var += (1 + this.variables[0].level) * this.dt
@@ -270,24 +286,8 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     {
       rhodot = this.totMult + l10(this.t_var) + (this.q[0] + this.r) * this.getA(this.milestones[2], this.milestones[4] > 0, vn);
     }
-    
 
     this.rho = add(this.rho, rhodot + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity || (this.forcedPubRho != -1 && this.pubRho <= this.forcedPubRho)) {
-      if (this.maxTauH < this.tauH && this.maxRho >= 1500)
-      {
-        this.forcedPubRho = -1;
-      }
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     if (!this.strat.includes("AI"))
