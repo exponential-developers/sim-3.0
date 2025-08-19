@@ -196,8 +196,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             RZdBHRewind: BHRoute,
             RZSpiralswap: noBHRoute,
             RZdMS: noBHRoute,
-            RZMS: noBHRoute,
-            // RZnoB: noBHRoute,
+            RZMS: noBHRoute
         };
         return tree[this.strat];
     }
@@ -313,12 +312,10 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         if(this.bhSearchingRewind && this.t_var > 14.5 && bhdt > 0)
         {
             let srdt = -Math.min(0.125 / bhdt, 0.125);
-            //console.log(`Searching rewind, t=${this.t_var}, srdt=${srdt}`)
             this.t_var += srdt;
         }
         else
         {
-            //console.log(`Not searching rewind, t=${this.t_var}, bhdt=${bhdt}`)
             this.t_var += bhdt;
             this.bhSearchingRewind = false;
             if(Math.abs(bhdt) < 1e-9)
@@ -340,6 +337,34 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         while(!this.bhFoundZero){
             this.bhProcess();
         }
+    }
+
+    updateSimStatus(ddt?: number, pubStatusUpdateCall?: Function | null): void {
+        if (this.maxW1 !== Infinity && this.variables[3].level < this.maxW1 && this.t_var > this.targetZero - 5 && this.bhRewindStatus < 2){
+            this.offGrid = true;
+            this.dt = 0.15;
+            this.t += this.dt / 1.5;
+            if (this.bhRewindStatus == 1){
+                this.bhRewindT += this.dt;
+            }
+        }
+        else if (this.bhRewindStatus == 2) {
+            this.t += this.dt / 1.5;
+        }
+        else {
+            this.t += this.dt / 1.5;
+            this.dt *= this.ddt;
+        }
+        
+        this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
+        if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
+        this.maxTauH = this.tauH;
+        this.pubT = this.t;
+        this.pubRho = this.maxRho;
+        if (pubStatusUpdateCall) {
+            pubStatusUpdateCall()
+        }
+    }
     }
 
     constructor(data: theoryData) {
@@ -368,12 +393,10 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         this.bhRewindT = 0;
         this.bhRewindNorm = 0;
         this.bhRewindDeriv = 0;
-        this.varNames = ["c1", "c2", "b", "w1", "w2", "w3"/*, "b+"*/];
+        this.varNames = ["c1", "c2", "b", "w1", "w2", "w3"];
         this.variables = [
             new Variable({
                 cost: new FirstFreeCost(new ExponentialCost(225, Math.pow(2, 0.699))),
-                // const c1Cost = new FirstFreeCost(new ExponentialCost(225, 0.699));
-                // const getc1 = (level) => Utils.getStepwisePowerSum(level, 2, 8, 0);
                 valueScaling: new StepwisePowerSumValue(2, 8),
             }),
             new Variable({
@@ -382,17 +405,11 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             }),
             new Variable({
                 cost: new VariableBcost, valueScaling: new LinearValue(0.5)
-                // cost: new ExponentialCost(1e21, 1e79),
-                // power: use outside method
             }),
-            // const w1Cost = new StepwiseCost(new ExponentialCost(12000, Math.log2(100)/3), 6);
-            // const getw1 = (level) => Utils.getStepwisePowerSum(level, 2, 8, 1);
             new Variable({
                 cost: new StepwiseCost(6, new ExponentialCost(12000, Math.pow(100, 1 / 3))),
                 valueScaling: new StepwisePowerSumValue(2, 8, 1),
             }),
-            // const w2Cost = new ExponentialCost(1e5, Math.log2(10));
-            // const getw2 = (level) => BigNumber.TWO.pow(level);
             new Variable({
                 cost: new ExponentialCost(1e5, 10),
                 valueScaling: new ExponentialValue(2),
@@ -401,22 +418,16 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                 cost: new ExponentialCost("3.16227766017e600", '1e30'),
                 valueScaling: new ExponentialValue(2),
             }),
-            // new Variable({
-            //     cost: new ExponentialCost("1e600", "1e300"),
-            //     // b (2nd layer)
-            // }),
         ];
         this.pubUnlock = 9;
         this.conditions = this.getBuyingConditions();
         this.milestoneConditions = this.getMilestoneConditions();
         this.milestoneTree = this.getMilestoneTree();
+        this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
-        // this.output = document.querySelector(".varOutput");
-        // this.outputResults = "time,t,rho,delta<br>";
     }
     async simulate() {
-        let pubCondition = false;
-        while (!pubCondition) {
+        while (!this.endSimulation()) {
             if (!global.simulating) break;
             // Prevent lookup table from retrieving values from wrong sim settings
             if (!this.ticks && (this.dt !== lookups.prevDt || this.ddt !== lookups.prevDdt)) {
@@ -428,15 +439,12 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             if ((this.ticks + 1) % 500000 === 0) await sleep();
             this.tick();
             if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
+            this.updateSimStatus();
             this.updateMilestones();
             this.curMult = Math.pow(10, this.getTotMult(this.maxRho) - this.totMult);
             this.buyVariables();
-            pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 30) && this.pubRho > this.pubUnlock;
             this.ticks++;
         }
-        // Printing
-        // this.output.innerHTML = this.outputResults;
-        // this.outputResults = '';
         this.pubMulti = Math.pow(10, this.getTotMult(this.pubRho) - this.totMult);
         let stratExtra = "";
         if (this.strat.includes("BH"))
@@ -487,7 +495,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                 const dr = tmpZ[0] - z[0];
                 const di = tmpZ[1] - z[1];
                 const derivTerm = l10(Math.sqrt(dr * dr + di * di) * 100000);
-                // derivCurrency.value += dTerm.pow(bTerm) * w1Term * w2Term * w3Term * bonus;
                 this.currencies[1] = add(this.currencies[1], derivTerm * bTerm + w1Term + w2Term + w3Term + bonus);
                 if (this.bhRewindStatus == 1) {
                     this.bhRewindDeriv += this.dt * (Math.sqrt(dr * dr + di * di) * 100000) ** bTerm;
@@ -514,33 +521,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             this.currencies[1] = add(this.currencies[1], this.bhdTerm * bTerm + w1Term + w2Term + w3Term + bonus);
             this.currencies[0] = add(this.currencies[0], tTerm + c1Term + c2Term + w1Term + bonus - l10(this.bhzTerm / (2 ** bTerm) + 0.01));
         }
-
-        // normCurrency.value += tTerm * c1Term * c2Term * w1Term * bonus / (zTerm / BigNumber.TWO.pow(bTerm) + bMarginTerm);
-        
-        if (this.maxW1 !== Infinity && this.variables[3].level < this.maxW1 && this.t_var > this.targetZero - 5 && this.bhRewindStatus < 2){
-            this.offGrid = true;
-            this.dt = 0.15;
-            this.t += this.dt / 1.5;
-            if (this.bhRewindStatus == 1){
-                this.bhRewindT += this.dt;
-            }
-        }
-        else if (this.bhRewindStatus == 2) {
-            this.t += this.dt / 1.5;
-        }
-        else {
-            this.t += this.dt / 1.5;
-            this.dt *= this.ddt;
-        }
-        
-        if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-        this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-        if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
-            this.maxTauH = this.tauH;
-            this.pubT = this.t;
-            this.pubRho = this.maxRho;
-        }
-        // this.outputResults += `${this.t},${this.t_var},${this.currencies[0]},${this.currencies[1]}<br>`;
     }
     buyVariables() {
         const currencyIndices = [0, 0, 0, 1, 1, 1];

@@ -216,6 +216,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     ];
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
+    this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
   copyFrom(other: this): void {
@@ -237,7 +238,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
-    while (!this.doPublish(this.forcedPubRho == Infinity)) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
@@ -339,9 +340,6 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
             this.boughtVars.push({ variable: this.varNames[minCost[1]], level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
           }
           this.variables[minCost[1]].buy();
-          if (minCost[1] === 11) {
-            console.log(`${this.variables[11].level} -> ${10**this.variables[11].value}`);
-          }
         } else break;
       }
     }

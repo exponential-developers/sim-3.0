@@ -192,13 +192,14 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
     this.milestoneTree = this.getMilestoneTree();
+    this.doSimEndConditions = () => this.targetRho == -1;
     this.updateMilestones();
   }
   async simulate() {
     if (this.targetRho != -1) {
       this.pubConditions.push(() => this.maxRho >= this.targetRho);
     }
-    while (!this.doPublish(this.targetRho == -1)) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();

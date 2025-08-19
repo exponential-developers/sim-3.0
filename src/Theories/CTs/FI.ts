@@ -11,6 +11,11 @@ export default async function fi(data: theoryData): Promise<simResult> {
   return res;
 }
 
+const factoriallogs = [0];
+for (let i = 1; i<9; i++) {
+  factoriallogs.push(l10(i) + factoriallogs[i-1]);
+}
+
 type theory = "FI";
 
 class fiSim extends theoryClass<theory> implements specificTheoryProps {
@@ -29,22 +34,22 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
     let activeStrat = [
       true, //tdot - 0
       //q1 mod 23
-      () => this.variables[1].cost + Math.log10((this.variables[1].level % 23) + 1) < this.variables[2].cost, //q1 - 1
+      () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < this.variables[2].cost, //q1 - 1
       true, //q2 - 2
       true, //k - 3
       true, //m - 4
       //n mod 11 - 5
-      () => this.variables[5].cost + Math.log10((this.variables[5].level % 11) + 1) < this.variables[4].cost //n - 5
+      () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < this.variables[4].cost //n - 5
     ]
     let activeStrat2 = [
       true, //tdot - 0
       //q1 mod 23
-      () => this.variables[1].cost + Math.log10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost), //q1 - 1
+      () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost), //q1 - 1
       true, //q2 - 2
       true, //k - 3
       true, //m - 4
       //n mod 11 - 5
-      () => this.variables[5].cost + Math.log10((this.variables[5].level % 11) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost, this.variables[4].cost) //n - 5
+      () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost, this.variables[4].cost) //n - 5
     ]
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
       FI: new Array(6).fill(true),
@@ -203,29 +208,10 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   fact(num: number) {
-    switch (num) {
-      case 1:
-        return 0;
-      case 2:
-        return l10(2);
-      case 3:
-        return Math.log10(6);
-      case 4:
-        return Math.log10(24);
-      case 5:
-        return Math.log10(120);
-      case 6:
-        return Math.log10(720);
-      case 7:
-        return Math.log10(5040);
-      case 8:
-        return Math.log10(40320);
-      case 9:
-        return Math.log10(362880);
-      default:
-        //todo: make this a global function later and convert to array
-        throw "Error in fact().";
+    if (num >= factoriallogs.length) {
+      throw "Error in fact().";
     }
+    return factoriallogs[num];
   }
   norm_int(limit: number): number {
     switch (this.milestones[3]) {
@@ -243,7 +229,7 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   approx(k_v: number, base: number) {
-    return -this.norm_int(Math.log10(Math.PI)) - 1 / (Math.E + 1.519) + k_v * Math.log10(base);
+    return -this.norm_int(l10(Math.PI)) - 1 / (Math.E + 1.519) + k_v * l10(base);
   }
 
   approxEX(limit: number) {
@@ -269,9 +255,9 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   approxL10(limit: number) {
-    let positives = add(limit * 2 - l10(2), add(limit * 4 - Math.log10(12), limit * 6 - Math.log10(30)));
-    let negatives = add(limit * 3 - Math.log10(6), limit * 5 - Math.log10(20));
-    return subtract(positives, negatives) - Math.log10(Math.log(10));
+    let positives = add(limit * 2 - l10(2), add(limit * 4 - l10(12), limit * 6 - l10(30)));
+    let negatives = add(limit * 3 - l10(6), limit * 5 - l10(20));
+    return subtract(positives, negatives) - l10(Math.log(10));
   }
 
   constructor(data: theoryData) {
@@ -305,18 +291,15 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition =
-        (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) &&
-        this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -345,17 +328,6 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
       vn;
 
     this.rho = add(this.rho, this.totMult + rhodot + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)

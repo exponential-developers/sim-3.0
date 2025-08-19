@@ -105,6 +105,7 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
     this.milestoneTree = this.getMilestoneTree();
+    this.doSimEndConditions = () => this.strat !== "T1SolarXLII";
     this.updateMilestones();
   }
   async simulate() {
@@ -115,7 +116,7 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     if (this.strat === "T1SolarXLII") {
       this.pubConditions.push(() => this.maxRho >= pub)
     }
-    while (!this.doPublish(this.strat !== "T1SolarXLII")) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
@@ -123,12 +124,12 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
-      if (this.strat !== "T1SolarXLII" || this.rho < coast || global.forcedPubTime !== Infinity) this.buyVariables();
+      if (this.strat !== "T1SolarXLII" || this.rho < coast) this.buyVariables();
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, global.forcedPubTime === Infinity && this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "");
+    const result = createResult(this, this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "");
     
     return result;
   }

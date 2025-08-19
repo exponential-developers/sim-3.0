@@ -45,6 +45,8 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   pubRho: number;
   forcedPubConditions: Array<conditionFunction>;
   pubConditions: Array<conditionFunction>;
+  simEndConditions: Array<conditionFunction>;
+  doSimEndConditions: conditionFunction;
   //milestones  [terms, c1exp, multQdot]
   milestones: milestoneType;
   pubMulti: number;
@@ -76,9 +78,9 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.pubT = 0;
     this.pubRho = 0;
     this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
-    this.pubConditions = global.forcedPubTime != Infinity 
-      ? [() => this.t > global.forcedPubTime] 
-      : [() => this.maxRho >= this.cap[0]];
+    this.pubConditions = [() => this.maxRho >= this.cap[0]];
+    this.simEndConditions = [() => this.t > this.pubT * 2];
+    this.doSimEndConditions = () => true;
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
     this.conditions = [];
@@ -127,9 +129,12 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     return this.pubConditions.some((cond) => cond())
   }
 
-  doPublish(useTimeCond = true): boolean {
-    return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() 
-    || (this.t > this.pubT * 2 && useTimeCond && global.forcedPubTime === Infinity))
+  evaluateSimEndConditions(): boolean {
+    return this.simEndConditions.some((cond) => cond())
+  }
+
+  endSimulation(): boolean {
+    return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() || (this.doSimEndConditions() && this.evaluateSimEndConditions()));
   }
 
   updateSimStatus(ddt = this.ddt, pubStatusUpdateCall: Function | null = null) {

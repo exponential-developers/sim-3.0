@@ -17,6 +17,7 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
   q: number;
   S: number;
+  curMult: number;
 
   getBuyingConditions() {
     let c1weight = 0;
@@ -104,6 +105,7 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
     super(data);
     this.pubUnlock = 8;
     this.totMult = this.getTotMult(data.rho);
+    this.curMult = 0;
     this.rho = 0;
     this.q = 0;
     //initialize variables
@@ -119,22 +121,19 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
     this.conditions = this.getBuyingConditions();
     this.milestoneConditions = this.getMilestoneConditions();
     this.milestoneTree = this.getMilestoneTree();
+    this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition =
-        (global.forcedPubTime !== Infinity
-          ? this.t > global.forcedPubTime
-          : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 15) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -152,17 +151,6 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
 
     const rhodot = this.totMult + vq1 + this.variables[1].value + this.q + l10(this.dt);
     this.rho = add(this.rho, rhodot);
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 8 || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     let updateS_flag = false;

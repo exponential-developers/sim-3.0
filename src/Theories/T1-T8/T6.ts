@@ -205,7 +205,7 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
     this.updateMilestones();
   }
   async simulate() {
-    while (!this.doPublish()) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();

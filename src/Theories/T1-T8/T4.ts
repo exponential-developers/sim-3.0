@@ -217,12 +217,12 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
     this.updateMilestones();
   }
   async simulate(data: theoryData) {
-    if ((this.recursionValue === null || this.recursionValue === undefined) && ["T4C3d66", "T4C3coast"].includes(this.strat) && global.forcedPubTime === Infinity) {
+    if ((this.recursionValue === null || this.recursionValue === undefined) && ["T4C3d66", "T4C3coast"].includes(this.strat)) {
       data.recursionValue = Number.MAX_VALUE;
       const tempSim = await new t4Sim(data).simulate(data);
       this.recursionValue = tempSim.rawData.pubRho;
     }
-    while (!this.doPublish()) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();

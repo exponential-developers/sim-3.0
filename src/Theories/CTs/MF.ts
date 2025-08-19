@@ -310,17 +310,15 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   async simulate() {
-    let pubCondition = false;
-    
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
       await this.checkForReset();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.pubMulti > 3.5) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -349,17 +347,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
 
     const rhodot = this.totMult + this.c + vc1 + vc2 + xterm + omegaterm + vterm;
     this.rho = add(this.rho, rhodot + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   calcBundleCost(bundle: resetBundle):number {
     let cost = 0.;
