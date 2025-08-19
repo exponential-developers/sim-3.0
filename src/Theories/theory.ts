@@ -43,6 +43,8 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   maxTauH: number;
   pubT: number;
   pubRho: number;
+  forcedPubConditions: Array<conditionFunction>;
+  pubConditions: Array<conditionFunction>;
   //milestones  [terms, c1exp, multQdot]
   milestones: milestoneType;
   pubMulti: number;
@@ -52,7 +54,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.theory = data.theory;
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     //theory
-    this.pubUnlock = 0;
+    this.pubUnlock = 1;
     this.cap = typeof data.cap === "number" && data.cap > 0 ? [data.cap, 1] : [Infinity, 0];
     this.recovery = data.recovery ?? { value: 0, time: 0, recoveryTime: false };
     this.lastPub = data.rho;
@@ -73,6 +75,10 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.maxTauH = 0;
     this.pubT = 0;
     this.pubRho = 0;
+    this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
+    this.pubConditions = global.forcedPubTime != Infinity 
+      ? [() => this.t > global.forcedPubTime] 
+      : [() => this.maxRho >= this.cap[0]];
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
     this.conditions = [];
@@ -111,5 +117,34 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
       cap: this.cap[0],
       recursionValue: null,
     };
+  }
+
+  evaluateForcedPubConditions(): boolean {
+    return this.forcedPubConditions.every((cond) => cond())
+  }
+
+  evaluatePubConditions(): boolean {
+    return this.pubConditions.some((cond) => cond())
+  }
+
+  doPublish(useTimeCond = true): boolean {
+    return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() 
+    || (this.t > this.pubT * 2 && useTimeCond))
+  }
+
+  simStatusUpdate(ddt = this.ddt, pubStatusUpdateCall: Function | null = null) {
+    this.t += this.dt / 1.5;
+    this.dt *= ddt;
+    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
+
+    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
+    if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
+      this.maxTauH = this.tauH;
+      this.pubT = this.t;
+      this.pubRho = this.maxRho;
+      if (pubStatusUpdateCall) {
+        pubStatusUpdateCall()
+      }
+    }
   }
 }
