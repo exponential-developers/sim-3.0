@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getLastLevel, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -159,7 +159,7 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
     return tree[this.strat];
   }
   getTotMult(val: number) {
-    return Math.max(0, val * 0.165 - l10(4)) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.165 - l10(4)) + getR9multiplier(this.sigma);
   }
   updateMilestones(): void {
     const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
@@ -222,21 +222,20 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
       const tempSim = await new t4Sim(data).simulate(data);
       this.recursionValue = tempSim.rawData.pubRho;
     }
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.doPublish()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition = global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : (this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, ["T4C3d66", "T4C3coast"].includes(this.strat) ? ` q1:${this.variables[6].level} q2:${this.variables[7].level}` : "");
+    const result = createResult(this, ["T4C3d66", "T4C3coast"].includes(this.strat) ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "");
 
     return result;
   }
@@ -244,23 +243,19 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
     const vq1 = this.variables[6].value;
     const vq2 = this.variables[7].value;
 
-    const qdot = l10(2) * this.milestones[2] + vq1 + vq2 - add(0, this.q);
-    this.q = add(this.q, qdot + l10(this.dt));
+    const p = add(this.q, 0) * 2
+    this.q = subtract(add(p, l10(2) * (1 + this.milestones[2]) + vq1 + vq2 + l10(this.dt)) / 2, 0)
+
+    const vc1 = this.variables[0].value * (1 + 0.15 * this.milestones[1]);
+    const vc2 = this.variables[1].value;
+    this.variableSum = vc1 + vc2;
+    this.variableSum = add(this.variableSum, this.variables[2].value + this.q);
+    if (this.milestones[0] >= 1) this.variableSum = add(this.variableSum, this.variables[3].value + this.q * 2);
+    if (this.milestones[0] >= 2) this.variableSum = add(this.variableSum, this.variables[4].value + this.q * 3);
+    if (this.milestones[0] >= 3) this.variableSum = add(this.variableSum, this.variables[5].value + this.q * 4);
 
     const rhodot = this.totMult + this.variableSum;
     this.rho = add(this.rho, rhodot + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    //this.dt *= ["T4C3d66", "T4C3coast"].includes(this.strat) && this.recursionValue === Number.MAX_VALUE ? Math.min(1.3, this.ddt * 10) : this.ddt;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 9 || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)
@@ -273,13 +268,5 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
           this.variables[i].buy();
         } else break;
       }
-
-    const vc1 = this.variables[0].value * (1 + 0.15 * this.milestones[1]);
-    const vc2 = this.variables[1].value;
-    this.variableSum = vc1 + vc2;
-    if (this.variables[2].level > 0) this.variableSum = add(this.variableSum, this.variables[2].value + this.q);
-    if (this.variables[3].level > 0) this.variableSum = add(this.variableSum, this.variables[3].value + this.q * 2);
-    if (this.variables[4].level > 0) this.variableSum = add(this.variableSum, this.variables[4].value + this.q * 3);
-    if (this.variables[5].level > 0) this.variableSum = add(this.variableSum, this.variables[5].value + this.q * 4);
   }
 }

@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -265,7 +265,7 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
     return tree[this.strat];
   }
   getTotMult(val: number) {
-    return Math.max(0, val * 0.147 + l10(3)) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
   }
   updateMilestones() {
     const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
@@ -305,7 +305,7 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
-      this.simStatusUpdate();
+      this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();

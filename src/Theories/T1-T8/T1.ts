@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, logToExp, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, logToExp, sleep, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -74,7 +74,7 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     return tree[this.strat];
   }
   getTotMult(val: number) {
-    return Math.max(0, val * 0.164 - l10(3)) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.164 - l10(3)) + getR9multiplier(this.sigma);
   }
   updateMilestones(): void {
     const stage = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
@@ -112,18 +112,18 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     const pub = c4_nc - this.lastPub < 3 ? c4_nc + 2 : c4_nc - this.lastPub < 5 ? c4_nc - 2 + Math.log10(1.5) : c4_nc - 4 + Math.log10(1.4);
     let coast = (c4_nc - this.lastPub < 3 ? c4_nc : Math.floor(this.lastPub)) + Math.log10(30);
     coast = Math.max(8 + Math.log10(30), coast + Math.floor(pub - coast));
-    let pubCondition = false;
-    while (!pubCondition) {
+    if (this.strat === "T1SolarXLII") {
+      this.pubConditions.push(() => this.maxRho >= pub)
+    }
+    while (!this.doPublish(this.strat !== "T1SolarXLII")) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       if (this.strat !== "T1SolarXLII" || this.rho < coast || global.forcedPubTime !== Infinity) this.buyVariables();
-      pubCondition =
-        (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.strat === "T1SolarXLII" ? this.pubRho > pub : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) &&
-        this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -139,17 +139,6 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
 
     const rhodot = add(this.term1, this.term2) + this.term3 + this.totMult + l10(this.dt);
     this.rho = add(this.rho, rhodot);
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 10 || global.forcedPubTime !== Infinity || this.strat === "T1SolarXLII") {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     let bought = false;

@@ -129,10 +129,10 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
 
   doPublish(useTimeCond = true): boolean {
     return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() 
-    || (this.t > this.pubT * 2 && useTimeCond))
+    || (this.t > this.pubT * 2 && useTimeCond && global.forcedPubTime === Infinity))
   }
 
-  simStatusUpdate(ddt = this.ddt, pubStatusUpdateCall: Function | null = null) {
+  updateSimStatus(ddt = this.ddt, pubStatusUpdateCall: Function | null = null) {
     this.t += this.dt / 1.5;
     this.dt *= ddt;
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;

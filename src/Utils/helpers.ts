@@ -187,3 +187,7 @@ export function getLastLevel(variable: string, arr:Array<varBuy>): number {
   }
   return 0;
 }
+
+export function getR9multiplier(sigma: number) {
+  return l10((sigma / 20) ** (sigma < 65 ? 0 : sigma < 75 ? 1 : sigma < 85 ? 2 : 3))
+}
