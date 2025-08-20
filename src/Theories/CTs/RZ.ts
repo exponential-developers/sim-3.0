@@ -339,7 +339,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         }
     }
 
-    updateSimStatus(ddt?: number, pubStatusUpdateCall?: Function | null): void {
+    updateT() {
         if (this.maxW1 !== Infinity && this.variables[3].level < this.maxW1 && this.t_var > this.targetZero - 5 && this.bhRewindStatus < 2){
             this.offGrid = true;
             this.dt = 0.15;
@@ -355,16 +355,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             this.t += this.dt / 1.5;
             this.dt *= this.ddt;
         }
-        
-        this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-        if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
-        this.maxTauH = this.tauH;
-        this.pubT = this.t;
-        this.pubRho = this.maxRho;
-        if (pubStatusUpdateCall) {
-            pubStatusUpdateCall()
-        }
-    }
     }
 
     constructor(data: theoryData) {

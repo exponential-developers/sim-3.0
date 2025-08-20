@@ -43,6 +43,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   maxTauH: number;
   pubT: number;
   pubRho: number;
+  //pub conditions
   forcedPubConditions: Array<conditionFunction>;
   pubConditions: Array<conditionFunction>;
   simEndConditions: Array<conditionFunction>;
@@ -137,9 +138,13 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() || (this.doSimEndConditions() && this.evaluateSimEndConditions()));
   }
 
-  updateSimStatus(ddt = this.ddt, pubStatusUpdateCall: Function | null = null) {
+  updateT() {
     this.t += this.dt / 1.5;
-    this.dt *= ddt;
+    this.dt *= this.ddt;
+  }
+
+  updateSimStatus() {
+    this.updateT();
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
 
     this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
@@ -147,9 +152,6 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
       this.maxTauH = this.tauH;
       this.pubT = this.t;
       this.pubRho = this.maxRho;
-      if (pubStatusUpdateCall) {
-        pubStatusUpdateCall()
-      }
     }
   }
 }
