@@ -6,16 +6,39 @@ import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.j
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function t2(data: theoryData): Promise<simResult> {
-  const sim = new t2SimWrap(data);
-  const res = await sim.simulate();
-  return res;
+  let bestSim, bestSimRes;
+  if(data.strat == "T2MCAlt2" || data.strat == "T2MCAlt3") {
+    const savedStrat = data.strat;
+    data.strat = "T2MC";
+    let res = await new t2Sim(data).simulate();
+
+    data.strat = savedStrat;
+    if(savedStrat == "T2MCAlt2") {
+      bestSim = new t2Sim(data);
+      bestSim.targetRho = res.rawData.pubRho;
+      bestSimRes = await bestSim.simulate();
+    }
+    else {
+      bestSim = new t2Sim(data);
+      bestSim.stop4 = 750;
+      bestSim.stop3 = 1700;
+      bestSim.stop2 = 2650;
+      bestSim.stop1 = 3700;
+      bestSim.targetRho = res.rawData.pubRho;
+      bestSimRes = await bestSim.simulate();
+    }
+  }
+  else {
+    bestSim = new t2Sim(data);
+    bestSimRes = await bestSim.simulate();
+  }
+  return bestSimRes;
 }
 
 type theory = "T2";
 
 class t2Sim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  curMult: number;
   q1: number;
   q2: number;
   q3: number;
@@ -206,7 +229,6 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       this.ticks++;
     }
@@ -249,43 +271,5 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
           this.variables[i].buy();
         } else break;
       }
-  }
-}
-
-class t2SimWrap extends theoryClass<theory> implements specificTheoryProps {
-  _originalData: theoryData;
-
-  constructor(data: theoryData) {
-    super(data);
-    this._originalData = data;
-  }
-  async simulate() {
-    let bestSim, bestSimRes;
-    if(this.strat == "T2MCAlt2" || this.strat == "T2MCAlt3") {
-      let savedStrat = this.strat;
-      this._originalData.strat = "T2MC";
-      let res = await new t2Sim(this._originalData).simulate();
-
-      this._originalData.strat = savedStrat;
-      if(savedStrat == "T2MCAlt2") {
-        bestSim = new t2Sim(this._originalData);
-        bestSim.targetRho = res.rawData.pubRho;
-        bestSimRes = await bestSim.simulate();
-      }
-      else {
-        bestSim = new t2Sim(this._originalData);
-        bestSim.stop4 = 750;
-        bestSim.stop3 = 1700;
-        bestSim.stop2 = 2650;
-        bestSim.stop1 = 3700;
-        bestSim.targetRho = res.rawData.pubRho;
-        bestSimRes = await bestSim.simulate();
-      }
-    }
-    else {
-      bestSim = new t2Sim(this._originalData);
-      bestSimRes = await bestSim.simulate();
-    }
-    return bestSimRes;
   }
 }

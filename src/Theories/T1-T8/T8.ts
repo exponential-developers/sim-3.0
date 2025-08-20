@@ -15,7 +15,6 @@ type theory = "T8";
 
 class t8Sim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  curMult: number;
   bounds: Array<Array<Array<number>>>;
   defaultStates: Array<Array<number>>;
   dts: Array<number>;
@@ -256,7 +255,6 @@ class t8Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 220) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       this.ticks++;
     }

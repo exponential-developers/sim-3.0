@@ -261,7 +261,6 @@ export default async function rz(data: theoryData) {
 }
 
 class rzSim extends theoryClass<theory> implements specificTheoryProps {
-    curMult: number;
     currencies: Array<number>;
     t_var: number;
     // Zeta parameters
@@ -634,7 +633,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
             this.updateSimStatus();
             this.updateMilestones();
-            this.curMult = Math.pow(10, this.getTotMult(this.maxRho) - this.totMult);
             this.buyVariables();
             this.ticks++;
         }

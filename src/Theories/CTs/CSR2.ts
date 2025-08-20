@@ -19,7 +19,6 @@ type pubTable = {[key: string]: number};
 class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   recursionValue: Array<number>;
   bestCoast: Array<number>;
-  curMult: number;
   rho: number;
   q: number;
   updateError_flag: boolean;
@@ -219,7 +218,6 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       if (
         (this.recursionValue !== null && this.recursionValue !== undefined && this.t < this.recursionValue[0]) ||
         this.curMult < 0.7 ||

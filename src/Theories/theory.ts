@@ -13,7 +13,7 @@ export interface specificTheoryProps extends currencyDefinition {
 
 export type conditionFunction = () => boolean;
 
-export class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
+export abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
   conditions: Array<conditionFunction>;
   milestoneConditions: Array<conditionFunction>;
   milestoneTree: Array<milestoneType>;
@@ -27,7 +27,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   lastPub: number;
   sigma: number;
   totMult: number;
-  curMult?: number;
+  curMult: number;
   dt: number;
   ddt: number;
   t: number;
@@ -52,6 +52,8 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   milestones: milestoneType;
   pubMulti: number;
 
+  abstract getTotMult(val: number): number;
+
   constructor(data: theoryData) {
     this.strat = data.strat as stratType[theory];
     this.theory = data.theory;
@@ -63,6 +65,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.lastPub = data.rho;
     this.sigma = data.sigma;
     this.totMult = 0;
+    this.curMult = 0;
     this.dt = global.dt;
     this.ddt = global.ddt;
     this.t = 0;
@@ -153,5 +156,7 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
       this.pubT = this.t;
       this.pubRho = this.maxRho;
     }
+    
+    this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
   }
 }

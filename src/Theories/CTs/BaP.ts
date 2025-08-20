@@ -245,7 +245,6 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       if (this.forcedPubRho == 1500 && this.maxRho >= 1495 && this.doContinuityFork) {
         this.doContinuityFork = false;

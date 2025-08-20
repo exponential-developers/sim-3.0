@@ -123,7 +123,6 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       if (this.strat !== "T1SolarXLII" || this.rho < coast) this.buyVariables();
       this.ticks++;
     }

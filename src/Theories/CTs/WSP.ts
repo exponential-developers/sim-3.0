@@ -17,7 +17,6 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
   q: number;
   S: number;
-  curMult: number;
 
   getBuyingConditions() {
     let c1weight = 0;
@@ -132,7 +131,6 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       this.ticks++;
     }

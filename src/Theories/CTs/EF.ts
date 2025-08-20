@@ -17,7 +17,6 @@ type theory = "EF";
 type pubTable = {[key: string]: number};
 
 class efSim extends theoryClass<theory> implements specificTheoryProps {
-  curMult: number;
   currencies: Array<number>;
   q: number;
   t_var: number;
@@ -233,7 +232,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
       if (this.nextMilestoneCost > prev_nextMilestoneCost) {
         this.coasting.fill(false);
       }
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       await this.buyVariables();
       if (this.forcedPubRho == 375 && this.maxRho >= 370 && this.doContinuityFork) {
         this.doContinuityFork = false;

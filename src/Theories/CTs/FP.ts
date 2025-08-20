@@ -52,17 +52,19 @@ interface milestones {
 type pubTable = {[key: string]: number};
 
 class fpSim extends theoryClass<theory, milestones> implements specificTheoryProps {
-  curMult: number;
+  milestones: milestones;
+  // currencies and growing variables
   rho: number;
   q: number;
   r: number;
   t_var: number;
+  // fractals
   T_n: number;
   U_n: number;
   S_n: number;
   n: number;
   updateN_flag: boolean;
-  milestones: milestones;
+  // pub tables and coasting
   forcedPubRho: number;
   coasting: Array<boolean>;
   bestRes: simResult | null;
@@ -288,7 +290,6 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       await this.buyVariables();
       if (this.forcedPubRho == 2000 && this.maxRho >= 1996 && this.doContinuityFork) {
         this.doContinuityFork = false;

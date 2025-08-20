@@ -14,7 +14,6 @@ export default async function sl(data: theoryData): Promise<simResult> {
 type theory = "SL";
 
 class slSim extends theoryClass<theory> implements specificTheoryProps {
-  curMult: number;
   rho: number;
   rho2: number;
   rho3: number;
@@ -136,11 +135,10 @@ class slSim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 300) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       this.ticks++;
     }
-    this.curMult = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
+    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
     const result = createResult(this, "");
 

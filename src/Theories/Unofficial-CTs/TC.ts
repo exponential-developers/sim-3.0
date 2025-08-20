@@ -167,7 +167,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
       if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 500) this.updateMilestones();
-      this.curMult = Math.pow(10, this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       this.ticks++;
     }

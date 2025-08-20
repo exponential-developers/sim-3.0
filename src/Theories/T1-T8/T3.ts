@@ -15,7 +15,6 @@ type theory = "T3";
 
 class t3Sim extends theoryClass<theory> implements specificTheoryProps {
   currencies: Array<number>;
-  curMult: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -307,7 +306,6 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
       if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
       this.ticks++;
     }
