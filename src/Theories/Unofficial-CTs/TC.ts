@@ -43,7 +43,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     return condition;
   }
 
-  getMilestoneConditions() {
+  getVariableAvailability() {
     return [
       () => true,
       () => true,
@@ -150,8 +150,8 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost("1e750", 16.60964), valueScaling: new StepwisePowerSumValue() }), // p1
       new Variable({ cost: new ExponentialCost("1e900", 1e15), valueScaling: new ExponentialValue(2) }), // p2
     ];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);
@@ -245,7 +245,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({
               variable: this.varNames[i],

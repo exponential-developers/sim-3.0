@@ -73,7 +73,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => this.variables[0].level < 4,
       () => true,
@@ -190,8 +190,8 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     this.doContinuityFork = true;
     this.depth = 0;
     this.nextMilestoneCost = Infinity;
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
@@ -291,7 +291,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const doDynamicCoasting = this.forcedPubRho == Infinity && this.strat != "EF";
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
+        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
           if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[i]())) {
             this.coasting[i] = true;
             break;

@@ -125,7 +125,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => this.variables[0].level < 4,
       () => true,
@@ -246,8 +246,8 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     }
     //pub values
     this.milestones = { snexp: 0, fractals: 0, nboost: 0, snboost: 0, sterm: 0, expterm: 0 };
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
@@ -348,7 +348,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
           if (this.forcedPubRho !== Infinity) {
             if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
               this.coasting[i] = true;

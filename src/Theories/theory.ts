@@ -14,8 +14,8 @@ export interface specificTheoryProps extends currencyDefinition {
 export type conditionFunction = () => boolean;
 
 export abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
-  conditions: Array<conditionFunction>;
-  milestoneConditions: Array<conditionFunction>;
+  buyingConditions: Array<conditionFunction>;
+  variableAvailability: Array<conditionFunction>;
   milestoneTree: Array<milestoneType>;
   strat: stratType[theory];
   theory: theoryType;
@@ -87,8 +87,8 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.doSimEndConditions = () => true;
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
-    this.conditions = [];
-    this.milestoneConditions = [];
+    this.buyingConditions = [];
+    this.variableAvailability = [];
     this.milestoneTree = [] as unknown as Array<milestoneType>;
   }
 

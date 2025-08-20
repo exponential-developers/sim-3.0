@@ -357,7 +357,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         };
         return conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     }
-    getMilestoneConditions() {
+    getVariableAvailability() {
         // "c1", "c2", "b", "w1", "w2", "w3"
         return [
             () => true,
@@ -610,8 +610,8 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             }),
         ];
         this.pubUnlock = 9;
-        this.conditions = this.getBuyingConditions();
-        this.milestoneConditions = this.getMilestoneConditions();
+        this.buyingConditions = this.getBuyingConditions();
+        this.variableAvailability = this.getVariableAvailability();
         this.milestoneTree = this.getMilestoneTree();
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
@@ -716,7 +716,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
 
         for (let i = this.variables.length - 1; i >= 0; i--)
             while (true) {
-                if (this.currencies[currencyIndices[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+                if (this.currencies[currencyIndices[i]] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
                     this.currencies[currencyIndices[i]] = subtract(this.currencies[currencyIndices[i]], this.variables[i].cost);
                     if (this.maxRho + 5 > this.lastPub) {
                         let vb: varBuy = {

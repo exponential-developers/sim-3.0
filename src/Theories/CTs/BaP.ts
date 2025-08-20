@@ -52,7 +52,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => this.variables[0].level < 4, //tdot
       () => true, //c1
@@ -213,8 +213,8 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
       new Variable({ cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
@@ -293,7 +293,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     {
       for (let i = this.variables.length - 1; i >= 0; i--)
         while (true) {
-          if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+          if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
             if (this.maxRho + 5 > this.lastPub) {
               this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
             }
@@ -329,7 +329,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
         ];
         let minCost = [Number.MAX_VALUE, -1];
         for (let i = this.variables.length - 1; i >= 0; i--)
-          if (rawCost[i] + weights[i] < minCost[0] && this.milestoneConditions[i]()) {
+          if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
             minCost = [rawCost[i] + weights[i], i];
           }
         if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho) {
