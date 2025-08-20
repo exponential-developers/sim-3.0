@@ -6,18 +6,39 @@ import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
-export default async function mf(data: theoryData): Promise<simResult> {
-  return await ((new mfSimWrap(data)).simulate());
-}
-
 type theory = "MF";
+type resetBundle = [number, number, number, number];
+
+export default async function mf(data: theoryData): Promise<simResult> {
+  let resetBundles: resetBundle[] = [
+    [0, 1, 0, 0],
+    [0, 1, 0, 1],
+    [0, 2, 0, 0]
+  ];
+  let bestRes: simResult = defaultResult();
+  for (const resetBundle of resetBundles) {
+    if (data.rho <= 100 && resetBundle[3] > 0) {
+      continue
+    }
+    let sim = new mfSim(data, resetBundle);
+    let res = await sim.simulate();
+    // Unnecessary additional coasting attempt
+    // let internalSim = new mfSim(data, resetCombination)
+    // internalSim.normalPubRho = bestSim.pubRho;
+    // let res = await internalSim.simulate();
+    // if (bestSim.maxTauH < internalSim.maxTauH) {
+    //   bestSim = internalSim;
+    //   bestSimRes = res;
+    // }
+    bestRes = getBestResult(bestRes, res);
+  }
+  return bestRes
+}
 
 const mu0 = 4e-7 * Math.PI
 const q0 = 1.602e-19
 const i0 = 1e-15
 const m0 = 1e-3
-
-type resetBundle = [number, number, number, number];
 
 class mfSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
@@ -440,39 +461,5 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
         }
       }
     }
-  }
-}
-
-class mfSimWrap extends theoryClass<theory> implements specificTheoryProps {
-  _originalData: theoryData;
-
-  constructor(data: theoryData) {
-      super(data);
-      this._originalData = data;
-  }
-  async simulate() {
-    let resetBundles: resetBundle[] = [
-      [0, 1, 0, 0],
-      [0, 1, 0, 1],
-      [0, 2, 0, 0]
-    ];
-    let bestRes: simResult = defaultResult();
-    for (const resetBundle of resetBundles) {
-      if (this._originalData.rho <= 100 && resetBundle[3] > 0) {
-        continue
-      }
-      let sim = new mfSim(this._originalData, resetBundle);
-      let res = await sim.simulate();
-      // Unnecessary additional coasting attempt
-      // let internalSim = new mfSim(this._originalData, resetCombination)
-      // internalSim.normalPubRho = bestSim.pubRho;
-      // let res = await internalSim.simulate();
-      // if (bestSim.maxTauH < internalSim.maxTauH) {
-      //   bestSim = internalSim;
-      //   bestSimRes = res;
-      // }
-      bestRes = getBestResult(bestRes, res);
-    }
-    return bestRes
   }
 }
