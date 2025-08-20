@@ -273,7 +273,6 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 9;
-    this.totMult = this.getTotMult(data.rho);
     this.currencies = [0, 0, 0];
     this.varNames = ["b1", "b2", "b3", "c11", "c12", "c13", "c21", "c22", "c23", "c31", "c32", "c33"];
     this.variables = [
@@ -290,7 +289,6 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
       new Variable({ cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
-    this.curMult = 0;
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestones = [0, 0, 0, 0];
     this.conditions = this.getBuyingConditions();

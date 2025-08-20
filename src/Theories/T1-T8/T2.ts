@@ -181,8 +181,6 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     super(data);
     //theory
     this.pubUnlock = 15;
-    this.curMult = 0;
-    this.totMult = this.getTotMult(data.rho);
     //currencies
     this.rho = 0;
     this.q1 = -Infinity;

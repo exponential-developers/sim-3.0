@@ -109,8 +109,6 @@ class slSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.totMult = this.getTotMult(data.rho);
-    this.curMult = 0;
     this.rho = 0;
     this.rho2 = 0;
     this.rho3 = 0;

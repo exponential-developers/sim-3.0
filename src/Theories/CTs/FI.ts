@@ -262,7 +262,6 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
 
   constructor(data: theoryData) {
     super(data);
-    this.totMult = this.getTotMult(data.rho);
     this.pubUnlock = 8;
     this.rho = 0;
     this.q = 0;

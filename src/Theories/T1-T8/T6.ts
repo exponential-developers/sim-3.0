@@ -180,7 +180,6 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 12;
-    this.totMult = this.getTotMult(data.rho);
     this.rho = 0;
     this.q = -Infinity;
     this.r = 0;

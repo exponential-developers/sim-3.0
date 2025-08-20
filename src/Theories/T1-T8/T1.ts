@@ -83,7 +83,6 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.totMult = this.getTotMult(data.rho);
     this.rho = 0;
     this.varNames = ["q1", "q2", "c1", "c2", "c3", "c4"];
     this.variables = [

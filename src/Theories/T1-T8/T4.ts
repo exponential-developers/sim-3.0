@@ -190,11 +190,9 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 9;
-    this.totMult = this.getTotMult(data.rho);
     this.recursionValue = <number>data.recursionValue;
     this.rho = 0;
     this.q = 0;
-    this.curMult = 0;
     //initialize variables
     this.variables = [
       new Variable({ cost: new FirstFreeCost(new ExponentialCost(5, 1.305)), valueScaling: new StepwisePowerSumValue() }),

@@ -161,8 +161,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.totMult = this.getTotMult(data.rho);
-    this.curMult = 0;
     this.currencies = [0, 0, 0];
     this.q = 0;
     this.t_var = 0;

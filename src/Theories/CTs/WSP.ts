@@ -103,8 +103,6 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 8;
-    this.totMult = this.getTotMult(data.rho);
-    this.curMult = 0;
     this.rho = 0;
     this.q = 0;
     //initialize variables

@@ -71,7 +71,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   getTotMult(val: number) {
-    return Math.max(0, val * this.tauFactor * 0.132075 + l10(5));
+    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.132075 + l10(5));
   }
   updateMilestones(): void {
     let stage = 0;
@@ -184,7 +184,6 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 7;
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.rho = 0;
     this.q = new Array(9).fill(-1e60)
     this.r = -1e60

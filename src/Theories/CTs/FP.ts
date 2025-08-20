@@ -162,7 +162,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
   }
 
   getTotMult(val: number) {
-    return Math.max(0, val * this.tauFactor * 0.331 + l10(5));
+    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.331 + l10(5));
   }
   updateMilestones(): void {
     let stage = 0;
@@ -210,8 +210,6 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
   }
   constructor(data: theoryData) {
     super(data);
-    this.totMult = data.rho < 9 ? 0 : this.getTotMult(data.rho);
-    this.curMult = 0;
     this.pubUnlock = 12;
     this.rho = 0;
     this.q = 0;

@@ -217,7 +217,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   getTotMult(val: number) {
-    return Math.max(0, val * this.tauFactor * 0.17);
+    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.17);
   }
   updateMilestones(): void {
     const points = [0, 20, 50, 175, 225, 275, 325, 425, 475, 525];
@@ -268,7 +268,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData, resetBundle: resetBundle) {
     super(data);
     this.pubUnlock = 8;
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.rho = -Infinity;
     this.c = 0;
     this.x = 0;

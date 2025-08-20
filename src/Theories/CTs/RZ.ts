@@ -561,8 +561,6 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
 
     constructor(data: theoryData) {
         super(data);
-        this.totMult = this.getTotMult(data.rho);
-        this.curMult = 0;
         this.targetZero = 999999999;
         this.currencies = [0, 0];
         this.t_var = 0;
