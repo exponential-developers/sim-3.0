@@ -22,7 +22,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   tauFactor: number;
   //theory
   pubUnlock: number;
-  cap: Array<number>;
+  cap: number;
   recovery: { value: number; time: number; recoveryTime: boolean };
   lastPub: number;
   sigma: number;
@@ -60,7 +60,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     //theory
     this.pubUnlock = 1;
-    this.cap = typeof data.cap === "number" && data.cap > 0 ? [data.cap, 1] : [Infinity, 0];
+    this.cap = typeof data.cap === "number" && data.cap > 0 ? data.cap : Infinity;
     this.recovery = data.recovery ?? { value: 0, time: 0, recoveryTime: false };
     this.lastPub = data.rho;
     this.sigma = data.sigma;
@@ -82,7 +82,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.pubT = 0;
     this.pubRho = 0;
     this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
-    this.pubConditions = [() => this.maxRho >= this.cap[0]];
+    this.pubConditions = [() => this.maxRho >= this.cap];
     this.simEndConditions = [() => this.t > this.pubT * 2];
     this.doSimEndConditions = () => true;
     this.milestones = [] as unknown as milestoneType;
@@ -93,7 +93,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   }
 
   copyFrom(other: this): void {
-    this.cap = [...other.cap];
+    this.cap = other.cap;
     this.totMult = other.totMult;
     this.dt = other.dt;
     this.ddt = other.ddt;
@@ -120,7 +120,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
       rho: this.lastPub,
       strat: this.strat as string,
       recovery: { ...this.recovery },
-      cap: this.cap[0],
+      cap: this.cap,
       recursionValue: null,
     };
   }
