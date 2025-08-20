@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, l2 } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { ExponentialCost } from "../../Utils/cost.js";

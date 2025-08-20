@@ -3,7 +3,7 @@ import { add, createResult, l10, subtract, sleep, binarySearch, getBestResult } 
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
-import { c1Exp, getBlackholeSpeed, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ.js";
+import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ.js";
 import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
 
 import { ExponentialCost, StepwiseCost, CompositeCost, ConstantCost, FirstFreeCost, BaseCost } from '../../Utils/cost.js';

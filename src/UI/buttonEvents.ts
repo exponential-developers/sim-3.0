@@ -1,6 +1,5 @@
 import html2canvas from "html2canvas";
 import { qs, event } from "../Utils/helpers.js";
-import { global } from "../Sim/main.js";
 
 //Buttons
 const clear = qs(".clear");

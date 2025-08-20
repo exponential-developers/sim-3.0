@@ -17,7 +17,6 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
   recursionValue: number;
   rho: number;
   q: number;
-  variableSum: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -204,7 +203,6 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(1e3, 100), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
     ];
-    this.variableSum = 0;
     this.varNames = ["c1", "c2", "c3", "c4", "c5", "c6", "q1", "q2"];
     //milestones  [terms, c1exp, multQdot]
     this.milestones = [0, 0, 0];
@@ -244,13 +242,13 @@ class t4Sim extends theoryClass<theory> implements specificTheoryProps {
 
     const vc1 = this.variables[0].value * (1 + 0.15 * this.milestones[1]);
     const vc2 = this.variables[1].value;
-    this.variableSum = vc1 + vc2;
-    this.variableSum = add(this.variableSum, this.variables[2].value + this.q);
-    if (this.milestones[0] >= 1) this.variableSum = add(this.variableSum, this.variables[3].value + this.q * 2);
-    if (this.milestones[0] >= 2) this.variableSum = add(this.variableSum, this.variables[4].value + this.q * 3);
-    if (this.milestones[0] >= 3) this.variableSum = add(this.variableSum, this.variables[5].value + this.q * 4);
+    let variableSum = vc1 + vc2;
+    variableSum = add(variableSum, this.variables[2].value + this.q);
+    if (this.milestones[0] >= 1) variableSum = add(variableSum, this.variables[3].value + this.q * 2);
+    if (this.milestones[0] >= 2) variableSum = add(variableSum, this.variables[4].value + this.q * 3);
+    if (this.milestones[0] >= 3) variableSum = add(variableSum, this.variables[5].value + this.q * 4);
 
-    const rhodot = this.totMult + this.variableSum;
+    const rhodot = this.totMult + variableSum;
     this.rho = add(this.rho, rhodot + l10(this.dt));
   }
   buyVariables() {

@@ -391,7 +391,6 @@ export let zeta = (T: number, ticks: number, offGrid: boolean, cache: Array<Comp
 
 // Mechanics to review:
 export const resolution = 4;
-export const getBlackholeSpeed = (z: number): number => Math.min(Math.pow(z, 2) + 0.004, 1 / resolution);
 export const c1Exp = [1, 1.14, 1.21, 1.25];
 
 // The lookup table only works before black hole is enabled in a pub, because then the time values would get misaligned.

@@ -1,5 +1,5 @@
 import { formatNumber, round, qs, event } from "../Utils/helpers.js";
-import { getSimState, setSimState } from "./simState.js";
+import { setSimState } from "./simState.js";
 
 const settingsBtn = <HTMLButtonElement>qs(".settingsBtn");
 const settingsCloseBtn = <HTMLButtonElement>qs(".settingsCloseBtn");
