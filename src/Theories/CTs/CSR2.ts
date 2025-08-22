@@ -111,13 +111,13 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   searchCoast(rhodot: number) {
     if (this.curMult > 0.7) {
       let i = getCoastLen(this.lastPub);
-      const maxMulti = ((this.totMult + Math.log10(4) + Math.log10(200)) / 2.203) * 10;
+      const maxMulti = ((this.totMult + l10(4) + l10(200)) / 2.203) * 10;
       const s = () => {
         const endRho = add(
           this.rho,
           rhodot +
             this.variables[0].value * (this.maxRho >= 10 ? (this.maxRho >= 45 ? (this.maxRho >= 80 ? 1.15 : 1.1) : 1.05) : 1) +
-            Math.log10(i * 1.5)
+            l10(i * 1.5)
         );
         const endTauH = (Math.min(maxMulti, endRho) - this.lastPub) / ((this.t + i) / 3600);
         if (this.bestCoast[0] < endTauH) {
@@ -134,8 +134,8 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
       } else {
         rhodot = this.totMult + this.variables[0].value * (1 + 0.05 * this.milestones[0]) + this.variables[1].value + this.q;
         const qdot = this.totMult + this.variables[2].value + this.variables[4].value * 1.15 + this.error;
-        const avgQ = add(this.q + l10(2), qdot + Math.log10(i * 1.5)) - l10(2);
-        const endRho = add(this.rho, rhodot - this.q + avgQ + Math.log10(i * 1.5));
+        const avgQ = add(this.q + l10(2), qdot + l10(i * 1.5)) - l10(2);
+        const endRho = add(this.rho, rhodot - this.q + avgQ + l10(i * 1.5));
         const endTauH = (endRho - this.lastPub) / ((this.t + i) / 3600);
         if (this.bestCoast[0] < endTauH && endRho < maxMulti) {
           this.bestCoast[0] = endTauH;

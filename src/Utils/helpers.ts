@@ -17,6 +17,9 @@ export function sleep(time = 0) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+export let l10 = Math.log10;
+export let l2 = Math.log2;
+
 export function getIndexFromTheory(theory: string) {
   return theory in Object.keys(jsonData.theories);
 }
@@ -26,7 +29,7 @@ export function getTheoryFromIndex(index: number) {
 
 export function parseLog10String(num: string): number {
   const split = String(num).split("e");
-  const result = Number(split[1]) + Math.log10(Math.max(1, Number(split[0])));
+  const result = Number(split[1]) + l10(Math.max(1, Number(split[0])));
   return Number(result);
 }
 
@@ -43,7 +46,7 @@ export function convertTime(secs: number): string {
   const years = Math.floor(secs / 31536000);
   let result = "";
   if (years > 0) {
-    result += years < 1e6 ? years : logToExp(Math.log10(years));
+    result += years < 1e6 ? years : logToExp(l10(years));
     result += "y";
   }
   if (days > 0) result += days + "d";
@@ -66,7 +69,7 @@ export function add_old(value1: number, value2: number) {
   const fractionalPart1 = 10 ** (max - wholePart1);
   const wholePart2 = Math.floor(min);
   const fractionalPart2 = 10 ** (min - wholePart2);
-  return wholePart1 + Math.log10(fractionalPart1 + fractionalPart2 / 10 ** (wholePart1 - wholePart2));
+  return wholePart1 + l10(fractionalPart1 + fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
 export function add(value1: number, value2: number) {
@@ -82,7 +85,7 @@ export function subtract_old(value1: number, value2: number) {
   const fractionalPart1 = 10 ** (max - wholePart1);
   const wholePart2 = Math.floor(min);
   const fractionalPart2 = 10 ** (min - wholePart2);
-  return wholePart1 + Math.log10(fractionalPart1 - fractionalPart2 / 10 ** (wholePart1 - wholePart2));
+  return wholePart1 + l10(fractionalPart1 - fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
 export function subtract(value1: number, value2: number) {
@@ -90,9 +93,6 @@ export function subtract(value1: number, value2: number) {
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
 }
-
-export let l10 = Math.log10;
-export let l2 = Math.log2;
 
 //written by propfeds
 export function binarySearch(arr: Array<number>, target: number) {

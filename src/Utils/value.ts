@@ -1,4 +1,4 @@
-import { add, subtract } from "./helpers";
+import { add, subtract, l10 } from "./helpers";
 
 export abstract class BaseValue {
     abstract computeNewValue(prevValue: number, currentLevel: number): number;
@@ -17,19 +17,19 @@ export class StepwisePowerSumValue extends BaseValue {
         this.offset = offset;
     }
     computeNewValue(prevValue: number, currentLevel: number): number {
-        let toAdd = Math.log10(this.base) * Math.floor(currentLevel / this.length);
+        let toAdd = l10(this.base) * Math.floor(currentLevel / this.length);
         return add(prevValue, toAdd);
     }
     recomputeValue(level: number): number {
         if (level === 0) {
-            return Math.log10(this.offset);
+            return l10(this.offset);
         }
         const intPart = Math.floor(level / this.length);
         const modPart = level - intPart * this.length;
         const d = this.length / (this.base - 1);
-        const subPart = subtract(Math.log10(d + modPart) + Math.log10(this.base) * intPart, Math.log10(d));
+        const subPart = subtract(l10(d + modPart) + l10(this.base) * intPart, l10(d));
         if (this.offset !== -Infinity) {
-            return add(Math.log10(this.offset), subPart);
+            return add(l10(this.offset), subPart);
         }
         else {
             return subPart;
@@ -49,10 +49,10 @@ export class ExponentialValue extends BaseValue {
     }
 
     computeNewValue(prevValue: number, currentLevel: number): number {
-        return Math.log10(this.power) * (currentLevel + 1);
+        return l10(this.power) * (currentLevel + 1);
     }
     recomputeValue(level: number): number {
-        return Math.log10(this.power) * level;
+        return l10(this.power) * level;
     }
     copy(): ExponentialValue {
         return new ExponentialValue(this.power);

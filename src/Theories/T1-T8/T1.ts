@@ -109,9 +109,9 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   async simulate() {
     const c4_nc = Math.ceil((this.lastPub - 10) / 8) * 8 + 10;
-    const pub = c4_nc - this.lastPub < 3 ? c4_nc + 2 : c4_nc - this.lastPub < 5 ? c4_nc - 2 + Math.log10(1.5) : c4_nc - 4 + Math.log10(1.4);
-    let coast = (c4_nc - this.lastPub < 3 ? c4_nc : Math.floor(this.lastPub)) + Math.log10(30);
-    coast = Math.max(8 + Math.log10(30), coast + Math.floor(pub - coast));
+    const pub = c4_nc - this.lastPub < 3 ? c4_nc + 2 : c4_nc - this.lastPub < 5 ? c4_nc - 2 + l10(1.5) : c4_nc - 4 + l10(1.4);
+    let coast = (c4_nc - this.lastPub < 3 ? c4_nc : Math.floor(this.lastPub)) + l10(30);
+    coast = Math.max(8 + l10(30), coast + Math.floor(pub - coast));
     if (this.strat === "T1SolarXLII") {
       this.pubConditions.push(() => this.maxRho >= pub)
     }

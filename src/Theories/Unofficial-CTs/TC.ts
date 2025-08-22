@@ -28,7 +28,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   kd: number;
   T: number;
   setPoint: number;
-  curMult: number;
 
   getBuyingConditions() {
     const conditions = {
