@@ -128,7 +128,7 @@ export function createResult(data: simResultInterface, stratExtra: null | string
     deltaTau: logToExp((data.pubRho - data.lastPub) * jsonData.theories[data.theory].tauFactor, 2),
     pubMulti: formatNumber(data.pubMulti),
     strat: data.strat + stratExtra,
-    tauH: data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH * jsonData.theories[data.theory].tauFactor)),
+    tauH: data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH)),
     time: convertTime(Math.max(0, data.pubT - data.recovery.time)),
     rawData : {
       pubRho: data.pubRho,

@@ -150,7 +150,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.updateT();
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
 
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
+    this.tauH = this.tauFactor * (this.maxRho - this.lastPub) / (this.t / 3600);
     if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
       this.maxTauH = this.tauH;
       this.pubT = this.t;
