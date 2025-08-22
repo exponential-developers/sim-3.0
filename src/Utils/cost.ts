@@ -83,10 +83,7 @@ export class ConstantCost extends BaseCost {
         return this.cost;
     }
     copy(): ConstantCost {
-        // Dark hacks to make a copy of this one:
-        let res = new ConstantCost("10");
-        res.cost = this.cost;
-        return res;
+        return new ConstantCost(this.cost);
     }
 }
 
