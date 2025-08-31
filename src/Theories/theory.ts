@@ -13,20 +13,21 @@ export interface specificTheoryProps extends currencyDefinition {
 
 export type conditionFunction = () => boolean;
 
-export class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
-  conditions: Array<conditionFunction>;
-  milestoneConditions: Array<conditionFunction>;
+export abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
+  buyingConditions: Array<conditionFunction>;
+  variableAvailability: Array<conditionFunction>;
   milestoneTree: Array<milestoneType>;
   strat: stratType[theory];
   theory: theoryType;
   tauFactor: number;
   //theory
-  cap: Array<number>;
+  pubUnlock: number;
+  cap: number;
   recovery: { value: number; time: number; recoveryTime: boolean };
   lastPub: number;
   sigma: number;
   totMult: number;
-  curMult?: number;
+  curMult: number;
   dt: number;
   ddt: number;
   t: number;
@@ -42,20 +43,29 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
   maxTauH: number;
   pubT: number;
   pubRho: number;
+  //pub conditions
+  forcedPubConditions: Array<conditionFunction>;
+  pubConditions: Array<conditionFunction>;
+  simEndConditions: Array<conditionFunction>;
+  doSimEndConditions: conditionFunction;
   //milestones  [terms, c1exp, multQdot]
   milestones: milestoneType;
   pubMulti: number;
+
+  abstract getTotMult(val: number): number;
 
   constructor(data: theoryData) {
     this.strat = data.strat as stratType[theory];
     this.theory = data.theory;
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     //theory
-    this.cap = typeof data.cap === "number" && data.cap > 0 ? [data.cap, 1] : [Infinity, 0];
+    this.pubUnlock = 1;
+    this.cap = typeof data.cap === "number" && data.cap > 0 ? data.cap : Infinity;
     this.recovery = data.recovery ?? { value: 0, time: 0, recoveryTime: false };
     this.lastPub = data.rho;
     this.sigma = data.sigma;
-    this.totMult = 0;
+    this.totMult = this.getTotMult(data.rho);
+    this.curMult = 0;
     this.dt = global.dt;
     this.ddt = global.ddt;
     this.t = 0;
@@ -71,15 +81,19 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
     this.maxTauH = 0;
     this.pubT = 0;
     this.pubRho = 0;
+    this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
+    this.pubConditions = [() => this.maxRho >= this.cap];
+    this.simEndConditions = [() => this.t > this.pubT * 2];
+    this.doSimEndConditions = () => true;
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
-    this.conditions = [];
-    this.milestoneConditions = [];
+    this.buyingConditions = [];
+    this.variableAvailability = [];
     this.milestoneTree = [] as unknown as Array<milestoneType>;
   }
 
   copyFrom(other: this): void {
-    this.cap = [...other.cap];
+    this.cap = other.cap;
     this.totMult = other.totMult;
     this.dt = other.dt;
     this.ddt = other.ddt;
@@ -106,8 +120,43 @@ export class theoryClass<theory extends theoryType, milestoneType = Array<number
       rho: this.lastPub,
       strat: this.strat as string,
       recovery: { ...this.recovery },
-      cap: this.cap[0],
+      cap: this.cap,
       recursionValue: null,
     };
+  }
+
+  evaluateForcedPubConditions(): boolean {
+    return this.forcedPubConditions.every((cond) => cond())
+  }
+
+  evaluatePubConditions(): boolean {
+    return this.pubConditions.some((cond) => cond())
+  }
+
+  evaluateSimEndConditions(): boolean {
+    return this.simEndConditions.some((cond) => cond())
+  }
+
+  endSimulation(): boolean {
+    return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() || (this.doSimEndConditions() && this.evaluateSimEndConditions()));
+  }
+
+  updateT() {
+    this.t += this.dt / 1.5;
+    this.dt *= this.ddt;
+  }
+
+  updateSimStatus() {
+    this.updateT();
+    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
+
+    this.tauH = this.tauFactor * (this.maxRho - this.lastPub) / (this.t / 3600);
+    if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
+      this.maxTauH = this.tauH;
+      this.pubT = this.t;
+      this.pubRho = this.maxRho;
+    }
+    
+    this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
   }
 }

@@ -1,5 +1,5 @@
 import { add } from "./helpers.js";
-import { parseValue, BaseCost, FirstFreeCost } from "./cost";
+import { BaseCost, FirstFreeCost } from "./cost";
 import { BaseValue } from "./value";
 
 interface variableData {

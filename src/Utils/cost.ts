@@ -1,10 +1,10 @@
-import { parseLog10String } from "./helpers";
+import { parseLog10String, l10 } from "./helpers";
 
 export function parseValue(val: string) {
     if (val === "Infinity") throw "Variable value reached Infinity";
     if (val === "0") return -Infinity;
     if (/[e]/.test(val)) return parseLog10String(val);
-    return Math.log10(Number(val));
+    return l10(Number(val));
 }
 
 export abstract class BaseCost {
@@ -43,7 +43,7 @@ export class ExponentialCost extends BaseCost  {
         super();
         this.cost = parseValue(String(base));
         this.costInc = parseValue(String(costInc));
-        if (log2) this.costInc = Math.log10(2) * 10 ** this.costInc;
+        if (log2) this.costInc = l10(2) * 10 ** this.costInc;
     }
     getCost(level: number) {
         return this.cost + this.costInc * level;
@@ -83,10 +83,7 @@ export class ConstantCost extends BaseCost {
         return this.cost;
     }
     copy(): ConstantCost {
-        // Dark hacks to make a copy of this one:
-        let res = new ConstantCost("10");
-        res.cost = this.cost;
-        return res;
+        return new ConstantCost(this.cost);
     }
 }
 

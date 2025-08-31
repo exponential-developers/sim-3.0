@@ -19,7 +19,6 @@ type pubTable = {[key: string]: number};
 class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   recursionValue: Array<number>;
   bestCoast: Array<number>;
-  curMult: number;
   rho: number;
   q: number;
   updateError_flag: boolean;
@@ -28,6 +27,7 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   forcedPubRho: number;
   coasting: Array<boolean>;
   bestRes: simResult | null;
+  doContinuityFork: boolean;
 
   getBuyingConditions() {
     const idlestrat = [true, true, true, true, true];
@@ -64,7 +64,7 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
@@ -111,13 +111,13 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   searchCoast(rhodot: number) {
     if (this.curMult > 0.7) {
       let i = getCoastLen(this.lastPub);
-      const maxMulti = ((this.totMult + Math.log10(4) + Math.log10(200)) / 2.203) * 10;
+      const maxMulti = ((this.totMult + l10(4) + l10(200)) / 2.203) * 10;
       const s = () => {
         const endRho = add(
           this.rho,
           rhodot +
             this.variables[0].value * (this.maxRho >= 10 ? (this.maxRho >= 45 ? (this.maxRho >= 80 ? 1.15 : 1.1) : 1.05) : 1) +
-            Math.log10(i * 1.5)
+            l10(i * 1.5)
         );
         const endTauH = (Math.min(maxMulti, endRho) - this.lastPub) / ((this.t + i) / 3600);
         if (this.bestCoast[0] < endTauH) {
@@ -134,8 +134,8 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
       } else {
         rhodot = this.totMult + this.variables[0].value * (1 + 0.05 * this.milestones[0]) + this.variables[1].value + this.q;
         const qdot = this.totMult + this.variables[2].value + this.variables[4].value * 1.15 + this.error;
-        const avgQ = add(this.q + l10(2), qdot + Math.log10(i * 1.5)) - l10(2);
-        const endRho = add(this.rho, rhodot - this.q + avgQ + Math.log10(i * 1.5));
+        const avgQ = add(this.q + l10(2), qdot + l10(i * 1.5)) - l10(2);
+        const endRho = add(this.rho, rhodot - this.q + avgQ + l10(i * 1.5));
         const endTauH = (endRho - this.lastPub) / ((this.t + i) / 3600);
         if (this.bestCoast[0] < endTauH && endRho < maxMulti) {
           this.bestCoast[0] = endTauH;
@@ -146,8 +146,7 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
-    this.totMult = this.getTotMult(data.rho);
-    this.curMult = 0;
+    this.pubUnlock = 10;
     this.rho = 0;
     this.q = 0;
     //initialize variables
@@ -167,9 +166,18 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
+    this.doContinuityFork = true;
 
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    if (this.strat.includes("PT") && this.lastPub >= 500 && this.lastPub < 1499.5) {
+      let newpubtable: pubTable = pubtable.csr2data;
+      let pubseek = Math.round(this.lastPub * 16);
+      this.forcedPubRho = newpubtable[pubseek.toString()] / 16;
+      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+    }
+
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
+    this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
   copyFrom(other: this): void {
@@ -193,40 +201,34 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     return newsim;
   }
   async simulate(data: theoryData) {
+    if (this.forcedPubRho != Infinity) {
+      this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
+    }
     if (this.lastPub >= 10 && (data.recursionValue === null || data.recursionValue === undefined) && this.strat === "CSR2XL") {
       data.recursionValue = [Infinity, 0];
       const sim = new csr2Sim(data);
       await sim.simulate(data);
       this.recursionValue = [sim.bestCoast[1], 1];
     }
-    let pubCondition = false;
-    if (this.strat.includes("PT") && this.lastPub >= 500 && this.lastPub < 1499.5) {
-      let newpubtable: pubTable = pubtable.csr2data;
-      let pubseek = Math.round(this.lastPub * 16);
-      this.forcedPubRho = newpubtable[pubseek.toString()] / 16;
-      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
-    }
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
+      this.updateSimStatus();
       if (
         (this.recursionValue !== null && this.recursionValue !== undefined && this.t < this.recursionValue[0]) ||
         this.curMult < 0.7 ||
         this.recursionValue[1] === 0
       ) await this.buyVariables();
       if (this.lastPub < 500) this.updateMilestones();
-      if (this.forcedPubRho !== Infinity) {
-        pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > 10 && (this.pubRho <= 1500 || this.t > this.pubT * 2);
-        pubCondition ||= this.pubRho > this.cap[0];
+      if (this.forcedPubRho == 1500 && this.maxRho >= 1495 && this.doContinuityFork) {
+        this.doContinuityFork = false;
+        const fork = this.copy();
+        fork.forcedPubRho = Infinity;
+        const res = await fork.simulate(this.getDataForCopy());
+        this.bestRes = getBestResult(this.bestRes, res);
       }
-      else {
-        pubCondition =
-          (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 10;
-      }
-      
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -266,28 +268,6 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     this.q = add(this.q, this.totMult + l10(this.dt) + qdot);
     const rhodot = this.totMult + vq1 + this.variables[1].value + this.q;
     this.rho = add(this.rho, rhodot + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (
-      this.maxTauH < this.tauH || 
-      this.maxRho >= this.cap[0] - this.cap[1] || 
-      this.pubRho < 10 || 
-      global.forcedPubTime !== Infinity ||
-      (this.forcedPubRho !== Infinity && this.pubRho < this.forcedPubRho)
-    ) {
-      if (this.maxTauH < this.tauH && this.maxRho >= 1500)
-      {
-        this.coasting = new Array(this.variables.length).fill(false);
-        this.forcedPubRho = Infinity;
-      }
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   async buyVariables() {
     let bought = false;
@@ -295,7 +275,7 @@ class csr2Sim extends theoryClass<theory> implements specificTheoryProps {
     const highbounds = [1.45, 0.5, 1.8, 1.2, 1.2];
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
           if (this.forcedPubRho !== Infinity) {
             if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
               this.coasting[i] = true;

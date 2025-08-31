@@ -1,21 +1,44 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getR9multiplier } from "../../Utils/helpers.js";
 import { StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function t2(data: theoryData): Promise<simResult> {
-  const sim = new t2SimWrap(data);
-  const res = await sim.simulate();
-  return res;
+  let bestSim, bestSimRes;
+  if(data.strat == "T2MCAlt2" || data.strat == "T2MCAlt3") {
+    const savedStrat = data.strat;
+    data.strat = "T2MC";
+    let res = await new t2Sim(data).simulate();
+
+    data.strat = savedStrat;
+    if(savedStrat == "T2MCAlt2") {
+      bestSim = new t2Sim(data);
+      bestSim.targetRho = res.rawData.pubRho;
+      bestSimRes = await bestSim.simulate();
+    }
+    else {
+      bestSim = new t2Sim(data);
+      bestSim.stop4 = 750;
+      bestSim.stop3 = 1700;
+      bestSim.stop2 = 2650;
+      bestSim.stop1 = 3700;
+      bestSim.targetRho = res.rawData.pubRho;
+      bestSimRes = await bestSim.simulate();
+    }
+  }
+  else {
+    bestSim = new t2Sim(data);
+    bestSimRes = await bestSim.simulate();
+  }
+  return bestSimRes;
 }
 
 type theory = "T2";
 
 class t2Sim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  curMult: number;
   q1: number;
   q2: number;
   q3: number;
@@ -79,7 +102,7 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => true,
       () => true,
@@ -118,7 +141,7 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     return tree[this.strat];
   }
   getTotMult(val: number) {
-    return Math.max(0, val * 0.198 - l10(100)) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.198 - l10(100)) + getR9multiplier(this.sigma);
   }
   updateMilestones() {
     let milestoneCount = Math.min(10, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
@@ -157,8 +180,7 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     //theory
-    this.curMult = 0;
-    this.totMult = this.getTotMult(data.rho);
+    this.pubUnlock = 15;
     //currencies
     this.rho = 0;
     this.q1 = -Infinity;
@@ -188,27 +210,24 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     ];
     //milestones  [qterm, rterm, q1exp, r1exp]
     this.milestones = [0, 0, 0, 0];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
+    this.doSimEndConditions = () => this.targetRho == -1;
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    if (this.targetRho != -1) {
+      this.pubConditions.push(() => this.maxRho >= this.targetRho);
+    }
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      if(this.targetRho != -1) {
-        pubCondition = this.maxRho >= this.targetRho;
-      }
-      else {
-        pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 15;
-      }
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -238,28 +257,11 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
 
     const rhodot = this.q1 * (1 + 0.05 * this.milestones[2]) + this.r1 * (1 + 0.05 * this.milestones[3]) + this.totMult + logdt;
     this.rho = add(this.rho, rhodot);
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (
-        this.maxTauH < this.tauH ||
-        this.maxRho >= this.cap[0] - this.cap[1] ||
-        this.pubRho < 15 ||
-        global.forcedPubTime !== Infinity ||
-        this.targetRho != -1
-    ) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }
@@ -267,52 +269,5 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
           this.variables[i].buy();
         } else break;
       }
-  }
-}
-
-class t2SimWrap extends theoryClass<theory> implements specificTheoryProps {
-  _originalData: theoryData;
-
-  constructor(data: theoryData) {
-    super(data);
-    this._originalData = data;
-  }
-  async simulate() {
-    let bestSim, bestSimRes;
-    if(this.strat == "T2MCAlt2" || this.strat == "T2MCAlt3") {
-      let savedStrat = this.strat;
-      this._originalData.strat = "T2MC";
-      let internalSim = new t2Sim(this._originalData);
-      // internalSim.strat = "T2MC";
-      let res = await internalSim.simulate();
-
-      this._originalData.strat = savedStrat;
-      if(savedStrat == "T2MCAlt2") {
-        bestSim = new t2Sim(this._originalData);
-        bestSim.targetRho = internalSim.pubRho;
-        bestSimRes = await bestSim.simulate();
-      }
-      else {
-        bestSim = new t2Sim(this._originalData);
-        bestSim.stop4 = 750;
-        bestSim.stop3 = 1700;
-        bestSim.stop2 = 2650;
-        bestSim.stop1 = 3700;
-        bestSim.targetRho = internalSim.pubRho;
-        bestSimRes = await bestSim.simulate();
-      }
-    }
-    else {
-      bestSim = new t2Sim(this._originalData);
-      bestSimRes = await bestSim.simulate();
-    }
-    for (let key in bestSim) {
-      // @ts-ignore
-      if (bestSim.hasOwnProperty(key) && typeof bestSim[key] !== "function") {
-        // @ts-ignore
-        this[key] = bestSim[key];
-      }
-    }
-    return bestSimRes;
   }
 }

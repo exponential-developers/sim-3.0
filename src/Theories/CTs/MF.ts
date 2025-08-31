@@ -6,22 +6,42 @@ import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
-export default async function mf(data: theoryData): Promise<simResult> {
-  return await ((new mfSimWrap(data)).simulate());
-}
-
 type theory = "MF";
+type resetBundle = [number, number, number, number];
+
+export default async function mf(data: theoryData): Promise<simResult> {
+  let resetBundles: resetBundle[] = [
+    [0, 1, 0, 0],
+    [0, 1, 0, 1],
+    [0, 2, 0, 0]
+  ];
+  let bestRes: simResult = defaultResult();
+  for (const resetBundle of resetBundles) {
+    if (data.rho <= 100 && resetBundle[3] > 0) {
+      continue
+    }
+    let sim = new mfSim(data, resetBundle);
+    let res = await sim.simulate();
+    // Unnecessary additional coasting attempt
+    // let internalSim = new mfSim(data, resetCombination)
+    // internalSim.normalPubRho = bestSim.pubRho;
+    // let res = await internalSim.simulate();
+    // if (bestSim.maxTauH < internalSim.maxTauH) {
+    //   bestSim = internalSim;
+    //   bestSimRes = res;
+    // }
+    bestRes = getBestResult(bestRes, res);
+  }
+  return bestRes
+}
 
 const mu0 = 4e-7 * Math.PI
 const q0 = 1.602e-19
 const i0 = 1e-15
 const m0 = 1e-3
 
-type resetBundle = [number, number, number, number];
-
 class mfSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  pubUnlock: number;
   c: number
   x: number;
   i: number;
@@ -150,7 +170,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = 
     [
       () => true,
@@ -197,7 +217,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   getTotMult(val: number) {
-    return Math.max(0, val * this.tauFactor * 0.17);
+    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.17);
   }
   updateMilestones(): void {
     const points = [0, 20, 50, 175, 225, 275, 325, 425, 475, 525];
@@ -248,7 +268,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData, resetBundle: resetBundle) {
     super(data);
     this.pubUnlock = 8;
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.rho = -Infinity;
     this.c = 0;
     this.x = 0;
@@ -277,8 +296,8 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
       new Variable({ cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
     this.resetParticle();
@@ -311,17 +330,15 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   async simulate() {
-    let pubCondition = false;
-    
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
       await this.checkForReset();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.pubMulti > 3.5) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -350,17 +367,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
 
     const rhodot = this.totMult + this.c + vc1 + vc2 + xterm + omegaterm + vterm;
     this.rho = add(this.rho, rhodot + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   calcBundleCost(bundle: resetBundle):number {
     let cost = 0.;
@@ -438,7 +444,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--) {
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 10 > this.lastPub) {
             this.boughtVars.push({
               variable: this.varNames[i],
@@ -454,39 +460,5 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
         }
       }
     }
-  }
-}
-
-class mfSimWrap extends theoryClass<theory> implements specificTheoryProps {
-  _originalData: theoryData;
-
-  constructor(data: theoryData) {
-      super(data);
-      this._originalData = data;
-  }
-  async simulate() {
-    let resetBundles: resetBundle[] = [
-      [0, 1, 0, 0],
-      [0, 1, 0, 1],
-      [0, 2, 0, 0]
-    ];
-    let bestRes: simResult = defaultResult();
-    for (const resetBundle of resetBundles) {
-      if (this._originalData.rho <= 100 && resetBundle[3] > 0) {
-        continue
-      }
-      let sim = new mfSim(this._originalData, resetBundle);
-      let res = await sim.simulate();
-      // Unnecessary additional coasting attempt
-      // let internalSim = new mfSim(this._originalData, resetCombination)
-      // internalSim.normalPubRho = bestSim.pubRho;
-      // let res = await internalSim.simulate();
-      // if (bestSim.maxTauH < internalSim.maxTauH) {
-      //   bestSim = internalSim;
-      //   bestSimRes = res;
-      // }
-      bestRes = getBestResult(bestRes, res);
-    }
-    return bestRes
   }
 }

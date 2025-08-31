@@ -30,7 +30,6 @@ export const global = {
   mfResetDepth: 0,
   stratFilter: true,
   simulating: false,
-  forcedPubTime: Infinity,
   showA23: false,
   showUnofficials: false,
   simAllStrats: "all",

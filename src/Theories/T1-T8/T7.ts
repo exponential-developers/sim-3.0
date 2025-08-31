@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add_old, createResult, l10, subtract_old, sleep } from "../../Utils/helpers.js";
+import { add_old, createResult, l10, subtract_old, sleep, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -51,7 +51,7 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => true,
       () => true,
@@ -129,7 +129,7 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   getTotMult(val: number) {
-    return Math.max(0, val * 0.152) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.152) + getR9multiplier(this.sigma);
   }
   updateMilestones(): void {
     const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
@@ -137,7 +137,7 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
-    this.totMult = this.getTotMult(data.rho);
+    this.pubUnlock = 10;
     this.rho = 0;
     this.rho2 = 0;
     //initialize variables
@@ -154,26 +154,25 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
     this.drho13 = 0;
     this.drho23 = 0;
     this.c2ratio = Infinity;
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 10;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, this.strat === "T7PlaySpqcey" ? (this.c2ratio !== Infinity ? this.c2ratio.toString() : "") : "");
+    const result = createResult(this, this.strat === "T7PlaySpqcey" && this.c2ratio !== Infinity ? this.c2ratio.toString() : "");
 
     return result;
   }
@@ -191,22 +190,11 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
     this.rho = add(this.rho, dtq1bonus + add(add(drho11, drho12), this.drho13));
 
     this.rho2 = add(this.rho2, dtq1bonus + add(add(drho21, drho22), this.drho23));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 10 || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }

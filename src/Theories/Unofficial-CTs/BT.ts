@@ -16,7 +16,6 @@ type theory = "BT";
 
 class btSim extends theoryClass<theory> implements specificTheoryProps {
   rho: number;
-  pubUnlock: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -30,7 +29,7 @@ class btSim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => true, 
       () => true,
@@ -93,22 +92,20 @@ class btSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
       new Variable({ cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > this.pubUnlock;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -128,22 +125,11 @@ class btSim extends theoryClass<theory> implements specificTheoryProps {
     if (this.milestones[3] == 1 && Math.max(this.maxRho, this.lastPub) * this.tauFactor < parseValue("9e599")) {
       this.rho = parseValue("1.05e1500");
     }
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < this.pubUnlock || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }

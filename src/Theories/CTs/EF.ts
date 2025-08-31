@@ -17,8 +17,6 @@ type theory = "EF";
 type pubTable = {[key: string]: number};
 
 class efSim extends theoryClass<theory> implements specificTheoryProps {
-  pubUnlock: number;
-  curMult: number;
   currencies: Array<number>;
   q: number;
   t_var: number;
@@ -27,6 +25,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   forcedPubRho: number;
   coasting: Array<boolean>;
   bestRes: simResult | null;
+  doContinuityFork: boolean;
 
   depth: number;
 
@@ -74,7 +73,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => this.variables[0].level < 4,
       () => true,
@@ -162,8 +161,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.totMult = this.getTotMult(data.rho);
-    this.curMult = 0;
     this.currencies = [0, 0, 0];
     this.q = 0;
     this.t_var = 0;
@@ -190,11 +187,13 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     }
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
+    this.doContinuityFork = true;
     this.depth = 0;
     this.nextMilestoneCost = Infinity;
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
+    this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
   copyFrom(other: this): void {
@@ -217,27 +216,27 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     return newsim;
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    if (this.forcedPubRho != Infinity) {
+      this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
+    }
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
+      this.updateSimStatus();
       let prev_nextMilestoneCost = this.nextMilestoneCost;
       if (this.lastPub <= 325) this.updateMilestones();
       if (this.nextMilestoneCost > prev_nextMilestoneCost) {
         this.coasting.fill(false);
       }
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       await this.buyVariables();
-      if (this.forcedPubRho != Infinity) {
-        pubCondition = this.pubRho >= this.forcedPubRho && this.pubRho > this.pubUnlock && (this.pubRho <= 375 || this.t > this.pubT * 2);
-        pubCondition ||= this.pubRho > this.cap[0];
-      }
-      else {
-        pubCondition =
-        (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) &&
-        this.pubRho > this.pubUnlock;
+      if (this.forcedPubRho == 375 && this.maxRho >= 370 && this.doContinuityFork) {
+        this.doContinuityFork = false;
+        const fork = this.copy();
+        fork.forcedPubRho = Infinity;
+        const res = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, res);
       }
       this.ticks++;
     }
@@ -283,28 +282,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
         this.currencies[0] = add(this.currencies[0], logbonus + a + add(add(l10(this.t_var) + this.q * 2, this.currencies[1] * 2), this.currencies[2] * 2) / 2);
         break;
     }
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (
-      this.maxTauH < this.tauH || 
-      this.maxRho >= this.cap[0] - this.cap[1] || 
-      this.pubRho < 10 || 
-      global.forcedPubTime !== Infinity ||
-      (this.forcedPubRho !== Infinity && this.pubRho < this.forcedPubRho)
-    ) {
-      if (this.maxTauH < this.tauH && this.maxRho >= 375 && this.forcedPubRho != Infinity)
-      {
-        this.coasting.fill(false);
-        this.forcedPubRho = Infinity;
-      }
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   async buyVariables() {
     const nextCoast = Math.min(this.forcedPubRho, this.nextMilestoneCost);
@@ -314,7 +291,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const doDynamicCoasting = this.forcedPubRho == Infinity && this.strat != "EF";
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]() && !this.coasting[i]) {
+        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
           if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[i]())) {
             this.coasting[i] = true;
             break;

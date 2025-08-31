@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, l2 } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { ExponentialCost } from "../../Utils/cost.js";
@@ -29,8 +29,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   T: number;
   setPoint: number;
 
-  pubUnlock: number;
-
   getBuyingConditions() {
     const conditions = {
       TC: new Array(7).fill(true),
@@ -44,7 +42,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     return condition;
   }
 
-  getMilestoneConditions() {
+  getVariableAvailability() {
     return [
       () => true,
       () => true,
@@ -151,28 +149,24 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost("1e750", 16.60964), valueScaling: new StepwisePowerSumValue() }), // p1
       new Variable({ cost: new ExponentialCost("1e900", 1e15), valueScaling: new ExponentialValue(2) }), // p2
     ];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
+    this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
+    this.simEndConditions.push(() => this.curMult > 15);
+
     this.updateMilestones();
   }
 
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 500) this.updateMilestones();
-      this.curMult = Math.pow(10, this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition =
-        (global.forcedPubTime !== Infinity
-          ? this.t > global.forcedPubTime
-          : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 15) &&
-        this.pubRho > this.pubUnlock &&
-        this.pubRho > this.lastPub;
       this.ticks++;
     }
     this.pubMulti = Math.pow(10, this.getTotMult(this.pubRho) - this.totMult);
@@ -245,30 +239,12 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
         this.totMult +
         l10(achievementMulti)
     );
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-
-    if (this.maxRho < this.recovery.value) {
-      this.recovery.time = this.t;
-    }
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (
-      this.maxTauH < this.tauH ||
-      this.maxRho >= this.cap[0] - this.cap[1] ||
-      this.pubRho < 10 ||
-      global.forcedPubTime !== Infinity
-    ) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
 
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({
               variable: this.varNames[i],

@@ -1,4 +1,4 @@
-import { getTheoryFromIndex, parseLog10String } from "../Utils/helpers.js";
+import { getR9multiplier, getTheoryFromIndex, parseLog10String, l10 } from "../Utils/helpers.js";
 import jsonData from "../Data/data.json" assert { type: "json" };
 import { global } from "./main.js";
 import { qs, qsa } from "../Utils/helpers.js";
@@ -89,10 +89,10 @@ function isInt(str: string) {
   return /^\d+$/.test(str);
 }
 export function reverseMulti(theory: string, value: number, sigma: number) {
-  const getR9Exp = () => (sigma < 65 ? 0 : sigma < 75 ? 1 : sigma < 85 ? 2 : 3);
-  const divSigmaMulti = (exp: number, div: number) => (value - Math.log10((sigma / 20) ** getR9Exp()) + Math.log10(div)) * (1 / exp);
-  const multSigmaMulti = (exp: number, mult: number) => (value - Math.log10((sigma / 20) ** getR9Exp()) - Math.log10(mult)) * (1 / exp);
-  const sigmaMulti = (exp: number) => (value - Math.log10((sigma / 20) ** getR9Exp())) * (1 / exp);
+  const R9 = getR9multiplier(sigma);
+  const divSigmaMulti = (exp: number, div: number) => (value - R9 + l10(div)) * (1 / exp);
+  const multSigmaMulti = (exp: number, mult: number) => (value - R9 - l10(mult)) * (1 / exp);
+  const sigmaMulti = (exp: number) => (value - R9) * (1 / exp);
   switch (theory) {
     case "T1":
       return divSigmaMulti(0.164, 3);
@@ -116,17 +116,17 @@ export function reverseMulti(theory: string, value: number, sigma: number) {
     case "EF":
       return value * (1 / 0.387) * 2.5;
     case "CSR2":
-      return (value + Math.log10(200)) * (1 / 2.203) * 10;
+      return (value + l10(200)) * (1 / 2.203) * 10;
     case "FI":
       return value * (1 / 0.1625) * 2.5;
     case "FP":
-      return (value - Math.log10(5)) * (1 / 0.331) * (10 / 3);
+      return (value - l10(5)) * (1 / 0.331) * (10 / 3);
     case "RZ":
-      return (value - Math.log10(2)) / 0.2102;
+      return (value - l10(2)) / 0.2102;
     case "MF":
       return value / 0.17;
     case "BaP":
-      return (value - Math.log10(5)) / 0.132075 * 2.5;
+      return (value - l10(5)) / 0.132075 * 2.5;
   }
   throw `Failed parsing multiplier. Please contact the author of the sim.`;
 }

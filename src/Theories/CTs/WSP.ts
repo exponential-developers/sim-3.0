@@ -43,7 +43,7 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
@@ -102,7 +102,7 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
-    this.totMult = this.getTotMult(data.rho);
+    this.pubUnlock = 8;
     this.rho = 0;
     this.q = 0;
     //initialize variables
@@ -115,25 +115,21 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
+    this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition =
-        (global.forcedPubTime !== Infinity
-          ? this.t > global.forcedPubTime
-          : this.t > this.pubT * 2 || this.pubRho > this.cap[0] || this.curMult > 15) && this.pubRho > 8;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -151,23 +147,12 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
 
     const rhodot = this.totMult + vq1 + this.variables[1].value + this.q + l10(this.dt);
     this.rho = add(this.rho, rhodot);
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 8 || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     let updateS_flag = false;
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           this.rho = subtract(this.rho, this.variables[i].cost);
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });

@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, sleep, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -15,7 +15,6 @@ type theory = "T3";
 
 class t3Sim extends theoryClass<theory> implements specificTheoryProps {
   currencies: Array<number>;
-  curMult: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -212,7 +211,7 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [
       () => true,
       () => true,
@@ -265,7 +264,7 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
     return tree[this.strat];
   }
   getTotMult(val: number) {
-    return Math.max(0, val * 0.147 + l10(3)) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
   }
   updateMilestones() {
     const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
@@ -273,7 +272,7 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
-    this.totMult = this.getTotMult(data.rho);
+    this.pubUnlock = 9;
     this.currencies = [0, 0, 0];
     this.varNames = ["b1", "b2", "b3", "c11", "c12", "c13", "c21", "c22", "c23", "c31", "c32", "c33"];
     this.variables = [
@@ -290,25 +289,22 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
       new Variable({ cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
       new Variable({ cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
-    this.curMult = 0;
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestones = [0, 0, 0, 0];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
+      this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 9;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -330,23 +326,12 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
 
     const rho3dot = add(add(this.variables[9].value + vb1, this.variables[10].value + vb2), this.variables[11].value + vb3);
     this.currencies[2] = this.milestones[0] > 0 ? add(this.currencies[2], l10(this.dt) + this.totMult + rho3dot) : 0;
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 9 || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     for (let i = this.variables.length - 1; i >= 0; i--) {
       const currencyIndex = i % 3;
       while (true) {
-        if (this.currencies[currencyIndex] > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.currencies[currencyIndex] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t, symbol: `rho_${currencyIndex + 1}` });
           }

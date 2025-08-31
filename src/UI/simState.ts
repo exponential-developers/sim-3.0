@@ -1,20 +1,5 @@
 import { qs, round } from "../Utils/helpers.js";
-import { global } from "../Sim/main.js"
-import { modeUpdate } from "./render.js";
-
-//Inputs
-const theory = <HTMLSelectElement>qs(".theory");
-const strat = <HTMLSelectElement>qs(".strat");
-const sigma = <HTMLInputElement>qs(".sigma");
-const input = <HTMLInputElement>qs(".input");
-const cap = <HTMLInputElement>qs(".cap");
-const mode = <HTMLSelectElement>qs(".mode");
-const modeInput = <HTMLInputElement>qs("textarea");
-const hardCap = <HTMLInputElement>qs(".hardCap");
-
-//Outputs
-const output = qs(".output");
-const table = qs(".simTable");
+import { global } from "../Sim/main.js";
 
 //Setting Inputs
 const dtSlider = <HTMLInputElement>qs(".dt");

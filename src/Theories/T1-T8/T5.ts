@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, logToExp, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, logToExp, sleep, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
@@ -39,7 +39,7 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
     return condition;
   }
-  getMilestoneConditions() {
+  getVariableAvailability() {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
@@ -61,23 +61,12 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
     return tree[this.strat];
   }
   getTotMult(val: number) {
-    return Math.max(0, val * 0.159) + l10((this.sigma / 20) ** (this.sigma < 65 ? 0 : this.sigma < 75 ? 1 : this.sigma < 85 ? 2 : 3));
+    return Math.max(0, val * 0.159) + getR9multiplier(this.sigma);
   }
   updateMilestones(): void {
     const stage = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
     this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
-  //calculateQ(ic1: number, ic2: number, ic3: number) {
-  //  const log10E = Math.log10(Math.E);
-  //  let sub = -Infinity;
-  //  if (ic2 + ic3 > this.q) sub = subtract(ic2 + ic3, this.q);
-  //  else if (ic2 + ic3 < this.q) sub = subtract(this.q, ic2 + ic3);
-  //  const sign = ic2 + ic3 >= this.q ? 1 : -1;
-  //  let relT = 0;
-  //  if (sub > this.q) relT = -(10 ** (ic2 - ic1 - ic3 + sign * Math.log10((sub - this.q) / log10E)));
-  //  else if (sub < this.q) relT = 10 ** (ic2 - ic1 - ic3 + sign * Math.log10((this.q - sub) / log10E));
-  //  return ic2 + ic3 - Math.log10(1 + 1 / Math.E ** ((relT + this.dt) * 10 ** (ic1 - ic2 + ic3)));
-  //}
   // Solves q using the differential equation result
   calculateQ(ic1: number, ic2: number, ic3: number){
     const qcap = ic2 + ic3
@@ -97,7 +86,7 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   constructor(data: theoryData) {
     super(data);
-    this.totMult = this.getTotMult(data.rho);
+    this.pubUnlock = 7;
     this.rho = 0;
     this.q = 0;
     //initialize variables
@@ -112,22 +101,20 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
     this.varNames = ["q1", "q2", "c1", "c2", "c3"];
     //milestones  [q1exp,c3term,c3exp]
     this.milestones = [0, 0, 0];
-    this.conditions = this.getBuyingConditions();
-    this.milestoneConditions = this.getMilestoneConditions();
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
   async simulate() {
-    let pubCondition = false;
-    while (!pubCondition) {
+    while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       if (this.rho > this.maxRho) this.maxRho = this.rho;
+      this.updateSimStatus();
       if (this.lastPub < 150) this.updateMilestones();
-      this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
       this.buyVariables();
-      pubCondition = (global.forcedPubTime !== Infinity ? this.t > global.forcedPubTime : this.t > this.pubT * 2 || this.pubRho > this.cap[0]) && this.pubRho > 7;
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -143,17 +130,6 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
     this.q = this.calculateQ(this.variables[2].value, this.variables[3].value, vc3);
     const rhodot = vq1 + this.variables[1].value + this.q;
     this.rho = add(this.rho, rhodot + this.totMult + l10(this.dt));
-
-    this.t += this.dt / 1.5;
-    this.dt *= this.ddt;
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || this.maxRho >= this.cap[0] - this.cap[1] || this.pubRho < 7 || global.forcedPubTime !== Infinity) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
   }
   buyVariables() {
     let c2Counter = 0;
@@ -162,7 +138,7 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
     this.c2worth = iq >= this.variables[3].value + nc3 + l10(2 / 3);
     for (let i = this.variables.length - 1; i >= 0; i--) {
       while (true) {
-        if (this.rho > this.variables[i].cost && this.conditions[i]() && this.milestoneConditions[i]()) {
+        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }
