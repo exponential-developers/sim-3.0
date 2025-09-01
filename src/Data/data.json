@@ -549,7 +549,7 @@
       }
     },
     "TC": {
-      "tauFactor": 0.6,
+      "tauFactor": 0.45,
       "UI_visible":false,
       "strats": {
         "TC": {
