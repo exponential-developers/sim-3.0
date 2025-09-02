@@ -14,11 +14,16 @@ export default async function tc(data: theoryData): Promise<simResult> {
 type theory = "TC";
 
 class tcSim extends theoryClass<theory> implements specificTheoryProps {
+  // Currencies and growing variables
   rho: number;
-  systemDt: number;
-  error: Array<number>;
   r: number;
   P: number;
+
+  achievementMulti: number;
+
+  // System parameters
+  systemDt: number;
+  error: Array<number>;
   timer: number;
   integral: number;
   amplitude: number;
@@ -31,11 +36,11 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
 
   getBuyingConditions() {
     const conditions = {
-      TC: new Array(7).fill(true),
+      TC: new Array(11).fill(true),
       TCd: [
         true, 
         () => this.variables[1].cost + l10(10) < this.variables[2].cost, 
-        ...new Array(5).fill(true)
+        ...new Array(9).fill(true)
       ]
     };
     const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
@@ -44,13 +49,17 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
 
   getVariableAvailability() {
     return [
-      () => true,
-      () => true,
-      () => true,
-      () => this.milestones[6] >= 0 && this.variables[3].level <= 75,
-      () => this.variables[4].level <= 100,
-      () => this.milestones[8] > 0,
-      () => this.milestones[8] > 0,
+      () => true, // c1
+      () => true, // r1
+      () => true, // r2
+      () => this.milestones[4] >= 0 && this.variables[3].level <= 75, // c2
+      () => this.variables[4].level <= 100, // dTexp
+      () => this.achievementMulti == 30, // p1
+      () => this.achievementMulti == 30, // p2
+      () => this.variables[7].level < 3, // c1exp perma
+      () => this.variables[8].level < 3, // r1exp perma
+      () => this.variables[9].level < 2, // r2exp perma
+      () => this.variables[10].level < 2 // c1base perma
     ];
   }
 
@@ -60,13 +69,16 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
 
   updateMilestones() {
     let stage = 0;
-    const points = [10, 35, 50, 65, 90, 110, 130, 150, 200, 325, 375, 400, 420, 440, 600, 750];
+    const points = [10, 50, 100, 400, 420, 440, 950, 1150];
     for (let i = 0; i < points.length; i++) {
       if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
     }
     this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-    if (this.variables[0].valueScaling instanceof ExponentialValue && this.variables[0].valueScaling.power !== 2.75 + 0.125 * this.milestones[4]) {
-      this.variables[0].valueScaling.power = 2.75 + 0.125 * this.milestones[4];
+  }
+
+  recomputeC1Base() {
+    if (this.variables[0].valueScaling instanceof ExponentialValue) {
+      this.variables[0].valueScaling.power = this.variables[10].value;
       this.variables[0].reCalculate();
     }
   }
@@ -92,24 +104,17 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   getMilestoneTree() {
+    // [autokick, ki, kd, rexp, c2, Pformula]
     const globalOptimalRoute = [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0], // Automation
-      [1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 0, 0, 0, 0, 0, 0, 0], // c1 exponent
-      [1, 2, 0, 0, 0, 0, 0, 0, 0],
-      [1, 3, 0, 0, 0, 0, 0, 0, 0],
-      [1, 3, 1, 0, 0, 0, 0, 0, 0], // r1 exponent
-      [1, 3, 2, 0, 0, 0, 0, 0, 0],
-      [1, 3, 3, 0, 0, 0, 0, 0, 0],
-      [1, 3, 3, 1, 0, 0, 0, 0, 0], // r2 exponent
-      [1, 3, 3, 2, 0, 0, 0, 0, 0],
-      [1, 3, 3, 2, 1, 0, 0, 0, 0], // c1 base
-      [1, 3, 3, 2, 2, 0, 0, 0, 0],
-      [1, 3, 3, 2, 2, 1, 0, 0, 0], // r exponent
-      [1, 3, 3, 2, 2, 2, 0, 0, 0],
-      [1, 3, 3, 2, 2, 2, 1, 0, 0], // c2
-      [1, 3, 3, 2, 2, 2, 1, 1, 0], // Achievement multi
-      [1, 3, 3, 2, 2, 2, 1, 1, 1], // P variable added
+      [0, 0, 0, 0, 0, 0], 
+      [1, 0, 0, 0, 0, 0], // Automation
+      [1, 1, 0, 0, 0, 0], // ki unlock
+      [1, 1, 1, 0, 0, 0], // kd unlock
+      [1, 1, 1, 1, 0, 0], // r1 exponent
+      [1, 1, 1, 2, 0, 0], 
+      [1, 1, 1, 2, 1, 0], // c2
+      [1, 1, 1, 2, 1, 1], // P formula
+      [1, 1, 1, 2, 1, 2] // P formula
     ];
     const tree = {
       TC: globalOptimalRoute,
@@ -121,6 +126,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.totMult = this.getTotMult(data.rho);
+    // System parameters
     this.systemDt = 0.1;
     this.curMult = 0;
     this.error = [0, 0];
@@ -138,23 +144,34 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     this.kd = pidSettings[2];
     this.T = 100;
     this.setPoint = pidSettings[3];
+
+    this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
     this.pubUnlock = 8;
-    this.varNames = ["c1", "r1", "r2", "c2", "dTexp", "p1", "p2"];
+    this.varNames = ["c1", "r1", "r2", "c2", "dTexp", "p1", "p2", "c1exp", "r1exp", "r2exp", "c1base"];
     this.variables = [
       new Variable({ cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
       new Variable({ cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1
       new Variable({ cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
       new Variable({ cost: new ExponentialCost("1e400", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
       new Variable({ cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
-      new Variable({ cost: new ExponentialCost("1e750", 16.60964), valueScaling: new StepwisePowerSumValue() }), // p1
+      new Variable({ cost: new ExponentialCost("1e750", 16.61), valueScaling: new StepwisePowerSumValue() }), // p1
       new Variable({ cost: new ExponentialCost("1e900", 1e15), valueScaling: new ExponentialValue(2) }), // p2
+      new Variable({ cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
+      new Variable({ cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
+      new Variable({ cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
+      new Variable({ cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
     ];
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);
-
+    for (let i=7; i<11; i++) {
+      while (this.lastPub <= this.variables[i].cost && this.variableAvailability[i]()) {
+        this.variables[i].buy();
+      }
+    }
+    this.recomputeC1Base();
     this.updateMilestones();
   }
 
@@ -177,12 +194,17 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
   }
 
   tick() {
-    let Q = 20; // max heat duty in W
-    let h = 5; // thermal passive convection coefficient for Al (W/m^2 k)
-    let Cp = 0.89; // heat capacity for Al (J/g/k)
-    let area = 0.024; // area of element (m^2)
-    let mass = 10; // grams
-    let Tc = 30;
+    // System update
+    const Q = 20; // max heat duty in W
+    const h = 5; // thermal passive convection coefficient for Al (W/m^2 k)
+    const Cp = 0.89; // heat capacity for Al (J/g/k)
+    const area = 0.024; // area of element (m^2)
+    const mass = 10; // grams
+    const Tc = 30;
+    if (this.milestones[1] >= 1)
+        this.ki = 0;
+    if (this.milestones[2] >= 3)
+        this.kd = 0;
     this.timer += this.systemDt;
     if (this.timer > this.frequency) {
       this.T = this.amplitude;
@@ -193,43 +215,38 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     this.error[1] = this.error[0];
     this.error[0] = this.setPoint - this.T;
     this.integral += this.error[0];
-    let derivative = (this.error[0] - this.error[1]) / this.systemDt;
+    const derivative = (this.error[0] - this.error[1]) / this.systemDt;
     // Anti-windup scheme
     if (this.integral > 100) this.integral = 100;
     if (this.integral < -100) this.integral = -100;
     let output = Math.round(Math.max(0, Math.min(this.kp * this.error[0] + this.ki * this.integral + this.kd * derivative, 512))) / 512; // range 0-512
 
     // Heating simulation
-    let dT = Math.abs(1 / mass / Cp * (Q * output - (this.T - Tc) * h * area));
-    let exponentialTerm = (Q * output - h * area * (this.T - Tc)) * Math.pow(Math.E, -1 * this.systemDt / mass / Cp);
+    const dT = Math.abs(1 / mass / Cp * (Q * output - (this.T - Tc) * h * area));
+    const exponentialTerm = (Q * output - h * area * (this.T - Tc)) * Math.pow(Math.E, -1 * this.systemDt / mass / Cp);
     this.T = Tc + (Q * output - exponentialTerm) / (h * area);
-    let mr1exp = this.milestones[2];
-    let mr2exp = this.milestones[3];
-    let dr =
-      this.variables[1].value * (1 + mr1exp * 0.05) +
-      l10(2) * this.variables[2].level * (1 + mr2exp * 0.03) -
+
+    // Variable calculation
+    const c1exp = this.variables[7].value;
+    const r1exp = this.variables[8].value;
+    const r2exp = this.variables[9].value;;
+    const dr =
+      this.variables[1].value * r1exp +
+      this.variables[2].value * r2exp -
       l10(1 + l10(1 + Math.abs(this.error[0])));
 
-    let achievementMulti = 1;
-    if (this.milestones[7] > 0) {
-      if (this.lastPub > 600 && this.lastPub < 750) {
-        achievementMulti = 10;
-      } else if (this.lastPub > 750) {
-        achievementMulti = 30;
-      }
-    }
-
-    if (this.milestones[8] > 0) {
-      let dP = this.variables[5].value + this.variables[6].value + l10(this.T) - l10(100);
+    if (this.achievementMulti == 30) {
+      let dP = 
+        this.variables[5].value + 
+        this.variables[6].value + 
+        Math.E * (-0.01 * Math.pow(0.8, this.milestones[4]) * Math.abs(this.T - 100));
       this.P = add(this.P, dP + l10(this.dt));
     }
 
     this.r = add(this.r, dr + l10(this.dt));
-    let mc1Base = this.milestones[4];
-    let mc1exp = this.milestones[1];
-    let vc1 = l10(2.75 + mc1Base * 0.125) * this.variables[0].level * (1 + mc1exp * 0.05);
-    let vc2 = this.milestones[6] > 0 ? this.variables[3].value : 0;
-    let mrexp = this.milestones[5];
+    const vc1 = this.variables[0].value * c1exp;
+    const vc2 = this.milestones[4] > 0 ? this.variables[3].value : 0;
+    const mrexp = this.milestones[3];
     this.rho = add(
       this.rho,
       this.P +
@@ -237,7 +254,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
         (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
         l10(this.dt) +
         this.totMult +
-        l10(achievementMulti)
+        l10(this.achievementMulti)
     );
   }
 
@@ -255,6 +272,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
           }
           this.rho = subtract(this.rho, this.variables[i].cost);
           this.variables[i].buy();
+          if (i == 10) this.recomputeC1Base();
         } else break;
       }
   }
