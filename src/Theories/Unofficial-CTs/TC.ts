@@ -226,8 +226,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     const exponentialTerm = (Q * output - h * area * (this.T - Tc)) * Math.pow(Math.E, -1 * this.systemDt / mass / Cp);
     this.T = Tc + (Q * output - exponentialTerm) / (h * area);
 
-    
-
     // Variable calculation
     const c1exp = this.variables[7].value;
     const r1exp = this.variables[8].value;
