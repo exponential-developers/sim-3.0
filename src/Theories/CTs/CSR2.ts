@@ -182,7 +182,6 @@ class csr2Sim extends theoryClass<theory> {
     this.recursionValue = [...other.recursionValue];
     this.bestCoast = [...other.bestCoast];
     this.curMult = other.curMult;
-    this.rho = other.rho;
     this.q = other.q;
     this.updateError_flag = other.updateError_flag;
     this.error = other.error;

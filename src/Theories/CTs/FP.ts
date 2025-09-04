@@ -252,7 +252,6 @@ class fpSim extends theoryClass<theory, milestones> {
 
     this.milestones = { ...other.milestones };
     this.curMult = other.curMult;
-    this.rho = other.rho;
     this.q = other.q;
     this.r = other.r;
     this.t_var = other.t_var;
