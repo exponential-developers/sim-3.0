@@ -152,8 +152,6 @@ class t7Sim extends theoryClass<theory> {
     this.drho13 = 0;
     this.drho23 = 0;
     this.c2ratio = Infinity;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

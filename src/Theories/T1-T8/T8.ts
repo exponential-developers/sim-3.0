@@ -236,8 +236,6 @@ class t8Sim extends theoryClass<theory> {
     this.dy = 0;
     this.dz = 0;
     this.msTimer = 0;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

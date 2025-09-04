@@ -621,8 +621,6 @@ class rzSim extends theoryClass<theory> {
             }),
         ];
         this.pubUnlock = 9;
-        this.buyingConditions = this.getBuyingConditions();
-        this.variableAvailability = this.getVariableAvailability();
         this.milestoneTree = this.getMilestoneTree();
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();

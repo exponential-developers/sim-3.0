@@ -242,10 +242,7 @@ class fpSim extends theoryClass<theory, milestones> {
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
-    //pub values
     this.milestones = { snexp: 0, fractals: 0, nboost: 0, snboost: 0, sterm: 0, expterm: 0 };
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();

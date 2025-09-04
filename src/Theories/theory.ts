@@ -87,8 +87,8 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
 
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
-    this.buyingConditions = [];
-    this.variableAvailability = [];
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = [] as unknown as Array<milestoneType>;
   }
 

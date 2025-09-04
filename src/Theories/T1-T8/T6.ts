@@ -195,8 +195,6 @@ class t6Sim extends theoryClass<theory> {
     ];
     this.k = 0;
     this.stopC12 = [0, 0, true];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

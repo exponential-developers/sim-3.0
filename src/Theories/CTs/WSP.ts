@@ -114,8 +114,6 @@ class wspSim extends theoryClass<theory> {
       new Variable({ name: "c2", cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();

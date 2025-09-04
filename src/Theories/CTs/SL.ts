@@ -117,8 +117,6 @@ class slSim extends theoryClass<theory> {
       new Variable({ name: "b2", cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
     ];
     this.inverseE_Gamma = 0;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }

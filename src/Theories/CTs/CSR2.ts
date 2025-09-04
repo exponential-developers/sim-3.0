@@ -172,8 +172,6 @@ class csr2Sim extends theoryClass<theory> {
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
 
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }

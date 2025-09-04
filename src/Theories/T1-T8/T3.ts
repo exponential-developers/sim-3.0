@@ -294,8 +294,6 @@ class t3Sim extends theoryClass<theory> {
     ];
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestones = [0, 0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

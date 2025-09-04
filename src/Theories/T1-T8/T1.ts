@@ -97,8 +97,6 @@ class t1Sim extends theoryClass<theory>{
     this.c3Ratio = this.lastPub < 300 ? 1 : this.lastPub < 450 ? 1.1 : this.lastPub < 550 ? 2 : this.lastPub < 655 ? 5 : 10;
     //milestones  [logterm, c1exp, c3term, c4term]
     this.milestones = [0, 0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.strat !== "T1SolarXLII";
     this.updateMilestones();

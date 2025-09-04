@@ -88,8 +88,6 @@ class btSim extends theoryClass<theory> {
       new Variable({ name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
       new Variable({ name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

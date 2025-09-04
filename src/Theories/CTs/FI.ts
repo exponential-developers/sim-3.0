@@ -282,8 +282,6 @@ class fiSim extends theoryClass<theory> {
       new Variable({ name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
     ];
     this.variables[5].buy();
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.updateMilestones();
   }
   async simulate() {

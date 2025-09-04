@@ -102,8 +102,6 @@ class t5Sim extends theoryClass<theory> {
     this.c2worth = true;
     //milestones  [q1exp,c3term,c3exp]
     this.milestones = [0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

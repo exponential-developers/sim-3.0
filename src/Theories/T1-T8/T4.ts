@@ -203,8 +203,6 @@ class t4Sim extends theoryClass<theory> {
     ];
     //milestones  [terms, c1exp, multQdot]
     this.milestones = [0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }

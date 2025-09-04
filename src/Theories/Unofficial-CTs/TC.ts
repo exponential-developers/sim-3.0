@@ -158,8 +158,6 @@ class tcSim extends theoryClass<theory> {
       new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
       new Variable({ name: "c1base", cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
     ];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);

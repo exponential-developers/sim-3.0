@@ -210,8 +210,6 @@ class bapSim extends theoryClass<theory> {
       new Variable({ name: "c10",  cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
       new Variable({ name: "n",    cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }

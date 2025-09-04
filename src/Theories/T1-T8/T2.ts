@@ -207,8 +207,6 @@ class t2Sim extends theoryClass<theory> {
     ];
     //milestones  [qterm, rterm, q1exp, r1exp]
     this.milestones = [0, 0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.targetRho == -1;
     this.updateMilestones();

@@ -192,8 +192,6 @@ class efSim extends theoryClass<theory> {
     this.doContinuityFork = true;
     this.depth = 0;
     this.nextMilestoneCost = Infinity;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
