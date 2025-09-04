@@ -229,7 +229,7 @@ class efSim extends theoryClass<theory> {
       if (this.nextMilestoneCost > prev_nextMilestoneCost) {
         this.coasting.fill(false);
       }
-      await this.buyVariables();
+      await this.buyVariablesFork();
       if (this.forcedPubRho == 375 && this.maxRho >= 370 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
@@ -281,41 +281,28 @@ class efSim extends theoryClass<theory> {
         break;
     }
   }
-  async buyVariables() {
+  extraBuyingCondition(id: number): boolean {
+    return !this.coasting[id];
+  }
+  async confirmPurchase(id: number): Promise<boolean> {
     const nextCoast = Math.min(this.forcedPubRho, this.nextMilestoneCost);
     const lowbounds = [0, 0.6, 0.2, 0, 0, 0, 0, 0.3, 0, 0];
     const highbounds = [0, 1.8, 1.5, 0, 0, 0, 0, 1.5, 0, 0];
     const doDynamicCoasting = this.forcedPubRho == Infinity && this.strat != "EF";
-    for (let i = this.variables.length - 1; i >= 0; i--) {
-      let currency = this.variables[i].currency ?? this.rho;
-      while (true) {
-        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
-          if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[i]())) {
-            this.coasting[i] = true;
-            break;
-          }
-          if (nextCoast - this.variables[i].cost < highbounds[i] || (doDynamicCoasting && this.getDynamicCoastingConditions()[i]())) {
-            if (this.depth > 100) {
-              throw "Max coasting research depth reached. Please contact the authors of the sim."
-            }
-            let fork = this.copy();
-            fork.coasting[i] = true;
-            const forkres = await fork.simulate();
-            this.bestRes = getBestResult(this.bestRes, forkres);
-          }
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.variables[i].name,
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-              symbol: currency.symb,
-            });
-          }
-          currency.subtract(this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
+    
+    if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[id]())) {
+      this.coasting[id] = true;
+      return false;
     }
+    if (nextCoast - this.variables[id].cost < highbounds[id] || (doDynamicCoasting && this.getDynamicCoastingConditions()[id]())) {
+      if (this.depth > 100) {
+        throw "Max coasting research depth reached. Please contact the authors of the sim."
+      }
+      let fork = this.copy();
+      fork.coasting[id] = true;
+      const forkres = await fork.simulate();
+      this.bestRes = getBestResult(this.bestRes, forkres);
+    }
+    return true;
   }
 }

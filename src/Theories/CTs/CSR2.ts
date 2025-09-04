@@ -213,7 +213,7 @@ class csr2Sim extends theoryClass<theory> {
         (this.recursionValue !== null && this.recursionValue !== undefined && this.t < this.recursionValue[0]) ||
         this.curMult < 0.7 ||
         this.recursionValue[1] === 0
-      ) await this.buyVariables();
+      ) await this.buyVariablesFork();
       if (this.lastPub < 500) this.updateMilestones();
       if (this.forcedPubRho == 1500 && this.maxRho >= 1495 && this.doContinuityFork) {
         this.doContinuityFork = false;
@@ -262,37 +262,31 @@ class csr2Sim extends theoryClass<theory> {
     const rhodot = this.totMult + vq1 + this.variables[1].value + this.q;
     this.rho.add(rhodot + l10(this.dt));
   }
-  async buyVariables() {
-    let bought = false;
+  extraBuyingCondition(id: number): boolean {
+    return !this.coasting[id];
+  }
+  async confirmPurchase(id: number): Promise<boolean> {
     const lowbounds = [0.65, 0.15, 0.85, 0, 0];
     const highbounds = [1.45, 0.5, 1.8, 1.2, 1.2];
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
-          if (this.forcedPubRho !== Infinity) {
-            if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
-              this.coasting[i] = true;
-              break;
-            }
-            if (this.forcedPubRho - this.variables[i].cost < highbounds[i]) {
-              //console.log(`Creating fork for ${this.varNames[i]} lvl ${this.variables[i].level + 1}`)
-              let fork = this.copy();
-              fork.coasting[i] = true;
-              const forkres = await fork.simulate(super.getDataForCopy());
-              //console.log(`Fork returned ${forkres.tauH}`)
-              this.bestRes = getBestResult(this.bestRes, forkres);
-            }
-          }
-          if (this.maxRho + 5 > this.lastPub && (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")) {
-            this.boughtVars.push({ variable: this.variables[i].name, level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho.subtract(this.variables[i].cost);
-          this.variables[i].buy();
-          if (i > 2) this.updateError_flag = true;
-          bought = true;
-        } else break;
+    if (this.forcedPubRho !== Infinity) {
+      if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id]) {
+        this.coasting[id] = true;
+        return false;
       }
-    if (bought && this.strat === "CSR2XL") this.searchCoast(this.totMult + this.variables[1].value + this.q);
+      if (this.forcedPubRho - this.variables[id].cost < highbounds[id]) {
+        let fork = this.copy();
+        fork.coasting[id] = true;
+        const forkres = await fork.simulate(super.getDataForCopy());
+        this.bestRes = getBestResult(this.bestRes, forkres);
+      }
+    }
+    return true;
+  }
+  onVariablePurchased(id: number): void {
+    if (id > 2) this.updateError_flag = true;
+  }
+  onAnyVariablePurchased(): void {
+    if (this.strat === "CSR2XL") this.searchCoast(this.totMult + this.variables[1].value + this.q);
   }
 }
 

@@ -281,7 +281,7 @@ class fpSim extends theoryClass<theory, milestones> {
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();
-      await this.buyVariables();
+      await this.buyVariablesFork();
       if (this.forcedPubRho == 2000 && this.maxRho >= 1996 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
@@ -336,31 +336,27 @@ class fpSim extends theoryClass<theory, milestones> {
 
     this.rho.add(rhodot + l10(this.dt));
   }
-  async buyVariables() {
-    const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
-    const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
-          if (this.forcedPubRho !== Infinity) {
-            if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
-              this.coasting[i] = true;
-              break;
-            }
-            if (this.forcedPubRho - this.variables[i].cost < highbounds[i]) {
-              let fork = this.copy();
-              fork.coasting[i] = true;
-              const forkres = await fork.simulate();
-              this.bestRes = getBestResult(this.bestRes, forkres);
-            }
-          }
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.variables[i].name, level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho.subtract(this.variables[i].cost);
-          this.variables[i].buy();
-          if (i === 6) this.updateN_flag = true;
-        } else break;
+  extraBuyingCondition(id: number): boolean {
+    return !this.coasting[id];
+  }
+  async confirmPurchase(id: number): Promise<boolean> {
+    if (this.forcedPubRho !== Infinity) {
+      const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
+      const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
+      if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id]) {
+        this.coasting[id] = true;
+        return false;
       }
+      if (this.forcedPubRho - this.variables[id].cost < highbounds[id]) {
+        let fork = this.copy();
+        fork.coasting[id] = true;
+        const forkres = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, forkres);
+      }
+    }
+    return true;
+  }
+  onVariablePurchased(id: number): void {
+    if (id === 6) this.updateN_flag = true;
   }
 }

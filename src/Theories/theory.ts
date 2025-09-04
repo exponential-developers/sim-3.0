@@ -165,12 +165,14 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
 
   onAnyVariablePurchased() {}
 
+  extraBuyingCondition(id: number): boolean {return true;};
+
   buyVariables() {
     let bought = false;
     for (let i = this.variables.length - 1; i >= 0; i--) {
       let currency = this.variables[i].currency ?? this.rho;
       while (true) {
-        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
+        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ 
               variable: this.variables[i].name, 
@@ -215,5 +217,36 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
         this.variables[minCost[1]].buy();
       } else break;
     }
+  }
+
+  async confirmPurchase?(id: number): Promise<boolean>;
+
+  // Change this at some point (maybe in the Web Workers update)
+  async buyVariablesFork() {
+    if (!this.confirmPurchase) throw "Cannot use buyVariablesFork if confirmPurchase is undefined";
+    let bought = false;
+    for (let i = this.variables.length - 1; i >= 0; i--) {
+      let currency = this.variables[i].currency ?? this.rho;
+      while (true) {
+        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
+          let confirmPurchase = await this.confirmPurchase(i);
+          if (!confirmPurchase) break;
+          if (this.maxRho + 5 > this.lastPub) {
+            this.boughtVars.push({ 
+              variable: this.variables[i].name, 
+              level: this.variables[i].level + 1, 
+              cost: this.variables[i].cost, 
+              timeStamp: this.t,
+              symbol: currency.symb
+            });
+          }
+          currency.subtract(this.variables[i].cost);
+          this.variables[i].buy();
+          bought = true;
+          this.onVariablePurchased(i);
+        } else break;
+      }
+    }
+    if (bought) this.onAnyVariablePurchased();
   }
 }
