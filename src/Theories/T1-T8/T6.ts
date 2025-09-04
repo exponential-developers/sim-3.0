@@ -234,35 +234,22 @@ class t6Sim extends theoryClass<theory> {
       this.stopC12[2] = false;
     }
   }
+  getVariableWeights(): number[] {
+    const weights = [
+      l10(7 + (this.variables[0].level % 10)), //q1
+      0, //q2
+      l10(5 + (this.variables[2].level % 10)), //r1
+      0, //r2
+      Math.max(0, this.k) + l10(8 + (this.variables[4].level % 10)), //c1
+      Math.max(0, this.k), //c2
+      Infinity, //c3
+      Infinity, //c4
+      -Math.min(0, this.k), //c5
+    ];
+    return weights;
+  }
   buyVariables() {
     if (this.strat !== "T6AI") super.buyVariables();
-    else {
-      while (true) {
-        const rawCost = this.variables.map((item) => item.cost);
-        const weights = [
-          l10(7 + (this.variables[0].level % 10)), //q1
-          0, //q2
-          l10(5 + (this.variables[2].level % 10)), //r1
-          0, //r2
-          Math.max(0, this.k) + l10(8 + (this.variables[4].level % 10)), //c1
-          Math.max(0, this.k), //c2
-          Infinity, //c3
-          Infinity, //c4
-          -Math.min(0, this.k), //c5
-        ];
-        let minCost = [Number.MAX_VALUE, -1];
-        for (let i = this.variables.length - 1; i >= 0; i--)
-          if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
-            minCost = [rawCost[i] + weights[i], i];
-          }
-        if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
-          this.rho.subtract(this.variables[minCost[1]].cost);
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.variables[minCost[1]].name, level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
-          }
-          this.variables[minCost[1]].buy();
-        } else break;
-      }
-    }
+    else super.buyVariablesWeight();
   }
 }

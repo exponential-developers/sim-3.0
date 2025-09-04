@@ -189,4 +189,31 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     }
     if (bought) this.onAnyVariablePurchased();
   }
+
+  getVariableWeights?(): number[];
+
+  buyVariablesWeight() {
+    if (!this.getVariableWeights) throw "Cannot use buyVariabllesWeight if getVariableWeights is undefined";
+    while (true) {
+      const rawCost = this.variables.map((item) => item.cost);
+      const weights = this.getVariableWeights();
+      let minCost = [Number.MAX_VALUE, -1];
+      for (let i = this.variables.length - 1; i >= 0; i--)
+        if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
+          minCost = [rawCost[i] + weights[i], i];
+        }
+      if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
+        this.rho.subtract(this.variables[minCost[1]].cost);
+        if (this.maxRho + 5 > this.lastPub) {
+          this.boughtVars.push({ 
+            variable: this.variables[minCost[1]].name, 
+            level: this.variables[minCost[1]].level + 1, 
+            cost: this.variables[minCost[1]].cost, 
+            timeStamp: this.t 
+          });
+        }
+        this.variables[minCost[1]].buy();
+      } else break;
+    }
+  }
 }

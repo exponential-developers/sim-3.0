@@ -281,46 +281,33 @@ class bapSim extends theoryClass<theory> {
 
     this.rho.add(rhodot + l10(this.dt));
   }
+  getVariableWeights(): number[] {
+    const rawCost = this.variables.map((item) => item.cost);
+    let nextCoast = this.getNextCoast();
+    const minlayercost = Math.min(...rawCost.slice(2, this.milestones[4] + 3));
+    const nextm64levels = 64 - ((this.variables[1].level - 1) % 64);
+    const p = 2**0.25;
+    const nextm64cost = rawCost[1] + l10((p**nextm64levels-1)/(p-1));
+    const coast64 = nextm64cost < minlayercost + l10(2) && this.milestones[0] > 0;
+    const coastn = this.maxRho > rawCost[11] - l10(25) && this.variables[11].level < 20 && this.milestones[4] > 0 && false;
+    const weights = this.maxRho > nextCoast - l10(25) ? new Array(12).fill(Infinity) :  coastn ? [
+      ...new Array(11).fill(Infinity),
+      0 //n
+    ] : coast64 ? [
+      0, //t
+      0, //c1
+      ...new Array(9).fill(l10(4)), //c2-c10
+      0 //n
+    ] : [
+      0, //t
+      this.milestones[0] > 0 ? l10(this.variables[1].level % 64) : this.variables[1].level < 65 ? l10(2) : Infinity, //c1
+      ...new Array(9).fill(0), //c2-c10
+      0 //n
+    ];
+    return weights;
+  }
   buyVariables() {
     if (!this.strat.includes("AI")) super.buyVariables();
-    else {
-      while (true) {
-        const rawCost = this.variables.map((item) => item.cost);
-        let nextCoast = this.getNextCoast();
-
-        const minlayercost = Math.min(...rawCost.slice(2, this.milestones[4] + 3));
-        const nextm64levels = 64 - ((this.variables[1].level - 1) % 64);
-        const p = 2**0.25;
-        const nextm64cost = rawCost[1] + l10((p**nextm64levels-1)/(p-1));
-        const coast64 = nextm64cost < minlayercost + l10(2) && this.milestones[0] > 0;
-        const coastn = this.maxRho > rawCost[11] - l10(25) && this.variables[11].level < 20 && this.milestones[4] > 0 && false;
-        const weights = this.maxRho > nextCoast - l10(25) ? new Array(12).fill(Infinity) :  coastn ? [
-          ...new Array(11).fill(Infinity),
-          0 //n
-        ] : coast64 ? [
-          0, //t
-          0, //c1
-          ...new Array(9).fill(l10(4)), //c2-c10
-          0 //n
-        ] : [
-          0, //t
-          this.milestones[0] > 0 ? l10(this.variables[1].level % 64) : this.variables[1].level < 65 ? l10(2) : Infinity, //c1
-          ...new Array(9).fill(0), //c2-c10
-          0 //n
-        ];
-        let minCost = [Number.MAX_VALUE, -1];
-        for (let i = this.variables.length - 1; i >= 0; i--)
-          if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
-            minCost = [rawCost[i] + weights[i], i];
-          }
-        if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
-          this.rho.subtract(this.variables[minCost[1]].cost);
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.variables[minCost[1]].name, level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
-          }
-          this.variables[minCost[1]].buy();
-        } else break;
-      }
-    }
+    else super.buyVariablesWeight();
   }
 }
