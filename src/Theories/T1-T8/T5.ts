@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, logToExp, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { createResult, l10, subtract, logToExp, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function t5(data: theoryData): Promise<simResult> {
@@ -13,10 +13,11 @@ export default async function t5(data: theoryData): Promise<simResult> {
 
 type theory = "T5";
 
-class t5Sim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class t5Sim extends theoryClass<theory> {
   q: number;
   c2worth: boolean;
+  c2Counter: number;
+  nc3: number;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -67,7 +68,7 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
     const stage = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
     this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
-  // Solves q using the differential equation result
+  /** Solves q using the differential equation result */
   calculateQ(ic1: number, ic2: number, ic3: number){
     const qcap = ic2 + ic3
     const gamma = 10 ** (ic1 + ic3 - ic2) // q growth speed characteristic parameter
@@ -87,8 +88,9 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 7;
-    this.rho = 0;
     this.q = 0;
+    this.c2Counter = 0;
+    this.nc3 = 0;
     //initialize variables
     this.variables = [
       new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
@@ -109,11 +111,10 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 150) this.updateMilestones();
+      this.c2Counter = 0;
       this.buyVariables();
       this.ticks++;
     }
@@ -129,28 +130,17 @@ class t5Sim extends theoryClass<theory> implements specificTheoryProps {
 
     this.q = this.calculateQ(this.variables[2].value, this.variables[3].value, vc3);
     const rhodot = vq1 + this.variables[1].value + this.q;
-    this.rho = add(this.rho, rhodot + this.totMult + l10(this.dt));
+    this.rho.add(rhodot + this.totMult + l10(this.dt));
+
+    this.nc3 = this.milestones[1] > 0 ? this.variables[4].value * (1 + 0.05 * this.milestones[2]) : 0;
+    const iq = this.calculateQ(this.variables[2].value, this.variables[3].value, this.nc3);
+    this.c2worth = iq >= this.variables[3].value + this.nc3 + l10(2 / 3);
   }
-  buyVariables() {
-    let c2Counter = 0;
-    const nc3 = this.milestones[1] > 0 ? this.variables[4].value * (1 + 0.05 * this.milestones[2]) : 0;
-    let iq = this.calculateQ(this.variables[2].value, this.variables[3].value, nc3);
-    this.c2worth = iq >= this.variables[3].value + nc3 + l10(2 / 3);
-    for (let i = this.variables.length - 1; i >= 0; i--) {
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-          if (i === 3) {
-            c2Counter++;
-            iq = this.calculateQ(this.variables[2].value, this.variables[3].value + l10(2) * c2Counter, nc3);
-            this.c2worth = iq >= this.variables[3].value + l10(2) * c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + l10(2 / 3);
-          }
-        } else break;
-      }
+  onVariablePurchased(id: number): void {
+    if (id == 3) {
+      this.c2Counter++;
+      const iq = this.calculateQ(this.variables[2].value, this.variables[3].value + l10(2) * this.c2Counter, this.nc3);
+      this.c2worth = iq >= this.variables[3].value + l10(2) * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + l10(2 / 3);
     }
   }
 }

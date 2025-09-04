@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function t8(data: theoryData): Promise<simResult> {
@@ -13,8 +13,7 @@ export default async function t8(data: theoryData): Promise<simResult> {
 
 type theory = "T8";
 
-class t8Sim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class t8Sim extends theoryClass<theory> {
   bounds: Array<Array<Array<number>>>;
   defaultStates: Array<Array<number>>;
   dts: Array<number>;
@@ -197,8 +196,6 @@ class t8Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 8;
-    //currencies
-    this.rho = 0;
     //initialize variables
     this.varNames = ["c1", "c2", "c3", "c4", "c5"];
     this.variables = [
@@ -248,9 +245,7 @@ class t8Sim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 220) this.updateMilestones();
       this.buyVariables();
@@ -309,18 +304,6 @@ class t8Sim extends theoryClass<theory> implements specificTheoryProps {
     const dz2Term = vc5 + l10(this.dz * this.dz);
 
     const rhodot = l10(this.dt) + this.totMult + this.variables[0].value + this.variables[1].value + add(add(dx2Term, dy2Term), dz2Term) / 2 - 2;
-    this.rho = add(this.rho, rhodot);
-  }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
+    this.rho.add(rhodot);
   }
 }

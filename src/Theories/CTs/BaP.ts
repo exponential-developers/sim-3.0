@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import pubtable from "./helpers/BaPpubtable.json" assert { type: "json" };
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
@@ -21,8 +21,7 @@ interface pubTable {
   };
 }
 
-class bapSim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class bapSim extends theoryClass<theory> {
   q: Array<number>;
   r: number;
   t_var: number;
@@ -184,7 +183,6 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 7;
-    this.rho = 0;
     this.q = new Array(9).fill(-1e60)
     this.r = -1e60
     this.t_var = 0
@@ -239,9 +237,7 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
@@ -286,23 +282,11 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
       rhodot = this.totMult + l10(this.t_var) + (this.q[0] + this.r) * this.getA(this.milestones[2], this.milestones[4] > 0, vn);
     }
 
-    this.rho = add(this.rho, rhodot + l10(this.dt));
+    this.rho.add(rhodot + l10(this.dt));
   }
   buyVariables() {
-    if (!this.strat.includes("AI"))
-    {
-      for (let i = this.variables.length - 1; i >= 0; i--)
-        while (true) {
-          if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-            if (this.maxRho + 5 > this.lastPub) {
-              this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-            }
-            this.rho = subtract(this.rho, this.variables[i].cost);
-            this.variables[i].buy();
-          } else break;
-        }
-    }
-    else{
+    if (!this.strat.includes("AI")) super.buyVariables();
+    else {
       while (true) {
         const rawCost = this.variables.map((item) => item.cost);
         let nextCoast = this.getNextCoast();
@@ -332,8 +316,8 @@ class bapSim extends theoryClass<theory> implements specificTheoryProps {
           if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
             minCost = [rawCost[i] + weights[i], i];
           }
-        if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho) {
-          this.rho = subtract(this.rho, this.variables[minCost[1]].cost);
+        if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
+          this.rho.subtract(this.variables[minCost[1]].cost);
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[minCost[1]], level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
           }

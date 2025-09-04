@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10 } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 import { parseValue } from "../../Sim/parsers.js";
 
@@ -14,9 +14,7 @@ export default async function bt(data: theoryData): Promise<simResult> {
 
 type theory = "BT";
 
-class btSim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
-
+class btSim extends theoryClass<theory> {
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
       BT: [true, true, true],
@@ -85,7 +83,6 @@ class btSim extends theoryClass<theory> implements specificTheoryProps {
     super(data);
     this.pubUnlock = 7;
     this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
-    this.rho = 0;
     this.varNames = ["tai", "rao", "tay"];
     this.variables = [
       new Variable({ cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
@@ -100,9 +97,7 @@ class btSim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
@@ -121,21 +116,9 @@ class btSim extends theoryClass<theory> implements specificTheoryProps {
     const vtay = this.variables[2].value * (this.milestones[3] == 0 ? tayexponent : 0.015)
     const rhodot = this.totMult + vtai + vrao + vtay;
 
-    this.rho = add(this.rho, rhodot + l10(this.dt));
+    this.rho.add(rhodot + l10(this.dt));
     if (this.milestones[3] == 1 && Math.max(this.maxRho, this.lastPub) * this.tauFactor < parseValue("9e599")) {
-      this.rho = parseValue("1.05e1500");
+      this.rho.value = parseValue("1.05e1500");
     }
-  }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
   }
 }

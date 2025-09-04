@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, logToExp, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, logToExp, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function t6(data: theoryData): Promise<simResult> {
@@ -13,8 +13,7 @@ export default async function t6(data: theoryData): Promise<simResult> {
 
 type theory = "T6";
 
-class t6Sim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class t6Sim extends theoryClass<theory> {
   q: number;
   r: number;
   k: number;
@@ -180,7 +179,6 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 12;
-    this.rho = 0;
     this.q = -Infinity;
     this.r = 0;
     //initialize variables
@@ -206,9 +204,7 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 150) this.updateMilestones();
       this.buyVariables();
@@ -223,7 +219,7 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
   tick() {
     const vc1 = this.variables[4].value * (1 + 0.05 * this.milestones[3]);
 
-    let C = subtract(this.calculateIntegral(vc1, this.variables[5].value, this.variables[6].value, this.variables[7].value, this.variables[8].value), this.rho);
+    let C = subtract(this.calculateIntegral(vc1, this.variables[5].value, this.variables[6].value, this.variables[7].value, this.variables[8].value), this.rho.value);
 
     this.q = add(this.q, this.variables[0].value + this.variables[1].value + l10(this.dt));
 
@@ -231,7 +227,7 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
 
     const newCurrency = this.calculateIntegral(vc1, this.variables[5].value, this.variables[6].value, this.variables[7].value, this.variables[8].value);
     C = C > newCurrency ? newCurrency : C;
-    this.rho = Math.max(0, subtract(newCurrency, C));
+    this.rho.value = Math.max(0, subtract(newCurrency, C));
 
     if (this.k > 0.3) this.stopC12[1]++;
     else this.stopC12[1] = 0;
@@ -242,17 +238,7 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
     }
   }
   buyVariables() {
-    if (this.strat !== "T6AI")
-      for (let i = this.variables.length - 1; i >= 0; i--)
-        while (true) {
-          if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-            if (this.maxRho + 5 > this.lastPub) {
-              this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-            }
-            this.rho = subtract(this.rho, this.variables[i].cost);
-            this.variables[i].buy();
-          } else break;
-        }
+    if (this.strat !== "T6AI") super.buyVariables();
     else {
       while (true) {
         const rawCost = this.variables.map((item) => item.cost);
@@ -272,8 +258,8 @@ class t6Sim extends theoryClass<theory> implements specificTheoryProps {
           if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
             minCost = [rawCost[i] + weights[i], i];
           }
-        if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho) {
-          this.rho = subtract(this.rho, this.variables[minCost[1]].cost);
+        if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
+          this.rho.subtract(this.variables[minCost[1]].cost);
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[minCost[1]], level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
           }

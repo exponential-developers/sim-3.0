@@ -1,21 +1,12 @@
 import Variable from "../Utils/variable";
 import { global } from "../Sim/main.js";
 import jsonData from "../Data/data.json";
+import Currency from "../Utils/currency";
 
-interface currencyDefinition {
-  rho?: number;
-  currencies?: Array<number>;
-}
-
-export interface specificTheoryProps extends currencyDefinition {
-  theory: theoryType;
-}
-
-export type conditionFunction = () => boolean;
-
-export abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
-  buyingConditions: Array<conditionFunction>;
-  variableAvailability: Array<conditionFunction>;
+/** Base class for a theory */
+export default abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
+  buyingConditions: conditionFunction[];
+  variableAvailability: conditionFunction[];
   milestoneTree: Array<milestoneType>;
   strat: stratType[theory];
   theory: theoryType;
@@ -33,6 +24,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   t: number;
   ticks: number;
   //currencies
+  rho: Currency;
   maxRho: number;
   //initialize variables
   varNames: Array<string>;
@@ -52,12 +44,15 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   milestones: milestoneType;
   pubMulti: number;
 
+  abstract getBuyingConditions(): conditionFunction[];
+  abstract getVariableAvailability(): conditionFunction[];
   abstract getTotMult(val: number): number;
 
   constructor(data: theoryData) {
     this.strat = data.strat as stratType[theory];
     this.theory = data.theory;
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
+
     //theory
     this.pubUnlock = 1;
     this.cap = typeof data.cap === "number" && data.cap > 0 ? data.cap : Infinity;
@@ -70,21 +65,28 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.ddt = global.ddt;
     this.t = 0;
     this.ticks = 0;
+
     //currencies
+    this.rho = new Currency;
     this.maxRho = 0;
+
     //initialize variables
     this.varNames = [];
     this.variables = [];
     this.boughtVars = [];
+
     //pub values
     this.tauH = 0;
     this.maxTauH = 0;
     this.pubT = 0;
     this.pubRho = 0;
+
+    // pub conditions
     this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
     this.pubConditions = [() => this.maxRho >= this.cap];
     this.simEndConditions = [() => this.t > this.pubT * 2];
     this.doSimEndConditions = () => true;
+
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
     this.buyingConditions = [];
@@ -100,6 +102,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.t = other.t;
     this.ticks = other.ticks;
 
+    this.rho = other.rho.copy();
     this.maxRho = other.maxRho;
     this.varNames = other.varNames;
     this.variables = other.variables.map((v) => v.copy());
@@ -147,6 +150,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   }
 
   updateSimStatus() {
+    if (this.rho.value > this.maxRho) this.maxRho = this.rho.value;
     this.updateT();
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
 
@@ -158,5 +162,34 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     }
     
     this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
+  }
+
+  onVariablePurchased(id: number) {}
+
+  onAnyVariablePurchased() {}
+
+  buyVariables() {
+    let bought = false;
+    for (let i = this.variables.length - 1; i >= 0; i--) {
+      let currency = this.variables[i].currency ?? this.rho;
+      while (true) {
+        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
+          if (this.maxRho + 5 > this.lastPub) {
+            this.boughtVars.push({ 
+              variable: this.varNames[i], 
+              level: this.variables[i].level + 1, 
+              cost: this.variables[i].cost, 
+              timeStamp: this.t,
+              symbol: currency.symb
+            });
+          }
+          currency.subtract(this.variables[i].cost);
+          this.variables[i].buy();
+          bought = true;
+          this.onVariablePurchased(i);
+        } else break;
+      }
+    }
+    if (bought) this.onAnyVariablePurchased();
   }
 }

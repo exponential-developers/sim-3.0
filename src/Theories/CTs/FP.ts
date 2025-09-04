@@ -1,9 +1,9 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function fp(data: theoryData): Promise<simResult> {
@@ -51,10 +51,9 @@ interface milestones {
 
 type pubTable = {[key: string]: number};
 
-class fpSim extends theoryClass<theory, milestones> implements specificTheoryProps {
+class fpSim extends theoryClass<theory, milestones> {
   milestones: milestones;
-  // currencies and growing variables
-  rho: number;
+  // growing variables
   q: number;
   r: number;
   t_var: number;
@@ -211,7 +210,6 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 12;
-    this.rho = 0;
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
@@ -283,9 +281,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
       await this.buyVariables();
@@ -341,14 +337,14 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     rhodot += this.milestones.fractals > 0 ? this.q : 0;
     rhodot += this.milestones.fractals > 1 ? this.r : 0;
 
-    this.rho = add(this.rho, rhodot + l10(this.dt));
+    this.rho.add(rhodot + l10(this.dt));
   }
   async buyVariables() {
     const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
     const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
     for (let i = this.variables.length - 1; i >= 0; i--)
       while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
+        if (this.rho.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
           if (this.forcedPubRho !== Infinity) {
             if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
               this.coasting[i] = true;
@@ -364,7 +360,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }
-          this.rho = subtract(this.rho, this.variables[i].cost);
+          this.rho.subtract(this.variables[i].cost);
           this.variables[i].buy();
           if (i === 6) this.updateN_flag = true;
         } else break;

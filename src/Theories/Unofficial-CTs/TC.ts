@@ -3,7 +3,7 @@ import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js"
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { ExponentialCost } from "../../Utils/cost.js";
-import { specificTheoryProps, theoryClass } from "../theory.js";
+import theoryClass from "../theory.js";
 
 export default async function tc(data: theoryData): Promise<simResult> {
   const sim = new tcSim(data);
@@ -13,9 +13,8 @@ export default async function tc(data: theoryData): Promise<simResult> {
 
 type theory = "TC";
 
-class tcSim extends theoryClass<theory> implements specificTheoryProps {
-  // Currencies and growing variables
-  rho: number;
+class tcSim extends theoryClass<theory> {
+  // growing variables
   r: number;
   P: number;
 
@@ -130,7 +129,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     this.systemDt = 0.1;
     this.curMult = 0;
     this.error = [0, 0];
-    this.rho = 0;
     this.r = 0;
     this.P = 0;
     this.timer = 0;
@@ -180,7 +178,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 500) this.updateMilestones();
       this.buyVariables();
@@ -247,8 +244,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     const vc1 = this.variables[0].value * c1exp;
     const vc2 = this.milestones[4] > 0 ? this.variables[3].value : 0;
     const mrexp = this.milestones[3];
-    this.rho = add(
-      this.rho,
+    this.rho.add(
       this.P +
         this.r * (1 + mrexp * 0.001) +
         (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
@@ -257,23 +253,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
         l10(this.achievementMulti)
     );
   }
-
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.varNames[i],
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-            });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-          if (i == 10) this.recomputeC1Base();
-        } else break;
-      }
+  onVariablePurchased(id: number): void {
+    if (id == 10) this.recomputeC1Base();
   }
 }

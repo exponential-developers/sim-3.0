@@ -1,9 +1,10 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import Currency from "../../Utils/currency.js";
 
 export default async function t3(data: theoryData): Promise<simResult> {
   const sim = new t3Sim(data);
@@ -13,8 +14,9 @@ export default async function t3(data: theoryData): Promise<simResult> {
 
 type theory = "T3";
 
-class t3Sim extends theoryClass<theory> implements specificTheoryProps {
-  currencies: Array<number>;
+class t3Sim extends theoryClass<theory> {
+  rho2: Currency;
+  rho3: Currency;
 
   getBuyingConditions() {
     const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
@@ -75,18 +77,18 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
         () => this.curMult < 1,
       ],
       T3Snax2: [
-        () => (this.curMult < 1 ? this.variables[0].cost + 1 < this.currencies[0] : false),
-        () => this.variables[1].cost + l10(3) < this.currencies[1],
-        () => this.variables[2].cost + l10(5) < this.currencies[2],
+        () => (this.curMult < 1 ? this.variables[0].cost + 1 < this.rho.value : false),
+        () => this.variables[1].cost + l10(3) < this.rho2.value,
+        () => this.variables[2].cost + l10(5) < this.rho3.value,
         false,
-        () => (this.curMult < 1 ? this.variables[4].cost + 2 < this.currencies[0] : true),
+        () => (this.curMult < 1 ? this.variables[4].cost + 2 < this.rho.value : true),
         false,
         false,
-        () => (this.curMult < 1 ? true : this.variables[7].cost + l10(8) < this.currencies[1]),
+        () => (this.curMult < 1 ? true : this.variables[7].cost + l10(8) < this.rho2.value),
         true,
         () => this.curMult < 1,
         () => this.curMult < 1,
-        () => (this.curMult < 1 ? this.variables[11].cost + 1 < this.currencies[2] : false),
+        () => (this.curMult < 1 ? this.variables[11].cost + 1 < this.rho3.value : false),
       ],
       T3P2C23d: [
         false,
@@ -273,21 +275,23 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 9;
-    this.currencies = [0, 0, 0];
+    this.rho.symb = "rho_1";
+    this.rho2 = new Currency("rho_2");
+    this.rho3 = new Currency("rho_3");
     this.varNames = ["b1", "b2", "b3", "c11", "c12", "c13", "c21", "c22", "c23", "c31", "c32", "c33"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 1.18099)), valueScaling: new StepwisePowerSumValue() }), //b1
-      new Variable({ cost: new ExponentialCost(10, 1.308), valueScaling: new StepwisePowerSumValue() }), //b2
-      new Variable({ cost: new ExponentialCost(3000, 1.675), valueScaling: new StepwisePowerSumValue() }), //b3
-      new Variable({ cost: new ExponentialCost(20, 6.3496), valueScaling: new ExponentialValue(2) }), //c11
-      new Variable({ cost: new ExponentialCost(10, 2.74), valueScaling: new ExponentialValue(2) }), //c12
-      new Variable({ cost: new ExponentialCost(1000, 1.965), valueScaling: new ExponentialValue(2) }), //c13
-      new Variable({ cost: new ExponentialCost(500, 18.8343), valueScaling: new ExponentialValue(2) }), //c21
-      new Variable({ cost: new ExponentialCost(1e5, 3.65), valueScaling: new ExponentialValue(2) }), //c22
-      new Variable({ cost: new ExponentialCost(1e5, 2.27), valueScaling: new ExponentialValue(2) }), //c23
-      new Variable({ cost: new ExponentialCost(1e4, 1248.27), valueScaling: new ExponentialValue(2) }), //c31
-      new Variable({ cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
-      new Variable({ cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
+      new Variable({ currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(10, 1.18099)), valueScaling: new StepwisePowerSumValue() }), //b1
+      new Variable({ currency: this.rho2, cost: new ExponentialCost(10, 1.308), valueScaling: new StepwisePowerSumValue() }), //b2
+      new Variable({ currency: this.rho3, cost: new ExponentialCost(3000, 1.675), valueScaling: new StepwisePowerSumValue() }), //b3
+      new Variable({ currency: this.rho, cost: new ExponentialCost(20, 6.3496), valueScaling: new ExponentialValue(2) }), //c11
+      new Variable({ currency: this.rho2, cost: new ExponentialCost(10, 2.74), valueScaling: new ExponentialValue(2) }), //c12
+      new Variable({ currency: this.rho3, cost: new ExponentialCost(1000, 1.965), valueScaling: new ExponentialValue(2) }), //c13
+      new Variable({ currency: this.rho, cost: new ExponentialCost(500, 18.8343), valueScaling: new ExponentialValue(2) }), //c21
+      new Variable({ currency: this.rho2, cost: new ExponentialCost(1e5, 3.65), valueScaling: new ExponentialValue(2) }), //c22
+      new Variable({ currency: this.rho3, cost: new ExponentialCost(1e5, 2.27), valueScaling: new ExponentialValue(2) }), //c23
+      new Variable({ currency: this.rho, cost: new ExponentialCost(1e4, 1248.27), valueScaling: new ExponentialValue(2) }), //c31
+      new Variable({ currency: this.rho2, cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
+      new Variable({ currency: this.rho3, cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestones = [0, 0, 0, 0];
@@ -299,9 +303,7 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
@@ -319,26 +321,12 @@ class t3Sim extends theoryClass<theory> implements specificTheoryProps {
     const vb3 = this.variables[2].value * (1 + 0.05 * this.milestones[3]);
 
     const rhodot = add(add(this.variables[3].value + vb1, this.variables[4].value + vb2), this.variables[5].value + vb3);
-    this.currencies[0] = add(this.currencies[0], l10(this.dt) + this.totMult + rhodot);
+    this.rho.add(l10(this.dt) + this.totMult + rhodot);
 
     const rho2dot = add(add(this.variables[6].value + vb1, this.variables[7].value + vb2), this.variables[8].value + vb3);
-    this.currencies[1] = add(this.currencies[1], l10(this.dt) + this.totMult + rho2dot);
+    this.rho2.add(l10(this.dt) + this.totMult + rho2dot);
 
     const rho3dot = add(add(this.variables[9].value + vb1, this.variables[10].value + vb2), this.variables[11].value + vb3);
-    this.currencies[2] = this.milestones[0] > 0 ? add(this.currencies[2], l10(this.dt) + this.totMult + rho3dot) : 0;
-  }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--) {
-      const currencyIndex = i % 3;
-      while (true) {
-        if (this.currencies[currencyIndex] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t, symbol: `rho_${currencyIndex + 1}` });
-          }
-          this.currencies[currencyIndex] = subtract(this.currencies[currencyIndex], this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
-    }
+    if (this.milestones[0] > 0) this.rho3.add(l10(this.dt) + this.totMult + rho3dot);
   }
 }

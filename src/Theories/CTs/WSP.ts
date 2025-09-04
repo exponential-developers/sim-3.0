@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10 } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function wsp(data: theoryData): Promise<simResult> {
@@ -13,10 +13,10 @@ export default async function wsp(data: theoryData): Promise<simResult> {
 
 type theory = "WSP";
 
-class wspSim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class wspSim extends theoryClass<theory> {
   q: number;
   S: number;
+  updateS_flag: boolean;
 
   getBuyingConditions() {
     let c1weight = 0;
@@ -103,8 +103,8 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 8;
-    this.rho = 0;
     this.q = 0;
+    this.updateS_flag = false;
     //initialize variables
     this.varNames = ["q1", "q2", "n", "c1", "c2"];
     this.variables = [
@@ -124,9 +124,7 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
       this.buyVariables();
@@ -139,6 +137,11 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
     return result;
   }
   tick() {
+    if (this.updateS_flag) {
+      this.updateS_flag = false;
+      this.updateS();
+    }
+
     const vq1 = this.variables[0].value * (1 + 0.01 * this.milestones[0]);
 
     const qdot = Math.max(0, l10(this.dt) + this.S + this.variables[4].value);
@@ -146,21 +149,9 @@ class wspSim extends theoryClass<theory> implements specificTheoryProps {
     this.q = add(this.q, qdot);
 
     const rhodot = this.totMult + vq1 + this.variables[1].value + this.q + l10(this.dt);
-    this.rho = add(this.rho, rhodot);
+    this.rho.add(rhodot);
   }
-  buyVariables() {
-    let updateS_flag = false;
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.variables[i].buy();
-          if (i === 2 || i === 4) updateS_flag = true;
-        } else break;
-      }
-    if (updateS_flag) this.updateS();
+  onVariablePurchased(id: number): void {
+    if (id === 2 || id === 4) this.updateS_flag = true;
   }
 }

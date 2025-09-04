@@ -1,12 +1,12 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, binarySearch, getBestResult } from "../../Utils/helpers.js";
+import { createResult, l10, binarySearch, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ.js";
 import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
-
 import { ExponentialCost, StepwiseCost, CompositeCost, ConstantCost, FirstFreeCost, BaseCost } from '../../Utils/cost.js';
+import Currency from "../../Utils/currency.js";
 
 type theory = "RZ";
 
@@ -260,8 +260,8 @@ export default async function rz(data: theoryData) {
     }
 }
 
-class rzSim extends theoryClass<theory> implements specificTheoryProps {
-    currencies: Array<number>;
+class rzSim extends theoryClass<theory> {
+    delta: Currency;
     t_var: number;
     // Zeta parameters
     zTerm: number;
@@ -562,7 +562,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
     constructor(data: theoryData) {
         super(data);
         this.targetZero = 999999999;
-        this.currencies = [0, 0];
+        this.delta = new Currency("delta");
         this.t_var = 0;
         this.zTerm = 0;
         this.rCoord = -1.4603545088095868;
@@ -586,25 +586,31 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         this.varNames = ["c1", "c2", "b", "w1", "w2", "w3"];
         this.variables = [
             new Variable({
+                currency: this.rho,
                 cost: new FirstFreeCost(new ExponentialCost(225, Math.pow(2, 0.699))),
                 valueScaling: new StepwisePowerSumValue(2, 8),
             }),
             new Variable({
+                currency: this.rho,
                 cost: new ExponentialCost(1500, Math.pow(2, 0.699 * 4)),
                 valueScaling: new ExponentialValue(2),
             }),
             new Variable({
+                currency: this.rho,
                 cost: new VariableBcost, valueScaling: new LinearValue(0.5)
             }),
             new Variable({
+                currency: this.delta,
                 cost: new StepwiseCost(6, new ExponentialCost(12000, Math.pow(100, 1 / 3))),
                 valueScaling: new StepwisePowerSumValue(2, 8, 1),
             }),
             new Variable({
+                currency: this.delta,
                 cost: new ExponentialCost(1e5, 10),
                 valueScaling: new ExponentialValue(2),
             }),
             new Variable({
+                currency: this.delta,
                 cost: new ExponentialCost("3.16227766017e600", '1e30'),
                 valueScaling: new ExponentialValue(2),
             }),
@@ -626,9 +632,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                 lookups.zetaLookup = [];
                 lookups.zetaDerivLookup = [];
             }
-            if ((this.ticks + 1) % 500000 === 0) await sleep();
             this.tick();
-            if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
             this.updateSimStatus();
             this.updateMilestones();
             this.buyVariables();
@@ -674,8 +678,8 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
         const bTerm = this.variables[2].value;
 
         if (this.bhRewindStatus == 2){
-            this.currencies[1] = add(this.currencies[1], l10(this.bhRewindDeriv) + w1Term + w2Term + w3Term + this.totMult);
-            this.currencies[0] = add(this.currencies[0], tTerm + c1Term + c2Term + w1Term + this.totMult + l10(this.bhRewindNorm));
+            this.delta.add(l10(this.bhRewindDeriv) + w1Term + w2Term + w3Term + this.totMult);
+            this.rho.add(tTerm + c1Term + c2Term + w1Term + this.totMult + l10(this.bhRewindNorm));
         }
         else if (!this.bhFoundZero){
             const z = zeta(this.t_var, this.ticks, this.offGrid, lookups.zetaLookup);
@@ -684,7 +688,7 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
                 const dr = tmpZ[0] - z[0];
                 const di = tmpZ[1] - z[1];
                 const derivTerm = l10(Math.sqrt(dr * dr + di * di) * 100000);
-                this.currencies[1] = add(this.currencies[1], derivTerm * bTerm + w1Term + w2Term + w3Term + bonus);
+                this.delta.add(derivTerm * bTerm + w1Term + w2Term + w3Term + bonus);
                 if (this.bhRewindStatus == 1) {
                     this.bhRewindDeriv += this.dt * (Math.sqrt(dr * dr + di * di) * 100000) ** bTerm;
                 }
@@ -701,49 +705,28 @@ class rzSim extends theoryClass<theory> implements specificTheoryProps {
             this.rCoord = z[0];
             this.iCoord = z[1];
             this.zTerm = Math.abs(z[2]);
-            this.currencies[0] = add(this.currencies[0], tTerm + c1Term + c2Term + w1Term + bonus - l10(this.zTerm / (2 ** bTerm) + 0.01));
+            this.rho.add(tTerm + c1Term + c2Term + w1Term + bonus - l10(this.zTerm / (2 ** bTerm) + 0.01));
             if (this.bhRewindStatus == 1) {
                 this.bhRewindNorm += this.dt / (this.zTerm / (2 ** bTerm) + 0.01);
             }
         }
         else {
-            this.currencies[1] = add(this.currencies[1], this.bhdTerm * bTerm + w1Term + w2Term + w3Term + bonus);
-            this.currencies[0] = add(this.currencies[0], tTerm + c1Term + c2Term + w1Term + bonus - l10(this.bhzTerm / (2 ** bTerm) + 0.01));
+            this.delta.add(this.bhdTerm * bTerm + w1Term + w2Term + w3Term + bonus);
+            this.rho.add(tTerm + c1Term + c2Term + w1Term + bonus - l10(this.bhzTerm / (2 ** bTerm) + 0.01));
         }
     }
-    buyVariables() {
-        const currencyIndices = [0, 0, 0, 1, 1, 1];
-
-        for (let i = this.variables.length - 1; i >= 0; i--)
-            while (true) {
-                if (this.currencies[currencyIndices[i]] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-                    this.currencies[currencyIndices[i]] = subtract(this.currencies[currencyIndices[i]], this.variables[i].cost);
-                    if (this.maxRho + 5 > this.lastPub) {
-                        let vb: varBuy = {
-                            variable: this.varNames[i],
-                            level: this.variables[i].level + 1,
-                            cost: this.variables[i].cost,
-                            timeStamp: this.t,
-                        };
-                        if (currencyIndices[i] == 1) {
-                            vb.symbol = "delta";
-                        }
-                        this.boughtVars.push(vb);
-                    }
-                    if (i == 2 && this.bhRewindStatus == 2) { 
-                        // Reset RZdBHRewind status when buying b
-                        // To make sure the cache is recomputed with the new b value
-                        this.bhRewindT = 0;
-                        this.bhRewindNorm = 0;
-                        this.bhRewindDeriv = 0;
-                        this.milestones[3] = 0;
-                        this.blackhole = false;
-                        this.bhSearchingRewind = true;
-                        this.bhFoundZero = false;
-                        this.bhRewindStatus = 1;
-                    }
-                    this.variables[i].buy();
-                } else break;
-            }
+    onVariablePurchased(id: number): void {
+        if (id == 2 && this.bhRewindStatus == 2) { 
+            // Reset RZdBHRewind status when buying b
+            // To make sure the cache is recomputed with the new b value
+            this.bhRewindT = 0;
+            this.bhRewindNorm = 0;
+            this.bhRewindDeriv = 0;
+            this.milestones[3] = 0;
+            this.blackhole = false;
+            this.bhSearchingRewind = true;
+            this.bhFoundZero = false;
+            this.bhRewindStatus = 1;
+        }
     }
 }
