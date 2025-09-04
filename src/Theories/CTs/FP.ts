@@ -213,19 +213,19 @@ class fpSim extends theoryClass<theory, milestones> {
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
-    this.varNames = ["tdot", "c1", "c2", "q1", "q2", "r1", "n", "s"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
-      new Variable({ cost: new CompositeCost(15, new ExponentialCost(1e15, 40), new ExponentialCost(1e37, 16.42)), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(1e35, 12)), valueScaling: new StepwisePowerSumValue(10, 10)}),
-      new Variable({ cost: new ExponentialCost(1e76, 1e3), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "tdot", cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
+      new Variable({ name: "c2", cost: new CompositeCost(15, new ExponentialCost(1e15, 40), new ExponentialCost(1e37, 16.42)), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(1e35, 12)), valueScaling: new StepwisePowerSumValue(10, 10)}),
+      new Variable({ name: "q2", cost: new ExponentialCost(1e76, 1e3), valueScaling: new ExponentialValue(10) }),
       new Variable({
+        name: "r1",
         cost: new FirstFreeCost(new CompositeCost(285, new ExponentialCost(1e80, 25), new ExponentialCost("1e480", 150))),
         valueScaling: new StepwisePowerSumValue(2, 5)
       }),
-      new Variable({ cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
+      new Variable({ name: "n", cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
     this.T_n = 1;
     this.U_n = 1;
@@ -358,7 +358,7 @@ class fpSim extends theoryClass<theory, milestones> {
             }
           }
           if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
+            this.boughtVars.push({ variable: this.variables[i].name, level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }
           this.rho.subtract(this.variables[i].cost);
           this.variables[i].buy();

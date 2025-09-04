@@ -583,33 +583,38 @@ class rzSim extends theoryClass<theory> {
         this.bhRewindT = 0;
         this.bhRewindNorm = 0;
         this.bhRewindDeriv = 0;
-        this.varNames = ["c1", "c2", "b", "w1", "w2", "w3"];
         this.variables = [
             new Variable({
+                name: "c1",
                 currency: this.rho,
                 cost: new FirstFreeCost(new ExponentialCost(225, Math.pow(2, 0.699))),
                 valueScaling: new StepwisePowerSumValue(2, 8),
             }),
             new Variable({
+                name: "c2",
                 currency: this.rho,
                 cost: new ExponentialCost(1500, Math.pow(2, 0.699 * 4)),
                 valueScaling: new ExponentialValue(2),
             }),
             new Variable({
+                name: "b",
                 currency: this.rho,
                 cost: new VariableBcost, valueScaling: new LinearValue(0.5)
             }),
             new Variable({
+                name: "w1",
                 currency: this.delta,
                 cost: new StepwiseCost(6, new ExponentialCost(12000, Math.pow(100, 1 / 3))),
                 valueScaling: new StepwisePowerSumValue(2, 8, 1),
             }),
             new Variable({
+                name: "w2",
                 currency: this.delta,
                 cost: new ExponentialCost(1e5, 10),
                 valueScaling: new ExponentialValue(2),
             }),
             new Variable({
+                name: "w3",
                 currency: this.delta,
                 cost: new ExponentialCost("3.16227766017e600", '1e30'),
                 valueScaling: new ExponentialValue(2),

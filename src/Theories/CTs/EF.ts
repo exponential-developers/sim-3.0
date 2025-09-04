@@ -168,18 +168,17 @@ class efSim extends theoryClass<theory> {
     this.q = 0;
     this.t_var = 0;
     //initialize variables
-    this.varNames = ["t", "q1", "q2", "b1", "b2", "c1", "c2", "a1", "a2", "a3"];
     this.variables = [
-      new Variable({ currency: this.rho, cost: new ExponentialCost(1e6, 1e6), valueScaling: new ExponentialValue(10) }),
-      new Variable({ currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ currency: this.rho, cost: new ExponentialCost(5, 60), valueScaling: new ExponentialValue(2) }),
-      new Variable({ currency: this.R, cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ currency: this.R, cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
-      new Variable({ currency: this.I, cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ currency: this.I, cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
-      new Variable({ currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(2000, 2.2, true)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ currency: this.R, cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
-      new Variable({ currency: this.I, cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "tdot", currency: this.rho, cost: new ExponentialCost(1e6, 1e6), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "q1",   currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2",   currency: this.rho, cost: new ExponentialCost(5, 60), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "b1",   currency: this.R,   cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "b2",   currency: this.R,   cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
+      new Variable({ name: "c1",   currency: this.I,   cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "c2",   currency: this.I,   cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
+      new Variable({ name: "a1",   currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(2000, 2.2, true)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "a2",   currency: this.R,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
+      new Variable({ name: "a3",   currency: this.I,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.forcedPubRho = Infinity;
     if (this.lastPub < 374 && this.strat !== "EF") {
@@ -244,7 +243,7 @@ class efSim extends theoryClass<theory> {
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const lastLevels = this.varNames.map((variable) => getLastLevel(variable, this.boughtVars));
+    const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
     const result = createResult(
       this,
       this.strat !== "EF"
@@ -308,7 +307,7 @@ class efSim extends theoryClass<theory> {
           }
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({
-              variable: this.varNames[i],
+              variable: this.variables[i].name,
               level: this.variables[i].level + 1,
               cost: this.variables[i].cost,
               timeStamp: this.t,

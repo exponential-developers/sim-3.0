@@ -195,16 +195,15 @@ class t2Sim extends theoryClass<theory> {
     this.stop3 = 2050;
     this.stop4 = 550;
     //initialize variables
-    this.varNames = ["q1", "q2", "q3", "q4", "r1", "r2", "r3", "r4"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(5000, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(3e25, 3), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(8e50, 4), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(2e6, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(3e9, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2", cost: new ExponentialCost(5000, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q3", cost: new ExponentialCost(3e25, 3), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q4", cost: new ExponentialCost(8e50, 4), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r1", cost: new ExponentialCost(2e6, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r2", cost: new ExponentialCost(3e9, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r3", cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r4", cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
     ];
     //milestones  [qterm, rterm, q1exp, r1exp]
     this.milestones = [0, 0, 0, 0];

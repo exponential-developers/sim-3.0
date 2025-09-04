@@ -4,15 +4,17 @@ import { BaseValue } from "./value";
 import Currency from "./currency";
 
 interface variableData {
+  currency?: Currency;
+  name: string;
   level?: number;
   cost: BaseCost;
-  currency?: Currency;
   valueScaling: BaseValue;
 }
 
 export default class Variable {
   data: variableData;
   currency?: Currency;
+  name: string;
   level: number;
   cost: number;
   value: number;
@@ -21,6 +23,7 @@ export default class Variable {
   constructor(data: variableData) {
     this.data = data;
     this.currency = data.currency;
+    this.name = data.name;
     this.level = 0;
     this.cost = 0;
     this.value = 0;
@@ -59,10 +62,11 @@ export default class Variable {
   }
   copy(): Variable {
     let varData = {
+      currency: this.currency,
+      name: this.name,
       level: this.data.level,
       cost: this.data.cost.copy(),
       valueScaling: this.data.valueScaling.copy(),
-      currency: this.currency
     }
     let copy = new Variable(varData);
     copy.level = this.level;

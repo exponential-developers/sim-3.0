@@ -273,14 +273,13 @@ class fiSim extends theoryClass<theory> {
     this.msq = 0;
 
     //initialize variables
-    this.varNames = ["tdot", "q1", "q2", "k", "m", "n"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
-      new Variable({ cost: new ExponentialCost(1e7, 5e3), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e2, 10), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost(1e4, 4.44), valueScaling: new ExponentialValue(1.5) }),
-      new Variable({ cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
+      new Variable({ name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "q1",   cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
+      new Variable({ name: "q2",   cost: new ExponentialCost(1e7, 5e3), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "K",    cost: new ExponentialCost(1e2, 10), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "m",    cost: new ExponentialCost(1e4, 4.44), valueScaling: new ExponentialValue(1.5) }),
+      new Variable({ name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
     ];
     this.variables[5].buy();
     this.buyingConditions = this.getBuyingConditions();

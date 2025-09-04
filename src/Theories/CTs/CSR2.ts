@@ -148,13 +148,12 @@ class csr2Sim extends theoryClass<theory> {
     this.pubUnlock = 10;
     this.q = 0;
     //initialize variables
-    this.varNames = ["q1", "q2", "c1", "n", "c2"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 5)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(15, 128), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e6, 16), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(50, 2 ** (Math.log2(256) * 3.346)), valueScaling: new LinearValue(1, 1)}),
-      new Variable({ cost: new ExponentialCost(1e3, 10 ** 5.65), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 5)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2", cost: new ExponentialCost(15, 128), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c1", cost: new ExponentialCost(1e6, 16), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "n",  cost: new ExponentialCost(50, 2 ** (Math.log2(256) * 3.346)), valueScaling: new LinearValue(1, 1)}),
+      new Variable({ name: "c2", cost: new ExponentialCost(1e3, 10 ** 5.65), valueScaling: new ExponentialValue(2) }),
     ];
     this.recursionValue = <Array<number>>data.recursionValue ?? [Infinity, 0];
     this.bestCoast = [0, 0];
@@ -287,7 +286,7 @@ class csr2Sim extends theoryClass<theory> {
             }
           }
           if (this.maxRho + 5 > this.lastPub && (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
+            this.boughtVars.push({ variable: this.variables[i].name, level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
           }
           this.rho.subtract(this.variables[i].cost);
           this.variables[i].buy();

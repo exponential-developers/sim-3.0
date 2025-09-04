@@ -106,13 +106,12 @@ class wspSim extends theoryClass<theory> {
     this.q = 0;
     this.updateS_flag = false;
     //initialize variables
-    this.varNames = ["q1", "q2", "n", "c1", "c2"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 3.38 / 4, true)), valueScaling: new StepwisePowerSumValue()}),
-      new Variable({ cost: new ExponentialCost(1000, 3.38 * 3, true), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(20, 3.38, true), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost(50, 3.38 / 1.5, true), valueScaling: new StepwisePowerSumValue(2, 50, 1)}),
-      new Variable({ cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 3.38 / 4, true)), valueScaling: new StepwisePowerSumValue()}),
+      new Variable({ name: "q2", cost: new ExponentialCost(1000, 3.38 * 3, true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "n",  cost: new ExponentialCost(20, 3.38, true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "c1", cost: new ExponentialCost(50, 3.38 / 1.5, true), valueScaling: new StepwisePowerSumValue(2, 50, 1)}),
+      new Variable({ name: "c2", cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;
     this.buyingConditions = this.getBuyingConditions();

@@ -278,20 +278,19 @@ class t3Sim extends theoryClass<theory> {
     this.rho.symb = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
-    this.varNames = ["b1", "b2", "b3", "c11", "c12", "c13", "c21", "c22", "c23", "c31", "c32", "c33"];
     this.variables = [
-      new Variable({ currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(10, 1.18099)), valueScaling: new StepwisePowerSumValue() }), //b1
-      new Variable({ currency: this.rho2, cost: new ExponentialCost(10, 1.308), valueScaling: new StepwisePowerSumValue() }), //b2
-      new Variable({ currency: this.rho3, cost: new ExponentialCost(3000, 1.675), valueScaling: new StepwisePowerSumValue() }), //b3
-      new Variable({ currency: this.rho, cost: new ExponentialCost(20, 6.3496), valueScaling: new ExponentialValue(2) }), //c11
-      new Variable({ currency: this.rho2, cost: new ExponentialCost(10, 2.74), valueScaling: new ExponentialValue(2) }), //c12
-      new Variable({ currency: this.rho3, cost: new ExponentialCost(1000, 1.965), valueScaling: new ExponentialValue(2) }), //c13
-      new Variable({ currency: this.rho, cost: new ExponentialCost(500, 18.8343), valueScaling: new ExponentialValue(2) }), //c21
-      new Variable({ currency: this.rho2, cost: new ExponentialCost(1e5, 3.65), valueScaling: new ExponentialValue(2) }), //c22
-      new Variable({ currency: this.rho3, cost: new ExponentialCost(1e5, 2.27), valueScaling: new ExponentialValue(2) }), //c23
-      new Variable({ currency: this.rho, cost: new ExponentialCost(1e4, 1248.27), valueScaling: new ExponentialValue(2) }), //c31
-      new Variable({ currency: this.rho2, cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
-      new Variable({ currency: this.rho3, cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
+      new Variable({ name: "b1",  currency: this.rho,  cost: new FirstFreeCost(new ExponentialCost(10, 1.18099)), valueScaling: new StepwisePowerSumValue() }), //b1
+      new Variable({ name: "b2",  currency: this.rho2, cost: new ExponentialCost(10, 1.308), valueScaling: new StepwisePowerSumValue() }), //b2
+      new Variable({ name: "b3",  currency: this.rho3, cost: new ExponentialCost(3000, 1.675), valueScaling: new StepwisePowerSumValue() }), //b3
+      new Variable({ name: "c11", currency: this.rho,  cost: new ExponentialCost(20, 6.3496), valueScaling: new ExponentialValue(2) }), //c11
+      new Variable({ name: "c12", currency: this.rho2, cost: new ExponentialCost(10, 2.74), valueScaling: new ExponentialValue(2) }), //c12
+      new Variable({ name: "c13", currency: this.rho3, cost: new ExponentialCost(1000, 1.965), valueScaling: new ExponentialValue(2) }), //c13
+      new Variable({ name: "c21", currency: this.rho,  cost: new ExponentialCost(500, 18.8343), valueScaling: new ExponentialValue(2) }), //c21
+      new Variable({ name: "c22", currency: this.rho2, cost: new ExponentialCost(1e5, 3.65), valueScaling: new ExponentialValue(2) }), //c22
+      new Variable({ name: "c23", currency: this.rho3, cost: new ExponentialCost(1e5, 2.27), valueScaling: new ExponentialValue(2) }), //c23
+      new Variable({ name: "c31", currency: this.rho,  cost: new ExponentialCost(1e4, 1248.27), valueScaling: new ExponentialValue(2) }), //c31
+      new Variable({ name: "c32", currency: this.rho2, cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
+      new Variable({ name: "c33", currency: this.rho3, cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestones = [0, 0, 0, 0];

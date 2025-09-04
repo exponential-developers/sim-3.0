@@ -196,20 +196,19 @@ class bapSim extends theoryClass<theory> {
       this.forcedPubRho = newpubtable[pubseek.toString()].next;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
-    this.varNames = ["tdot", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "n"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(0.0625, 0.25, true)), valueScaling: new StepwisePowerSumValue(65536, 64) }), //c1
-      new Variable({ cost: new ExponentialCost(16, 4, true), valueScaling: new ExponentialValue(2) }), // c2
-      new Variable({ cost: new ExponentialCost(19683, 19683), valueScaling: new ExponentialValue(3) }), // c3
-      new Variable({ cost: new ExponentialCost(4**16, 32, true), valueScaling: new ExponentialValue(4) }), // c4
-      new Variable({ cost: new ExponentialCost(5**25, 25*Math.log2(5), true), valueScaling: new ExponentialValue(5) }), // c5
-      new Variable({ cost: new ExponentialCost(6**36, 36*Math.log2(6), true), valueScaling: new ExponentialValue(6) }), // c6
-      new Variable({ cost: new ExponentialCost(7**49, 49*Math.log2(7), true), valueScaling: new ExponentialValue(7) }), // c7
-      new Variable({ cost: new ExponentialCost(8**64, 64*Math.log2(8), true), valueScaling: new ExponentialValue(8) }), // c8
-      new Variable({ cost: new ExponentialCost(9**81, 81*Math.log2(9), true), valueScaling: new ExponentialValue(9) }), // c9
-      new Variable({ cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
-      new Variable({ cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
+      new Variable({ name: "tdot", cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot
+      new Variable({ name: "c1",   cost: new FirstFreeCost(new ExponentialCost(0.0625, 0.25, true)), valueScaling: new StepwisePowerSumValue(65536, 64) }), //c1
+      new Variable({ name: "c2",   cost: new ExponentialCost(16, 4, true), valueScaling: new ExponentialValue(2) }), // c2
+      new Variable({ name: "c3",   cost: new ExponentialCost(19683, 19683), valueScaling: new ExponentialValue(3) }), // c3
+      new Variable({ name: "c4",   cost: new ExponentialCost(4**16, 32, true), valueScaling: new ExponentialValue(4) }), // c4
+      new Variable({ name: "c5",   cost: new ExponentialCost(5**25, 25*Math.log2(5), true), valueScaling: new ExponentialValue(5) }), // c5
+      new Variable({ name: "c6",   cost: new ExponentialCost(6**36, 36*Math.log2(6), true), valueScaling: new ExponentialValue(6) }), // c6
+      new Variable({ name: "c7",   cost: new ExponentialCost(7**49, 49*Math.log2(7), true), valueScaling: new ExponentialValue(7) }), // c7
+      new Variable({ name: "c8",   cost: new ExponentialCost(8**64, 64*Math.log2(8), true), valueScaling: new ExponentialValue(8) }), // c8
+      new Variable({ name: "c9",   cost: new ExponentialCost(9**81, 81*Math.log2(9), true), valueScaling: new ExponentialValue(9) }), // c9
+      new Variable({ name: "c10",  cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
+      new Variable({ name: "n",    cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
@@ -319,7 +318,7 @@ class bapSim extends theoryClass<theory> {
         if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
           this.rho.subtract(this.variables[minCost[1]].cost);
           if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[minCost[1]], level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
+            this.boughtVars.push({ variable: this.variables[minCost[1]].name, level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
           }
           this.variables[minCost[1]].buy();
         } else break;

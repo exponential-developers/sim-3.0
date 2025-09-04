@@ -83,11 +83,10 @@ class btSim extends theoryClass<theory> {
     super(data);
     this.pubUnlock = 7;
     this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
-    this.varNames = ["tai", "rao", "tay"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
+      new Variable({ name: "tai", cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();

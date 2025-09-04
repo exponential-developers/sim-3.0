@@ -81,14 +81,13 @@ class t1Sim extends theoryClass<theory>{
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.varNames = ["q1", "q2", "c1", "c2", "c3", "c4"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(15, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(3000, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2", cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c1", cost: new ExponentialCost(15, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "c2", cost: new ExponentialCost(3000, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c3", cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "c4", cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
     ];
     //values of the different terms, so they are accesible for variable buying conditions
     this.term1 = 0;

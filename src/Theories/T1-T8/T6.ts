@@ -182,17 +182,16 @@ class t6Sim extends theoryClass<theory> {
     this.q = -Infinity;
     this.r = 0;
     //initialize variables
-    this.varNames = ["q1", "q2", "r1", "r2", "c1", "c2", "c3", "c4", "c5"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(15, 3)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(500, 100), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e25, 1e5), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(1e30, 1e10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(10, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(100, 5), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e7, 1.255), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(1e25, 5e5), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(15, 3.9), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(15, 3)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2", cost: new ExponentialCost(500, 100), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "r1", cost: new ExponentialCost(1e25, 1e5), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r2", cost: new ExponentialCost(1e30, 1e10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c1", cost: new ExponentialCost(10, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "c2", cost: new ExponentialCost(100, 5), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c3", cost: new ExponentialCost(1e7, 1.255), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "c4", cost: new ExponentialCost(1e25, 5e5), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c5", cost: new ExponentialCost(15, 3.9), valueScaling: new ExponentialValue(2) }),
     ];
     this.k = 0;
     this.stopC12 = [0, 0, true];
@@ -261,7 +260,7 @@ class t6Sim extends theoryClass<theory> {
         if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
           this.rho.subtract(this.variables[minCost[1]].cost);
           if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[minCost[1]], level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
+            this.boughtVars.push({ variable: this.variables[minCost[1]].name, level: this.variables[minCost[1]].level + 1, cost: this.variables[minCost[1]].cost, timeStamp: this.t });
           }
           this.variables[minCost[1]].buy();
         } else break;

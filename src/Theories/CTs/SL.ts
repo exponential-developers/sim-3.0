@@ -110,12 +110,11 @@ class slSim extends theoryClass<theory> {
     this.pubUnlock = 10;
     this.rho2 = 0;
     this.rho3 = 0;
-    this.varNames = ["a1", "a2", "b1", "b2"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(1, 0.369 * l2(10), true)), valueScaling: new StepwisePowerSumValue(3.5, 3)}),
-      new Variable({ cost: new ExponentialCost(175, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(500, 0.649 * l2(10), true), valueScaling: new StepwisePowerSumValue(6.5, 4) }),
-      new Variable({ cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "a1", cost: new FirstFreeCost(new ExponentialCost(1, 0.369 * l2(10), true)), valueScaling: new StepwisePowerSumValue(3.5, 3)}),
+      new Variable({ name: "a2", cost: new ExponentialCost(175, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "b1", cost: new ExponentialCost(500, 0.649 * l2(10), true), valueScaling: new StepwisePowerSumValue(6.5, 4) }),
+      new Variable({ name: "b2", cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
     ];
     this.inverseE_Gamma = 0;
     this.buyingConditions = this.getBuyingConditions();

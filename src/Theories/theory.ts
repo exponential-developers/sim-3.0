@@ -27,7 +27,6 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
   rho: Currency;
   maxRho: number;
   //initialize variables
-  varNames: Array<string>;
   variables: Array<Variable>;
   boughtVars: Array<varBuy>;
   //pub values
@@ -71,7 +70,6 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     this.maxRho = 0;
 
     //initialize variables
-    this.varNames = [];
     this.variables = [];
     this.boughtVars = [];
 
@@ -104,7 +102,6 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
 
     this.rho = other.rho.copy();
     this.maxRho = other.maxRho;
-    this.varNames = other.varNames;
     this.variables = other.variables.map((v) => v.copy());
     this.boughtVars = [...other.boughtVars];
 
@@ -176,7 +173,7 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
         if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
           if (this.maxRho + 5 > this.lastPub) {
             this.boughtVars.push({ 
-              variable: this.varNames[i], 
+              variable: this.variables[i].name, 
               level: this.variables[i].level + 1, 
               cost: this.variables[i].cost, 
               timeStamp: this.t,
