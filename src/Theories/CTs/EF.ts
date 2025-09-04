@@ -200,8 +200,8 @@ class efSim extends theoryClass<theory> {
     super.copyFrom(other);
 
     this.curMult = other.curMult;
-    this.R = other.R.copy();
-    this.I = other.I.copy();
+    this.R.value = other.R.value;
+    this.I.value = other.I.value;
     this.q = other.q;
     this.t_var = other.t_var;
     this.nextMilestoneCost = other.nextMilestoneCost;
