@@ -301,7 +301,6 @@ class mfSim extends theoryClass<theory> {
 
     this.milestones = [...other.milestones];
     this.pubUnlock = other.pubUnlock;
-    this.rho = other.rho;
     this.c = other.c;
     this.x = other.x;
     this.i = other.i;

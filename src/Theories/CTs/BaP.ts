@@ -216,7 +216,6 @@ class bapSim extends theoryClass<theory> {
   copyFrom(other: this): void {
     super.copyFrom(other);
 
-    this.rho = other.rho;
     this.q = [...other.q];
     this.r = other.r;
     this.t_var = other.t_var;
