@@ -102,9 +102,7 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
 
     this.rho.value = other.rho.value;
     this.maxRho = other.maxRho;
-    const originalCurrencies = this.variables.map((v) => v.currency);
-    this.variables = other.variables.map((v) => v.copy());
-    this.variables.forEach((v, i) => v.currency = originalCurrencies[i]);
+    this.variables = other.variables.map((v, i) => v.copy(this.variables[i].currency));
     this.boughtVars = [...other.boughtVars];
 
     this.tauH = other.tauH;

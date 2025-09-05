@@ -18,8 +18,8 @@ export default class Currency {
     }
 
     copy(): Currency {
-        let newCurrency = new Currency(this.symb);
-        newCurrency.value = this.value;
-        return newCurrency;
+        let copy = new Currency(this.symb);
+        copy.value = this.value;
+        return copy;
     }
 }

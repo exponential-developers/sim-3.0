@@ -60,9 +60,9 @@ export default class Variable {
   reset() {
     this.init();
   }
-  copy(): Variable {
+  copy(currency?: Currency): Variable {
     let varData = {
-      currency: this.currency,
+      currency: currency ?? this.currency,
       name: this.name,
       level: this.data.level,
       cost: this.data.cost.copy(),
