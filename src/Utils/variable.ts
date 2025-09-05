@@ -1,8 +1,11 @@
 import { add } from "./helpers.js";
 import { BaseCost, FirstFreeCost } from "./cost";
 import { BaseValue } from "./value";
+import Currency from "./currency";
 
 interface variableData {
+  currency?: Currency;
+  name: string;
   level?: number;
   cost: BaseCost;
   valueScaling: BaseValue;
@@ -10,6 +13,8 @@ interface variableData {
 
 export default class Variable {
   data: variableData;
+  currency?: Currency;
+  name: string;
   level: number;
   cost: number;
   value: number;
@@ -17,6 +22,8 @@ export default class Variable {
 
   constructor(data: variableData) {
     this.data = data;
+    this.currency = data.currency;
+    this.name = data.name;
     this.level = 0;
     this.cost = 0;
     this.value = 0;
@@ -53,8 +60,10 @@ export default class Variable {
   reset() {
     this.init();
   }
-  copy(): Variable {
+  copy(currency?: Currency): Variable {
     let varData = {
+      currency: currency ?? this.currency,
+      name: this.name,
       level: this.data.level,
       cost: this.data.cost.copy(),
       valueScaling: this.data.valueScaling.copy(),

@@ -179,6 +179,12 @@ export function getBestResult(res1: simResult | null, res2: simResult | null): s
   return defaultResult();
 }
 
+/**
+ * Returns the last bought level of a variable in a variable buy list
+ * @param variable The variable name to search
+ * @param arr The variable buy list
+ * @returns The last level bought of the variable, or 0 if the variable was not found
+ */
 export function getLastLevel(variable: string, arr:Array<varBuy>): number {
   for (let i = arr.length - 1; i >= 0; i--) {
     if (arr[i].variable == variable) {
@@ -188,6 +194,10 @@ export function getLastLevel(variable: string, arr:Array<varBuy>): number {
   return 0;
 }
 
-export function getR9multiplier(sigma: number) {
+/**
+ * @param {number} sigma Number of students
+ * @returns the R9 multiplier as a log value
+*/
+export function getR9multiplier(sigma: number): number {
   return l10((sigma / 20) ** (sigma < 65 ? 0 : sigma < 75 ? 1 : sigma < 85 ? 2 : 3))
 }

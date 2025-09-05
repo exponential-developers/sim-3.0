@@ -1,10 +1,11 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getLastLevel, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, getLastLevel, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import Currency from "../../Utils/currency.js";
 
 export default async function ef(data: theoryData): Promise<simResult> {
   const sim = new efSim(data);
@@ -16,8 +17,9 @@ type theory = "EF";
 
 type pubTable = {[key: string]: number};
 
-class efSim extends theoryClass<theory> implements specificTheoryProps {
-  currencies: Array<number>;
+class efSim extends theoryClass<theory> {
+  R: Currency;
+  I: Currency;
   q: number;
   t_var: number;
   nextMilestoneCost: number;
@@ -161,22 +163,22 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.currencies = [0, 0, 0];
+    this.R = new Currency("R");
+    this.I = new Currency("I");
     this.q = 0;
     this.t_var = 0;
     //initialize variables
-    this.varNames = ["t", "q1", "q2", "b1", "b2", "c1", "c2", "a1", "a2", "a3"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e6, 1e6), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(5, 60), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(2000, 2.2, true)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "tdot", currency: this.rho, cost: new ExponentialCost(1e6, 1e6), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "q1",   currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2",   currency: this.rho, cost: new ExponentialCost(5, 60), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "b1",   currency: this.R,   cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "b2",   currency: this.R,   cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
+      new Variable({ name: "c1",   currency: this.I,   cost: new FirstFreeCost(new ExponentialCost(20, 200)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "c2",   currency: this.I,   cost: new ExponentialCost(100, 2), valueScaling: new ExponentialValue(1.1) }),
+      new Variable({ name: "a1",   currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(2000, 2.2, true)), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "a2",   currency: this.R,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
+      new Variable({ name: "a3",   currency: this.I,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.forcedPubRho = Infinity;
     if (this.lastPub < 374 && this.strat !== "EF") {
@@ -190,8 +192,6 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     this.doContinuityFork = true;
     this.depth = 0;
     this.nextMilestoneCost = Infinity;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
@@ -200,7 +200,8 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     super.copyFrom(other);
 
     this.curMult = other.curMult;
-    this.currencies = [...other.currencies];
+    this.R.value = other.R.value;
+    this.I.value = other.I.value;
     this.q = other.q;
     this.t_var = other.t_var;
     this.nextMilestoneCost = other.nextMilestoneCost;
@@ -221,16 +222,14 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.currencies[0] > this.maxRho) this.maxRho = this.currencies[0];
       this.updateSimStatus();
       let prev_nextMilestoneCost = this.nextMilestoneCost;
       if (this.lastPub <= 325) this.updateMilestones();
       if (this.nextMilestoneCost > prev_nextMilestoneCost) {
         this.coasting.fill(false);
       }
-      await this.buyVariables();
+      await this.buyVariablesFork();
       if (this.forcedPubRho == 375 && this.maxRho >= 370 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
@@ -242,7 +241,7 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const lastLevels = this.varNames.map((variable) => getLastLevel(variable, this.boughtVars));
+    const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
     const result = createResult(
       this,
       this.strat !== "EF"
@@ -267,56 +266,43 @@ class efSim extends theoryClass<theory> implements specificTheoryProps {
     const R = b + l10(Math.abs(Math.cos(this.t_var)));
     const I = c + l10(Math.abs(Math.sin(this.t_var)));
 
-    this.currencies[1] = this.milestones[0] > 0 ? add(this.currencies[1], logbonus + R * 2) : 0;
-
-    this.currencies[2] = this.milestones[0] > 1 ? add(this.currencies[2], logbonus + I * 2) : 0;
+    if (this.milestones[0] > 0) this.R.add(logbonus + R * 2);
+    if (this.milestones[0] > 1) this.I.add(logbonus + I * 2);
 
     switch (this.milestones[0]) {
       case 0:
-        this.currencies[0] = add(this.currencies[0], logbonus + (l10(this.t_var) + this.q * 2) / 2);
+        this.rho.add(logbonus + (l10(this.t_var) + this.q * 2) / 2);
         break;
       case 1:
-        this.currencies[0] = add(this.currencies[0], logbonus + add(l10(this.t_var) + this.q * 2, this.currencies[1] * 2) / 2);
+        this.rho.add(logbonus + add(l10(this.t_var) + this.q * 2, this.R.value * 2) / 2);
         break;
       case 2:
-        this.currencies[0] = add(this.currencies[0], logbonus + a + add(add(l10(this.t_var) + this.q * 2, this.currencies[1] * 2), this.currencies[2] * 2) / 2);
+        this.rho.add(logbonus + a + add(add(l10(this.t_var) + this.q * 2, this.R.value * 2), this.I.value * 2) / 2);
         break;
     }
   }
-  async buyVariables() {
+  extraBuyingCondition(id: number): boolean {
+    return !this.coasting[id];
+  }
+  async confirmPurchase(id: number): Promise<boolean> {
     const nextCoast = Math.min(this.forcedPubRho, this.nextMilestoneCost);
-    const currencyIndicies = [0, 0, 0, 1, 1, 2, 2, 0, 1, 2];
     const lowbounds = [0, 0.6, 0.2, 0, 0, 0, 0, 0.3, 0, 0];
     const highbounds = [0, 1.8, 1.5, 0, 0, 0, 0, 1.5, 0, 0];
     const doDynamicCoasting = this.forcedPubRho == Infinity && this.strat != "EF";
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.currencies[currencyIndicies[i]] > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
-          if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[i]())) {
-            this.coasting[i] = true;
-            break;
-          }
-          if (nextCoast - this.variables[i].cost < highbounds[i] || (doDynamicCoasting && this.getDynamicCoastingConditions()[i]())) {
-            if (this.depth > 100) {
-              throw "Max coasting research depth reached. Please contact the authors of the sim."
-            }
-            let fork = this.copy();
-            fork.coasting[i] = true;
-            const forkres = await fork.simulate();
-            this.bestRes = getBestResult(this.bestRes, forkres);
-          }
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.varNames[i],
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-              symbol: ["rho", "R", "I"][currencyIndicies[i]],
-            });
-          }
-          this.currencies[currencyIndicies[i]] = subtract(this.currencies[currencyIndicies[i]], this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
+    
+    if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[id]())) {
+      this.coasting[id] = true;
+      return false;
+    }
+    if (nextCoast - this.variables[id].cost < highbounds[id] || (doDynamicCoasting && this.getDynamicCoastingConditions()[id]())) {
+      if (this.depth > 100) {
+        throw "Max coasting research depth reached. Please contact the authors of the sim."
       }
+      let fork = this.copy();
+      fork.coasting[id] = true;
+      const forkres = await fork.simulate();
+      this.bestRes = getBestResult(this.bestRes, forkres);
+    }
+    return true;
   }
 }

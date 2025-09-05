@@ -1,6 +1,8 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 
 declare global {
+  type conditionFunction = () => boolean;
+
   type theoryType = keyof typeof jsonData.theories;
   type stratType = {
     [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
