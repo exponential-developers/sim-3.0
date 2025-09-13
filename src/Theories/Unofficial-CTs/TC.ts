@@ -3,7 +3,7 @@ import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js"
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import { ExponentialCost } from "../../Utils/cost.js";
-import { specificTheoryProps, theoryClass } from "../theory.js";
+import theoryClass from "../theory.js";
 
 export default async function tc(data: theoryData): Promise<simResult> {
   const sim = new tcSim(data);
@@ -13,9 +13,8 @@ export default async function tc(data: theoryData): Promise<simResult> {
 
 type theory = "TC";
 
-class tcSim extends theoryClass<theory> implements specificTheoryProps {
-  // Currencies and growing variables
-  rho: number;
+class tcSim extends theoryClass<theory> {
+  // growing variables
   r: number;
   P: number;
 
@@ -130,7 +129,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     this.systemDt = 0.1;
     this.curMult = 0;
     this.error = [0, 0];
-    this.rho = 0;
     this.r = 0;
     this.P = 0;
     this.timer = 0;
@@ -147,22 +145,19 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
 
     this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
     this.pubUnlock = 8;
-    this.varNames = ["c1", "r1", "r2", "c2", "dTexp", "p1", "p2", "c1exp", "r1exp", "r2exp", "c1base"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
-      new Variable({ cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1
-      new Variable({ cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
-      new Variable({ cost: new ExponentialCost("1e400", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
-      new Variable({ cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
-      new Variable({ cost: new ExponentialCost("1e750", 16.61), valueScaling: new StepwisePowerSumValue() }), // p1
-      new Variable({ cost: new ExponentialCost("1e900", 1e15), valueScaling: new ExponentialValue(2) }), // p2
-      new Variable({ cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
-      new Variable({ cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
-      new Variable({ cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
-      new Variable({ cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
+      new Variable({ name: "c1", cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
+      new Variable({ name: "r1", cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1
+      new Variable({ name: "r2", cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
+      new Variable({ name: "c2", cost: new ExponentialCost("1e400", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
+      new Variable({ name: "dTexp", cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
+      new Variable({ name: "p1", cost: new ExponentialCost("1e750", 16.61), valueScaling: new StepwisePowerSumValue() }), // p1
+      new Variable({ name: "p2", cost: new ExponentialCost("1e900", 1e15), valueScaling: new ExponentialValue(2) }), // p2
+      new Variable({ name: "c1exp", cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
+      new Variable({ name: "r1exp", cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
+      new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
+      new Variable({ name: "c1base", cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
     ];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);
@@ -180,7 +175,6 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 500) this.updateMilestones();
       this.buyVariables();
@@ -247,8 +241,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
     const vc1 = this.variables[0].value * c1exp;
     const vc2 = this.milestones[4] > 0 ? this.variables[3].value : 0;
     const mrexp = this.milestones[3];
-    this.rho = add(
-      this.rho,
+    this.rho.add(
       this.P +
         this.r * (1 + mrexp * 0.001) +
         (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
@@ -257,23 +250,7 @@ class tcSim extends theoryClass<theory> implements specificTheoryProps {
         l10(this.achievementMulti)
     );
   }
-
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.varNames[i],
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-            });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-          if (i == 10) this.recomputeC1Base();
-        } else break;
-      }
+  onVariablePurchased(id: number): void {
+    if (id == 10) this.recomputeC1Base();
   }
 }

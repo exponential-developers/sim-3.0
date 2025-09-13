@@ -1,9 +1,9 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function fp(data: theoryData): Promise<simResult> {
@@ -51,10 +51,9 @@ interface milestones {
 
 type pubTable = {[key: string]: number};
 
-class fpSim extends theoryClass<theory, milestones> implements specificTheoryProps {
+class fpSim extends theoryClass<theory, milestones> {
   milestones: milestones;
-  // currencies and growing variables
-  rho: number;
+  // growing variables
   q: number;
   r: number;
   t_var: number;
@@ -211,23 +210,22 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 12;
-    this.rho = 0;
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
-    this.varNames = ["tdot", "c1", "c2", "q1", "q2", "r1", "n", "s"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
-      new Variable({ cost: new CompositeCost(15, new ExponentialCost(1e15, 40), new ExponentialCost(1e37, 16.42)), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(1e35, 12)), valueScaling: new StepwisePowerSumValue(10, 10)}),
-      new Variable({ cost: new ExponentialCost(1e76, 1e3), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "tdot", cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
+      new Variable({ name: "c2", cost: new CompositeCost(15, new ExponentialCost(1e15, 40), new ExponentialCost(1e37, 16.42)), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(1e35, 12)), valueScaling: new StepwisePowerSumValue(10, 10)}),
+      new Variable({ name: "q2", cost: new ExponentialCost(1e76, 1e3), valueScaling: new ExponentialValue(10) }),
       new Variable({
+        name: "r1",
         cost: new FirstFreeCost(new CompositeCost(285, new ExponentialCost(1e80, 25), new ExponentialCost("1e480", 150))),
         valueScaling: new StepwisePowerSumValue(2, 5)
       }),
-      new Variable({ cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
+      new Variable({ name: "n", cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
     this.T_n = 1;
     this.U_n = 1;
@@ -244,10 +242,7 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
-    //pub values
     this.milestones = { snexp: 0, fractals: 0, nboost: 0, snboost: 0, sterm: 0, expterm: 0 };
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
@@ -257,7 +252,6 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
 
     this.milestones = { ...other.milestones };
     this.curMult = other.curMult;
-    this.rho = other.rho;
     this.q = other.q;
     this.r = other.r;
     this.t_var = other.t_var;
@@ -283,12 +277,10 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
-      await this.buyVariables();
+      await this.buyVariablesFork();
       if (this.forcedPubRho == 2000 && this.maxRho >= 1996 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
@@ -341,33 +333,29 @@ class fpSim extends theoryClass<theory, milestones> implements specificTheoryPro
     rhodot += this.milestones.fractals > 0 ? this.q : 0;
     rhodot += this.milestones.fractals > 1 ? this.r : 0;
 
-    this.rho = add(this.rho, rhodot + l10(this.dt));
+    this.rho.add(rhodot + l10(this.dt));
   }
-  async buyVariables() {
-    const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
-    const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && !this.coasting[i]) {
-          if (this.forcedPubRho !== Infinity) {
-            if (this.forcedPubRho - this.variables[i].cost <= lowbounds[i]) {
-              this.coasting[i] = true;
-              break;
-            }
-            if (this.forcedPubRho - this.variables[i].cost < highbounds[i]) {
-              let fork = this.copy();
-              fork.coasting[i] = true;
-              const forkres = await fork.simulate();
-              this.bestRes = getBestResult(this.bestRes, forkres);
-            }
-          }
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-          if (i === 6) this.updateN_flag = true;
-        } else break;
+  extraBuyingCondition(id: number): boolean {
+    return !this.coasting[id];
+  }
+  async confirmPurchase(id: number): Promise<boolean> {
+    if (this.forcedPubRho !== Infinity) {
+      const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
+      const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
+      if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id]) {
+        this.coasting[id] = true;
+        return false;
       }
+      if (this.forcedPubRho - this.variables[id].cost < highbounds[id]) {
+        let fork = this.copy();
+        fork.coasting[id] = true;
+        const forkres = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, forkres);
+      }
+    }
+    return true;
+  }
+  onVariablePurchased(id: number): void {
+    if (id === 6) this.updateN_flag = true;
   }
 }

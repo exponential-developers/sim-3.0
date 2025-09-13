@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
 import { StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function t2(data: theoryData): Promise<simResult> {
@@ -37,8 +37,7 @@ export default async function t2(data: theoryData): Promise<simResult> {
 
 type theory = "T2";
 
-class t2Sim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class t2Sim extends theoryClass<theory> {
   q1: number;
   q2: number;
   q3: number;
@@ -182,7 +181,6 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     //theory
     this.pubUnlock = 15;
     //currencies
-    this.rho = 0;
     this.q1 = -Infinity;
     this.q2 = 0;
     this.q3 = 0;
@@ -197,21 +195,18 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     this.stop3 = 2050;
     this.stop4 = 550;
     //initialize variables
-    this.varNames = ["q1", "q2", "q3", "q4", "r1", "r2", "r3", "r4"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(5000, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(3e25, 3), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(8e50, 4), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(2e6, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(3e9, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2", cost: new ExponentialCost(5000, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q3", cost: new ExponentialCost(3e25, 3), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q4", cost: new ExponentialCost(8e50, 4), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r1", cost: new ExponentialCost(2e6, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r2", cost: new ExponentialCost(3e9, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r3", cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "r4", cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
     ];
     //milestones  [qterm, rterm, q1exp, r1exp]
     this.milestones = [0, 0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.targetRho == -1;
     this.updateMilestones();
@@ -222,9 +217,7 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
       this.buyVariables();
@@ -256,18 +249,6 @@ class t2Sim extends theoryClass<theory> implements specificTheoryProps {
     this.r4 = this.milestones[1] > 1 ? add(this.r4, this.variables[7].value + logdt) : this.r4;
 
     const rhodot = this.q1 * (1 + 0.05 * this.milestones[2]) + this.r1 * (1 + 0.05 * this.milestones[3]) + this.totMult + logdt;
-    this.rho = add(this.rho, rhodot);
-  }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
+    this.rho.add(rhodot);
   }
 }

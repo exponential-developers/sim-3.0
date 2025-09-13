@@ -1,8 +1,8 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function fi(data: theoryData): Promise<simResult> {
@@ -18,8 +18,7 @@ for (let i = 1; i<9; i++) {
 
 type theory = "FI";
 
-class fiSim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class fiSim extends theoryClass<theory> {
   q: number;
   r: number;
   tval: number;
@@ -263,7 +262,6 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 8;
-    this.rho = 0;
     this.q = 0;
     this.r = 0;
     this.tval = 0;
@@ -275,26 +273,21 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
     this.msq = 0;
 
     //initialize variables
-    this.varNames = ["tdot", "q1", "q2", "k", "m", "n"];
     this.variables = [
-      new Variable({ cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
-      new Variable({ cost: new ExponentialCost(1e7, 5e3), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e2, 10), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost(1e4, 4.44), valueScaling: new ExponentialValue(1.5) }),
-      new Variable({ cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
+      new Variable({ name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "q1",   cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
+      new Variable({ name: "q2",   cost: new ExponentialCost(1e7, 5e3), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "K",    cost: new ExponentialCost(1e2, 10), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "m",    cost: new ExponentialCost(1e4, 4.44), valueScaling: new ExponentialValue(1.5) }),
+      new Variable({ name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
     ];
     this.variables[5].buy();
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.updateMilestones();
   }
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
@@ -325,19 +318,9 @@ class fiSim extends theoryClass<theory> implements specificTheoryProps {
       vm +
       vn;
 
-    this.rho = add(this.rho, this.totMult + rhodot + l10(this.dt));
+    this.rho.add(this.totMult + rhodot + l10(this.dt));
   }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          if (i == 2 && this.msstate == 0) this.msstate = 1;
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
+  onVariablePurchased(id: number): void {
+    if (id == 2 && this.msstate == 0) this.msstate = 1;
   }
 }

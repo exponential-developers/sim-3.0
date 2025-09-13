@@ -1,9 +1,8 @@
-
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep, binarySearch, getBestResult, defaultResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, binarySearch, getBestResult, defaultResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 type theory = "MF";
@@ -18,7 +17,7 @@ export default async function mf(data: theoryData): Promise<simResult> {
   let bestRes: simResult = defaultResult();
   for (const resetBundle of resetBundles) {
     if (data.rho <= 100 && resetBundle[3] > 0) {
-      continue
+      continue;
     }
     let sim = new mfSim(data, resetBundle);
     let res = await sim.simulate();
@@ -40,8 +39,7 @@ const q0 = 1.602e-19
 const i0 = 1e-15
 const m0 = 1e-3
 
-class mfSim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
+class mfSim extends theoryClass<theory> {
   c: number
   x: number;
   i: number;
@@ -268,7 +266,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData, resetBundle: resetBundle) {
     super(data);
     this.pubUnlock = 8;
-    this.rho = -Infinity;
     this.c = 0;
     this.x = 0;
     this.i = 0;
@@ -276,7 +273,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
     this.vz = 0;
     this.vtot = 0;
     this.resets = 0;
-    this.varNames = ["c1", "c2", "a1", "a2", "δ",  "v1", "v2", "v3", "v4"];
     this.normalPubRho = -1;
     this.resetBundle = resetBundle;
     this.stopReset = false;
@@ -286,18 +282,16 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
     this.bestRes = null;
     this.variables =
     [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
-      new Variable({ cost: new ExponentialCost(1e3, 50), valueScaling: new ExponentialValue(2) }), // c2
-      new Variable({ cost: new ExponentialCost(1e3, 25), valueScaling: new StepwisePowerSumValue(2, 5, 3)}), // a1
-      new Variable({ cost: new ExponentialCost(1e4, 100), valueScaling: new ExponentialValue(1.25) }), // a2
-      new Variable({ cost: new ExponentialCost(1e50, 300), valueScaling: new ExponentialValue(1.1) }), // delta
-      new Variable({ cost: new ExponentialCost(80, 80), valueScaling: new StepwisePowerSumValue(2, 10, 1)}), // v1
-      new Variable({ cost: new ExponentialCost(1e4, 10**4.5), valueScaling: new ExponentialValue(1.3) }), // v2
-      new Variable({ cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
-      new Variable({ cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
+      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
+      new Variable({ name: "c2", cost: new ExponentialCost(1e3, 50), valueScaling: new ExponentialValue(2) }), // c2
+      new Variable({ name: "a1", cost: new ExponentialCost(1e3, 25), valueScaling: new StepwisePowerSumValue(2, 5, 3)}), // a1
+      new Variable({ name: "a2", cost: new ExponentialCost(1e4, 100), valueScaling: new ExponentialValue(1.25) }), // a2
+      new Variable({ name: "δ",  cost: new ExponentialCost(1e50, 300), valueScaling: new ExponentialValue(1.1) }), // delta
+      new Variable({ name: "v1", cost: new ExponentialCost(80, 80), valueScaling: new StepwisePowerSumValue(2, 10, 1)}), // v1
+      new Variable({ name: "v2", cost: new ExponentialCost(1e4, 10**4.5), valueScaling: new ExponentialValue(1.3) }), // v2
+      new Variable({ name: "v3", cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
+      new Variable({ name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
     this.resetParticle();
@@ -307,7 +301,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
 
     this.milestones = [...other.milestones];
     this.pubUnlock = other.pubUnlock;
-    this.rho = other.rho;
     this.c = other.c;
     this.x = other.x;
     this.i = other.i;
@@ -332,9 +325,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
@@ -366,7 +357,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
     const vterm = this.milestones[0] ? l10(this.vtot) * this.vexp() : 0;
 
     const rhodot = this.totMult + this.c + vc1 + vc2 + xterm + omegaterm + vterm;
-    this.rho = add(this.rho, rhodot + l10(this.dt));
+    this.rho.add(rhodot + l10(this.dt));
   }
   calcBundleCost(bundle: resetBundle):number {
     let cost = 0.;
@@ -407,7 +398,7 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
       this.buyV = false;
       return;
     }
-    if (this.rho >= this.goalBundleCost + 0.0001) {
+    if (this.rho.value >= this.goalBundleCost + 0.0001) {
       if (this.maxRho >= this.lastPub) {
         let fork = this.copy();
         fork.stopReset = true;
@@ -437,26 +428,6 @@ class mfSim extends theoryClass<theory> implements specificTheoryProps {
           fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
           forkres = await fork.simulate();
           this.bestRes = getBestResult(this.bestRes, forkres);
-        }
-      }
-    }
-  }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--) {
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 10 > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.varNames[i],
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t
-            });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-        } else {
-          break;
         }
       }
     }

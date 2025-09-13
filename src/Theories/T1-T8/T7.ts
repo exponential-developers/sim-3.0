@@ -1,9 +1,10 @@
 import { global } from "../../Sim/main.js";
-import { add_old, createResult, l10, subtract_old, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { add_old, createResult, l10, subtract_old, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
+import theoryClass from "../theory.js";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import Currency from "../../Utils/currency.js";
 
 export default async function t7(data: theoryData): Promise<simResult> {
   const sim = new t7Sim(data);
@@ -16,9 +17,8 @@ type theory = "T7";
 const add = add_old;
 const subtract = subtract_old;
 
-class t7Sim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
-  rho2: number;
+class t7Sim extends theoryClass<theory> {
+  rho2: Currency;
   drho13: number;
   drho23: number;
   c2ratio: number;
@@ -138,33 +138,27 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.rho = 0;
-    this.rho2 = 0;
+    this.rho2 = new Currency;
     //initialize variables
-    this.varNames = ["q1", "c1", "c2", "c3", "c4", "c5", "c6"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(500, 1.51572)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(10, 1.275), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(40, 8), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e5, 63), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(10, 2.82), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e8, 60), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e2, 2.81), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(500, 1.51572)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "c1", cost: new ExponentialCost(10, 1.275), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "c2", cost: new ExponentialCost(40, 8), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c3", cost: new ExponentialCost(1e5, 63), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c4", cost: new ExponentialCost(10, 2.82), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c5", cost: new ExponentialCost(1e8, 60), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c6", cost: new ExponentialCost(1e2, 2.81), valueScaling: new ExponentialValue(2) }),
     ];
     this.drho13 = 0;
     this.drho23 = 0;
     this.c2ratio = Infinity;
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
   async simulate() {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
@@ -178,29 +172,18 @@ class t7Sim extends theoryClass<theory> implements specificTheoryProps {
   }
   tick() {
     const vc1 = this.variables[1].value * (1 + 0.05 * this.milestones[4]);
+    const rho = Math.max(this.rho.value, 0);
+    const rho2 = Math.max(this.rho2.value, 0);
 
     const drho11 = vc1 + this.variables[2].value;
-    const drho12 = this.milestones[1] > 0 ? l10(1.5) + this.variables[3].value + this.rho / 2 : 0;
+    const drho12 = this.milestones[1] > 0 ? l10(1.5) + this.variables[3].value + rho / 2 : 0;
     const drho21 = this.milestones[0] > 0 ? this.variables[4].value : 0;
-    const drho22 = this.milestones[2] > 0 ? l10(1.5) + this.variables[5].value + this.rho2 / 2 : 0;
-    this.drho13 = this.milestones[3] > 0 ? Math.min(this.drho13 + 2, Math.min(l10(0.5) + this.variables[6].value + this.rho2 / 2 - this.rho / 2, this.rho + 2)) : 0;
-    this.drho23 = this.milestones[3] > 0 ? Math.min(this.drho23 + 2, Math.min(l10(0.5) + this.variables[6].value + this.rho / 2 - this.rho2 / 2, this.rho2 + 2)) : 0;
+    const drho22 = this.milestones[2] > 0 ? l10(1.5) + this.variables[5].value + rho2 / 2 : 0;
+    this.drho13 = this.milestones[3] > 0 ? Math.min(this.drho13 + 2, Math.min(l10(0.5) + this.variables[6].value + rho2 / 2 - rho / 2, rho + 2)) : 0;
+    this.drho23 = this.milestones[3] > 0 ? Math.min(this.drho23 + 2, Math.min(l10(0.5) + this.variables[6].value + rho / 2 - rho2 / 2, rho2 + 2)) : 0;
     const dtq1bonus = l10(this.dt) + this.variables[0].value + this.totMult;
 
-    this.rho = add(this.rho, dtq1bonus + add(add(drho11, drho12), this.drho13));
-
-    this.rho2 = add(this.rho2, dtq1bonus + add(add(drho21, drho22), this.drho23));
-  }
-  buyVariables() {
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-        } else break;
-      }
+    this.rho.add(dtq1bonus + add(add(drho11, drho12), this.drho13));
+    this.rho2.add(dtq1bonus + add(add(drho21, drho22), this.drho23));
   }
 }

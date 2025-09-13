@@ -1,21 +1,12 @@
 import Variable from "../Utils/variable";
 import { global } from "../Sim/main.js";
 import jsonData from "../Data/data.json";
+import Currency from "../Utils/currency";
 
-interface currencyDefinition {
-  rho?: number;
-  currencies?: Array<number>;
-}
-
-export interface specificTheoryProps extends currencyDefinition {
-  theory: theoryType;
-}
-
-export type conditionFunction = () => boolean;
-
-export abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
-  buyingConditions: Array<conditionFunction>;
-  variableAvailability: Array<conditionFunction>;
+/** Base class for a theory */
+export default abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
+  buyingConditions: conditionFunction[];
+  variableAvailability: conditionFunction[];
   milestoneTree: Array<milestoneType>;
   strat: stratType[theory];
   theory: theoryType;
@@ -33,9 +24,9 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   t: number;
   ticks: number;
   //currencies
+  rho: Currency;
   maxRho: number;
   //initialize variables
-  varNames: Array<string>;
   variables: Array<Variable>;
   boughtVars: Array<varBuy>;
   //pub values
@@ -52,12 +43,15 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   milestones: milestoneType;
   pubMulti: number;
 
+  abstract getBuyingConditions(): conditionFunction[];
+  abstract getVariableAvailability(): conditionFunction[];
   abstract getTotMult(val: number): number;
 
   constructor(data: theoryData) {
     this.strat = data.strat as stratType[theory];
     this.theory = data.theory;
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
+
     //theory
     this.pubUnlock = 1;
     this.cap = typeof data.cap === "number" && data.cap > 0 ? data.cap : Infinity;
@@ -70,25 +64,31 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.ddt = global.ddt;
     this.t = 0;
     this.ticks = 0;
+
     //currencies
+    this.rho = new Currency;
     this.maxRho = 0;
+
     //initialize variables
-    this.varNames = [];
     this.variables = [];
     this.boughtVars = [];
+
     //pub values
     this.tauH = 0;
     this.maxTauH = 0;
     this.pubT = 0;
     this.pubRho = 0;
+
+    // pub conditions
     this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
     this.pubConditions = [() => this.maxRho >= this.cap];
     this.simEndConditions = [() => this.t > this.pubT * 2];
     this.doSimEndConditions = () => true;
+
     this.milestones = [] as unknown as milestoneType;
     this.pubMulti = 0;
-    this.buyingConditions = [];
-    this.variableAvailability = [];
+    this.buyingConditions = this.getBuyingConditions();
+    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = [] as unknown as Array<milestoneType>;
   }
 
@@ -100,9 +100,9 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     this.t = other.t;
     this.ticks = other.ticks;
 
+    this.rho.value = other.rho.value;
     this.maxRho = other.maxRho;
-    this.varNames = other.varNames;
-    this.variables = other.variables.map((v) => v.copy());
+    this.variables = other.variables.map((v, i) => v.copy(this.variables[i].currency));
     this.boughtVars = [...other.boughtVars];
 
     this.tauH = other.tauH;
@@ -147,6 +147,7 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
   }
 
   updateSimStatus() {
+    if (this.rho.value > this.maxRho) this.maxRho = this.rho.value;
     this.updateT();
     if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
 
@@ -158,5 +159,94 @@ export abstract class theoryClass<theory extends theoryType, milestoneType = Arr
     }
     
     this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
+  }
+
+  onVariablePurchased(id: number) {}
+
+  onAnyVariablePurchased() {}
+
+  extraBuyingCondition(id: number): boolean {return true;};
+
+  buyVariables() {
+    let bought = false;
+    for (let i = this.variables.length - 1; i >= 0; i--) {
+      let currency = this.variables[i].currency ?? this.rho;
+      while (true) {
+        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
+          if (this.maxRho + 5 > this.lastPub) {
+            this.boughtVars.push({ 
+              variable: this.variables[i].name, 
+              level: this.variables[i].level + 1, 
+              cost: this.variables[i].cost, 
+              timeStamp: this.t,
+              symbol: currency.symbol
+            });
+          }
+          currency.subtract(this.variables[i].cost);
+          this.variables[i].buy();
+          bought = true;
+          this.onVariablePurchased(i);
+        } else break;
+      }
+    }
+    if (bought) this.onAnyVariablePurchased();
+  }
+
+  getVariableWeights?(): number[];
+
+  buyVariablesWeight() {
+    if (!this.getVariableWeights) throw "Cannot use buyVariabllesWeight if getVariableWeights is undefined";
+    while (true) {
+      const rawCost = this.variables.map((item) => item.cost);
+      const weights = this.getVariableWeights();
+      let minCost = [Number.MAX_VALUE, -1];
+      for (let i = this.variables.length - 1; i >= 0; i--)
+        if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
+          minCost = [rawCost[i] + weights[i], i];
+        }
+      if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
+        this.rho.subtract(this.variables[minCost[1]].cost);
+        if (this.maxRho + 5 > this.lastPub) {
+          this.boughtVars.push({ 
+            variable: this.variables[minCost[1]].name, 
+            level: this.variables[minCost[1]].level + 1, 
+            cost: this.variables[minCost[1]].cost, 
+            timeStamp: this.t 
+          });
+        }
+        this.variables[minCost[1]].buy();
+      } else break;
+    }
+  }
+
+  async confirmPurchase?(id: number): Promise<boolean>;
+
+  // Change this at some point (maybe in the Web Workers update)
+  async buyVariablesFork() {
+    if (!this.confirmPurchase) throw "Cannot use buyVariablesFork if confirmPurchase is undefined";
+    let bought = false;
+    for (let i = this.variables.length - 1; i >= 0; i--) {
+      let currency = this.variables[i].currency ?? this.rho;
+      while (true) {
+        if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
+          let confirmPurchase = await this.confirmPurchase(i);
+          if (!confirmPurchase) break;
+          if (this.maxRho + 5 > this.lastPub) {
+            this.boughtVars.push({ 
+              variable: this.variables[i].name, 
+              level: this.variables[i].level + 1, 
+              cost: this.variables[i].cost, 
+              timeStamp: this.t,
+              symbol: currency.symbol
+            });
+          }
+          currency.subtract(this.variables[i].cost);
+          this.variables[i].buy();
+          bought = true;
+          this.onVariablePurchased(i);
+        } else break;
+      }
+    }
+    if (bought) this.onAnyVariablePurchased();
   }
 }

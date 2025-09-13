@@ -1,9 +1,9 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, logToExp, sleep, getR9multiplier } from "../../Utils/helpers.js";
+import { add, createResult, l10, logToExp, getR9multiplier } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import { specificTheoryProps, theoryClass, conditionFunction } from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import Variable from "../../Utils/variable";
+import theoryClass from "../theory";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 
 export default async function t1(data: theoryData): Promise<simResult> {
   const sim = new t1Sim(data);
@@ -13,9 +13,7 @@ export default async function t1(data: theoryData): Promise<simResult> {
 
 type theory = "T1";
 
-class t1Sim extends theoryClass<theory> implements specificTheoryProps {
-  rho: number;
-
+class t1Sim extends theoryClass<theory>{
   term1: number;
   term2: number;
   term3: number;
@@ -28,22 +26,22 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
       T1C34: [true, true, false, false, true, true],
       T1C4: [true, true, false, false, false, true],
       T1Ratio: [
-        () => this.variables[0].cost + 1 < this.rho,
-        () => this.variables[1].cost + l10(1.11) < this.rho,
-        () => this.variables[2].cost + this.termRatio + 1 <= this.rho,
-        () => this.variables[3].cost + this.termRatio <= this.rho,
-        () => this.variables[4].cost + l10(this.c3Ratio) < this.rho,
+        () => this.variables[0].cost + 1 < this.rho.value,
+        () => this.variables[1].cost + l10(1.11) < this.rho.value,
+        () => this.variables[2].cost + this.termRatio + 1 <= this.rho.value,
+        () => this.variables[3].cost + this.termRatio <= this.rho.value,
+        () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
         true,
       ],
       T1SolarXLII: [
         () =>
-          this.variables[0].cost + l10(5) <= this.rho &&
+          this.variables[0].cost + l10(5) <= this.rho.value &&
           this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <= this.variables[1].cost &&
           this.variables[0].cost + l10(15 + (this.variables[0].level % 10)) < (this.milestones[3] > 0 ? this.variables[5].cost : 1000),
-        () => this.variables[1].cost + l10(1.11) < this.rho,
-        () => this.variables[2].cost + this.termRatio + 1 <= this.rho,
-        () => this.variables[3].cost + this.termRatio <= this.rho,
-        () => this.variables[4].cost + l10(this.c3Ratio) < this.rho,
+        () => this.variables[1].cost + l10(1.11) < this.rho.value,
+        () => this.variables[2].cost + this.termRatio + 1 <= this.rho.value,
+        () => this.variables[3].cost + this.termRatio <= this.rho.value,
+        () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
         true,
       ],
     };
@@ -83,15 +81,13 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
-    this.rho = 0;
-    this.varNames = ["q1", "q2", "c1", "c2", "c3", "c4"];
     this.variables = [
-      new Variable({ cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(15, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ cost: new ExponentialCost(3000, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
-      new Variable({ cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "q2", cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c1", cost: new ExponentialCost(15, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ name: "c2", cost: new ExponentialCost(3000, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c3", cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ name: "c4", cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
     ];
     //values of the different terms, so they are accesible for variable buying conditions
     this.term1 = 0;
@@ -101,8 +97,6 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     this.c3Ratio = this.lastPub < 300 ? 1 : this.lastPub < 450 ? 1.1 : this.lastPub < 550 ? 2 : this.lastPub < 655 ? 5 : 10;
     //milestones  [logterm, c1exp, c3term, c4term]
     this.milestones = [0, 0, 0, 0];
-    this.buyingConditions = this.getBuyingConditions();
-    this.variableAvailability = this.getVariableAvailability();
     this.milestoneTree = this.getMilestoneTree();
     this.doSimEndConditions = () => this.strat !== "T1SolarXLII";
     this.updateMilestones();
@@ -117,12 +111,10 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
-      if (this.rho > this.maxRho) this.maxRho = this.rho;
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
-      if (this.strat !== "T1SolarXLII" || this.rho < coast) this.buyVariables();
+      if (this.strat !== "T1SolarXLII" || this.rho.value < coast) this.buyVariables();
       this.ticks++;
     }
     this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
@@ -132,28 +124,16 @@ class t1Sim extends theoryClass<theory> implements specificTheoryProps {
     return result;
   }
   tick() {
-    this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1]) + this.variables[3].value + (this.milestones[0] > 0 ? l10(1 + this.rho / Math.LOG10E / 100) : 0);
-    this.term2 = add(this.variables[4].value + this.rho * 0.2, this.variables[5].value + this.rho * 0.3);
+    this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1]) 
+      + this.variables[3].value 
+      + (this.milestones[0] > 0 ? l10(1 + Math.max(this.rho.value, 0) / Math.LOG10E / 100) : 0);
+    this.term2 = add(this.variables[4].value + this.rho.value * 0.2, this.variables[5].value + this.rho.value * 0.3);
     this.term3 = this.variables[0].value + this.variables[1].value;
 
     const rhodot = add(this.term1, this.term2) + this.term3 + this.totMult + l10(this.dt);
-    this.rho = add(this.rho, rhodot);
+    this.rho.add(rhodot);
   }
-  buyVariables() {
-    let bought = false;
-    for (let i = this.variables.length - 1; i >= 0; i--)
-      while (true) {
-        if (this.rho > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + 5 > this.lastPub && ((i !== 2 && i !== 3) || this.lastPub < 350)) {
-            this.boughtVars.push({ variable: this.varNames[i], level: this.variables[i].level + 1, cost: this.variables[i].cost, timeStamp: this.t });
-          }
-          this.rho = subtract(this.rho, this.variables[i].cost);
-          this.variables[i].buy();
-          bought = true;
-        } else break;
-      }
-    if (bought) {
-      this.termRatio = Math.max(l10(5), (this.term2 - this.term1) * Number(this.milestones[3] > 0));
-    }
+  onAnyVariablePurchased(): void {
+    this.termRatio = this.lastPub < 350 ? Math.max(l10(5), (this.term2 - this.term1) * Number(this.milestones[3] > 0)) : Infinity;
   }
 }
