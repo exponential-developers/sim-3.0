@@ -275,7 +275,7 @@ class t3Sim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 9;
-    this.rho.symb = "rho_1";
+    this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
     this.variables = [

@@ -2,11 +2,11 @@ import { add, subtract } from "./helpers";
 
 export default class Currency {
     value: number;
-    symb: string;
+    symbol: string;
 
     constructor(symb: string = "rho") {
         this.value = -Infinity;
-        this.symb = symb;
+        this.symbol = symb;
     }
 
     add(toAdd: number) {
@@ -18,7 +18,7 @@ export default class Currency {
     }
 
     copy(): Currency {
-        let copy = new Currency(this.symb);
+        let copy = new Currency(this.symbol);
         copy.value = this.value;
         return copy;
     }

@@ -179,7 +179,7 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
               level: this.variables[i].level + 1, 
               cost: this.variables[i].cost, 
               timeStamp: this.t,
-              symbol: currency.symb
+              symbol: currency.symbol
             });
           }
           currency.subtract(this.variables[i].cost);
@@ -237,7 +237,7 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
               level: this.variables[i].level + 1, 
               cost: this.variables[i].cost, 
               timeStamp: this.t,
-              symbol: currency.symb
+              symbol: currency.symbol
             });
           }
           currency.subtract(this.variables[i].cost);
