@@ -12,7 +12,7 @@ export default async function fi(data: theoryData): Promise<simResult> {
 }
 
 const factoriallogs = [0];
-for (let i = 1; i<9; i++) {
+for (let i = 1; i < 9; i++) {
   factoriallogs.push(l10(i) + factoriallogs[i-1]);
 }
 
@@ -69,9 +69,9 @@ class fiSim extends theoryClass<theory> {
       () => this.variables[0].level < 4,
       () => true,
       () => true,
-      () => Math.max(this.maxRho, this.lastPub) > 20,
       () => this.milestones[1] > 0,
-      () => this.milestones[2] > 0,
+      () => this.milestones[3] > 0,
+      () => this.milestones[4] > 0,
     ];
     return conditions;
   }
@@ -87,13 +87,13 @@ class fiSim extends theoryClass<theory> {
     const avaliable_lambda = binaryInsertionSearch([350, 750], rho);
     const use_fx_level3 = this.strat.includes("PermaSwap") ? this.maxRho >= 1076 : rho >= 1150;
     if (!use_fx_level3) available_fx = Math.min(available_fx, 2);
-    this.milestonesMax = [3, 1, 1, available_fx, avaliable_lambda];
+    this.milestonesMax = [1, 1, 3, 1, 1, available_fx, avaliable_lambda];
 
-    const q1mn_points = total_points - (available_fx + avaliable_lambda);
+    const q1mn_points = total_points - (2 + available_fx + avaliable_lambda);
     const q1m23 = this.variables[1].level % 23;
     const qf = q1m23 < 5 ? 4 : q1m23 < 10 ? 3 : q1m23 < 20 ? 2.5 : 2;
-    const qpriority = [3, 4, 0, 1, 2];
-    const rhopriority = [3, 4, 1, 2, 0];
+    const qpriority = [0, 1, 5, 6, 2, 3, 4];
+    const rhopriority = [0, 1, 5, 6, 3, 4, 2];
     if (this.strat.includes("MS") && q1mn_points > 0 && q1mn_points < 5 && this.msstate > 0) {
       if (this.msstate == 1) // start q build
       {
@@ -114,8 +114,8 @@ class fiSim extends theoryClass<theory> {
   }
   updateMilestones(): void {
     super.updateMilestones();
-    const fx = this.milestones[3];
-    const lambda = this.milestones[4];
+    const fx = this.milestones[5];
+    const lambda = this.milestones[6];
     if (fx > this.maxFx) {
       if (fx === 1) {
         this.variables[2].data.cost = new ExponentialCost(1e7, 3e3);
@@ -152,7 +152,7 @@ class fiSim extends theoryClass<theory> {
     return factoriallogs[num];
   }
   norm_int(limit: number): number {
-    switch (this.milestones[3]) {
+    switch (this.milestones[5]) {
       case 0:
         return this.approxCos(limit);
       case 1:
@@ -201,7 +201,7 @@ class fiSim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 8;
-    this.milestoneUnlocks = [30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
+    this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.q = 0;
     this.r = 0;
     this.tval = 0;
@@ -240,23 +240,21 @@ class fiSim extends theoryClass<theory> {
     return result;
   }
   tick() {
-    let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[0]);
-    let vden = this.approx(this.variables[3].value, 2 + this.milestones[4]);
+    let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[2]);
+    let vden = this.approx(this.variables[3].value, 2 + this.milestones[6]);
 
     this.tval += ((this.variables[0].value + 1) / 5) * this.dt;
     this.q = add(this.q, vq1 + this.variables[2].value + l10(this.dt));
     this.r = add(this.r, vden + l10(this.dt));
 
-    const vm = this.milestones[1] ? this.variables[4].value : 0;
-    const vn = this.milestones[2] ? this.variables[5].value : 0;
+    const integral = (this.milestones[0] 
+      ? this.norm_int(this.q - (this.milestones[5] < 3 ? l10(Math.PI) : 0)) 
+      : this.q - l10(Math.PI)) 
+      * (1 / Math.PI);
+    const vm = this.milestones[3] ? this.variables[4].value : 0;
+    const vn = this.milestones[4] ? this.variables[5].value : 0;
 
-    let rhodot =
-      l10(this.tval) +
-      (Math.max(this.maxRho, this.lastPub) >= 10 ? this.norm_int(this.q - (this.milestones[3] < 3 ? l10(Math.PI) : 0)) : this.q - l10(Math.PI)) *
-        (1 / Math.PI) +
-      this.r +
-      vm +
-      vn;
+    let rhodot = l10(this.tval) + integral + this.r + vm + vn;
 
     this.rho.add(this.totMult + rhodot + l10(this.dt));
   }
