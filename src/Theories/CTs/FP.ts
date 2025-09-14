@@ -127,45 +127,11 @@ class fpSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    // [fractals, nboost, snexp, snboost, sterm, expterm]
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0, 0],
-      [2, 0, 0, 0, 0, 0],
-      [2, 1, 0, 0, 0, 0],
-      [2, 2, 0, 0, 0, 0],
-      [2, 2, 1, 0, 0, 0],
-      [2, 2, 2, 0, 0, 0],
-      [2, 2, 3, 0, 0, 0],
-      [2, 2, 3, 1, 0, 0],
-      [2, 2, 3, 1, 1, 0],
-      [2, 2, 3, 1, 1, 1],
-    ];
-    const tree: Record<stratType[theory], number[][]>  = {
-      FP: globalOptimalRoute,
-      FPcoast: globalOptimalRoute,
-      FPdMS: globalOptimalRoute,
-      FPmodBurstC1MS: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
-
   getTotMult(val: number) {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.331 + l10(5));
   }
-  updateMilestones(): void {
-    let stage = 0;
-    const points = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-
-    // if (this.lastPub > 700 && this.lastPub < 900) {
-    //   if (this.ticks % 40 < 20) this.milestones.sterm = 0;
-    //   else this.milestones.sterm = 1;
-    // }
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4, 5];
   }
   approx(n: number) {
     n++;
@@ -218,11 +184,13 @@ class fpSim extends theoryClass<theory> {
       new Variable({ name: "n", cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
+
     this.T_n = 1;
     this.U_n = 1;
     this.S_n = 0;
     this.n = 1;
     this.updateN_flag = true;
+
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
@@ -233,8 +201,9 @@ class fpSim extends theoryClass<theory> {
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
-    this.milestones = [0, 0, 0, 0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+
+    this.milestoneUnlocks = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
+    this.milestonesMax = [2, 2, 3, 1, 1, 1];
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }

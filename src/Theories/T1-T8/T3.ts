@@ -230,47 +230,11 @@ class t3Sim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 2, 0, 0],
-      [0, 2, 1, 0],
-      [0, 2, 2, 0],
-      [1, 2, 2, 0],
-      [1, 2, 2, 1],
-      [1, 2, 2, 2],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T3Play2: globalOptimalRoute,
-      T3Play: globalOptimalRoute,
-      T3Snax: globalOptimalRoute,
-      T3SnaxdC12: globalOptimalRoute,
-      T3Snax2: globalOptimalRoute,
-      T3P2C23d: globalOptimalRoute,
-      T3P2C23C33d: globalOptimalRoute,
-      T3P2C23: globalOptimalRoute,
-      T3P2C23C33: globalOptimalRoute,
-      T3noC11C13C21C33d: globalOptimalRoute,
-      T3noC11C13C21C33: globalOptimalRoute,
-      T3noC13C33d: globalOptimalRoute,
-      T3noC13C33: globalOptimalRoute,
-      T3noC11C13C33d: globalOptimalRoute,
-      T3noC11C13C33: globalOptimalRoute,
-      T3noC13C32C33d: globalOptimalRoute,
-      T3noC13C32C33: globalOptimalRoute,
-      T3C11C12C21d: globalOptimalRoute,
-      T3C11C12C21: globalOptimalRoute,
-      T3: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [1, 2, 0, 3];
   }
   getTotMult(val: number) {
     return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
-  }
-  updateMilestones() {
-    const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   constructor(data: theoryData) {
     super(data);
@@ -293,8 +257,8 @@ class t3Sim extends theoryClass<theory> {
       new Variable({ name: "c33", currency: this.rho3, cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
     //milestones  [dimensions, b1exp, b2exp, b3exp]
-    this.milestones = [0, 0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [1, 2, 2, 2];
+    this.milestoneUnlockSteps = 25;
     this.updateMilestones();
   }
   async simulate() {

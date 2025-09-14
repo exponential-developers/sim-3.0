@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, binarySearch, getBestResult, defaultResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, binaryInsertionSearch, getBestResult, defaultResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import theoryClass from "../theory.js";
@@ -183,45 +183,17 @@ class mfSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0, 0],
-      [1, 1, 0, 0, 0, 0],
-      [1, 1, 1, 0, 0, 0],
-      [1, 1, 2, 0, 0, 0],
-      [1, 1, 2, 1, 0, 0],
-      [1, 1, 2, 2, 0, 0],
-      [1, 1, 2, 2, 1, 0],
-      [1, 1, 2, 2, 2, 0],
-      [1, 1, 2, 2, 2, 1]
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      MF: globalOptimalRoute,
-      MFd: globalOptimalRoute,
-      MFd2: globalOptimalRoute,
-      MFdPostRecovery0: globalOptimalRoute,
-      MFdPostRecovery1: globalOptimalRoute,
-      MFdPostRecovery2: globalOptimalRoute,
-      MFdPostRecovery3: globalOptimalRoute,
-      MFdPostRecovery4: globalOptimalRoute,
-      MFdPostRecovery5: globalOptimalRoute,
-      MFdPostRecovery6: globalOptimalRoute,
-      MFdPostRecovery7: globalOptimalRoute,
-      MFdPostRecovery8: globalOptimalRoute,
-      MFdPostRecovery9: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
 
   getTotMult(val: number) {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.17);
   }
+
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4, 5];
+  }
   updateMilestones(): void {
-    const points = [0, 20, 50, 175, 225, 275, 325, 425, 475, 525];
-    const stage = binarySearch(points, Math.max(this.lastPub, this.maxRho));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-    this.updateC()
+    super.updateMilestones();
+    this.updateC();
   }
 
   omegaexp(): number {
@@ -292,7 +264,8 @@ class mfSim extends theoryClass<theory> {
       new Variable({ name: "v3", cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
       new Variable({ name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
+    this.milestonesMax = [1, 1, 2, 2, 2, 1];
     this.updateMilestones();
     this.resetParticle();
   }

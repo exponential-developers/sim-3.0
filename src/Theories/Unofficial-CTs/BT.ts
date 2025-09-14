@@ -35,49 +35,11 @@ class btSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 2, 0, 0],
-      [0, 3, 0, 0],
-      [1, 3, 0, 0],
-      [2, 3, 0, 0],
-      [3, 3, 0, 0],
-      [3, 3, 1, 0],
-      [3, 3, 2, 0],
-      [3, 3, 3, 0],
-      [3, 3, 4, 0],
-      [3, 3, 5, 0],
-      [3, 3, 6, 0],
-      [3, 3, 6, 1]
-    ]
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      BT: globalOptimalRoute,
-      BTd: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
-
   getTotMult(val: number) {
     return Math.max(0, val * this.tauFactor * 1.25);
   }
-  updateMilestones(): void {
-    let stage = 0;
-    const points = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
-    const max = [3, 3, 6, 1];
-    const priority = [2, 1, 3, 4]
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    let milestoneCount = stage;
-    this.milestones = [0, 0, 0, 0];
-    for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-            this.milestones[priority[i] - 1]++;
-            milestoneCount--;
-        }
-    }
+  getMilestonePriority(): number[] {
+    return [1, 0, 2, 3];
   }
   constructor(data: theoryData) {
     super(data);
@@ -88,7 +50,8 @@ class btSim extends theoryClass<theory> {
       new Variable({ name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
       new Variable({ name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
+    this.milestonesMax = [3, 3, 6, 1];
     this.updateMilestones();
   }
   async simulate() {

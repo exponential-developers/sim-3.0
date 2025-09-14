@@ -66,15 +66,6 @@ class tcSim extends theoryClass<theory> {
     return Math.max(0, val * 0.2 - l10(2));
   }
 
-  updateMilestones() {
-    let stage = 0;
-    const points = [10, 50, 100, 400, 420, 440, 950, 1150];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-  }
-
   recomputeC1Base() {
     if (this.variables[0].valueScaling instanceof ExponentialValue) {
       this.variables[0].valueScaling.power = this.variables[10].value;
@@ -102,26 +93,9 @@ class tcSim extends theoryClass<theory> {
     }
   }
 
-  getMilestoneTree() {
-    // [autokick, ki, kd, rexp, c2, Pformula]
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0, 0], 
-      [1, 0, 0, 0, 0, 0], // Automation
-      [1, 1, 0, 0, 0, 0], // ki unlock
-      [1, 1, 1, 0, 0, 0], // kd unlock
-      [1, 1, 1, 1, 0, 0], // r1 exponent
-      [1, 1, 1, 2, 0, 0], 
-      [1, 1, 1, 2, 1, 0], // c2
-      [1, 1, 1, 2, 1, 1], // P formula
-      [1, 1, 1, 2, 1, 2] // P formula
-    ];
-    const tree = {
-      TC: globalOptimalRoute,
-      TCd: globalOptimalRoute
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4, 5];
   }
-
   constructor(data: theoryData) {
     super(data);
     this.totMult = this.getTotMult(data.rho);
@@ -158,7 +132,8 @@ class tcSim extends theoryClass<theory> {
       new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
       new Variable({ name: "c1base", cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
     ];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestoneUnlocks = [10, 50, 100, 400, 420, 440, 950, 1150];
+    this.milestonesMax = [1, 1, 1, 2, 1, 2];
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);
     for (let i=7; i<11; i++) {

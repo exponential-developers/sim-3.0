@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { createResult, l10, binarySearch, getBestResult } from "../../Utils/helpers.js";
+import { createResult, l10, binaryInsertionSearch, getBestResult } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import theoryClass from "../theory.js";
@@ -405,67 +405,43 @@ class rzSim extends theoryClass<theory> {
     getTotMult(val: number) {
         return Math.max(0, val * 0.2102 + l10(2));
     }
-    updateMilestones() {
-        const points = [0, 25, 50, 125, 250, 400, 600];
-        const stage = binarySearch(points, Math.max(this.lastPub, this.maxRho));
-        const max = [3, 1, 1, 1];
-        const originPriority = [2, 1, 3];
-        const peripheryPriority = [2, 3, 1];
-        let BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
+    getMilestonePriority(): number[] {
+        const stage = binaryInsertionSearch(this.milestoneUnlocks, Math.max(this.lastPub, this.maxRho));
+        const originPriority = [1, 0, 2, 3];
+        const peripheryPriority = [1, 2, 0, 3];
 
         if (this.strat === "RZSpiralswap" && stage >= 2 && stage <= 4)
         {
-            // Spiralswap
-            let priority = originPriority;
-            if (this.zTerm > 1) priority = peripheryPriority;
-            let milestoneCount = stage;
-            this.milestones = [0, 0, 0, 0];
-            for (let i = 0; i < priority.length; i++) {
-                while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-                    this.milestones[priority[i] - 1]++;
-                    milestoneCount--;
-                }
-            }
+            return this.zTerm > 1 ? peripheryPriority : originPriority;
         }
         else if ((this.strat === "RZMS" || this.strat === "RZdMS") && stage >= 2 && stage <= 4)
         {
-            let priority = peripheryPriority;
-            if (this.maxRho > this.lastPub + this.swapPointDelta) priority = originPriority;
-            let milestoneCount = stage;
-            this.milestones = [0, 0, 0, 0];
-            for (let i = 0; i < priority.length; i++) {
-                while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-                    this.milestones[priority[i] - 1]++;
-                    milestoneCount--;
-                }
-            }
+            return this.maxRho > this.lastPub + this.swapPointDelta ? originPriority : peripheryPriority;
         }
-        else if (BHStrats.has(this.strat) && stage === 6 && this.maxW1 === Infinity)
+
+        return peripheryPriority;
+    }
+
+    updateBHstatus() {
+        if (this.maxW1 === Infinity)
         {
             if (!this.blackhole){
                 // Black hole coasting
                 if (
-                    (!this.bhAtRecovery && (this.t_var <= this.targetZero)) ||
-                    (this.bhAtRecovery && (this.maxRho < this.lastPub))
-                ) 
-                {
-                    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-                }
-                else {
+                    (!this.bhAtRecovery && (this.t_var > this.targetZero)) ||
+                    (this.bhAtRecovery && (this.maxRho >= this.lastPub))
+                ) {
                     if (!this.bhAtRecovery)
                         this.t_var = this.targetZero + 0.01;
                     this.blackhole = true;
                     this.offGrid = true;
-                    this.milestones = this.milestoneTree[stage + 1];
                 }
             }
         }
-        else if (this.maxW1 !== Infinity){
-            this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
+        else {
             if (this.variables[3].level < this.maxW1){
                 if (this.bhFoundZero === true){
                     if (this.bhRewindStatus === 0) {
-                        this.milestones[3] = 0;
                         this.blackhole = false;
                         this.bhSearchingRewind = true;
                         this.bhFoundZero = false;
@@ -480,7 +456,6 @@ class rzSim extends theoryClass<theory> {
                 }
                 else if (this.t_var > this.targetZero && !this.blackhole){
                     this.t_var = this.targetZero;
-                    this.milestones[3] = 1;
                     this.blackhole = true;
                     this.offGrid = true;
                     this.bhSearchingRewind = true;
@@ -488,13 +463,9 @@ class rzSim extends theoryClass<theory> {
                 }
             }
             else {
-                this.milestones[3] = 1;
                 this.blackhole = true;
                 this.bhRewindStatus = 3;
             }
-        }
-        else{
-            this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
         }
     }
 
@@ -621,11 +592,13 @@ class rzSim extends theoryClass<theory> {
             }),
         ];
         this.pubUnlock = 9;
-        this.milestoneTree = this.getMilestoneTree();
+        this.milestoneUnlocks = [25, 50, 125, 250, 400, 600];
+        this.milestonesMax = [3, 1, 1, 1];
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
     }
     async simulate() {
+        const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
         while (!this.endSimulation()) {
             if (!global.simulating) break;
             // Prevent lookup table from retrieving values from wrong sim settings
@@ -638,6 +611,7 @@ class rzSim extends theoryClass<theory> {
             this.tick();
             this.updateSimStatus();
             this.updateMilestones();
+            if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
             this.buyVariables();
             this.ticks++;
         }
@@ -666,7 +640,7 @@ class rzSim extends theoryClass<theory> {
     tick() {
         let t_dot: number;
 
-        if (!this.milestones[3]){
+        if (!this.blackhole){
             t_dot = 1 / resolution;
             this.t_var += (this.dt * t_dot) / 1.5;
         }
@@ -696,7 +670,7 @@ class rzSim extends theoryClass<theory> {
                     this.bhRewindDeriv += this.dt * (Math.sqrt(dr * dr + di * di) * 100000) ** bTerm;
                 }
 
-                if (this.milestones[3]){
+                if (this.blackhole){
                     if (this.maxW1 === Infinity || this.variables[3].level >= this.maxW1){
                         this.snapZero();
                     }
@@ -725,7 +699,6 @@ class rzSim extends theoryClass<theory> {
             this.bhRewindT = 0;
             this.bhRewindNorm = 0;
             this.bhRewindDeriv = 0;
-            this.milestones[3] = 0;
             this.blackhole = false;
             this.bhSearchingRewind = true;
             this.bhFoundZero = false;

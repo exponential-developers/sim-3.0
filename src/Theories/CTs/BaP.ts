@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, subtract, getBestResult, binaryInsertionSearch } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import theoryClass from "../theory.js";
@@ -72,50 +72,27 @@ class bapSim extends theoryClass<theory> {
   getTotMult(val: number) {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.132075 + l10(5));
   }
-  updateMilestones(): void {
-    let stage = 0;
-    let a_max = 0;
-    let q_max = 0;
-    const points = [10, 15, 20, 25, 30, 40, 50, 70, 90, 120, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000];
+  getMilestonePriority(): number[] {
+    const rho = Math.max(this.lastPub, this.maxRho);
+
     const a_points = [20, 30, 50, 80, 140, 240, 400, 600, 800];
     const q_points = [25, 40, 60, 100, 180, 300, 500, 700];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    for (let i = 0; i < a_points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= a_points[i]) a_max = i + 1;
-    }
-    for (let i = 0; i < q_points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= q_points[i]) q_max = i + 1;
-    }
-    let milestoneCount = stage;
+    const a_max = binaryInsertionSearch(a_points, rho);
+    const q_max = binaryInsertionSearch(q_points, rho);
+    const use_n = rho >= 1000 && this.maxRho >= 940 ? 1 : 0;
+    this.milestonesMax = [1, 1, a_max, q_max, use_n];
 
-    const max = [1, 1, a_max, q_max, stage===20?1:0];
-    const apriority = [1, 2, 3, 4, 5];
-    const qpriority = [1, 2, 4, 3, 5];
-    let priority = apriority;
+    const apriority = [0, 1, 2, 3, 4];
+    const qpriority = [0, 1, 3, 2, 4];
 
     if (this.strat == "BaPdMS" || this.strat == "BaPAIMS")
     {
       const tm300 = this.t % 300;
-      if (tm300 < 100) priority = qpriority;
-      else if (tm300 < 300) priority = apriority;
+      if (tm300 < 100) return qpriority;
+      else return apriority;
     }
-
-    this.milestones = [0, 0, 0, 0, 0];
-    for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-            this.milestones[priority[i] - 1]++;
-            milestoneCount--;
-        }
-    }
-
-    if (this.maxRho < 940)
-    {
-      this.milestones[4] = 0;
-    }
+    return apriority;
   }
-
   getRdot(c1:number, r_ms:boolean):number {
     if (c1 <= 2) { // exact computation
         c1 = 10**c1;
@@ -210,6 +187,7 @@ class bapSim extends theoryClass<theory> {
       new Variable({ name: "c10",  cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
       new Variable({ name: "n",    cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
+    this.milestoneUnlocks = [10, 15, 20, 25, 30, 40, 50, 70, 90, 120, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000];
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }

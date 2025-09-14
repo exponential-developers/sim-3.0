@@ -142,19 +142,13 @@ class t2Sim extends theoryClass<theory> {
   getTotMult(val: number) {
     return Math.max(0, val * 0.198 - l10(100)) + getR9multiplier(this.sigma);
   }
-  updateMilestones() {
-    let milestoneCount = Math.min(10, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = [0, 0, 0, 0];
-    let priority: Array<number> = [];
-
-    priority = [1, 2, 3, 4];
-
+  getMilestonePriority(): number[] {
     if (this.strat === "T2MS") {
       const tm100 = this.t % 100;
-      if (tm100 < 10) priority = [3, 4, 1, 2];
-      else if (tm100 < 50) priority = [1, 2, 3, 4];
-      else if (tm100 < 60) priority = [3, 4, 1, 2];
-      else if (tm100 < 100) priority = [2, 1, 3, 4];
+      if (tm100 < 10) return [2, 3, 0, 1];
+      else if (tm100 < 50) return [0, 1, 2, 3];
+      else if (tm100 < 60) return [2, 3, 0, 1];
+      else if (tm100 < 100) return [1, 0, 2, 3];
     }
     if (this.strat === "T2QS") {
       let coastMulti = Infinity;
@@ -165,16 +159,10 @@ class t2Sim extends theoryClass<theory> {
       if (this.lastPub > 150) coastMulti = 600;
       if (this.lastPub > 200) coastMulti = 100;
       if (this.lastPub > 225) coastMulti = 25;
-      if (this.curMult < coastMulti) priority = [1, 2, 3, 4];
-      else priority = [3, 4, 1, 2];
+      if (this.curMult < coastMulti) return [0, 1, 2, 3];
+      else return [2, 3, 0, 1];
     }
-    const max = [2, 2, 3, 3];
-    for (let i = 0; i < priority.length; i++) {
-      while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-        this.milestones[priority[i] - 1]++;
-        milestoneCount--;
-      }
-    }
+    return [0, 1, 2, 3];
   }
   constructor(data: theoryData) {
     super(data);
@@ -206,8 +194,8 @@ class t2Sim extends theoryClass<theory> {
       new Variable({ name: "r4", cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
     ];
     //milestones  [qterm, rterm, q1exp, r1exp]
-    this.milestones = [0, 0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [2, 2, 3, 3];
+    this.milestoneUnlockSteps = 25;
     this.doSimEndConditions = () => this.targetRho == -1;
     this.updateMilestones();
   }

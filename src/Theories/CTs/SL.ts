@@ -46,11 +46,8 @@ class slSim extends theoryClass<theory> {
   getTotMult(val: number) {
     return Math.max(0, val * this.tauFactor * 0.375);
   }
-  updateMilestones(): void {
+  getMilestonePriority(): number[] {
     const maxVal = Math.max(this.lastPub, this.maxRho);
-    let milestoneCount = Math.min(13, Math.floor(maxVal / 25));
-    this.milestones = [0, 0, 0, 0];
-    let priority = [4, 3, 1, 2];
     if ((this.strat === "SLMS" || this.strat === "SLMSd") && maxVal >= 25 && maxVal <= 300) {
       //when to swap to a3exp (increasing rho2dot) before b1b2
       let emg_Before_b1b2 = 5;
@@ -84,22 +81,16 @@ class slSim extends theoryClass<theory> {
       const minCost = Math.min(this.variables[2].cost, this.variables[3].cost);
       if (this.rho.value + l10(emg_Before_b1b2) < minCost) {
         //b12 exp
-        priority = [4, 3, 1, 2];
+        return [3, 2, 0, 1];
       } else if (this.curMult > 4.5 || this.rho.value + l10(r2exp_Before_b1b2) > minCost) {
         //rho2 exp
-        priority = [1, 2, 4, 3];
+        return [0, 1, 3, 2];
       } else if (this.rho.value + l10(emg_Before_b1b2) > minCost && this.rho.value + l10(r2exp_Before_b1b2) < minCost) {
         //a3 boost
-        priority = [2, 1, 4, 3];
+        return [1, 0, 3, 2];
       }
     }
-    const max = [3, 5, 2, 2];
-    for (let i = 0; i < priority.length; i++) {
-      while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-        this.milestones[priority[i] - 1]++;
-        milestoneCount--;
-      }
-    }
+    return [3, 2, 0, 1];
   }
   updateInverseE_Gamma = (x: number) => {
     const y = l10(l10(2) / Math.LOG10E + x / Math.LOG10E + l10(Math.PI) / Math.LOG10E) - (l10(2) + x);
@@ -116,6 +107,8 @@ class slSim extends theoryClass<theory> {
       new Variable({ name: "b1", cost: new ExponentialCost(500, 0.649 * l2(10), true), valueScaling: new StepwisePowerSumValue(6.5, 4) }),
       new Variable({ name: "b2", cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
     ];
+    this.milestonesMax = [3, 5, 2, 2];
+    this.milestoneUnlockSteps = 25;
     this.inverseE_Gamma = 0;
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();

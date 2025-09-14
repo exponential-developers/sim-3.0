@@ -123,50 +123,27 @@ class t6Sim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const c4Route = [
-      [0, 0, 0, 0],
-      [0, 1, 0, 0],
-      [1, 1, 0, 0],
-      [1, 1, 1, 0],
-      [1, 1, 1, 1],
-      [1, 1, 1, 2],
-      [1, 1, 1, 3],
-    ];
-    const globalOptimalRoute = [
-      [0, 0, 0, 0],
-      [0, 1, 0, 0],
-      [1, 1, 0, 0],
-      [1, 1, 1, 0],
-      [1, 0, 0, 3],
-      [1, 0, 1, 3],
-      [1, 1, 1, 3],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T6: globalOptimalRoute,
-      T6C3: globalOptimalRoute,
-      T6C4: c4Route,
-      T6C125: globalOptimalRoute,
-      T6C12: globalOptimalRoute,
-      T6C5: globalOptimalRoute,
-      T6Snax: globalOptimalRoute,
-      T6C3d: globalOptimalRoute,
-      T6C4d: c4Route,
-      T6C125d: globalOptimalRoute,
-      T6C12d: globalOptimalRoute,
-      T6C5d: globalOptimalRoute,
-      T6AI: globalOptimalRoute,
-      T6C5dIdleRecovery: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    const milestoneCount = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
+    switch (this.strat) {
+      case "T6": return milestoneCount >= 4 ? [0, 3, 1, 2] : [1, 0, 3, 2];
+      case "T6C3": return [0];
+      case "T6C4": return [1, 0];
+      case "T6C125": return [0, 2, 3];
+      case "T6C12": return [0, 3];
+      case "T6C5": return [0, 2];
+      case "T6Snax": return [0, 3, 2];
+      case "T6C3d": return [0];
+      case "T6C4d": return [1, 0];
+      case "T6C125d": return [0, 2, 3];
+      case "T6C12d": return [0, 3];
+      case "T6C5d": return [0, 2];
+      case "T6AI": return [0, 3, 2];
+      case "T6C5dIdleRecovery": return [0, 2];
+    }
   }
-
   getTotMult(val: number) {
     return Math.max(0, val * 0.196 - l10(50)) + getR9multiplier(this.sigma);
-  }
-  updateMilestones(): void {
-    const stage = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   calculateIntegral(vc1: number, vc2: number, vc3: number, vc4: number, vc5: number) {
     const term1 = vc1 + vc2 + this.q + this.r;
@@ -195,7 +172,8 @@ class t6Sim extends theoryClass<theory> {
     ];
     this.k = 0;
     this.stopC12 = [0, 0, true];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [1, 1, 1, 3];
+    this.milestoneUnlockSteps = 25;
     this.updateMilestones();
   }
   async simulate() {

@@ -70,13 +70,10 @@ class csr2Sim extends theoryClass<theory> {
   getTotMult(val: number) {
     return Math.max(0, val * this.tauFactor * 0.55075 - l10(200));
   }
-  updateMilestones(): void {
-    let milestoneCount = 0;
-    const points = [10, 45, 80, 115, 220, 500];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) milestoneCount = i + 1;
-    }
-    let priority = [2, 3, 1];
+  getMilestonePriority(): number[] {
+    const c2priority = [1, 2, 0];
+    const q1priority = [0, 1, 2];
+
     if (this.lastPub < 500 && this.strat === "CSR2XL") {
       let msCond = 0;
       if (this.lastPub > 45) msCond = 4;
@@ -90,17 +87,11 @@ class csr2Sim extends theoryClass<theory> {
           this.rho.value < Math.min(this.variables[3].cost, this.variables[4].cost)) ||
         this.t > this.recursionValue[0]
       ) {
-        priority = [1, 2, 3];
-      } else priority = [2, 3, 1];
+        return q1priority;
+      } else return c2priority;
     }
-    this.milestones = [0, 0, 0];
-    const max = [3, 1, 2];
-    for (let i = 0; i < priority.length; i++) {
-      while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-        this.milestones[priority[i] - 1]++;
-        milestoneCount--;
-      }
-    }
+
+    return c2priority;
   }
   updateError(n: number) {
     const root8 = Math.sqrt(8)
@@ -155,6 +146,9 @@ class csr2Sim extends theoryClass<theory> {
       new Variable({ name: "n",  cost: new ExponentialCost(50, 2 ** (Math.log2(256) * 3.346)), valueScaling: new LinearValue(1, 1)}),
       new Variable({ name: "c2", cost: new ExponentialCost(1e3, 10 ** 5.65), valueScaling: new ExponentialValue(2) }),
     ];
+    this.milestoneUnlocks = [10, 45, 80, 115, 220, 500];
+    this.milestonesMax = [3, 1, 2];
+
     this.recursionValue = <Array<number>>data.recursionValue ?? [Infinity, 0];
     this.bestCoast = [0, 0];
     this.updateError_flag = true;

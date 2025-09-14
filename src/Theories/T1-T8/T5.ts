@@ -44,29 +44,11 @@ class t5Sim extends theoryClass<theory> {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0],
-      [0, 1, 0],
-      [1, 1, 0],
-      [2, 1, 0],
-      [3, 1, 0],
-      [3, 1, 1],
-      [3, 1, 2],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T5: globalOptimalRoute,
-      T5Idle: globalOptimalRoute,
-      T5AI2: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [1, 0, 2];
   }
   getTotMult(val: number) {
     return Math.max(0, val * 0.159) + getR9multiplier(this.sigma);
-  }
-  updateMilestones(): void {
-    const stage = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   /** Solves q using the differential equation result */
   calculateQ(ic1: number, ic2: number, ic3: number){
@@ -101,8 +83,8 @@ class t5Sim extends theoryClass<theory> {
     ];
     this.c2worth = true;
     //milestones  [q1exp,c3term,c3exp]
-    this.milestones = [0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [3, 1, 2];
+    this.milestoneUnlockSteps = 25;
     this.updateMilestones();
   }
   async simulate() {

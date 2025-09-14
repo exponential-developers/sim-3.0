@@ -2,12 +2,12 @@ import Variable from "../Utils/variable";
 import { global } from "../Sim/main.js";
 import jsonData from "../Data/data.json";
 import Currency from "../Utils/currency";
+import { binaryInsertionSearch } from "../Utils/helpers";
 
 /** Base class for a theory */
-export default abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
+export default abstract class theoryClass<theory extends theoryType> {
   buyingConditions: conditionFunction[];
   variableAvailability: conditionFunction[];
-  milestoneTree: Array<milestoneType>;
   strat: stratType[theory];
   theory: theoryType;
   tauFactor: number;
@@ -35,12 +35,15 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
   pubT: number;
   pubRho: number;
   //pub conditions
-  forcedPubConditions: Array<conditionFunction>;
-  pubConditions: Array<conditionFunction>;
-  simEndConditions: Array<conditionFunction>;
+  forcedPubConditions: conditionFunction[];
+  pubConditions: conditionFunction[];
+  simEndConditions: conditionFunction[];
   doSimEndConditions: conditionFunction;
-  //milestones  [terms, c1exp, multQdot]
-  milestones: milestoneType;
+  //milestones
+  milestones: number[];
+  milestonesMax: number[];
+  milestoneUnlocks: number[];
+  milestoneUnlockSteps: number;
   pubMulti: number;
 
   abstract getBuyingConditions(): conditionFunction[];
@@ -85,11 +88,31 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     this.simEndConditions = [() => this.t > this.pubT * 2];
     this.doSimEndConditions = () => true;
 
-    this.milestones = [] as unknown as milestoneType;
+    this.milestones = [];
+    this.milestonesMax = [];
+    this.milestoneUnlocks = [];
+    this.milestoneUnlockSteps = -1;
+
     this.pubMulti = 0;
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
-    this.milestoneTree = [] as unknown as Array<milestoneType>;
+  }
+
+  abstract getMilestonePriority(): number[];
+
+  updateMilestones(): void {
+    const rho = Math.max(this.maxRho, this.lastPub);
+    const priority = this.getMilestonePriority();
+    let milestoneCount = this.milestoneUnlockSteps > 0 
+      ? Math.floor(rho / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.milestones = new Array(this.milestonesMax.length).fill(0);
+    for (let i = 0; i < priority.length; i++) {
+        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+            this.milestones[priority[i]]++;
+            milestoneCount--;
+        }
+    }
   }
 
   copyFrom(other: this): void {

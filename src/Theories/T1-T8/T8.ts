@@ -58,123 +58,22 @@ class t8Sim extends theoryClass<theory> {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => true];
     return conditions;
   }
-  getMilestoneTree() {
-    const pActiveRoute = [
-      [0, 0, 0, 0],
-      [1, 0, 0, 0],
-      [2, 0, 0, 0],
-      [0, 0, 0, 3],
-      [1, 0, 3, 0],
-      [2, 0, 3, 0],
-      [2, 0, 3, 1],
-      [2, 0, 3, 2],
-      [2, 0, 3, 3],
-      [2, 1, 3, 3],
-      [2, 2, 3, 3],
-      [2, 3, 3, 3],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T8: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [0, 0, 0, 3],
-        [1, 0, 3, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-        [2, 1, 3, 3],
-        [2, 2, 3, 3],
-        [2, 3, 3, 3],
-      ],
-      T8noC3: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-      ],
-      T8noC5: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 1, 3, 0],
-        [2, 2, 3, 0],
-        [2, 3, 3, 0],
-      ],
-      T8noC35: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-      ],
-      T8Snax: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [0, 0, 0, 3],
-        [1, 0, 3, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-        [2, 1, 3, 3],
-        [2, 2, 3, 3],
-        [2, 3, 3, 3],
-      ],
-      T8noC3d: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-      ],
-      T8noC5d: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 1, 3, 0],
-        [2, 2, 3, 0],
-        [2, 3, 3, 0],
-      ],
-      T8noC35d: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-      ],
-      T8d: pActiveRoute,
-      T8Play: pActiveRoute,
-      T8PlaySolarswap: pActiveRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
+    switch (this.strat) {
+      case "T8noC3": return [0, 2, 3];
+      case "T8noC3d": return [0, 2, 3];
+      case "T8noC5": return [0, 2, 1];
+      case "T8noC5d": return [0, 2, 1];
+      case "T8noC35": return [0, 2];
+      case "T8noC35d": return [0, 2];
+    }
+    if (milestoneCount < 3) return [0];
+    else if (milestoneCount == 3) return [3];
+    else return [2, 0, 3, 1];
   }
-
   getTotMult(val: number) {
     return Math.max(0, val * 0.15) + getR9multiplier(this.sigma);
-  }
-  updateMilestones(): void {
-    const stage = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   dn(ix = this.x, iy = this.y, iz = this.z) {
     if (this.milestones[0] === 0) {
@@ -236,7 +135,8 @@ class t8Sim extends theoryClass<theory> {
     this.dy = 0;
     this.dz = 0;
     this.msTimer = 0;
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [2, 3, 3, 3];
+    this.milestoneUnlockSteps = 20;
     this.updateMilestones();
   }
   async simulate() {

@@ -63,77 +63,21 @@ class t7Sim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T7: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 0],
-        [1, 1, 1, 1, 0],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 2],
-        [1, 1, 1, 1, 3],
-      ],
-      T7C12: [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 2],
-        [0, 0, 0, 0, 3],
-      ],
-      T7C3: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-      ],
-      T7noC12: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 0],
-        [1, 1, 1, 1, 0],
-      ],
-      T7noC123: [
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0],
-        [1, 0, 1, 0, 0],
-        [1, 0, 1, 1, 0],
-      ],
-      T7noC1234: [
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0],
-        [1, 0, 1, 0, 0],
-        [1, 0, 1, 1, 0],
-      ],
-      T7C12d: [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 2],
-        [0, 0, 0, 0, 3],
-      ],
-      T7C3d: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-      ],
-      T7PlaySpqcey: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 0],
-        [1, 1, 1, 1, 0],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 2],
-        [1, 1, 1, 1, 3],
-      ],
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    switch (this.strat) {
+      case "T7": return [1, 0, 2, 3, 4];
+      case "T7C12": return [4];
+      case "T7C3": return [1];
+      case "T7noC12": return [1, 0, 2, 3];
+      case "T7noC123": return [0, 2, 3];
+      case "T7noC1234": return [0, 2, 3];
+      case "T7C12d": return [4];
+      case "T7C3d": return [1];
+      case "T7PlaySpqcey": return [1, 0, 2, 3, 4]; 
+    }
   }
-
   getTotMult(val: number) {
     return Math.max(0, val * 0.152) + getR9multiplier(this.sigma);
-  }
-  updateMilestones(): void {
-    const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   constructor(data: theoryData) {
     super(data);
@@ -152,7 +96,8 @@ class t7Sim extends theoryClass<theory> {
     this.drho13 = 0;
     this.drho23 = 0;
     this.c2ratio = Infinity;
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [1, 1, 1, 1, 3];
+    this.milestoneUnlockSteps = 25;
     this.updateMilestones();
   }
   async simulate() {

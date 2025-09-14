@@ -47,36 +47,11 @@ class wspSim extends theoryClass<theory> {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0],
-      [0, 0, 1],
-      [0, 0, 2],
-      [0, 0, 3],
-      [0, 1, 3],
-      [1, 1, 3],
-      [2, 1, 3],
-      [3, 1, 3],
-      [4, 1, 3],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      WSP: globalOptimalRoute,
-      WSPStopC1: globalOptimalRoute,
-      WSPdStopC1: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [2, 1, 0];
   }
-
   getTotMult(val: number) {
     return Math.max(0, val * this.tauFactor * 0.375);
-  }
-  updateMilestones() {
-    let stage = 0;
-    const points = [10, 25, 40, 55, 70, 100, 140, 200];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   srK_helper = (x: number) => {
     const x2 = x * x;
@@ -114,7 +89,8 @@ class wspSim extends theoryClass<theory> {
       new Variable({ name: "c2", cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestoneUnlocks = [10, 25, 40, 55, 70, 100, 140, 200];
+    this.milestonesMax = [4, 1, 3];
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }

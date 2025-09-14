@@ -57,132 +57,35 @@ class t4Sim extends theoryClass<theory> {
     const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => this.milestones[0] > 0, () => this.milestones[0] > 1, () => this.milestones[0] > 2, () => true, () => true];
     return conditions;
   }
-  getMilestoneTree() {
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T4C3d66: [
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 0, 2],
-        [0, 0, 3],
-      ],
-      T4C3coast: [
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 0, 2],
-        [0, 0, 3],
-      ],
-      T4C3: [
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 0, 2],
-        [0, 0, 3],
-      ],
-      T4C3dC12rcv: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3]
-      ],
-      T4C356dC12rcv: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3],
-        [1, 1, 3],
-        [2, 1, 3],
-        [3, 1, 3],
-      ],
-      T4C456dC12rcvMS: [[0, 0, 0]],
-      T4C123d: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3],
-      ],
-      T4C123: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3],
-      ],
-      T4C12d: [
-        [0, 0, 0],
-        [0, 1, 0],
-      ],
-      T4C12: [
-        [0, 0, 0],
-        [0, 1, 0],
-      ],
-      T4C56: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-        [3, 0, 0],
-        [3, 0, 1],
-        [3, 0, 2],
-        [3, 0, 3],
-        [3, 0, 3],
-      ],
-      T4C4: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [1, 0, 1],
-        [1, 0, 2],
-        [1, 0, 3],
-      ],
-      T4C5: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-        [2, 0, 1],
-        [2, 0, 2],
-        [2, 0, 3],
-      ],
-      T4: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-        [3, 0, 0],
-        [3, 0, 1],
-        [3, 0, 2],
-        [3, 0, 3],
-        [3, 1, 3],
-      ],
-    };
-    return tree[this.strat];
-  }
   getTotMult(val: number) {
     return Math.max(0, val * 0.165 - l10(4)) + getR9multiplier(this.sigma);
   }
-  updateMilestones(): void {
-    const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-
-    if (this.strat === "T4C456dC12rcvMS") {
-      const max = [3, 1, 3];
-      this.milestones = [0, 0, 0];
-
-      let priority;
-      if (this.maxRho < this.lastPub) {
-        priority = [2, 3, 1];
-      } else if (this.t % 100 < 50) {
-        priority = [3, 1, 2];
-      } else {
-        priority = [1, 3, 2];
+  getMilestonePriority(): number[] {
+    switch (this.strat) {
+      case "T4C3d66": return [2];
+      case "T4C3coast": return [2];
+      case "T4C3": return [2];
+      case "T4C3dC12rcv": return [1, 2];
+      case "T4C356dC12rcv": return [1, 2, 0];
+      case "T4C456dC12rcvMS": {
+        if (this.maxRho < this.lastPub) return [1, 2, 0]
+        else if (this.t % 100 < 50) return [2, 0, 1] 
+        else return [0, 2, 1];
       }
-
-      let milestoneCount = stage;
-      this.milestones = [0, 0, 0];
-      for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-          this.milestones[priority[i] - 1]++;
-          milestoneCount--;
-        }
+      case "T4C123d": return [1, 2];
+      case "T4C123": return [1, 2];
+      case "T4C12d": return [1];
+      case "T4C12": return [1];
+      case "T4C56": return [0, 2];
+      case "T4C4": {
+        this.milestonesMax = [1, 0, 3];
+        return [0, 2];
       }
+      case "T4C5": {
+        this.milestonesMax = [2, 0, 3];
+        return [0, 2];
+      }
+      case "T4": return [0, 2, 1];
     }
   }
   constructor(data: theoryData) {
@@ -202,8 +105,8 @@ class t4Sim extends theoryClass<theory> {
       new Variable({ name: "q2", cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
     ];
     //milestones  [terms, c1exp, multQdot]
-    this.milestones = [0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestonesMax = [3, 1, 3];
+    this.milestoneUnlockSteps = 25;
     this.updateMilestones();
   }
   async simulate(data: theoryData) {

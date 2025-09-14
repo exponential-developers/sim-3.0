@@ -94,8 +94,8 @@ export function subtract(value1: number, value2: number) {
   return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
 }
 
-//written by propfeds
-export function binarySearch(arr: Array<number>, target: number) {
+export function binaryInsertionSearch(arr: Array<number>, target: number) {
+  if (target < arr[0]) return 0;
   let l = 0;
   let r = arr.length - 1;
   while (l < r) {
@@ -103,7 +103,7 @@ export function binarySearch(arr: Array<number>, target: number) {
     if (arr[m] <= target) l = m;
     else r = m - 1;
   }
-  return l;
+  return l + 1;
 }
 
 interface simResultInterface {

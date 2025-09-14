@@ -1,5 +1,5 @@
 import { global } from "../../Sim/main.js";
-import { add, createResult, l10, getLastLevel, getBestResult } from "../../Utils/helpers.js";
+import { add, createResult, l10, getLastLevel, getBestResult, binaryInsertionSearch } from "../../Utils/helpers.js";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import Variable from "../../Utils/variable.js";
 import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
@@ -110,47 +110,17 @@ class efSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0],
-      [2, 0, 0, 0, 0],
-      [2, 1, 0, 0, 0],
-      [2, 2, 0, 0, 0],
-      [2, 3, 0, 0, 0],
-      [2, 3, 1, 0, 0],
-      [2, 3, 2, 0, 0],
-      [2, 3, 3, 0, 0],
-      [2, 3, 4, 0, 0],
-      [2, 3, 5, 0, 0],
-      [2, 3, 5, 1, 0],
-      [2, 3, 5, 2, 0],
-      [2, 3, 5, 2, 1],
-      [2, 3, 5, 2, 2],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      EF: globalOptimalRoute,
-      EFd: globalOptimalRoute,
-      EFSnax: globalOptimalRoute,
-      EFAI: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
   getTotMult(val: number) {
     return Math.max(0, val * this.tauFactor * 0.09675);
   }
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4];
+  }
   updateMilestones(): void {
-    let stage = 0;
-    const points = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-      if (points[i] > Math.max(this.lastPub, this.maxRho)) {
-        this.nextMilestoneCost = points[i];
-        break;
-      }
-    }
-    if (Math.max(this.lastPub, this.maxRho) >= 325) this.nextMilestoneCost = Infinity;
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
+    const rho = Math.max(this.lastPub, this.maxRho);
+    const stage = binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.nextMilestoneCost = this.milestoneUnlocks[stage] || Infinity;
+    super.updateMilestones();
     if (this.variables[4].valueScaling instanceof ExponentialValue && this.variables[4].valueScaling.power !== 1.1 + 0.01 * this.milestones[3]) {
       this.variables[4].valueScaling.power = 1.1 + 0.01 * this.milestones[3];
       this.variables[4].reCalculate();
@@ -180,6 +150,10 @@ class efSim extends theoryClass<theory> {
       new Variable({ name: "a2",   currency: this.R,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
       new Variable({ name: "a3",   currency: this.I,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
+    this.milestoneUnlocks = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
+    this.milestonesMax = [2, 3, 5, 2, 2];
+    this.nextMilestoneCost = Infinity;
+
     this.forcedPubRho = Infinity;
     if (this.lastPub < 374 && this.strat !== "EF") {
       let newpubtable: pubTable = pubtable.efdata;
@@ -191,8 +165,7 @@ class efSim extends theoryClass<theory> {
     this.bestRes = null;
     this.doContinuityFork = true;
     this.depth = 0;
-    this.nextMilestoneCost = Infinity;
-    this.milestoneTree = this.getMilestoneTree();
+
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
@@ -214,6 +187,7 @@ class efSim extends theoryClass<theory> {
   copy(): efSim {
     let newsim = new efSim(this.getDataForCopy());
     newsim.copyFrom(this);
+    newsim.updateMilestones();
     return newsim;
   }
   async simulate() {
