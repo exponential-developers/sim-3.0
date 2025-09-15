@@ -226,9 +226,8 @@ class bapSim extends theoryClass<theory> {
         const res = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, res);
       }
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    this.trimBoughtVars();
     const result = this.createResult();
     return getBestResult(result, this.bestRes);
   }

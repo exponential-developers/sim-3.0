@@ -94,12 +94,9 @@ class t5Sim extends theoryClass<theory> {
       if (this.lastPub < 150) this.updateMilestones();
       this.c2Counter = 0;
       this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-
+    this.trimBoughtVars();
     const stratExtra = this.strat === "T5Idle" ? " " + logToExp(this.variables[2].cost, 1) : "";
-
     return this.createResult(stratExtra);
   }
   tick() {

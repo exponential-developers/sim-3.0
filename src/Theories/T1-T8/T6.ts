@@ -186,10 +186,8 @@ class t6Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-
+    this.trimBoughtVars();
     const stratExtra = this.strat === "T6Snax" ? " " + logToExp(this.stopC12[0], 1) : "";
-
     return this.createResult(stratExtra);
   }
   tick() {

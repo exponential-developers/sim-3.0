@@ -102,12 +102,9 @@ class t1Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       if (this.strat !== "T1SolarXLII" || this.rho.value < coast) this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-
+    this.trimBoughtVars();
     const stratExtra = this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "";
-    
     return this.createResult(stratExtra);
   }
   tick() {

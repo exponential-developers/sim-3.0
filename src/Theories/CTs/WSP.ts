@@ -100,9 +100,8 @@ class wspSim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    this.trimBoughtVars();
     return this.createResult();
   }
   tick() {

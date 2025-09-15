@@ -296,9 +296,8 @@ class mfSim extends theoryClass<theory> {
       this.updateMilestones();
       this.buyVariables();
       await this.checkForReset();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    this.trimBoughtVars();
     const result = this.createResult(` Depth: ${global.mfResetDepth}`);
     return getBestResult(result, this.bestRes);
   }

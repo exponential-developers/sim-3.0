@@ -60,9 +60,8 @@ class btSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    this.trimBoughtVars();
     return this.createResult();
   }
   tick() {

@@ -44,7 +44,6 @@ export default abstract class theoryClass<theory extends theoryType> {
   milestonesMax: number[];
   milestoneUnlocks: number[];
   milestoneUnlockSteps: number;
-  pubMulti: number;
 
   abstract getBuyingConditions(): conditionFunction[];
   abstract getVariableAvailability(): conditionFunction[];
@@ -93,7 +92,6 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.milestoneUnlocks = [];
     this.milestoneUnlockSteps = -1;
 
-    this.pubMulti = 0;
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
   }
@@ -132,8 +130,6 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.maxTauH = other.maxTauH;
     this.pubT = other.pubT;
     this.pubRho = other.pubRho;
-    
-    this.pubMulti = other.pubMulti;
   }
 
   getDataForCopy(): theoryData {
@@ -182,6 +178,7 @@ export default abstract class theoryClass<theory extends theoryType> {
     }
     
     this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
+    this.ticks++;
   }
 
   onVariablePurchased(id: number) {}
@@ -271,6 +268,10 @@ export default abstract class theoryClass<theory extends theoryType> {
       }
     }
     if (bought) this.onAnyVariablePurchased();
+  }
+
+  trimBoughtVars() {
+    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
   }
 
   createResult(stratExtra: string = ""): simResult {

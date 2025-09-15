@@ -106,12 +106,9 @@ class t7Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-
+    this.trimBoughtVars()
     const stratExtra = this.strat === "T7PlaySpqcey" && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
-
     return this.createResult(stratExtra);
   }
   tick() {

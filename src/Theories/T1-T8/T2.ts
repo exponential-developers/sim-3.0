@@ -182,12 +182,9 @@ class t2Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-
+    this.trimBoughtVars();
     const stratExtra = this.strat === "T2MCAlt3" ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
-
     return this.createResult(stratExtra);
   }
   tick() {

@@ -138,7 +138,7 @@ class t4Sim extends theoryClass<theory> {
       new Variable({ name: "q1", cost: new ExponentialCost(1e3, 100), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "q2", cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
     ];
-    this.recursionValue = <number>data.recursionValue;
+    this.recursionValue = data.recursionValue as number;
     this.updateMilestones();
   }
   async simulate(data: theoryData): Promise<simResult> {
@@ -153,13 +153,10 @@ class t4Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    
+    this.trimBoughtVars();
     const stratExtra = ["T4C3d66", "T4C3coast"].includes(this.strat) 
       ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "";
-
     return this.createResult(stratExtra);
   }
   tick() {

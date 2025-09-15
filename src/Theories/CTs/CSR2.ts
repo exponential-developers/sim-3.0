@@ -222,10 +222,9 @@ class csr2Sim extends theoryClass<theory> {
         const res = await fork.simulate(this.getDataForCopy());
         this.bestRes = getBestResult(this.bestRes, res);
       }
-      this.ticks++;
     }
     if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
-      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+      this.trimBoughtVars();
 
     let stratExtra = " ";
     if (this.strat === "CSR2XL") {
@@ -234,13 +233,12 @@ class csr2Sim extends theoryClass<theory> {
         const costIncs = [5, 128, 16, 2 ** (Math.log2(256) * 3.346), 10 ** 5.65];
         lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
       }
-      stratExtra += Math.min(this.pubMulti, 10 ** (this.getTotMult(lastBuy) - this.totMult)).toFixed(2);
+      stratExtra += (10 ** (this.getTotMult(Math.min(lastBuy, this.pubRho)) - this.totMult)).toFixed(2);
     }
     if (this.strat.includes("PT")) {
       stratExtra += `q1: ${getLastLevel("q1", this.boughtVars)} q2: ${getLastLevel("q2", this.boughtVars)} c1: ${getLastLevel("c1", this.boughtVars)}`;
     }
     const result = this.createResult(stratExtra);
-
     return getBestResult(result, this.bestRes);
   }
   tick() {

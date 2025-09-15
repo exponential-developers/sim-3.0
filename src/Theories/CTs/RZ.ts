@@ -581,9 +581,7 @@ class rzSim extends theoryClass<theory> {
             if (this.lastPub < 600) this.updateMilestones();
             if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
             this.buyVariables();
-            this.ticks++;
         }
-        this.pubMulti = Math.pow(10, this.getTotMult(this.pubRho) - this.totMult);
         let stratExtra = "";
         if (this.strat.includes("BH"))
         {
@@ -601,7 +599,7 @@ class rzSim extends theoryClass<theory> {
         if (this.maxW1 !== Infinity){
             stratExtra += ` w1: ${this.maxW1}`;
         }
-        while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+        this.trimBoughtVars();
         const result = this.createResult(stratExtra);
         return result;
     }
