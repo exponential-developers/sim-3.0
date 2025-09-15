@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, getBestResult, binaryInsertionSearch } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, createResult, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/BaPpubtable.json" assert { type: "json" };
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function bap(data: theoryData): Promise<simResult> {
   const sim = new bapSim(data);
@@ -22,7 +22,7 @@ interface pubTable {
 }
 
 class bapSim extends theoryClass<theory> {
-  q: Array<number>;
+  q: number[];
   r: number;
   t_var: number;
 
@@ -30,16 +30,17 @@ class bapSim extends theoryClass<theory> {
   doContinuityFork: boolean;
   bestRes: simResult | null;
 
-  getBuyingConditions() {
+  getBuyingConditions(): conditionFunction[] {
     const idlestrat = new Array(12).fill(true)
     const semiidlestrat = new Array(12).fill(() => this.maxRho < this.getNextCoast() - l10(25));
     const activestrat = [
       true,
-      () => this.variables[1].cost + l10(0.5 * this.variables[0].level % 64) < this.variables[2].cost && (this.milestones[0] > 0 || this.variables[1].level < 65),
+      () => this.variables[1].cost + l10(0.5 * this.variables[0].level % 64) < this.variables[2].cost 
+        && (this.milestones[0] > 0 || this.variables[1].level < 65),
       ...new Array(10).fill(true)
     ]
 
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BaP: idlestrat,
       BaPcoast: semiidlestrat,
       BaPAI: [],
@@ -48,11 +49,11 @@ class bapSim extends theoryClass<theory> {
       BaPd: activestrat,
       BaPdMS: activestrat,
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => this.variables[0].level < 4, //tdot
       () => true, //c1
       () => true, //c2
@@ -69,7 +70,7 @@ class bapSim extends theoryClass<theory> {
     return conditions;
   }
 
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.132075 + l10(5));
   }
   getMilestonePriority(): number[] {
@@ -93,7 +94,8 @@ class bapSim extends theoryClass<theory> {
     }
     return apriority;
   }
-  getRdot(c1:number, r_ms:boolean):number {
+
+  getRdot(c1: number, r_ms: boolean): number {
     if (c1 <= 2) { // exact computation
         c1 = 10**c1;
         let sum = 0;
@@ -121,7 +123,7 @@ class bapSim extends theoryClass<theory> {
     return add(subtract(l10(Math.PI*Math.PI/6), approx_sum), -2*c1);
   }
 
-  getA(level:number, n_unlocked:boolean, n_value:number):number {
+  getA(level: number, n_unlocked: boolean, n_value: number): number {
     if (n_unlocked) {
         let partial_sum = 0;
 
@@ -144,7 +146,7 @@ class bapSim extends theoryClass<theory> {
     }
   }
 
-  getNextCoast(){
+  getNextCoast(): number {
     let nextCoast = this.forcedPubRho;
     const rho = Math.max(this.maxRho, this.lastPub);
     const coastPoints = [10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 140, 150, 180, 200, 240, 300, 400, 500, 600, 700, 1000];
@@ -159,20 +161,11 @@ class bapSim extends theoryClass<theory> {
 
   constructor(data: theoryData) {
     super(data);
+    this.q = new Array(9).fill(-1e60);
+    this.r = -1e60;
+    this.t_var = 0;
     this.pubUnlock = 7;
-    this.q = new Array(9).fill(-1e60)
-    this.r = -1e60
-    this.t_var = 0
-    this.forcedPubRho = Infinity;
-    this.doContinuityFork = true;
-    this.bestRes = null;
-    if (this.lastPub < 1480)
-    {
-      let newpubtable: pubTable = pubtable.bapdata;
-      let pubseek = this.lastPub < 100 ? Math.round(this.lastPub * 4) / 4 : Math.round(this.lastPub);
-      this.forcedPubRho = newpubtable[pubseek.toString()].next;
-      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
-    }
+    this.milestoneUnlocks = [10, 15, 20, 25, 30, 40, 50, 70, 90, 120, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000];
     this.variables = [
       new Variable({ name: "tdot", cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot
       new Variable({ name: "c1",   cost: new FirstFreeCost(new ExponentialCost(0.0625, 0.25, true)), valueScaling: new StepwisePowerSumValue(65536, 64) }), //c1
@@ -187,11 +180,22 @@ class bapSim extends theoryClass<theory> {
       new Variable({ name: "c10",  cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
       new Variable({ name: "n",    cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
-    this.milestoneUnlocks = [10, 15, 20, 25, 30, 40, 50, 70, 90, 120, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000];
+
+    this.forcedPubRho = Infinity;
+    this.doContinuityFork = true;
+    this.bestRes = null;
+    if (this.lastPub < 1480)
+    {
+      let newpubtable: pubTable = pubtable.bapdata;
+      let pubseek = this.lastPub < 100 ? Math.round(this.lastPub * 4) / 4 : Math.round(this.lastPub);
+      this.forcedPubRho = newpubtable[pubseek.toString()].next;
+      if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+    }
+
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
-  copyFrom(other: this): void {
+  copyFrom(other: this) {
     super.copyFrom(other);
 
     this.q = [...other.q];
@@ -205,7 +209,7 @@ class bapSim extends theoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
@@ -238,9 +242,7 @@ class bapSim extends theoryClass<theory> {
     for (let i=9; i>=2; i--)
     {
       if (this.milestones[3] > i-3)
-      {
-        this.q[i-2] = add(this.q[i-2], this.variables[i].value + (this.milestones[3] > i-2 ? this.q[i-1] : 0) + l10(this.dt))
-      }
+        this.q[i-2] = add(this.q[i-2], this.variables[i].value + (this.milestones[3] > i-2 ? this.q[i-1] : 0) + l10(this.dt));
     }
 
     this.r = add(this.r, this.getRdot(this.variables[1].value, this.milestones[0] > 0) + l10(this.dt));
@@ -248,13 +250,9 @@ class bapSim extends theoryClass<theory> {
 
     let rhodot;
     if (this.milestones[1] == 0)
-    {
       rhodot = this.totMult + (l10(this.t_var) + this.q[0] + this.r) * this.getA(this.milestones[2], this.milestones[4] > 0, vn);
-    }
     else
-    {
       rhodot = this.totMult + l10(this.t_var) + (this.q[0] + this.r) * this.getA(this.milestones[2], this.milestones[4] > 0, vn);
-    }
 
     this.rho.add(rhodot + l10(this.dt));
   }

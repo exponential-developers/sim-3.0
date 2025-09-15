@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, l2 } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, createResult, l10, subtract, l2, toCallables } from "../../Utils/helpers";
 
 export default async function sl(data: theoryData): Promise<simResult> {
   const sim = new slSim(data);
@@ -18,8 +18,8 @@ class slSim extends theoryClass<theory> {
   rho3: number;
   inverseE_Gamma: number;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       SL: [true, true, true, true],
       SLStopA: [() => this.curMult < 4.5, () => this.curMult < 4.5, () => this.curMult < 6, () => this.curMult < 6],
       SLStopAd: [
@@ -36,14 +36,13 @@ class slSim extends theoryClass<theory> {
         () => this.curMult < 7.5,
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true];
     return conditions;
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 0.375);
   }
   getMilestonePriority(): number[] {
@@ -92,28 +91,28 @@ class slSim extends theoryClass<theory> {
     }
     return [3, 2, 0, 1];
   }
-  updateInverseE_Gamma = (x: number) => {
+  updateInverseE_Gamma(x: number) {
     const y = l10(l10(2) / Math.LOG10E + x / Math.LOG10E + l10(Math.PI) / Math.LOG10E) - (l10(2) + x);
     this.inverseE_Gamma = 0 - Math.LOG10E - add(subtract(y, y + y - l10(2)), y + y + y + l10(6));
   };
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 10;
     this.rho2 = 0;
     this.rho3 = 0;
+    this.pubUnlock = 10;
+    this.milestoneUnlockSteps = 25;
+    this.milestonesMax = [3, 5, 2, 2];
     this.variables = [
       new Variable({ name: "a1", cost: new FirstFreeCost(new ExponentialCost(1, 0.369 * l2(10), true)), valueScaling: new StepwisePowerSumValue(3.5, 3)}),
       new Variable({ name: "a2", cost: new ExponentialCost(175, 10), valueScaling: new ExponentialValue(2) }),
       new Variable({ name: "b1", cost: new ExponentialCost(500, 0.649 * l2(10), true), valueScaling: new StepwisePowerSumValue(6.5, 4) }),
       new Variable({ name: "b2", cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
     ];
-    this.milestonesMax = [3, 5, 2, 2];
-    this.milestoneUnlockSteps = 25;
     this.inverseE_Gamma = 0;
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

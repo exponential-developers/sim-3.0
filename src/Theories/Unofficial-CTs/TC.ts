@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import { ExponentialCost } from "../../Utils/cost.js";
-import theoryClass from "../theory.js";
+import { ExponentialCost } from "../../Utils/cost";
+import { add, createResult, l10, sleep, toCallables } from "../../Utils/helpers";
 
 export default async function tc(data: theoryData): Promise<simResult> {
   const sim = new tcSim(data);
@@ -22,7 +22,7 @@ class tcSim extends theoryClass<theory> {
 
   // System parameters
   systemDt: number;
-  error: Array<number>;
+  error: [number, number];
   timer: number;
   integral: number;
   amplitude: number;
@@ -33,8 +33,8 @@ class tcSim extends theoryClass<theory> {
   T: number;
   setPoint: number;
 
-  getBuyingConditions() {
-    const conditions = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       TC: new Array(11).fill(true),
       TCd: [
         true, 
@@ -42,11 +42,10 @@ class tcSim extends theoryClass<theory> {
         ...new Array(9).fill(true)
       ]
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
 
-  getVariableAvailability() {
+  getVariableAvailability(): conditionFunction[] {
     return [
       () => true, // c1
       () => true, // r1
@@ -62,7 +61,7 @@ class tcSim extends theoryClass<theory> {
     ];
   }
 
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.2 - l10(2));
   }
 
@@ -73,7 +72,7 @@ class tcSim extends theoryClass<theory> {
     }
   }
 
-  getPidValues(strat: string) {
+  getPidValues(strat: string): [number, number, number, number] {
     switch (strat) {
       case "TC":
       case "TCd":
@@ -83,7 +82,7 @@ class tcSim extends theoryClass<theory> {
     }
   }
 
-  getAutomationSettings(strat: string) {
+  getAutomationSettings(strat: string): [number, number] {
     switch (strat) {
       case "TC":
       case "TCd":
@@ -145,7 +144,7 @@ class tcSim extends theoryClass<theory> {
     this.updateMilestones();
   }
 
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       if ((this.ticks + 1) % 500000 === 0) await sleep();
@@ -218,11 +217,11 @@ class tcSim extends theoryClass<theory> {
     const mrexp = this.milestones[3];
     this.rho.add(
       this.P +
-        this.r * (1 + mrexp * 0.001) +
-        (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
-        l10(this.dt) +
-        this.totMult +
-        l10(this.achievementMulti)
+      this.r * (1 + mrexp * 0.001) +
+      (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
+      l10(this.dt) +
+      this.totMult +
+      l10(this.achievementMulti)
     );
   }
   onVariablePurchased(id: number): void {

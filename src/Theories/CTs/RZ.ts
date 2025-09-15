@@ -1,17 +1,17 @@
-import { global } from "../../Sim/main.js";
-import { createResult, l10, binaryInsertionSearch, getBestResult } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Currency from "../../Utils/currency";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ.js";
+import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
+import { createResult, l10, binaryInsertionSearch, getBestResult, toCallables } from "../../Utils/helpers";
+import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
-import { ExponentialCost, StepwiseCost, CompositeCost, ConstantCost, FirstFreeCost, BaseCost } from '../../Utils/cost.js';
-import Currency from "../../Utils/currency.js";
 
 type theory = "RZ";
 
 class VariableBcost extends BaseCost {
-    getCost(level: number) {
+    getCost(level: number): number {
         return [15, 45, 360, 810, 1050, 1200][level];
     }
     copy(): VariableBcost {
@@ -19,8 +19,8 @@ class VariableBcost extends BaseCost {
     }
 }
 
-function mergeSortedLists(list1: Array<number>, list2: Array<number>): Array<number> {
-    let mergedList = [];
+function mergeSortedLists(list1: number[], list2: number[]): number[] {
+    let mergedList: number[] = [];
     let i = 0; // Pointer for list1
     let j = 0; // Pointer for list2
 
@@ -288,7 +288,7 @@ class rzSim extends theoryClass<theory> {
     bhRewindNorm: number;
     bhRewindDeriv: number;
 
-    getBuyingConditions() {
+    getBuyingConditions(): conditionFunction[] {
         const activeStrat = [
             () => {
                 if(this.normalPubRho != -1 && this.variables[1].cost > this.normalPubRho - l10(2)) {
@@ -342,7 +342,7 @@ class rzSim extends theoryClass<theory> {
             true,
             true
         ]
-        const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+        const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
             RZ: semiPassiveStrat,
             RZd: activeStrat,
             RZBH: semiPassiveStrat,
@@ -355,9 +355,9 @@ class rzSim extends theoryClass<theory> {
             RZMS: semiPassiveStrat,
             // RZnoB: [true, true, false, true, true, false, false],
         };
-        return conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
+        return toCallables(conditions[this.strat]);
     }
-    getVariableAvailability() {
+    getVariableAvailability(): conditionFunction[] {
         // "c1", "c2", "b", "w1", "w2", "w3"
         return [
             () => true,
@@ -368,41 +368,7 @@ class rzSim extends theoryClass<theory> {
             () => this.milestones[2] === 1,
         ];
     }
-    getMilestoneTree() {
-        const noBHRoute = [
-            [0, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 1, 1, 0],
-            [1, 1, 1, 0],
-            [2, 1, 1, 0],
-            [3, 1, 1, 0],
-            [3, 1, 1, 0]
-        ]
-        const BHRoute = [
-            [0, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 1, 1, 0],
-            [1, 1, 1, 0],
-            [2, 1, 1, 0],
-            [3, 1, 1, 0],
-            [3, 1, 1, 0],
-            [3, 1, 1, 1]
-        ]
-        const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-            RZ: noBHRoute,
-            RZd: noBHRoute,
-            RZBH: BHRoute,
-            RZBHLong: BHRoute,
-            RZdBH: BHRoute,
-            RZdBHLong: BHRoute,
-            RZdBHRewind: BHRoute,
-            RZSpiralswap: noBHRoute,
-            RZdMS: noBHRoute,
-            RZMS: noBHRoute
-        };
-        return tree[this.strat];
-    }
-    getTotMult(val: number) {
+    getTotMult(val: number): number {
         return Math.max(0, val * 0.2102 + l10(2));
     }
     getMilestonePriority(): number[] {
@@ -532,28 +498,19 @@ class rzSim extends theoryClass<theory> {
 
     constructor(data: theoryData) {
         super(data);
-        this.targetZero = 999999999;
         this.delta = new Currency("delta");
         this.t_var = 0;
         this.zTerm = 0;
         this.rCoord = -1.4603545088095868;
         this.iCoord = 0;
+        this.targetZero = 999999999;
         this.offGrid = false;
         this.blackhole = false;
         this.bhSearchingRewind = true;
         this.bhFoundZero = false;
-        this.bhAtRecovery = false;
-        this.bhzTerm = 0;
-        this.bhdTerm = 0;
-        this.normalPubRho = -1;
-        this.maxC1Level = -1;
-        this.maxC1LevelActual = -1;
-        this.swapPointDelta = 0;
-        this.maxW1 = Infinity;
-        this.bhRewindStatus = 0;
-        this.bhRewindT = 0;
-        this.bhRewindNorm = 0;
-        this.bhRewindDeriv = 0;
+        this.pubUnlock = 9;
+        this.milestoneUnlocks = [25, 50, 125, 250, 400, 600];
+        this.milestonesMax = [3, 1, 1, 1];
         this.variables = [
             new Variable({
                 name: "c1",
@@ -591,13 +548,24 @@ class rzSim extends theoryClass<theory> {
                 valueScaling: new ExponentialValue(2),
             }),
         ];
-        this.pubUnlock = 9;
-        this.milestoneUnlocks = [25, 50, 125, 250, 400, 600];
-        this.milestonesMax = [3, 1, 1, 1];
+        
+        this.bhAtRecovery = false;
+        this.bhzTerm = 0;
+        this.bhdTerm = 0;
+        this.normalPubRho = -1;
+        this.maxC1Level = -1;
+        this.maxC1LevelActual = -1;
+        this.swapPointDelta = 0;
+        this.maxW1 = Infinity;
+        this.bhRewindStatus = 0;
+        this.bhRewindT = 0;
+        this.bhRewindNorm = 0;
+        this.bhRewindDeriv = 0;
+
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
     }
-    async simulate() {
+    async simulate(): Promise<simResult> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
         while (!this.endSimulation()) {
             if (!global.simulating) break;

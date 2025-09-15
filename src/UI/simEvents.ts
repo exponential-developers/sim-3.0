@@ -4,6 +4,12 @@ import { setSimState } from "./simState.js";
 import jsondata from "../Data/data.json" assert { type: "json" };
 import { theoryUpdate } from "./render.js";
 
+type TheoryDataStructure = {
+  [key in theoryType]: {
+    UI_visible?: boolean;
+  }
+}
+
 //Inputs
 const theory = qs<HTMLSelectElement>(".theory");
 const strat = qs<HTMLSelectElement>(".strat");
@@ -35,7 +41,7 @@ const skipCompletedCTs = <HTMLInputElement>qs(".skipcompletedcts");
 const showA23 = <HTMLInputElement>qs(".a23");
 const showUnofficials = <HTMLInputElement>qs(".unofficials");
 
-const theories = Object.keys(jsondata.theories) as Array<theoryType>;
+const theories = Object.keys(jsondata.theories) as theoryType[];
 
 let prevMode = "All";
 
@@ -56,7 +62,7 @@ event(showUnofficials, "click", async () => {
     global.showUnofficials = showUnofficials.checked;
     while (theory.firstChild) theory.firstChild.remove();
     for (let i = 0; i < theories.length; i++) {
-      if ((jsondata.theories[theories[i]] as unknown as Record<"UI_visible", boolean>).UI_visible === false && !global.showUnofficials) continue;
+      if ((jsondata.theories as TheoryDataStructure)[theories[i]].UI_visible === false && !global.showUnofficials) continue;
       const option = ce<HTMLSelectElement>("option");
       option.value = theories[i];
       option.textContent = theories[i];
@@ -121,7 +127,7 @@ function updateTablePreprocess(): void {
   if (mode.value !== "Single sim") clearTable();
 }
 
-function updateTable(arr: Array<generalResult>): void {
+function updateTable(arr: generalResult[]): void {
   const addCell = (row: HTMLTableRowElement, content: any) => {
     const cell = ce("td");
     cell.innerHTML = String(content);
@@ -135,7 +141,7 @@ function updateTable(arr: Array<generalResult>): void {
     row.appendChild(cell);
   }
 
-  const bindVarBuy = (row: HTMLTableRowElement, buys: Array<varBuy>) => {
+  const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[]) => {
     (<HTMLElement>row?.lastChild).onclick = () => {
       openVarModal(buys);
     };
@@ -259,7 +265,7 @@ function highlightResetCells() {
   });
 }
 
-function openVarModal(arr: Array<varBuy>) {
+function openVarModal(arr: varBuy[]) {
   document.body.style.overflow = "hidden";
   (<HTMLDialogElement>qs(".boughtVars")).showModal();
   const tbody = qs(".boughtVarsOtp");

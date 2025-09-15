@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10 } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
-import { parseValue } from "../../Sim/parsers.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { createResult, l10, toCallables } from "../../Utils/helpers";
+import { parseValue } from "../../Sim/parsers";
 
 export default async function bt(data: theoryData): Promise<simResult> {
   const sim = new btSim(data);
@@ -15,8 +15,8 @@ export default async function bt(data: theoryData): Promise<simResult> {
 type theory = "BT";
 
 class btSim extends theoryClass<theory> {
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BT: [true, true, true],
       BTd: [
         () => this.variables[0].cost + l10(this.lastPub < 275 ? 12 + (this.variables[0].level % 10) : 10 + (this.variables[0].level % 10)) < this.variables[1].cost, 
@@ -24,18 +24,17 @@ class btSim extends theoryClass<theory> {
         true
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => true, 
       () => true,
       () => this.milestones[2] > 0
     ];
     return conditions;
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 1.25);
   }
   getMilestonePriority(): number[] {
@@ -44,17 +43,17 @@ class btSim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 7;
+    this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
+    this.milestonesMax = [3, 3, 6, 1];
     this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.variables = [
       new Variable({ name: "tai", cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
       new Variable({ name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
-    this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
-    this.milestonesMax = [3, 3, 6, 1];
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

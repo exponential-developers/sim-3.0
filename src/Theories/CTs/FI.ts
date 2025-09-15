@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, binaryInsertionSearch, createResult, l10, subtract } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, binaryInsertionSearch, createResult, l10, subtract, toCallables } from "../../Utils/helpers";
 
 export default async function fi(data: theoryData): Promise<simResult> {
   const sim = new fiSim(data);
@@ -29,8 +29,9 @@ class fiSim extends theoryClass<theory> {
   msstate: number;
   msq: number;
 
-  getBuyingConditions() {
-    let activeStrat = [
+  getBuyingConditions(): conditionFunction[] {
+    const idleStrat = new Array(6).fill(true);
+    const activeStrat = [
       true, //tdot - 0
       //q1 mod 23
       () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < this.variables[2].cost, //q1 - 1
@@ -40,7 +41,7 @@ class fiSim extends theoryClass<theory> {
       //n mod 11 - 5
       () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < this.variables[4].cost //n - 5
     ]
-    let activeStrat2 = [
+    const activeStrat2 = [
       true, //tdot - 0
       //q1 mod 23
       () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost), //q1 - 1
@@ -50,22 +51,20 @@ class fiSim extends theoryClass<theory> {
       //n mod 11 - 5
       () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost, this.variables[4].cost) //n - 5
     ]
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
-      FI: new Array(6).fill(true),
-      // ["tdot", "q1", "q2", "k", "m", "n"]
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+      FI: idleStrat,
       FId: activeStrat2,
-      FIPermaSwap: new Array(6).fill(true),
+      FIPermaSwap: idleStrat,
       FIdPermaSwap: activeStrat2,
-      FIMS: new Array(6).fill(true),
-      // ["tdot", "q1", "q2", "k", "m", "n"]
+      FIMS: idleStrat,
       FIMSd: activeStrat2,
-      FIMSPermaSwap: new Array(6).fill(true),
+      FIMSPermaSwap: idleStrat,
       FIMSdPermaSwap: activeStrat2
     };
-    return conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => this.variables[0].level < 4,
       () => true,
       () => true,
@@ -76,7 +75,7 @@ class fiSim extends theoryClass<theory> {
     return conditions;
   }
 
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 0.1625);
   }
   getMilestonePriority(): number[] {
@@ -145,7 +144,7 @@ class fiSim extends theoryClass<theory> {
     }
   }
 
-  fact(num: number) {
+  fact(num: number): number {
     if (num >= factoriallogs.length) {
       throw "Error in fact().";
     }
@@ -166,11 +165,11 @@ class fiSim extends theoryClass<theory> {
     }
   }
 
-  approx(k_v: number, base: number) {
+  approx(k_v: number, base: number): number {
     return -this.norm_int(l10(Math.PI)) - 1 / (Math.E + 1.519) + k_v * l10(base);
   }
 
-  approxEX(limit: number) {
+  approxEX(limit: number): number {
     return add(
       add(
         add(add(add(limit * 6 - this.fact(6), limit * 5 - this.fact(5)), limit * 4 - this.fact(4)), limit * 3 - this.fact(3)),
@@ -180,19 +179,19 @@ class fiSim extends theoryClass<theory> {
     );
   }
 
-  approxSin(limit: number) {
+  approxSin(limit: number): number {
     let positives = add(limit * 2 - this.fact(2), limit * 6 - this.fact(6));
     let negatives = limit * 4 - this.fact(4);
     return subtract(positives, negatives);
   }
 
-  approxCos(limit: number) {
+  approxCos(limit: number): number {
     let positives = add(limit, limit * 5 - this.fact(5));
     let negatives = limit * 3 - this.fact(3);
     return subtract(positives, negatives);
   }
 
-  approxL10(limit: number) {
+  approxL10(limit: number): number {
     let positives = add(limit * 2 - l10(2), add(limit * 4 - l10(12), limit * 6 - l10(30)));
     let negatives = add(limit * 3 - l10(6), limit * 5 - l10(20));
     return subtract(positives, negatives) - l10(Math.log(10));
@@ -200,19 +199,11 @@ class fiSim extends theoryClass<theory> {
 
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 8;
-    this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.q = 0;
     this.r = 0;
     this.tval = 0;
-
-    this.maxFx = 0;
-    this.maxLambda = 0;
-
-    this.msstate = 0;
-    this.msq = 0;
-
-    //initialize variables
+    this.pubUnlock = 8;
+    this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.variables = [
       new Variable({ name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "q1",   cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
@@ -222,9 +213,15 @@ class fiSim extends theoryClass<theory> {
       new Variable({ name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
     ];
     this.variables[5].buy();
+
+    this.maxFx = 0;
+    this.maxLambda = 0;
+    this.msstate = 0;
+    this.msq = 0;
+
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

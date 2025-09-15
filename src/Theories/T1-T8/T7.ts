@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add_old, createResult, l10, subtract_old, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Currency from "../../Utils/currency";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
-import Currency from "../../Utils/currency.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add_old, createResult, l10, subtract_old, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t7(data: theoryData): Promise<simResult> {
   const sim = new t7Sim(data);
@@ -23,13 +23,13 @@ class t7Sim extends theoryClass<theory> {
   drho23: number;
   c2ratio: number;
 
-  getBuyingConditions() {
+  getBuyingConditions(): conditionFunction[] {
     if (this.lastPub >= 100) this.c2ratio = 100;
     if (this.lastPub >= 175) this.c2ratio = 10;
     if (this.lastPub >= 250) this.c2ratio = 20;
     if (this.lastPub >= 275) this.c2ratio = 50;
     if (this.lastPub >= 300) this.c2ratio = Infinity;
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T7: [true, true, true, true, true, true, true],
       T7C12: [true, true, true, false, false, false, false],
       T7C3: [true, false, false, true, false, false, false],
@@ -48,11 +48,10 @@ class t7Sim extends theoryClass<theory> {
         true,
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => true,
       () => true,
       () => true,
@@ -76,13 +75,15 @@ class t7Sim extends theoryClass<theory> {
       case "T7PlaySpqcey": return [1, 0, 2, 3, 4]; 
     }
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.152) + getR9multiplier(this.sigma);
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 10;
     this.rho2 = new Currency;
+    this.pubUnlock = 10;
+    this.milestoneUnlockSteps = 25;
+    this.milestonesMax = [1, 1, 1, 1, 3];
     //initialize variables
     this.variables = [
       new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(500, 1.51572)), valueScaling: new StepwisePowerSumValue() }),
@@ -96,11 +97,9 @@ class t7Sim extends theoryClass<theory> {
     this.drho13 = 0;
     this.drho23 = 0;
     this.c2ratio = Infinity;
-    this.milestonesMax = [1, 1, 1, 1, 3];
-    this.milestoneUnlockSteps = 25;
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

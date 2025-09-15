@@ -2,7 +2,7 @@ import jsonData from "../../Data/data.json" assert { type: "json" };
 import { getTheoryFromIndex } from "../../Utils/helpers.js";
 import { inputData } from "../main.js";
 
-export function parseSimParams(params: Array<string>) {
+export function parseSimParams(params: string[]) {
   if (params.length < 3) throw "At least 3 parameters [strat, sigma, start rho] required.";
   params = params.map((elem) => elem.replace(/ /g, ""));
 

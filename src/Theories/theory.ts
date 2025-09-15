@@ -1,8 +1,8 @@
-import Variable from "../Utils/variable";
-import { global } from "../Sim/main.js";
-import jsonData from "../Data/data.json";
+import { global } from "../Sim/main";
 import Currency from "../Utils/currency";
+import Variable from "../Utils/variable";
 import { binaryInsertionSearch } from "../Utils/helpers";
+import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
 export default abstract class theoryClass<theory extends theoryType> {
@@ -27,8 +27,8 @@ export default abstract class theoryClass<theory extends theoryType> {
   rho: Currency;
   maxRho: number;
   //initialize variables
-  variables: Array<Variable>;
-  boughtVars: Array<varBuy>;
+  variables: Variable[];
+  boughtVars: varBuy[];
   //pub values
   tauH: number;
   maxTauH: number;

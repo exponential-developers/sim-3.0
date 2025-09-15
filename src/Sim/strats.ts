@@ -1,7 +1,7 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 import { global } from "./main.js";
 
-const stratData = convertConditions((<unknown>structuredClone(jsonData.theories)) as theoryDataType);
+const stratData = convertConditions(structuredClone(jsonData.theories) as unknown as theoryDataType);
 
 type args = [boolean, boolean, boolean, boolean, number, string];
 
@@ -42,7 +42,7 @@ function parseExpression(expression: string) {
   return `return ${expression}`;
 }
 
-export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string): Array<string> {
+export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string): string[] {
   const res = [];
   const args = [...jsonData.stratCategories.map((v) => v === type), rho, lastStrat] as args;
   for (const strat of Object.keys(stratData[theory].strats)) {

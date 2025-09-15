@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { createResult, l10, subtract, logToExp, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { createResult, l10, subtract, logToExp, getR9multiplier, toCallable, toCallables } from "../../Utils/helpers";
 
 export default async function t5(data: theoryData): Promise<simResult> {
   const sim = new t5Sim(data);
@@ -19,8 +19,8 @@ class t5Sim extends theoryClass<theory> {
   c2Counter: number;
   nc3: number;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T5: [true, true, true, true, true],
       T5Idle: [
         true, 
@@ -30,33 +30,33 @@ class t5Sim extends theoryClass<theory> {
         true
       ],
       T5AI2: [
-        () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
+        () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) 
+          <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
         true,
         () => this.q + l10(1.5) < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
         () => this.c2worth,
         true,
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
   getMilestonePriority(): number[] {
     return [1, 0, 2];
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.159) + getR9multiplier(this.sigma);
   }
   /** Solves q using the differential equation result */
-  calculateQ(ic1: number, ic2: number, ic3: number){
+  calculateQ(ic1: number, ic2: number, ic3: number): number{
     const qcap = ic2 + ic3
     const gamma = 10 ** (ic1 + ic3 - ic2) // q growth speed characteristic parameter
     const adjust = this.q - subtract(qcap, this.q); // initial condition
     const sigma = 10 ** (adjust + gamma * this.dt * l10(Math.E)) 
-    let newq;
+    let newq: number;
     // Approximation when q << qcap
     if (sigma < 1e-30){
       newq = qcap + adjust + gamma * this.dt * l10(Math.E);
@@ -69,11 +69,11 @@ class t5Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 7;
     this.q = 0;
-    this.c2Counter = 0;
-    this.nc3 = 0;
-    //initialize variables
+    this.pubUnlock = 7;
+    this.milestoneUnlockSteps = 25;
+    //milestones  [q1exp,c3term,c3exp]
+    this.milestonesMax = [3, 1, 2];
     this.variables = [
       new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "q2", cost: new ExponentialCost(15, 64), valueScaling: new ExponentialValue(2) }),
@@ -82,12 +82,11 @@ class t5Sim extends theoryClass<theory> {
       new Variable({ name: "c3", cost: new ExponentialCost(1e3, 8.85507e7), valueScaling: new ExponentialValue(2) }),
     ];
     this.c2worth = true;
-    //milestones  [q1exp,c3term,c3exp]
-    this.milestonesMax = [3, 1, 2];
-    this.milestoneUnlockSteps = 25;
+    this.c2Counter = 0;
+    this.nc3 = 0;
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

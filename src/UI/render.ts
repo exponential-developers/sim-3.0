@@ -4,6 +4,18 @@ import { updateTimeDiffTable } from "../Sim/parsers.js";
 import { global } from "../Sim/main.js";
 import { getSimState } from "./simState.js";
 
+type TheoryDataStructure = {
+  [key in theoryType]: {
+    tauFactor: number,
+    UI_visible?: boolean,
+    strats: {
+      [key: string]: {
+        UI_visible?: boolean;
+      }
+    }
+  };
+}
+
 //Inputs
 const theory = qs<HTMLSelectElement>(".theory");
 const strat = qs<HTMLSelectElement>(".strat");
@@ -25,7 +37,7 @@ const modeInputDescription = qs(".extraInputDescription");
 
 //Renders theories, strats and modes options on page load
 
-const theories = Object.keys(data.theories) as Array<theoryType>;
+const theories = Object.keys(data.theories) as theoryType[];
 
 window.onload = () => {
   for (let i = 0; i < data.themes.length; i++) {
@@ -39,7 +51,7 @@ window.onload = () => {
   getSimState();
 
   for (let i = 0; i < theories.length; i++) {
-    if ((data.theories[theories[i]] as unknown as Record<"UI_visible", boolean>).UI_visible === false && !global.showUnofficials) continue;
+    if ((data.theories as TheoryDataStructure)[theories[i]].UI_visible === false && !global.showUnofficials) continue;
     const option = ce<HTMLSelectElement>("option");
     option.value = theories[i];
     option.textContent = theories[i];
@@ -64,7 +76,7 @@ window.onload = () => {
 
   event(theory, "change", theoryUpdate);
 
-  const simAllSettings: Array<boolean> = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
+  const simAllSettings: [boolean, boolean] = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
   semi_idle.checked = simAllSettings[0];
   hard_active.checked = simAllSettings[1];
 
@@ -115,7 +127,7 @@ export function theoryUpdate() {
   const currentTheory = theory.value as theoryType;
   const strats = Object.keys(data.theories[currentTheory].strats);
   for (let i = 0; i < strats.length; i++) {
-    if ((data.theories[currentTheory] as unknown as Record<"strats", Record<string, Record<"UI_visible", boolean>>>).strats[strats[i]].UI_visible === false) continue;
+    if ((data.theories as TheoryDataStructure)[currentTheory].strats[strats[i]].UI_visible === false) continue;
     const option = ce<HTMLSelectElement>("option");
     option.value = strats[i];
     option.textContent = strats[i];

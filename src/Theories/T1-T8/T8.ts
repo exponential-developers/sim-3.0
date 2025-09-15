@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, createResult, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t8(data: theoryData): Promise<simResult> {
   const sim = new t8Sim(data);
@@ -14,9 +14,9 @@ export default async function t8(data: theoryData): Promise<simResult> {
 type theory = "T8";
 
 class t8Sim extends theoryClass<theory> {
-  bounds: Array<Array<Array<number>>>;
-  defaultStates: Array<Array<number>>;
-  dts: Array<number>;
+  bounds: number[][][];
+  defaultStates: number[][];
+  dts: number[];
   x: number;
   y: number;
   z: number;
@@ -25,8 +25,8 @@ class t8Sim extends theoryClass<theory> {
   dz: number;
   msTimer: number;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T8: [true, true, true, true, true],
       T8noC3: [true, true, false, true, true],
       T8noC5: [true, true, true, true, false],
@@ -51,11 +51,10 @@ class t8Sim extends theoryClass<theory> {
         () => this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => true];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => true];
     return conditions;
   }
   getMilestonePriority(): number[] {
@@ -72,7 +71,7 @@ class t8Sim extends theoryClass<theory> {
     else if (milestoneCount == 3) return [3];
     else return [2, 0, 3, 1];
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.15) + getR9multiplier(this.sigma);
   }
   dn(ix = this.x, iy = this.y, iz = this.z) {
@@ -94,15 +93,6 @@ class t8Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 8;
-    //initialize variables
-    this.variables = [
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.5172)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "c2", cost: new ExponentialCost(20, 64), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(1e2, 1.15 * Math.log2(3), true), valueScaling: new ExponentialValue(3) }),
-      new Variable({ name: "c4", cost: new ExponentialCost(1e2, 1.15 * Math.log2(5), true), valueScaling: new ExponentialValue(5) }),
-      new Variable({ name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
-    ];
     //attractor stuff
     this.bounds = [
       [
@@ -127,19 +117,27 @@ class t8Sim extends theoryClass<theory> {
       [-6, 15, 0],
     ];
     this.dts = [0.02, 0.002, 0.00014];
-    this.milestones = [0, 0, 0, 0];
     this.x = this.defaultStates[this.milestones[0]][0];
     this.y = this.defaultStates[this.milestones[0]][1];
     this.z = this.defaultStates[this.milestones[0]][2];
     this.dx = 0;
     this.dy = 0;
     this.dz = 0;
-    this.msTimer = 0;
-    this.milestonesMax = [2, 3, 3, 3];
+    this.pubUnlock = 8;
     this.milestoneUnlockSteps = 20;
+    this.milestonesMax = [2, 3, 3, 3];
+    //initialize variables
+    this.variables = [
+      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.5172)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "c2", cost: new ExponentialCost(20, 64), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c3", cost: new ExponentialCost(1e2, 1.15 * Math.log2(3), true), valueScaling: new ExponentialValue(3) }),
+      new Variable({ name: "c4", cost: new ExponentialCost(1e2, 1.15 * Math.log2(5), true), valueScaling: new ExponentialValue(5) }),
+      new Variable({ name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
+    ];
+    this.msTimer = 0;
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

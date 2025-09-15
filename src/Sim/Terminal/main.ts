@@ -94,7 +94,7 @@ if (localStorage.getItem("dev") === "true") {
       console.clear();
     }
   }
-  function resize(params: Array<string>) {
+  function resize(params: string[]) {
     if (params[0] === "" && params.length === 1) throw "At least one parameter is required.";
 
     const x = parseFloat(params[0]);
@@ -117,7 +117,7 @@ if (localStorage.getItem("dev") === "true") {
     terminal.writeLine(`Resized terminal to <g>${terminalSize.width}</g> | <g>${terminalSize.height}</g>.`);
   }
 
-  function setValue(params: Array<string>) {
+  function setValue(params: string[]) {
     const str = params.join(",");
     if (str === "g") terminal.writeLine(`Value of global.customVal is <g>${JSON.stringify(global.customVal)}</g>.`);
     else {
@@ -127,7 +127,7 @@ if (localStorage.getItem("dev") === "true") {
     }
   }
 
-  async function sim(params: Array<string>) {
+  async function sim(params: string[]) {
     const timeA = performance.now();
     const data = parseSimParams(params);
     await sleep();
@@ -142,7 +142,7 @@ if (localStorage.getItem("dev") === "true") {
     }
   }
 
-  function printSimResults(arr: Array<generalResult>, data: inputData) {
+  function printSimResults(arr: generalResult[], data: inputData) {
     if (data.mode === "Single sim" && resultIsSimResult(arr[0])) {
       terminal.writeLine(`${arr[0].sigma} | ${arr[0].lastPub} | ${arr[0].pubRho} | ${arr[0].pubMulti} | ${arr[0].strat} | ${arr[0].tauH} | ${arr[0].time}`);
     } else if (data.mode === "Chain") {
@@ -165,7 +165,7 @@ if (localStorage.getItem("dev") === "true") {
     updateTable(arr);
   }
 
-  function updateTable(arr: Array<generalResult>): void {
+  function updateTable(arr: generalResult[]): void {
     const addCell = (row: HTMLTableRowElement, content: any) => {
       const cell = document.createElement("td");
       cell.innerHTML = String(content);

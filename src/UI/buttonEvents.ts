@@ -30,15 +30,17 @@ function createImage(mode: string) {
         a.download = "output.png";
         a.click();
       } else {
+        if (blob == null) throw "blob is null";
         navigator.clipboard
-          .write([new ClipboardItem({ "image/png": blob } as { [key: string]: Blob })])
+          .write([new ClipboardItem({ "image/png": blob })])
           .then(() => {
             console.log("Sucsessfully created image and copied to clipboard!");
           })
           .catch(() => console.log("Failed creating image."));
       }
     })
-  );
+  )
+  .catch(() => console.log("Failed creating image."));
 }
 
 const saveDist = <HTMLButtonElement>qs(".saveDist");

@@ -9,7 +9,7 @@ export const ce = <T extends HTMLElement>(type: string) => (document.createEleme
 
 export const event = <T>(element: HTMLElement, eventType: string, callback: (e: T) => void) => element.addEventListener(eventType, (e) => callback(e as T));
 
-export function findIndex(arr: Array<string | number | boolean>, val: string | number | boolean) {
+export function findIndex<T>(arr: T[], val: T): number {
   for (let i = 0; i < arr.length; i++) if (val === arr[i]) return i;
   return -1;
 }
@@ -20,23 +20,23 @@ export function sleep(time = 0) {
 export let l10 = Math.log10;
 export let l2 = Math.log2;
 
-export function getIndexFromTheory(theory: string) {
-  return theory in Object.keys(jsonData.theories);
+export function getIndexFromTheory(theory: string): number {
+  return findIndex(Object.keys(jsonData.theories), theory);
 }
-export function getTheoryFromIndex(index: number) {
+export function getTheoryFromIndex(index: number): theoryType {
   return Object.keys(jsonData.theories)[index] as theoryType;
 }
 
 export function parseLog10String(num: string): number {
-  const split = String(num).split("e");
+  const split = num.split("e");
   const result = Number(split[1]) + l10(Math.max(1, Number(split[0])));
-  return Number(result);
+  return result;
 }
 
 export function logToExp(num: number, dec = 3): string {
-  const wholePart: number = Math.floor(num);
-  const fractionalPart: number = num - wholePart;
-  const frac1: number = round(10 ** fractionalPart, dec);
+  const wholePart = Math.floor(num);
+  const fractionalPart = num - wholePart;
+  const frac1 = round(10 ** fractionalPart, dec);
   return (frac1 >= 10 ? frac1 / 10 : frac1) + "e" + (frac1 >= 10 ? wholePart + 1 : wholePart);
 }
 export function convertTime(secs: number): string {
@@ -62,7 +62,14 @@ export function round(number: number, decimals: number): number {
   return Math.round(number * 10 ** decimals) / 10 ** decimals;
 }
 
-export function add_old(value1: number, value2: number) {
+export function toCallable<T>(val: T | (() => T)): () => T {
+  return typeof val === "function" ? (val as () => T) : () => val;
+}
+export function toCallables<T>(arr: (T | (() => T))[]): (() => T)[] {
+  return arr.map((val) => toCallable(val));
+}
+
+export function add_old(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   const wholePart1 = Math.floor(max);
@@ -72,13 +79,13 @@ export function add_old(value1: number, value2: number) {
   return wholePart1 + l10(fractionalPart1 + fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
-export function add(value1: number, value2: number) {
+export function add(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 + 10**(min-max)) : max;
 }
 
-export function subtract_old(value1: number, value2: number) {
+export function subtract_old(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   const wholePart1 = Math.floor(max);
@@ -88,13 +95,13 @@ export function subtract_old(value1: number, value2: number) {
   return wholePart1 + l10(fractionalPart1 - fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
-export function subtract(value1: number, value2: number) {
+export function subtract(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
 }
 
-export function binaryInsertionSearch(arr: Array<number>, target: number) {
+export function binaryInsertionSearch(arr: number[], target: number): number {
   if (target < arr[0]) return 0;
   let l = 0;
   let r = arr.length - 1;
@@ -116,7 +123,7 @@ interface simResultInterface {
   strat: string;
   maxTauH: number;
   theory: theoryType;
-  boughtVars: Array<varBuy>;
+  boughtVars: varBuy[];
 }
 
 export function createResult(data: simResultInterface, stratExtra: null | string): simResult {
@@ -185,7 +192,7 @@ export function getBestResult(res1: simResult | null, res2: simResult | null): s
  * @param arr The variable buy list
  * @returns The last level bought of the variable, or 0 if the variable was not found
  */
-export function getLastLevel(variable: string, arr:Array<varBuy>): number {
+export function getLastLevel(variable: string, arr: varBuy[]): number {
   for (let i = arr.length - 1; i >= 0; i--) {
     if (arr[i].variable == variable) {
       return arr[i].level;

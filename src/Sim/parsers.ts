@@ -43,7 +43,7 @@ export function parseData(data: inputData) {
   return parsedDataObj;
 }
 
-export function parseCurrencyValue(value: string | Array<number | string>, theory: theoryType, sigma: number, defaultType = "r"): number {
+export function parseCurrencyValue(value: string | (number | string)[], theory: theoryType, sigma: number, defaultType = "r"): number {
   if (typeof value === "string") {
     const lastChar: string = value.charAt(value.length - 1);
     //checks if last character is not valid currency character. If not, throw error
@@ -130,7 +130,7 @@ export function reverseMulti(theory: string, value: number, sigma: number) {
   }
   throw `Failed parsing multiplier. Please contact the author of the sim.`;
 }
-export function parseModeInput(input: string, mode: string): Array<number> | number | string | Array<Array<Array<number>>> {
+export function parseModeInput(input: string, mode: string): number[] | number | string | number[][][] {
   //Parsing Step mode input
   if (mode === "Steps" && typeof input === "string") {
     if (isValidCurrency(input)) return parseValue(input);
@@ -149,15 +149,15 @@ export function parseModeInput(input: string, mode: string): Array<number> | num
   throw `Couldnt parse mode ${mode}. Please contact the author of the sim.`;
 }
 // function parseTime(input: string):number {
-//   let years: string | Array<string> = input.split("y");
-//   let days: string | Array<string> = years[Math.min(years.length - 1, 1)].split("d");
-//   let hours: string | Array<string> = days[Math.min(days.length - 1, 1)].split("h");
-//   let minutes: string | Array<string> = hours[Math.min(hours.length - 1, 1)].split("m");
+//   let years: string | string[] = input.split("y");
+//   let days: string | string[] = years[Math.min(years.length - 1, 1)].split("d");
+//   let hours: string | string[] = days[Math.min(days.length - 1, 1)].split("h");
+//   let minutes: string | string[] = hours[Math.min(hours.length - 1, 1)].split("m");
 //   if(Math.max(years.length, days.length, hours.length, minutes.length)>2)throw "Invalid time value."
 //   if(years.length > 0)
 //   years = years[0]
 // }
-function parseSimAll(input: string): Array<number> {
+function parseSimAll(input: string): number[] {
   //splitting input at every space
   let split = input.split(" ");
   //removing all leftover spaces and line breaks in every split
@@ -172,7 +172,7 @@ function parseSimAll(input: string): Array<number> {
   if (split.length - 1 > Object.keys(jsonData.theories).length)
     throw `Invalid value ${split[Object.keys(jsonData.theories).length + 1]} does not match any theory.`;
   //parse students
-  const res: Array<number> = [];
+  const res: number[] = [];
   let value = 0;
   if (isInt(split[0])) res.push(parseInt(split[0]));
   else throw `Invalid student value ${split[0]}.`;
@@ -203,7 +203,7 @@ function parseTimeDiff(input: string) {
   //parsing theory
   const distributions = [];
   for (let i = 0; i < 2; i++) {
-    const theories = <Array<string>>inputSplit[i].split(",");
+    const theories = <string[]>inputSplit[i].split(",");
     const parsedInput = [];
     for (let j = 0; j < theories.length; j++) {
       const values = theories[j].split(" ");
@@ -219,7 +219,7 @@ function parseTimeDiff(input: string) {
   return distributions;
 }
 export function updateTimeDiffTable() {
-  const timeDiffInputs = <Array<HTMLInputElement>>(<unknown>qsa(".timeDiffInput"));
+  const timeDiffInputs = Array.from(qsa(".timeDiffInput")) as HTMLInputElement[];
   const timeDiffTable = <HTMLTableElement>qs(".timeDiffTable");
   const str = [];
   for (const elem of timeDiffInputs) str.push(elem.value);

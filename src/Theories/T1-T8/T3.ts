@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Currency from "../../Utils/currency";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
-import Currency from "../../Utils/currency.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, createResult, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t3(data: theoryData): Promise<simResult> {
   const sim = new t3Sim(data);
@@ -18,8 +18,8 @@ class t3Sim extends theoryClass<theory> {
   rho2: Currency;
   rho3: Currency;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T3Play2: [
         () => (this.lastPub - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
         () => (this.curMult < 1.2 ? this.variables[1].cost + l10(5) < this.variables[10].cost : this.variables[1].cost + l10(8) < this.variables[4].cost) || this.curMult > 2.4,
@@ -36,7 +36,10 @@ class t3Sim extends theoryClass<theory> {
       ],
       T3Play: [
         () => (this.curMult < 2 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
-        () => (this.curMult < 2 ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost) && this.variables[1].cost + l10(2) < this.variables[7].cost : true),
+        () => this.curMult < 2 
+          ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost) 
+            && this.variables[1].cost + l10(2) < this.variables[7].cost 
+          : true,
         () => this.variables[2].cost + l10(8) < this.variables[8].cost && this.variables[2].cost + l10(2) < this.variables[11].cost,
         false,
         true,
@@ -210,11 +213,10 @@ class t3Sim extends theoryClass<theory> {
       T3C11C12C21: [true, true, false, true, true, false, true, false, false, false, false, false],
       T3: new Array(12).fill(true), //t3
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => true,
       () => true,
       () => this.milestones[0] > 0,
@@ -233,15 +235,18 @@ class t3Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [1, 2, 0, 3];
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 9;
     this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
+    this.pubUnlock = 9;
+    this.milestoneUnlockSteps = 25;
+    //milestones  [dimensions, b1exp, b2exp, b3exp]
+    this.milestonesMax = [1, 2, 2, 2];
     this.variables = [
       new Variable({ name: "b1",  currency: this.rho,  cost: new FirstFreeCost(new ExponentialCost(10, 1.18099)), valueScaling: new StepwisePowerSumValue() }), //b1
       new Variable({ name: "b2",  currency: this.rho2, cost: new ExponentialCost(10, 1.308), valueScaling: new StepwisePowerSumValue() }), //b2
@@ -256,12 +261,10 @@ class t3Sim extends theoryClass<theory> {
       new Variable({ name: "c32", currency: this.rho2, cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
       new Variable({ name: "c33", currency: this.rho3, cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
-    //milestones  [dimensions, b1exp, b2exp, b3exp]
-    this.milestonesMax = [1, 2, 2, 2];
-    this.milestoneUnlockSteps = 25;
+
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

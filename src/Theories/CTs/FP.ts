@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, getBestResult } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
+import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, createResult, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
-import theoryClass from "../theory.js";
-import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function fp(data: theoryData): Promise<simResult> {
   const sim = new fpSim(data);
@@ -55,11 +55,11 @@ class fpSim extends theoryClass<theory> {
   updateN_flag: boolean;
   // pub tables and coasting
   forcedPubRho: number;
-  coasting: Array<boolean>;
+  coasting: boolean[];
   bestRes: simResult | null;
   doContinuityFork: boolean;
 
-  getBuyingConditions() {
+  getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FP: new Array(8).fill(true),
       FPcoast: new Array(8).fill(true),
@@ -111,11 +111,10 @@ class fpSim extends theoryClass<theory> {
         true, //s - 7
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => this.variables[0].level < 4,
       () => true,
       () => true,
@@ -127,13 +126,13 @@ class fpSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.331 + l10(5));
   }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
-  approx(n: number) {
+  approx(n: number): number {
     n++;
     return l10(1 / 6) + add(l10(2) * (2 * n), l10(2));
   }
@@ -151,10 +150,10 @@ class fpSim extends theoryClass<theory> {
     const i = n - 2 ** Math.floor(log2N);
     return 2 ** (2 * Math.floor(log2N)) + 3 * this.V(i);
   }
-  U(n: number) {
+  U(n: number): number {
     return (4/3)*this.V(n) - (1/3);
   }
-  S(n: number) {
+  S(n: number): number {
     if (n === 0) return 0;
     if (this.milestones[3] === 0) return l10(3) * (n - 1);
     return l10(1 / 3) + subtract(l10(2) + l10(3) * n, l10(3));
@@ -166,10 +165,17 @@ class fpSim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 12;
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
+    this.T_n = 1;
+    this.U_n = 1;
+    this.S_n = 0;
+    this.n = 1;
+    this.updateN_flag = true;
+    this.pubUnlock = 12;
+    this.milestoneUnlocks = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
+    this.milestonesMax = [2, 2, 3, 1, 1, 1];
     this.variables = [
       new Variable({ name: "tdot", cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
@@ -185,12 +191,6 @@ class fpSim extends theoryClass<theory> {
       new Variable({ name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
 
-    this.T_n = 1;
-    this.U_n = 1;
-    this.S_n = 0;
-    this.n = 1;
-    this.updateN_flag = true;
-
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
@@ -202,8 +202,6 @@ class fpSim extends theoryClass<theory> {
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
 
-    this.milestoneUnlocks = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
-    this.milestonesMax = [2, 2, 3, 1, 1, 1];
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
@@ -228,7 +226,7 @@ class fpSim extends theoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
@@ -258,9 +256,10 @@ class fpSim extends theoryClass<theory> {
   }
   tick() {
     if (this.updateN_flag) {
+      const term1 = stepwiseSum(this.variables[6].level, 1, 40);
       const term2 = this.milestones[1] > 0 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 30), 1, 35) * 2) : 0;
       const term3 = this.milestones[1] > 1 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 69), 1, 30) * 2.4) : 0;
-      this.n = Math.min(20000, 1 + stepwiseSum(this.variables[6].level, 1, 40) + term2 + term3);
+      this.n = Math.min(20000, 1 + term1 + term2 + term3);
       this.updateN();
       this.updateN_flag = false;
     }
