@@ -71,6 +71,15 @@ class t8Sim extends theoryClass<theory> {
     else if (milestoneCount == 3) return [3];
     else return [2, 0, 3, 1];
   }
+  updateMilestones(): void {
+    const prevAttractor = this.milestones[0];
+    super.updateMilestones();
+    if (this.milestones[0] != prevAttractor) {
+      this.x = this.defaultStates[this.milestones[0]][0];
+      this.y = this.defaultStates[this.milestones[0]][1];
+      this.z = this.defaultStates[this.milestones[0]][2];
+    }
+  }
   getTotMult(val: number): number {
     return Math.max(0, val * 0.15) + getR9multiplier(this.sigma);
   }
