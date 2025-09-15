@@ -219,8 +219,8 @@ function parseTimeDiff(input: string) {
   return distributions;
 }
 export function updateTimeDiffTable() {
-  const timeDiffInputs = Array.from(qsa(".timeDiffInput")) as HTMLInputElement[];
-  const timeDiffTable = <HTMLTableElement>qs(".timeDiffTable");
+  const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
+  const timeDiffTable = qs<HTMLTableElement>(".timeDiffTable");
   const str = [];
   for (const elem of timeDiffInputs) str.push(elem.value);
   // const parsedValues = parseTimeDiff(JSON.stringify(str));
