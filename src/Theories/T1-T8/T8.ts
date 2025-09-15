@@ -205,7 +205,7 @@ class t8Sim extends theoryClass<theory> {
     const dy2Term = vc4 + l10(this.dy * this.dy);
     const dz2Term = vc5 + l10(this.dz * this.dz);
 
-    const rhodot = l10(this.dt) + this.totMult + this.variables[0].value + this.variables[1].value + add(add(dx2Term, dy2Term), dz2Term) / 2 - 2;
+    const rhodot = l10(this.dt) + this.totMult + this.variables[0].value + this.variables[1].value + add(dx2Term, dy2Term, dz2Term) / 2 - 2;
     this.rho.add(rhodot);
   }
 }

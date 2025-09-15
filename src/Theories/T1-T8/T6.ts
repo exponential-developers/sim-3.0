@@ -153,7 +153,7 @@ class t6Sim extends theoryClass<theory> {
     const term3 = this.milestones[1] > 0 ? vc4 + this.q * 3 + this.r - l10(3) : -Infinity;
     const term4 = this.milestones[2] > 0 ? vc5 + this.q + this.r * 2 - l10(2) : -Infinity;
     this.k = term4 - term1;
-    return this.totMult + add(term1, add(term2, add(term3, term4)));
+    return this.totMult + add(term1, term2, term3, term4);
   }
   constructor(data: theoryData) {
     super(data);

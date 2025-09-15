@@ -247,7 +247,7 @@ class efSim extends theoryClass<theory> {
         this.rho.add(logbonus + add(l10(this.t_var) + this.q * 2, this.R.value * 2) / 2);
         break;
       case 2:
-        this.rho.add(logbonus + a + add(add(l10(this.t_var) + this.q * 2, this.R.value * 2), this.I.value * 2) / 2);
+        this.rho.add(logbonus + a + add(l10(this.t_var) + this.q * 2, this.R.value * 2, this.I.value * 2) / 2);
         break;
     }
   }

@@ -578,7 +578,7 @@ class rzSim extends theoryClass<theory> {
             }
             this.tick();
             this.updateSimStatus();
-            this.updateMilestones();
+            if (this.lastPub < 600) this.updateMilestones();
             if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
             this.buyVariables();
             this.ticks++;

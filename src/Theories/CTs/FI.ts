@@ -171,11 +171,8 @@ class fiSim extends theoryClass<theory> {
 
   approxEX(limit: number): number {
     return add(
-      add(
-        add(add(add(limit * 6 - this.fact(6), limit * 5 - this.fact(5)), limit * 4 - this.fact(4)), limit * 3 - this.fact(3)),
-        limit * 2 - this.fact(2)
-      ),
-      limit
+        limit * 6 - this.fact(6), limit * 5 - this.fact(5), limit * 4 - this.fact(4), limit * 3 - this.fact(3),
+        limit * 2 - this.fact(2), limit
     );
   }
 
@@ -192,7 +189,7 @@ class fiSim extends theoryClass<theory> {
   }
 
   approxL10(limit: number): number {
-    let positives = add(limit * 2 - l10(2), add(limit * 4 - l10(12), limit * 6 - l10(30)));
+    let positives = add(limit * 2 - l10(2), limit * 4 - l10(12), limit * 6 - l10(30));
     let negatives = add(limit * 3 - l10(6), limit * 5 - l10(20));
     return subtract(positives, negatives) - l10(Math.log(10));
   }

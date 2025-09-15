@@ -79,10 +79,21 @@ export function add_old(value1: number, value2: number): number {
   return wholePart1 + l10(fractionalPart1 + fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
-export function add(value1: number, value2: number): number {
+export function add2(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 + 10**(min-max)) : max;
+}
+
+export function add(...values: number[]): number {
+  if (values.length === 0) return -Infinity;
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return add2(values[0], values[1]);
+  let sum = add2(values[0], values[1]);
+  for (let i = 2; i < values.length; i++) {
+    sum = add2(sum, values[i]);
+  }
+  return sum;
 }
 
 export function subtract_old(value1: number, value2: number): number {

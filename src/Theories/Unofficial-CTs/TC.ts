@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost } from "../../Utils/cost";
-import { add, l10, sleep, toCallables } from "../../Utils/helpers";
+import { add, l10, toCallables } from "../../Utils/helpers";
 
 export default async function tc(data: theoryData): Promise<simResult> {
   const sim = new tcSim(data);
@@ -147,7 +147,6 @@ class tcSim extends theoryClass<theory> {
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 500) this.updateMilestones();
