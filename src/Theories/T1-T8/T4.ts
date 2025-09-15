@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, subtract, getLastLevel, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, subtract, getLastLevel, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t4(data: theoryData): Promise<simResult> {
   const sim = new t4Sim(data);
@@ -155,11 +155,12 @@ class t4Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, ["T4C3d66", "T4C3coast"].includes(this.strat) ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "");
+    
+    const stratExtra = ["T4C3d66", "T4C3coast"].includes(this.strat) 
+      ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "";
 
-    return result;
+    return this.createResult(stratExtra);
   }
   tick() {
     const vq1 = this.variables[6].value;

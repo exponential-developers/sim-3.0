@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t3(data: theoryData): Promise<simResult> {
   const sim = new t3Sim(data);
@@ -273,11 +273,9 @@ class t3Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
 
-    return result;
+    return this.createResult();
   }
   tick() {
     const vb1 = this.variables[0].value * (1 + 0.05 * this.milestones[1]);

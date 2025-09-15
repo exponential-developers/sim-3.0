@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
+import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
 
 export default async function ef(data: theoryData): Promise<simResult> {
@@ -215,11 +215,9 @@ class efSim extends theoryClass<theory> {
       }
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
-    const result = createResult(
-      this,
+    const result = this.createResult(
       this.strat !== "EF"
         ? ` q1: ${lastLevels[1]} q2: ${lastLevels[2]} a1: ${lastLevels[7]}` +
             (global.showA23 ? ` a2: ${lastLevels[8]} a3: ${lastLevels[9]}` : "")

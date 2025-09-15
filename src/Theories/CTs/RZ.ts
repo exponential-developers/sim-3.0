@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
-import { createResult, l10, binaryInsertionSearch, getBestResult, toCallables } from "../../Utils/helpers";
+import { l10, binaryInsertionSearch, getBestResult, toCallables } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
 
@@ -602,7 +602,7 @@ class rzSim extends theoryClass<theory> {
             stratExtra += ` w1: ${this.maxW1}`;
         }
         while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-        const result = createResult(this, stratExtra);
+        const result = this.createResult(stratExtra);
         return result;
     }
     tick() {

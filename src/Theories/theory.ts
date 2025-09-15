@@ -1,7 +1,7 @@
 import { global } from "../Sim/main";
 import Currency from "../Utils/currency";
 import Variable from "../Utils/variable";
-import { binaryInsertionSearch } from "../Utils/helpers";
+import { binaryInsertionSearch, convertTime, formatNumber, logToExp } from "../Utils/helpers";
 import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
@@ -271,5 +271,24 @@ export default abstract class theoryClass<theory extends theoryType> {
       }
     }
     if (bought) this.onAnyVariablePurchased();
+  }
+
+  createResult(stratExtra: string = ""): simResult {
+    return {
+      theory: this.theory,
+      sigma: this.sigma,
+      lastPub: logToExp(this.lastPub, 2),
+      pubRho: logToExp(this.pubRho, 2),
+      deltaTau: logToExp((this.pubRho - this.lastPub) * this.tauFactor, 2),
+      pubMulti: formatNumber(10 ** (this.getTotMult(this.pubRho) - this.totMult)),
+      strat: this.strat as String + stratExtra,
+      tauH: this.maxTauH === 0 ? 0 : Number(formatNumber(this.maxTauH)),
+      time: convertTime(Math.max(0, this.pubT - this.recovery.time)),
+      rawData: {
+        pubRho: this.pubRho,
+        time: this.recovery.recoveryTime ? this.recovery.time : Math.max(0, this.pubT - this.recovery.time)
+      },
+      boughtVars: this.boughtVars
+    }
   }
 }

@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add_old, createResult, l10, subtract_old, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add_old, l10, subtract_old, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t7(data: theoryData): Promise<simResult> {
   const sim = new t7Sim(data);
@@ -108,11 +108,11 @@ class t7Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, this.strat === "T7PlaySpqcey" && this.c2ratio !== Infinity ? this.c2ratio.toString() : "");
 
-    return result;
+    const stratExtra = this.strat === "T7PlaySpqcey" && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
+
+    return this.createResult(stratExtra);
   }
   tick() {
     const vc1 = this.variables[1].value * (1 + 0.05 * this.milestones[4]);

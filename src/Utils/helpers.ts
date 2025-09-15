@@ -113,38 +113,6 @@ export function binaryInsertionSearch(arr: number[], target: number): number {
   return l + 1;
 }
 
-interface simResultInterface {
-  sigma: number;
-  pubRho: number;
-  pubMulti: number;
-  lastPub: number;
-  recovery: { value: number; time: number; recoveryTime: boolean };
-  pubT: number;
-  strat: string;
-  maxTauH: number;
-  theory: theoryType;
-  boughtVars: varBuy[];
-}
-
-export function createResult(data: simResultInterface, stratExtra: null | string): simResult {
-  return {
-    theory: data.theory,
-    sigma: data.sigma,
-    lastPub: logToExp(data.lastPub, 2),
-    pubRho: logToExp(data.pubRho, 2),
-    deltaTau: logToExp((data.pubRho - data.lastPub) * jsonData.theories[data.theory].tauFactor, 2),
-    pubMulti: formatNumber(data.pubMulti),
-    strat: data.strat + stratExtra,
-    tauH: data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH)),
-    time: convertTime(Math.max(0, data.pubT - data.recovery.time)),
-    rawData : {
-      pubRho: data.pubRho,
-      time: data.recovery.recoveryTime ? data.recovery.time : Math.max(0, data.pubT - data.recovery.time)
-    },
-    boughtVars: data.boughtVars
-  }
-}
-
 export function resultIsSimResult(result: generalResult): result is simResult {
   return "strat" in result;
 }

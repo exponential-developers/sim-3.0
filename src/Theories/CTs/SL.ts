@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, subtract, l2, toCallables } from "../../Utils/helpers";
+import { add, l10, subtract, l2, toCallables } from "../../Utils/helpers";
 
 export default async function sl(data: theoryData): Promise<simResult> {
   const sim = new slSim(data);
@@ -121,11 +121,8 @@ class slSim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    return this.createResult();
   }
   tick() {
     const rho3dot = this.variables[2].value * (1 + 0.02 * this.milestones[2]) + this.variables[3].value * (1 + 0.02 * this.milestones[3]);

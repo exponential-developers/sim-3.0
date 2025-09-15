@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, getBestResult, defaultResult, toCallable, toCallables } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult, toCallable, toCallables } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -298,9 +298,8 @@ class mfSim extends theoryClass<theory> {
       await this.checkForReset();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, ` Depth: ${global.mfResetDepth}`);
+    const result = this.createResult(` Depth: ${global.mfResetDepth}`);
     return getBestResult(result, this.bestRes);
   }
   tick() {

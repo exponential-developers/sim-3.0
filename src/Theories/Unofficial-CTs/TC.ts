@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost } from "../../Utils/cost";
-import { add, createResult, l10, sleep, toCallables } from "../../Utils/helpers";
+import { add, l10, sleep, toCallables } from "../../Utils/helpers";
 
 export default async function tc(data: theoryData): Promise<simResult> {
   const sim = new tcSim(data);
@@ -154,11 +154,8 @@ class tcSim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = Math.pow(10, this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-    
-    return result;
+    return this.createResult();
   }
 
   tick() {

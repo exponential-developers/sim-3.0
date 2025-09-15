@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { createResult, l10, subtract, logToExp, getR9multiplier, toCallable, toCallables } from "../../Utils/helpers";
+import { l10, subtract, logToExp, getR9multiplier, toCallable, toCallables } from "../../Utils/helpers";
 
 export default async function t5(data: theoryData): Promise<simResult> {
   const sim = new t5Sim(data);
@@ -96,11 +96,11 @@ class t5Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, this.strat === "T5Idle" ? " " + logToExp(this.variables[2].cost, 1) : "");
 
-    return result;
+    const stratExtra = this.strat === "T5Idle" ? " " + logToExp(this.variables[2].cost, 1) : "";
+
+    return this.createResult(stratExtra);
   }
   tick() {
     const vq1 = this.variables[0].value * (1 + 0.05 * this.milestones[0]);

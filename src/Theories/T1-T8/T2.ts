@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t2(data: theoryData): Promise<simResult> {
   let bestSim: t2Sim;
@@ -184,15 +184,11 @@ class t2Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    let result: simResult;
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    if(this.strat == "T2MCAlt3") {
-      result = createResult(this, ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}`);
-    }
-    else result = createResult(this, "");
 
-    return result;
+    const stratExtra = this.strat === "T2MCAlt3" ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
+
+    return this.createResult(stratExtra);
   }
   tick() {
     const logdt = l10(this.dt);

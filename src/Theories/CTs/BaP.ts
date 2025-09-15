@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
+import { add, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/BaPpubtable.json" assert { type: "json" };
 
 export default async function bap(data: theoryData): Promise<simResult> {
@@ -228,10 +228,8 @@ class bapSim extends theoryClass<theory> {
       }
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
+    const result = this.createResult();
     return getBestResult(result, this.bestRes);
   }
   tick() {

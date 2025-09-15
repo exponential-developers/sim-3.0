@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t8(data: theoryData): Promise<simResult> {
   const sim = new t8Sim(data);
@@ -146,11 +146,9 @@ class t8Sim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
 
-    return result;
+    return this.createResult();
   }
   tick() {
     this.dn();

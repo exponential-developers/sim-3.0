@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, logToExp, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, logToExp, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t1(data: theoryData): Promise<simResult> {
   const sim = new t1Sim(data);
@@ -104,11 +104,11 @@ class t1Sim extends theoryClass<theory> {
       if (this.strat !== "T1SolarXLII" || this.rho.value < coast) this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "");
+
+    const stratExtra = this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "";
     
-    return result;
+    return this.createResult(stratExtra);
   }
   tick() {
     this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1]) 

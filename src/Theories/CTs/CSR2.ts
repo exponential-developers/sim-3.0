@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { LinearValue, ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, createResult, l10, subtract, getBestResult, getLastLevel, toCallables } from "../../Utils/helpers";
+import { add, l10, subtract, getBestResult, getLastLevel, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/CSR2pubtable.json" assert { type: "json" };
 
 export default async function csr2(data: theoryData): Promise<simResult> {
@@ -224,22 +224,22 @@ class csr2Sim extends theoryClass<theory> {
       }
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    let lastBuy = 0;
-    for (let i = 0; i < this.variables.length; i++) {
-      const costIncs = [5, 128, 16, 2 ** (Math.log2(256) * 3.346), 10 ** 5.65];
-      lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
-    }
     if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
       while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+
     let stratExtra = " ";
     if (this.strat === "CSR2XL") {
+      let lastBuy = 0;
+      for (let i = 0; i < this.variables.length; i++) {
+        const costIncs = [5, 128, 16, 2 ** (Math.log2(256) * 3.346), 10 ** 5.65];
+        lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
+      }
       stratExtra += Math.min(this.pubMulti, 10 ** (this.getTotMult(lastBuy) - this.totMult)).toFixed(2);
     }
     if (this.strat.includes("PT")) {
       stratExtra += `q1: ${getLastLevel("q1", this.boughtVars)} q2: ${getLastLevel("q2", this.boughtVars)} c1: ${getLastLevel("c1", this.boughtVars)}`;
     }
-    const result = createResult(this, stratExtra);
+    const result = this.createResult(stratExtra);
 
     return getBestResult(result, this.bestRes);
   }

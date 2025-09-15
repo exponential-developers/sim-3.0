@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, binaryInsertionSearch, createResult, l10, subtract, toCallables } from "../../Utils/helpers";
+import { add, binaryInsertionSearch, l10, subtract, toCallables } from "../../Utils/helpers";
 
 export default async function fi(data: theoryData): Promise<simResult> {
   const sim = new fiSim(data);
@@ -230,11 +230,8 @@ class fiSim extends theoryClass<theory> {
       this.buyVariables();
       this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
     while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    return this.createResult();
   }
   tick() {
     let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[2]);
