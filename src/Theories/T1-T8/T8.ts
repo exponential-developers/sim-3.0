@@ -117,9 +117,9 @@ class t8Sim extends theoryClass<theory> {
       [-6, 15, 0],
     ];
     this.dts = [0.02, 0.002, 0.00014];
-    this.x = this.defaultStates[this.milestones[0]][0];
-    this.y = this.defaultStates[this.milestones[0]][1];
-    this.z = this.defaultStates[this.milestones[0]][2];
+    this.x = this.defaultStates[0][0];
+    this.y = this.defaultStates[0][1];
+    this.z = this.defaultStates[0][2];
     this.dx = 0;
     this.dy = 0;
     this.dz = 0;
