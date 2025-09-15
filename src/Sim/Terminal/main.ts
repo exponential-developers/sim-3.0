@@ -166,7 +166,7 @@ if (localStorage.getItem("dev") === "true") {
   }
 
   function updateTable(arr: generalResult[]): void {
-    const addCell = (row: HTMLTableRowElement, content: any) => {
+    const addCell = (row: HTMLTableRowElement, content: string | number) => {
       const cell = document.createElement("td");
       cell.innerHTML = String(content);
       row.appendChild(cell);

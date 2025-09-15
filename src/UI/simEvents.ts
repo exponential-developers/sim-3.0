@@ -36,10 +36,10 @@ const simulateButton = qs(".simulate");
 const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
 const mfDepthOtp = qs(".mfDepthOtp");
-const simAllStrats = <HTMLSelectElement>qs(".simallstrats");
-const skipCompletedCTs = <HTMLInputElement>qs(".skipcompletedcts");
-const showA23 = <HTMLInputElement>qs(".a23");
-const showUnofficials = <HTMLInputElement>qs(".unofficials");
+const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
+const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
+const showA23 = qs<HTMLInputElement>(".a23");
+const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 const theories = Object.keys(jsondata.theories) as theoryType[];
 
@@ -128,13 +128,13 @@ function updateTablePreprocess(): void {
 }
 
 function updateTable(arr: generalResult[]): void {
-  const addCell = (row: HTMLTableRowElement, content: any) => {
+  const addCell = (row: HTMLTableRowElement, content: string | number) => {
     const cell = ce("td");
     cell.innerHTML = String(content);
     row.appendChild(cell);
   }
 
-  const addCellRowspan = (row: HTMLTableRowElement, content: any, rowspan: string) => {
+  const addCellRowspan = (row: HTMLTableRowElement, content: string | number, rowspan: string) => {
     const cell = ce("td");
     cell.innerHTML = String(content);
     cell.setAttribute("rowspan", rowspan);
@@ -142,10 +142,12 @@ function updateTable(arr: generalResult[]): void {
   }
 
   const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[]) => {
-    (<HTMLElement>row?.lastChild).onclick = () => {
+    if (row.lastChild == null) return;
+    const lastChild = row.lastChild as HTMLElement;
+    lastChild.onclick = () => {
       openVarModal(buys);
     };
-    (<HTMLElement>row?.lastChild).style.cursor = "pointer";
+    lastChild.style.cursor = "pointer";
   }
 
   if(mode.value == "All") {
@@ -156,8 +158,8 @@ function updateTable(arr: generalResult[]): void {
           thead.children[0].children[0].innerHTML = String(res.active.sigma) + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
         }
 
-        const rowActive = <HTMLTableRowElement>ce("tr");
-        const rowPassive = <HTMLTableRowElement>ce("tr");
+        const rowActive = ce<HTMLTableRowElement>("tr");
+        const rowPassive = ce<HTMLTableRowElement>("tr");
 
         // Theory name cell:
         addCellRowspan(rowActive, res.theory, "2");
@@ -193,7 +195,7 @@ function updateTable(arr: generalResult[]): void {
           thead.children[0].children[0].innerHTML = String(res.sigma) + '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>';
         }
 
-        const row = <HTMLTableRowElement>ce("tr");
+        const row = ce<HTMLTableRowElement>("tr");
 
         addCell(row, res.theory);
         addCell(row, res.lastPub);
@@ -215,8 +217,8 @@ function updateTable(arr: generalResult[]): void {
         const lastTheory = (resultIsSimAllResult(res) ? res.active.theory : resultIsSimResult(res) ? res.theory : "");
         const nextTheory = (resultIsSimAllResult(next) ? next.active.theory : resultIsSimResult(next) ? next.theory : "");
         if (lastTheory.match(/T[1-8]/) && !nextTheory.match(/T[1-8]/)){
-          const bufferRow1 = <HTMLTableRowElement>ce("tr");
-          const bufferRow2 = <HTMLTableRowElement>ce("tr");
+          const bufferRow1 = ce<HTMLTableRowElement>("tr");
+          const bufferRow2 = ce<HTMLTableRowElement>("tr");
           
           bufferRow1.style.display = "none";
           addCell(bufferRow2, "---");
@@ -230,7 +232,7 @@ function updateTable(arr: generalResult[]): void {
   else {
     for (let i = 0; i < arr.length; i++) {
       const res = arr[i];
-      const row = <HTMLTableRowElement>ce("tr");
+      const row = ce<HTMLTableRowElement>("tr");
       if (resultIsSimResult(res)) {
         addCell(row, res.theory);
         addCell(row, res.sigma);
@@ -256,18 +258,17 @@ function updateTable(arr: generalResult[]): void {
 }
 
 function highlightResetCells() {
-  const cells = document.querySelectorAll('.boughtVars tr td:nth-child(1)');
+  const cells = qsa<HTMLTableCellElement>('.boughtVars tr td:nth-child(1)');
   cells.forEach(cell => {
-    const htmlCell = cell as HTMLElement;
-    if (htmlCell.innerText.toLowerCase().includes('reset at')) {
-      htmlCell.classList.add('highlighted');
+    if (cell.innerText.toLowerCase().includes('reset at')) {
+      cell.classList.add('highlighted');
     }
   });
 }
 
 function openVarModal(arr: varBuy[]) {
   document.body.style.overflow = "hidden";
-  (<HTMLDialogElement>qs(".boughtVars")).showModal();
+  qs<HTMLDialogElement>(".boughtVars").showModal();
   const tbody = qs(".boughtVarsOtp");
   while (tbody.firstChild) tbody.firstChild.remove();
   for (let i = 0; i < arr.length; i++) {
@@ -300,7 +301,7 @@ function getCurrencySymbol(value: string | undefined): string {
   return value;
 }
 event(qs(".boughtVarsCloseBtn"), "pointerdown", () => {
-  (<HTMLDialogElement>qs(".boughtVars")).close();
+  qs<HTMLDialogElement>(".boughtVars").close();
   document.body.style.overflow = "auto";
 });
 function clearTable(): void {

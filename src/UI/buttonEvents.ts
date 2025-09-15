@@ -43,10 +43,10 @@ function createImage(mode: string) {
   .catch(() => console.log("Failed creating image."));
 }
 
-const saveDist = <HTMLButtonElement>qs(".saveDist");
+const saveDist = qs<HTMLButtonElement>(".saveDist");
 const getDist = qs(".getDist");
 const loadSave = qs(".loadSave");
-const modeInput = <HTMLTextAreaElement>qs("textarea");
+const modeInput = qs<HTMLTextAreaElement>("textarea");
 
 event(saveDist, "pointerdown", () => {
   if (modeInput.value.replace(" ", "").length === 0) return;

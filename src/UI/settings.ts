@@ -1,9 +1,9 @@
 import { formatNumber, round, qs, event } from "../Utils/helpers.js";
 import { setSimState } from "./simState.js";
 
-const settingsBtn = <HTMLButtonElement>qs(".settingsBtn");
-const settingsCloseBtn = <HTMLButtonElement>qs(".settingsCloseBtn");
-const settingsModal = <HTMLDialogElement>qs(".settings");
+const settingsBtn = qs<HTMLButtonElement>(".settingsBtn");
+const settingsCloseBtn = qs<HTMLButtonElement>(".settingsCloseBtn");
+const settingsModal = qs<HTMLDialogElement>(".settings");
 
 event(settingsBtn, "pointerdown", () => {
   settingsModal.showModal();
@@ -16,9 +16,9 @@ event(settingsCloseBtn, "pointerdown", () => {
   document.body.style.overflow = "auto";
 });
 
-const instructionsBtn = <HTMLButtonElement>qs(".instructionsBtn");
-const instructionsCloseBtn = <HTMLButtonElement>qs(".instructionsCloseBtn");
-const instructionsModal = <HTMLDialogElement>qs(".instructions");
+const instructionsBtn = qs<HTMLButtonElement>(".instructionsBtn");
+const instructionsCloseBtn = qs<HTMLButtonElement>(".instructionsCloseBtn");
+const instructionsModal = qs<HTMLDialogElement>(".instructions");
 
 event(instructionsBtn, "pointerdown", () => {
   instructionsModal.showModal();
@@ -30,13 +30,13 @@ event(instructionsCloseBtn, "pointerdown", () => {
   document.body.style.overflow = "auto";
 });
 
-const dtSlider = <HTMLInputElement>qs(".dt");
+const dtSlider = qs<HTMLInputElement>(".dt");
 const dtOtp = qs(".dtOtp");
 
-const ddtSlider = <HTMLInputElement>qs(".ddt");
+const ddtSlider = qs<HTMLInputElement>(".ddt");
 const ddtOtp = qs(".ddtOtp");
 
-const mfDepthSlider = <HTMLInputElement>qs(".mfDepth");
+const mfDepthSlider = qs<HTMLInputElement>(".mfDepth");
 const mfDepthOpt = qs(".mfDepthOtp");
 
 event(

@@ -2,21 +2,21 @@ import { qs, round } from "../Utils/helpers.js";
 import { global } from "../Sim/main.js";
 
 //Setting Inputs
-const dtSlider = <HTMLInputElement>qs(".dt");
+const dtSlider = qs<HTMLInputElement>(".dt");
 const dtOtp = qs(".dtOtp");
 
-const ddtSlider = <HTMLInputElement>qs(".ddt");
+const ddtSlider = qs<HTMLInputElement>(".ddt");
 const ddtOtp = qs(".ddtOtp");
 
-const mfDepthSlider = <HTMLInputElement>qs(".mfDepth");
+const mfDepthSlider = qs<HTMLInputElement>(".mfDepth");
 const mfDepthOpt = qs(".mfDepthOtp");
 
-const themeSelector = <HTMLSelectElement>qs(".themeSelector");
+const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 
-const simAllStrats = <HTMLSelectElement>qs(".simallstrats");
-const skipCompletedCTs = <HTMLInputElement>qs(".skipcompletedcts");
-const showA23 = <HTMLInputElement>qs(".a23");
-const showUnofficials = <HTMLInputElement>qs(".unofficials");
+const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
+const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
+const showA23 = qs<HTMLInputElement>(".a23");
+const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 const defaultState = `{"settings":{"dt":"1.5","ddt":"1.0001","skipCompletedCTs":false,"showA23":false,"showUnofficials":false}}`;
 const defaultTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "classic";
