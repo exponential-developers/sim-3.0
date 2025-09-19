@@ -30,21 +30,23 @@ function createImage(mode: string) {
         a.download = "output.png";
         a.click();
       } else {
+        if (blob == null) throw "blob is null";
         navigator.clipboard
-          .write([new ClipboardItem({ "image/png": blob } as { [key: string]: Blob })])
+          .write([new ClipboardItem({ "image/png": blob })])
           .then(() => {
             console.log("Sucsessfully created image and copied to clipboard!");
           })
           .catch(() => console.log("Failed creating image."));
       }
     })
-  );
+  )
+  .catch(() => console.log("Failed creating image."));
 }
 
-const saveDist = <HTMLButtonElement>qs(".saveDist");
+const saveDist = qs<HTMLButtonElement>(".saveDist");
 const getDist = qs(".getDist");
 const loadSave = qs(".loadSave");
-const modeInput = <HTMLTextAreaElement>qs("textarea");
+const modeInput = qs<HTMLTextAreaElement>("textarea");
 
 event(saveDist, "pointerdown", () => {
   if (modeInput.value.replace(" ", "").length === 0) return;

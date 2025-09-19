@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, getLastLevel, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, subtract, getLastLevel, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t4(data: theoryData): Promise<simResult> {
   const sim = new t4Sim(data);
@@ -17,8 +17,8 @@ class t4Sim extends theoryClass<theory> {
   recursionValue: number;
   q: number;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T4C3d66: [
         false,
         false,
@@ -38,159 +38,96 @@ class t4Sim extends theoryClass<theory> {
         () => this.variables[7].cost + 0.5 < (this.recursionValue ?? Infinity),
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
-      T4C3dC12rcv: [() => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, () => this.maxRho < this.lastPub, true, false, false, false, () => this.variables[6].cost + 1 < this.variables[7].cost, true],
-      T4C356dC12rcv: [() => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, () => this.maxRho < this.lastPub, true, false, true, true, () => this.variables[6].cost + 1 < this.variables[7].cost, true],
-      T4C456dC12rcvMS: [() => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, () => this.maxRho < this.lastPub, false, true, true, true, () => this.variables[6].cost + 1 < this.variables[7].cost, true],
+      T4C3dC12rcv: [
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
+        () => this.maxRho < this.lastPub, 
+        true, 
+        ...new Array(3).fill(false),
+        () => this.variables[6].cost + 1 < this.variables[7].cost, 
+        true
+      ],
+      T4C356dC12rcv: [
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
+        () => this.maxRho < this.lastPub, 
+        true, 
+        false, 
+        true, 
+        true, 
+        () => this.variables[6].cost + 1 < this.variables[7].cost, 
+        true
+      ],
+      T4C456dC12rcvMS: [
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
+        () => this.maxRho < this.lastPub, 
+        false, 
+        true, 
+        true, 
+        true, 
+        () => this.variables[6].cost + 1 < this.variables[7].cost, 
+        true
+      ],
       T4C123d: [() => this.variables[0].cost + 1 < this.variables[1].cost, true, true, false, false, false, () => this.variables[6].cost + 1 < this.variables[7].cost, true],
       T4C123: [true, true, true, false, false, false, true, true],
-      T4C12d: [() => this.variables[0].cost + 1 < this.variables[1].cost, true, false, false, false, false, false, false],
+      T4C12d: [() => this.variables[0].cost + 1 < this.variables[1].cost, true, ...new Array(6).fill(false)],
       T4C12: [true, true, ...new Array(6).fill(false)],
       T4C56: [...new Array(4).fill(false), true, true, true, true],
       T4C4: [...new Array(3).fill(false), true, false, false, true, true],
       T4C5: [...new Array(4).fill(false), true, false, true, true],
       T4: new Array(8).fill(true),
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
   getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => this.milestones[0] > 0, () => this.milestones[0] > 1, () => this.milestones[0] > 2, () => true, () => true];
+    const conditions: conditionFunction[] = [
+      () => true, 
+      () => true, 
+      () => true, 
+      () => this.milestones[0] > 0, 
+      () => this.milestones[0] > 1, 
+      () => this.milestones[0] > 2, 
+      () => true, 
+      () => true
+    ];
     return conditions;
   }
-  getMilestoneTree() {
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T4C3d66: [
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 0, 2],
-        [0, 0, 3],
-      ],
-      T4C3coast: [
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 0, 2],
-        [0, 0, 3],
-      ],
-      T4C3: [
-        [0, 0, 0],
-        [0, 0, 1],
-        [0, 0, 2],
-        [0, 0, 3],
-      ],
-      T4C3dC12rcv: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3]
-      ],
-      T4C356dC12rcv: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3],
-        [1, 1, 3],
-        [2, 1, 3],
-        [3, 1, 3],
-      ],
-      T4C456dC12rcvMS: [[0, 0, 0]],
-      T4C123d: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3],
-      ],
-      T4C123: [
-        [0, 0, 0],
-        [0, 1, 0],
-        [0, 1, 1],
-        [0, 1, 2],
-        [0, 1, 3],
-      ],
-      T4C12d: [
-        [0, 0, 0],
-        [0, 1, 0],
-      ],
-      T4C12: [
-        [0, 0, 0],
-        [0, 1, 0],
-      ],
-      T4C56: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-        [3, 0, 0],
-        [3, 0, 1],
-        [3, 0, 2],
-        [3, 0, 3],
-        [3, 0, 3],
-      ],
-      T4C4: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [1, 0, 1],
-        [1, 0, 2],
-        [1, 0, 3],
-      ],
-      T4C5: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-        [2, 0, 1],
-        [2, 0, 2],
-        [2, 0, 3],
-      ],
-      T4: [
-        [0, 0, 0],
-        [1, 0, 0],
-        [2, 0, 0],
-        [3, 0, 0],
-        [3, 0, 1],
-        [3, 0, 2],
-        [3, 0, 3],
-        [3, 1, 3],
-      ],
-    };
-    return tree[this.strat];
-  }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.165 - l10(4)) + getR9multiplier(this.sigma);
   }
-  updateMilestones(): void {
-    const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-
-    if (this.strat === "T4C456dC12rcvMS") {
-      const max = [3, 1, 3];
-      this.milestones = [0, 0, 0];
-
-      let priority;
-      if (this.maxRho < this.lastPub) {
-        priority = [2, 3, 1];
-      } else if (this.t % 100 < 50) {
-        priority = [3, 1, 2];
-      } else {
-        priority = [1, 3, 2];
+  getMilestonePriority(): number[] {
+    switch (this.strat) {
+      case "T4C3d66": return [2];
+      case "T4C3coast": return [2];
+      case "T4C3": return [2];
+      case "T4C3dC12rcv": return [1, 2];
+      case "T4C356dC12rcv": return [1, 2, 0];
+      case "T4C456dC12rcvMS": {
+        if (this.maxRho < this.lastPub) return [1, 2, 0]
+        else if (this.t % 100 < 50) return [2, 0, 1] 
+        else return [0, 2, 1];
       }
-
-      let milestoneCount = stage;
-      this.milestones = [0, 0, 0];
-      for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-          this.milestones[priority[i] - 1]++;
-          milestoneCount--;
-        }
+      case "T4C123d": return [1, 2];
+      case "T4C123": return [1, 2];
+      case "T4C12d": return [1];
+      case "T4C12": return [1];
+      case "T4C56": return [0, 2];
+      case "T4C4": {
+        this.milestonesMax = [1, 0, 3];
+        return [0, 2];
       }
+      case "T4C5": {
+        this.milestonesMax = [2, 0, 3];
+        return [0, 2];
+      }
+      case "T4": return [0, 2, 1];
     }
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 9;
-    this.recursionValue = <number>data.recursionValue;
     this.q = 0;
-    //initialize variables
+    this.pubUnlock = 9;
+    this.milestoneUnlockSteps = 25;
+    //milestones  [terms, c1exp, multQdot]
+    this.milestonesMax = [3, 1, 3];
     this.variables = [
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(5, 1.305)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "c2", cost: new ExponentialCost(20, 3.75), valueScaling: new ExponentialValue(2) }),
@@ -201,12 +138,10 @@ class t4Sim extends theoryClass<theory> {
       new Variable({ name: "q1", cost: new ExponentialCost(1e3, 100), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "q2", cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
     ];
-    //milestones  [terms, c1exp, multQdot]
-    this.milestones = [0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+    this.recursionValue = data.recursionValue as number;
     this.updateMilestones();
   }
-  async simulate(data: theoryData) {
+  async simulate(data: theoryData): Promise<simResult> {
     if ((this.recursionValue === null || this.recursionValue === undefined) && ["T4C3d66", "T4C3coast"].includes(this.strat)) {
       data.recursionValue = Number.MAX_VALUE;
       const tempSim = await new t4Sim(data).simulate(data);
@@ -218,13 +153,11 @@ class t4Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, ["T4C3d66", "T4C3coast"].includes(this.strat) ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "");
-
-    return result;
+    this.trimBoughtVars();
+    const stratExtra = ["T4C3d66", "T4C3coast"].includes(this.strat) 
+      ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "";
+    return this.createResult(stratExtra);
   }
   tick() {
     const vq1 = this.variables[6].value;

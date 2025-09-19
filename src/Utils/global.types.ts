@@ -23,7 +23,7 @@ declare global {
     strat: string;
     recovery: null | { value: number; time: number; recoveryTime: boolean };
     cap: null | number;
-    recursionValue: null | number | Array<number>;
+    recursionValue: null | number | number[];
   }
 
   type combinedResult = [string, string, string];
@@ -39,7 +39,7 @@ declare global {
     tauH: number;
     time: string;
     rawData: { pubRho: number; time: number };
-    boughtVars: Array<varBuy>;
+    boughtVars: varBuy[];
   }
 
   interface simAllResult {

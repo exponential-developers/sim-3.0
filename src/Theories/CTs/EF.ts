@@ -1,11 +1,11 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, getLastLevel, getBestResult } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Currency from "../../Utils/currency";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
-import Currency from "../../Utils/currency.js";
 
 export default async function ef(data: theoryData): Promise<simResult> {
   const sim = new efSim(data);
@@ -25,14 +25,14 @@ class efSim extends theoryClass<theory> {
   nextMilestoneCost: number;
 
   forcedPubRho: number;
-  coasting: Array<boolean>;
+  coasting: boolean[];
   bestRes: simResult | null;
   doContinuityFork: boolean;
 
   depth: number;
 
   getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       EF: new Array(10).fill(true),
       EFSnax: [
         true,
@@ -72,11 +72,10 @@ class efSim extends theoryClass<theory> {
         /*a3*/ true,
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
   getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+    const conditions: conditionFunction[] = [
       () => this.variables[0].level < 4,
       () => true,
       () => true,
@@ -91,7 +90,7 @@ class efSim extends theoryClass<theory> {
     return conditions;
   }
   getDynamicCoastingConditions() {
-    const conditions: Array<conditionFunction> = [
+    const conditions: conditionFunction[] = [
       () => false,
       () => this.curMult > 1.2,
       () => this.curMult > 1.6,
@@ -103,71 +102,47 @@ class efSim extends theoryClass<theory> {
     return conditions;
   }
   getForcedDynamicCoastingConditions() {
-    const conditions: Array<conditionFunction> = [
+    const conditions: conditionFunction[] = [
       () => false,
       () => this.coasting[2] || this.coasting[7],
       ...new Array(8).fill(() => false)
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0],
-      [2, 0, 0, 0, 0],
-      [2, 1, 0, 0, 0],
-      [2, 2, 0, 0, 0],
-      [2, 3, 0, 0, 0],
-      [2, 3, 1, 0, 0],
-      [2, 3, 2, 0, 0],
-      [2, 3, 3, 0, 0],
-      [2, 3, 4, 0, 0],
-      [2, 3, 5, 0, 0],
-      [2, 3, 5, 1, 0],
-      [2, 3, 5, 2, 0],
-      [2, 3, 5, 2, 1],
-      [2, 3, 5, 2, 2],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      EF: globalOptimalRoute,
-      EFd: globalOptimalRoute,
-      EFSnax: globalOptimalRoute,
-      EFAI: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
   getTotMult(val: number) {
     return Math.max(0, val * this.tauFactor * 0.09675);
   }
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4];
+  }
   updateMilestones(): void {
-    let stage = 0;
-    const points = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-      if (points[i] > Math.max(this.lastPub, this.maxRho)) {
-        this.nextMilestoneCost = points[i];
-        break;
-      }
-    }
-    if (Math.max(this.lastPub, this.maxRho) >= 325) this.nextMilestoneCost = Infinity;
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-    if (this.variables[4].valueScaling instanceof ExponentialValue && this.variables[4].valueScaling.power !== 1.1 + 0.01 * this.milestones[3]) {
+    const rho = Math.max(this.lastPub, this.maxRho);
+    const stage = binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.nextMilestoneCost = this.milestoneUnlocks[stage] || Infinity;
+    super.updateMilestones();
+    if (this.variables[4].valueScaling instanceof ExponentialValue 
+        && this.variables[4].valueScaling.power !== 1.1 + 0.01 * this.milestones[3]) 
+    {
       this.variables[4].valueScaling.power = 1.1 + 0.01 * this.milestones[3];
       this.variables[4].reCalculate();
     }
-    if (this.variables[6].valueScaling instanceof ExponentialValue && this.variables[6].valueScaling.power !== 1.1 + 0.0125 * this.milestones[4]) {
+    if (this.variables[6].valueScaling instanceof ExponentialValue 
+        && this.variables[6].valueScaling.power !== 1.1 + 0.0125 * this.milestones[4]) 
+    {
       this.variables[6].valueScaling.power = 1.1 + 0.0125 * this.milestones[4];
       this.variables[6].reCalculate();
     }
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 10;
     this.R = new Currency("R");
     this.I = new Currency("I");
     this.q = 0;
     this.t_var = 0;
-    //initialize variables
+    this.pubUnlock = 10;
+    this.milestoneUnlocks = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
+    this.milestonesMax = [2, 3, 5, 2, 2];
+    this.nextMilestoneCost = Infinity;
     this.variables = [
       new Variable({ name: "tdot", currency: this.rho, cost: new ExponentialCost(1e6, 1e6), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "q1",   currency: this.rho, cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
@@ -180,6 +155,7 @@ class efSim extends theoryClass<theory> {
       new Variable({ name: "a2",   currency: this.R,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new StepwisePowerSumValue(40, 10, 1) }),
       new Variable({ name: "a3",   currency: this.I,   cost: new ExponentialCost(500, 2.2, true), valueScaling: new ExponentialValue(2) }),
     ];
+
     this.forcedPubRho = Infinity;
     if (this.lastPub < 374 && this.strat !== "EF") {
       let newpubtable: pubTable = pubtable.efdata;
@@ -191,8 +167,7 @@ class efSim extends theoryClass<theory> {
     this.bestRes = null;
     this.doContinuityFork = true;
     this.depth = 0;
-    this.nextMilestoneCost = Infinity;
-    this.milestoneTree = this.getMilestoneTree();
+
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
@@ -214,9 +189,10 @@ class efSim extends theoryClass<theory> {
   copy(): efSim {
     let newsim = new efSim(this.getDataForCopy());
     newsim.copyFrom(this);
+    newsim.updateMilestones();
     return newsim;
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
@@ -237,13 +213,10 @@ class efSim extends theoryClass<theory> {
         const res = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, res);
       }
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    this.trimBoughtVars();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
-    const result = createResult(
-      this,
+    const result = this.createResult(
       this.strat !== "EF"
         ? ` q1: ${lastLevels[1]} q2: ${lastLevels[2]} a1: ${lastLevels[7]}` +
             (global.showA23 ? ` a2: ${lastLevels[8]} a3: ${lastLevels[9]}` : "")
@@ -253,22 +226,18 @@ class efSim extends theoryClass<theory> {
   }
   tick() {
     const logbonus = l10(this.dt) + this.totMult;
-    this.q = add(this.q, this.variables[1].value + this.variables[2].value + logbonus);
 
+    this.q = add(this.q, this.variables[1].value + this.variables[2].value + logbonus);
     this.t_var += this.dt * (this.variables[0].level / 5 + 0.2);
 
-    const a = this.milestones[1] > 0 ? (this.variables[7].value + this.variables[8].value + this.variables[9].value) * (0.1 * this.milestones[2] + 1) : 0;
-
     const b = this.variables[3].value + this.variables[4].value;
-
     const c = this.variables[5].value + this.variables[6].value;
-
     const R = b + l10(Math.abs(Math.cos(this.t_var)));
     const I = c + l10(Math.abs(Math.sin(this.t_var)));
-
     if (this.milestones[0] > 0) this.R.add(logbonus + R * 2);
     if (this.milestones[0] > 1) this.I.add(logbonus + I * 2);
-
+    
+    const a = this.milestones[1] > 0 ? (this.variables[7].value + this.variables[8].value + this.variables[9].value) * (0.1 * this.milestones[2] + 1) : 0;
     switch (this.milestones[0]) {
       case 0:
         this.rho.add(logbonus + (l10(this.t_var) + this.q * 2) / 2);
@@ -277,7 +246,7 @@ class efSim extends theoryClass<theory> {
         this.rho.add(logbonus + add(l10(this.t_var) + this.q * 2, this.R.value * 2) / 2);
         break;
       case 2:
-        this.rho.add(logbonus + a + add(add(l10(this.t_var) + this.q * 2, this.R.value * 2), this.I.value * 2) / 2);
+        this.rho.add(logbonus + a + add(l10(this.t_var) + this.q * 2, this.R.value * 2, this.I.value * 2) / 2);
         break;
     }
   }

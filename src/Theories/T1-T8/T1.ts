@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, logToExp, getR9multiplier } from "../../Utils/helpers.js";
-import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable";
+import { global } from "../../Sim/main";
 import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
+import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, logToExp, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t1(data: theoryData): Promise<simResult> {
   const sim = new t1Sim(data);
@@ -13,15 +13,15 @@ export default async function t1(data: theoryData): Promise<simResult> {
 
 type theory = "T1";
 
-class t1Sim extends theoryClass<theory>{
+class t1Sim extends theoryClass<theory> {
   term1: number;
   term2: number;
   term3: number;
   termRatio: number;
   c3Ratio: number;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T1: new Array(6).fill(true),
       T1C34: [true, true, false, false, true, true],
       T1C4: [true, true, false, false, false, true],
@@ -45,42 +45,31 @@ class t1Sim extends theoryClass<theory>{
         true,
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[2] > 0, () => this.milestones[3] > 0];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
+      () => true, 
+      () => true, 
+      () => true, 
+      () => true, 
+      () => this.milestones[2] > 0, 
+      () => this.milestones[3] > 0
+    ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0],
-      [0, 0, 1, 0],
-      [0, 0, 1, 1],
-      [1, 0, 1, 1],
-      [1, 1, 1, 1],
-      [1, 2, 1, 1],
-      [1, 3, 1, 1],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T1: globalOptimalRoute,
-      T1C34: globalOptimalRoute,
-      T1C4: globalOptimalRoute,
-      T1Ratio: globalOptimalRoute,
-      T1SolarXLII: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [2, 3, 0, 1];
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.164 - l10(3)) + getR9multiplier(this.sigma);
-  }
-  updateMilestones(): void {
-    const stage = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 10;
+    this.milestoneUnlockSteps = 25;
+    //milestones  [logterm, c1exp, c3term, c4term]
+    this.milestonesMax = [1, 3, 1, 1];
     this.variables = [
       new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "q2", cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
@@ -95,13 +84,11 @@ class t1Sim extends theoryClass<theory>{
     this.term3 = 0;
     this.termRatio = 0;
     this.c3Ratio = this.lastPub < 300 ? 1 : this.lastPub < 450 ? 1.1 : this.lastPub < 550 ? 2 : this.lastPub < 655 ? 5 : 10;
-    //milestones  [logterm, c1exp, c3term, c4term]
-    this.milestones = [0, 0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+
     this.doSimEndConditions = () => this.strat !== "T1SolarXLII";
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     const c4_nc = Math.ceil((this.lastPub - 10) / 8) * 8 + 10;
     const pub = c4_nc - this.lastPub < 3 ? c4_nc + 2 : c4_nc - this.lastPub < 5 ? c4_nc - 2 + l10(1.5) : c4_nc - 4 + l10(1.4);
     let coast = (c4_nc - this.lastPub < 3 ? c4_nc : Math.floor(this.lastPub)) + l10(30);
@@ -115,13 +102,10 @@ class t1Sim extends theoryClass<theory>{
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       if (this.strat !== "T1SolarXLII" || this.rho.value < coast) this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "");
-    
-    return result;
+    this.trimBoughtVars();
+    const stratExtra = this.strat === "T1SolarXLII" ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "";
+    return this.createResult(stratExtra);
   }
   tick() {
     this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1]) 

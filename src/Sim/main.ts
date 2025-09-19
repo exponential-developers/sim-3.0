@@ -52,7 +52,7 @@ export interface inputData {
   hardCap: boolean;
   modeInput: string;
   simAllInputs: [boolean, boolean];
-  timeDiffInputs: Array<string>;
+  timeDiffInputs: string[];
 }
 export interface parsedData {
   theory: theoryType;
@@ -63,11 +63,11 @@ export interface parsedData {
   mode: string;
   simAllInputs: [boolean, boolean];
   hardCap?: boolean;
-  modeInput?: string | Array<number> | Array<Array<Array<number>>> | number;
+  modeInput?: string | number[] | number[][][] | number;
   recovery?: null | { value: number; time: number; recoveryTime: boolean };
 }
 
-export async function simulate(simData: inputData): Promise<string | null | Array<generalResult>> {
+export async function simulate(simData: inputData): Promise<string | null | generalResult[]> {
   if (global.simulating) {
     global.simulating = false;
     return "Sim stopped.";
@@ -75,7 +75,7 @@ export async function simulate(simData: inputData): Promise<string | null | Arra
   if ((performance.now() - cache.simEndTimestamp) / 1000 < 1) return null;
   try {
     const pData: parsedData = parseData(simData);
-    let res: Array<generalResult> = [];
+    let res: generalResult[] = [];
     global.simulating = true;
     switch (pData.mode) {
       case "Single sim":
@@ -151,11 +151,11 @@ async function singleSim(data: Omit<parsedData, "simAllInputs">): Promise<simRes
   }
 }
 
-async function chainSim(data: parsedData): Promise<Array<simResult | combinedResult>> {
+async function chainSim(data: parsedData): Promise<(simResult | combinedResult)[]> {
   let lastPub: number = data.rho;
   let time = 0;
   const start = data.rho;
-  const result: Array<simResult | combinedResult> = [];
+  const result: (simResult | combinedResult)[] = [];
   const stopOtp = logToExp(data.cap);
   let lastLog = 0;
   while (lastPub < data.cap) {
@@ -179,8 +179,8 @@ async function chainSim(data: parsedData): Promise<Array<simResult | combinedRes
   result.push([logToExp(dtau, 2), formatNumber(dtau / (time / 3600), 5), convertTime(time)]);
   return result;
 }
-async function stepSim(data: parsedData): Promise<Array<simResult>> {
-  const result: Array<simResult> = [];
+async function stepSim(data: parsedData): Promise<simResult[]> {
+  const result: simResult[] = [];
   const stopOtp = logToExp(data.cap);
   let lastLog = 0;
   while (data.rho < data.cap + 0.00001) {
@@ -199,12 +199,12 @@ async function stepSim(data: parsedData): Promise<Array<simResult>> {
   cache.lastStrat = "";
   return result;
 }
-async function simAll(data: parsedData): Promise<Array<generalResult>> {
-  const sigma = (<Array<number>>data.modeInput)[0];
-  const values = (<Array<number>>data.modeInput).slice(1, (<Array<number>>data.modeInput).length);
-  const res: Array<generalResult> = [];
+async function simAll(data: parsedData): Promise<generalResult[]> {
+  const sigma = (<number[]>data.modeInput)[0];
+  const values = (<number[]>data.modeInput).slice(1, (<number[]>data.modeInput).length);
+  const res: generalResult[] = [];
   const totalSimmed = Math.min(values.length, global.showUnofficials ? Infinity : 17);
-  let simRes:simResult | null;
+  let simRes: simResult | null;
   for (let i = 0; i < totalSimmed; i++) {
     if (values[i] === 0) continue;
     output.innerText = `Simulating ${getTheoryFromIndex(i)}/${getTheoryFromIndex(totalSimmed - 1)}`;
@@ -213,7 +213,7 @@ async function simAll(data: parsedData): Promise<Array<generalResult>> {
     const modes = [];
     if (global.simAllStrats !== "idle") modes.push(data.simAllInputs[1] ? "Best Overall" : "Best Active")
     if (global.simAllStrats !== "active") modes.push(data.simAllInputs[0] ? "Best Semi-Idle" : "Best Idle")
-    const temp: Array<simResult> = [];
+    const temp: simResult[] = [];
     for (let j = 0; j < modes.length; j++) {
       const sendData = {
         theory: getTheoryFromIndex(i),
@@ -230,7 +230,7 @@ async function simAll(data: parsedData): Promise<Array<generalResult>> {
   }
   return res;
 }
-function createSimAllOutput(arr: Array<simResult>): simResult | simAllResult {
+function createSimAllOutput(arr: simResult[]): simResult | simAllResult {
   if (global.simAllStrats === "all") {
     return {
       theory: arr[0].theory,
@@ -244,7 +244,7 @@ function createSimAllOutput(arr: Array<simResult>): simResult | simAllResult {
 }
 
 async function getBestStrat(data: Omit<parsedData, "simAllInputs">): Promise<simResult> {
-  const strats: Array<string> = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
+  const strats: string[] = getStrats(data.theory, data.rho, data.strat, cache.lastStrat);
   let bestSim: simResult = defaultResult();
   for (let i = 0; i < strats.length; i++) {
     data.strat = strats[i];

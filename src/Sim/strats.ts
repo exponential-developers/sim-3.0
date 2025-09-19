@@ -1,32 +1,51 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 import { global } from "./main.js";
 
-const stratData = convertConditions((<unknown>structuredClone(jsonData.theories)) as theoryDataType);
+type TheoryDataRawType = {
+  [key: string]: {
+    strats: {
+      [key: string]: {
+        stratFilterCondition: string;
+        forcedCondition?: string;
+      }
+    }
+  }
+}
 
 type args = [boolean, boolean, boolean, boolean, number, string];
 
 type conditionFunctions = (...args: args) => boolean;
 
-type stratDataType = {
-  [key: string]: {
-    stratFilterCondition: conditionFunctions;
-    forcedCondition: conditionFunctions;
+type SingleTheoryDataType = { 
+  strats: {
+    [key: string]: {
+      stratFilterCondition: conditionFunctions;
+      forcedCondition: conditionFunctions;
+    };
   };
 };
 
 type theoryDataType = {
-  [key: string]: { strats: stratDataType; tauFactor?: number };
+  [key: string]: SingleTheoryDataType
 };
 
-function convertConditions(theoryData: theoryDataType) {
+const stratData = convertConditions(structuredClone(jsonData.theories) as TheoryDataRawType);
+
+function convertConditions(theoryData: TheoryDataRawType): theoryDataType {
+  let returnedData: theoryDataType = {};
   for (const theory of Object.keys(theoryData)) {
-    delete theoryData[theory].tauFactor;
+    let currentTheory: SingleTheoryDataType = {
+      strats: {}
+    };
     for (const strat of Object.keys(theoryData[theory].strats)) {
-      theoryData[theory].strats[strat].stratFilterCondition = Function(parseExpression(<string>(<unknown>theoryData[theory].strats[strat].stratFilterCondition))) as conditionFunctions;
-      theoryData[theory].strats[strat].forcedCondition = Function(parseExpression(<string>(<unknown>theoryData[theory].strats[strat].forcedCondition))) as conditionFunctions;
+      currentTheory.strats[strat] = {
+        stratFilterCondition: Function(parseExpression(theoryData[theory].strats[strat].stratFilterCondition)) as conditionFunctions,
+        forcedCondition: Function(parseExpression(theoryData[theory].strats[strat].forcedCondition ?? "")) as conditionFunctions
+      }
     }
+    returnedData[theory] = currentTheory;
   }
-  return theoryData;
+  return returnedData;
 }
 
 function parseExpression(expression: string) {
@@ -42,7 +61,7 @@ function parseExpression(expression: string) {
   return `return ${expression}`;
 }
 
-export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string): Array<string> {
+export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string): string[] {
   const res = [];
   const args = [...jsonData.stratCategories.map((v) => v === type), rho, lastStrat] as args;
   for (const strat of Object.keys(stratData[theory].strats)) {

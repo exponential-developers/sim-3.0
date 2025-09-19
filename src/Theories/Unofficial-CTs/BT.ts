@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10 } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
-import { parseValue } from "../../Sim/parsers.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { l10, toCallables } from "../../Utils/helpers";
+import { parseValue } from "../../Sim/parsers";
 
 export default async function bt(data: theoryData): Promise<simResult> {
   const sim = new btSim(data);
@@ -15,8 +15,8 @@ export default async function bt(data: theoryData): Promise<simResult> {
 type theory = "BT";
 
 class btSim extends theoryClass<theory> {
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BT: [true, true, true],
       BTd: [
         () => this.variables[0].cost + l10(this.lastPub < 275 ? 12 + (this.variables[0].level % 10) : 10 + (this.variables[0].level % 10)) < this.variables[1].cost, 
@@ -24,87 +24,45 @@ class btSim extends theoryClass<theory> {
         true
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => true, 
       () => true,
       () => this.milestones[2] > 0
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 2, 0, 0],
-      [0, 3, 0, 0],
-      [1, 3, 0, 0],
-      [2, 3, 0, 0],
-      [3, 3, 0, 0],
-      [3, 3, 1, 0],
-      [3, 3, 2, 0],
-      [3, 3, 3, 0],
-      [3, 3, 4, 0],
-      [3, 3, 5, 0],
-      [3, 3, 6, 0],
-      [3, 3, 6, 1]
-    ]
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      BT: globalOptimalRoute,
-      BTd: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
-
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 1.25);
   }
-  updateMilestones(): void {
-    let stage = 0;
-    const points = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
-    const max = [3, 3, 6, 1];
-    const priority = [2, 1, 3, 4]
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    let milestoneCount = stage;
-    this.milestones = [0, 0, 0, 0];
-    for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-            this.milestones[priority[i] - 1]++;
-            milestoneCount--;
-        }
-    }
+  getMilestonePriority(): number[] {
+    return [1, 0, 2, 3];
   }
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 7;
+    this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
+    this.milestonesMax = [3, 3, 6, 1];
     this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.variables = [
       new Variable({ name: "tai", cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
       new Variable({ name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
-    this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    this.trimBoughtVars();
+    return this.createResult();
   }
   tick() {
     const tayexponent = ((this.milestones[2] + 1) * (this.milestones[2] + 2) * 0.5 - 1) * 0.0003

@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t8(data: theoryData): Promise<simResult> {
   const sim = new t8Sim(data);
@@ -14,9 +14,9 @@ export default async function t8(data: theoryData): Promise<simResult> {
 type theory = "T8";
 
 class t8Sim extends theoryClass<theory> {
-  bounds: Array<Array<Array<number>>>;
-  defaultStates: Array<Array<number>>;
-  dts: Array<number>;
+  bounds: number[][][];
+  defaultStates: number[][];
+  dts: number[];
   x: number;
   y: number;
   z: number;
@@ -25,8 +25,8 @@ class t8Sim extends theoryClass<theory> {
   dz: number;
   msTimer: number;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T8: [true, true, true, true, true],
       T8noC3: [true, true, false, true, true],
       T8noC5: [true, true, true, true, false],
@@ -51,130 +51,37 @@ class t8Sim extends theoryClass<theory> {
         () => this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => true];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => true];
     return conditions;
   }
-  getMilestoneTree() {
-    const pActiveRoute = [
-      [0, 0, 0, 0],
-      [1, 0, 0, 0],
-      [2, 0, 0, 0],
-      [0, 0, 0, 3],
-      [1, 0, 3, 0],
-      [2, 0, 3, 0],
-      [2, 0, 3, 1],
-      [2, 0, 3, 2],
-      [2, 0, 3, 3],
-      [2, 1, 3, 3],
-      [2, 2, 3, 3],
-      [2, 3, 3, 3],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T8: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [0, 0, 0, 3],
-        [1, 0, 3, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-        [2, 1, 3, 3],
-        [2, 2, 3, 3],
-        [2, 3, 3, 3],
-      ],
-      T8noC3: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-      ],
-      T8noC5: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 1, 3, 0],
-        [2, 2, 3, 0],
-        [2, 3, 3, 0],
-      ],
-      T8noC35: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-      ],
-      T8Snax: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [0, 0, 0, 3],
-        [1, 0, 3, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-        [2, 1, 3, 3],
-        [2, 2, 3, 3],
-        [2, 3, 3, 3],
-      ],
-      T8noC3d: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 0, 3, 1],
-        [2, 0, 3, 2],
-        [2, 0, 3, 3],
-      ],
-      T8noC5d: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-        [2, 1, 3, 0],
-        [2, 2, 3, 0],
-        [2, 3, 3, 0],
-      ],
-      T8noC35d: [
-        [0, 0, 0, 0],
-        [1, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 1, 0],
-        [2, 0, 2, 0],
-        [2, 0, 3, 0],
-      ],
-      T8d: pActiveRoute,
-      T8Play: pActiveRoute,
-      T8PlaySolarswap: pActiveRoute,
-    };
-    return tree[this.strat];
-  }
-
-  getTotMult(val: number) {
-    return Math.max(0, val * 0.15) + getR9multiplier(this.sigma);
+  getMilestonePriority(): number[] {
+    const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
+    switch (this.strat) {
+      case "T8noC3": return [0, 2, 3];
+      case "T8noC3d": return [0, 2, 3];
+      case "T8noC5": return [0, 2, 1];
+      case "T8noC5d": return [0, 2, 1];
+      case "T8noC35": return [0, 2];
+      case "T8noC35d": return [0, 2];
+    }
+    if (milestoneCount < 3) return [0];
+    else if (milestoneCount == 3) return [3];
+    else return [2, 0, 3, 1];
   }
   updateMilestones(): void {
-    const stage = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
+    const prevAttractor = this.milestones[0];
+    super.updateMilestones();
+    if (this.milestones[0] != prevAttractor) {
+      this.x = this.defaultStates[this.milestones[0]][0];
+      this.y = this.defaultStates[this.milestones[0]][1];
+      this.z = this.defaultStates[this.milestones[0]][2];
+    }
+  }
+  getTotMult(val: number): number {
+    return Math.max(0, val * 0.15) + getR9multiplier(this.sigma);
   }
   dn(ix = this.x, iy = this.y, iz = this.z) {
     if (this.milestones[0] === 0) {
@@ -195,15 +102,6 @@ class t8Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 8;
-    //initialize variables
-    this.variables = [
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.5172)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "c2", cost: new ExponentialCost(20, 64), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(1e2, 1.15 * Math.log2(3), true), valueScaling: new ExponentialValue(3) }),
-      new Variable({ name: "c4", cost: new ExponentialCost(1e2, 1.15 * Math.log2(5), true), valueScaling: new ExponentialValue(5) }),
-      new Variable({ name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
-    ];
     //attractor stuff
     this.bounds = [
       [
@@ -228,31 +126,36 @@ class t8Sim extends theoryClass<theory> {
       [-6, 15, 0],
     ];
     this.dts = [0.02, 0.002, 0.00014];
-    this.milestones = [0, 0, 0, 0];
-    this.x = this.defaultStates[this.milestones[0]][0];
-    this.y = this.defaultStates[this.milestones[0]][1];
-    this.z = this.defaultStates[this.milestones[0]][2];
+    this.x = this.defaultStates[0][0];
+    this.y = this.defaultStates[0][1];
+    this.z = this.defaultStates[0][2];
     this.dx = 0;
     this.dy = 0;
     this.dz = 0;
+    this.pubUnlock = 8;
+    this.milestoneUnlockSteps = 20;
+    this.milestonesMax = [2, 3, 3, 3];
+    //initialize variables
+    this.variables = [
+      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.5172)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ name: "c2", cost: new ExponentialCost(20, 64), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "c3", cost: new ExponentialCost(1e2, 1.15 * Math.log2(3), true), valueScaling: new ExponentialValue(3) }),
+      new Variable({ name: "c4", cost: new ExponentialCost(1e2, 1.15 * Math.log2(5), true), valueScaling: new ExponentialValue(5) }),
+      new Variable({ name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
+    ];
     this.msTimer = 0;
-    this.milestoneTree = this.getMilestoneTree();
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 220) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    this.trimBoughtVars();
+    return this.createResult();
   }
   tick() {
     this.dn();
@@ -300,7 +203,7 @@ class t8Sim extends theoryClass<theory> {
     const dy2Term = vc4 + l10(this.dy * this.dy);
     const dz2Term = vc5 + l10(this.dz * this.dz);
 
-    const rhodot = l10(this.dt) + this.totMult + this.variables[0].value + this.variables[1].value + add(add(dx2Term, dy2Term), dz2Term) / 2 - 2;
+    const rhodot = l10(this.dt) + this.totMult + this.variables[0].value + this.variables[1].value + add(dx2Term, dy2Term, dz2Term) / 2 - 2;
     this.rho.add(rhodot);
   }
 }

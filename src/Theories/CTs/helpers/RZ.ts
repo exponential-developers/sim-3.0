@@ -6,7 +6,7 @@ let interpolate = (t: number): number => {
     return v1 * (1 - t) + v2 * t;
 }
 
-const zeta01Table: Array<[number, number]> = [
+const zeta01Table: [number, number][] = [
     [
         -1.4603545088095868,
         0
@@ -323,8 +323,8 @@ let C = (n: number, z: number): number =>
             +.00000000000000000004 * Math.pow(z,48.0));
 }
 
-let logLookup: Array<number> = [];
-let sqrtLookup: Array<number> = [];
+let logLookup: number[] = [];
+let sqrtLookup: number[] = [];
 let terms = 0;
 
 let riemannSiegelZeta = (t: number, n: number): ComplexValue =>
@@ -360,7 +360,7 @@ let riemannSiegelZeta = (t: number, n: number): ComplexValue =>
     return [Z*Math.cos(th), -Z*Math.sin(th), Z];
 }
 
-export let zeta = (T: number, ticks: number, offGrid: boolean, cache: Array<ComplexValue>): ComplexValue =>
+export let zeta = (T: number, ticks: number, offGrid: boolean, cache: ComplexValue[]): ComplexValue =>
 {
     if (!offGrid && cache[ticks]) return cache[ticks];
     let t = Math.abs(T);
@@ -386,7 +386,6 @@ export let zeta = (T: number, ticks: number, offGrid: boolean, cache: Array<Comp
 
     if (!offGrid) cache[ticks] = z;
     return z;
-
 }
 
 // Mechanics to review:
@@ -395,8 +394,8 @@ export const c1Exp = [1, 1.14, 1.21, 1.25];
 
 // The lookup table only works before black hole is enabled in a pub, because then the time values would get misaligned.
 interface lookupsInterface {
-    zetaLookup: Array<ComplexValue>;
-    zetaDerivLookup: Array<ComplexValue>;
+    zetaLookup: ComplexValue[];
+    zetaDerivLookup: ComplexValue[];
     prevDt: number;
     prevDdt: number;
 }

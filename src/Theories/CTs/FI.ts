@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, binaryInsertionSearch, l10, subtract, toCallables } from "../../Utils/helpers";
 
 export default async function fi(data: theoryData): Promise<simResult> {
   const sim = new fiSim(data);
@@ -12,7 +12,7 @@ export default async function fi(data: theoryData): Promise<simResult> {
 }
 
 const factoriallogs = [0];
-for (let i = 1; i<9; i++) {
+for (let i = 1; i < 9; i++) {
   factoriallogs.push(l10(i) + factoriallogs[i-1]);
 }
 
@@ -29,8 +29,9 @@ class fiSim extends theoryClass<theory> {
   msstate: number;
   msq: number;
 
-  getBuyingConditions() {
-    let activeStrat = [
+  getBuyingConditions(): conditionFunction[] {
+    const idleStrat = new Array(6).fill(true);
+    const activeStrat = [
       true, //tdot - 0
       //q1 mod 23
       () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < this.variables[2].cost, //q1 - 1
@@ -40,7 +41,7 @@ class fiSim extends theoryClass<theory> {
       //n mod 11 - 5
       () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < this.variables[4].cost //n - 5
     ]
-    let activeStrat2 = [
+    const activeStrat2 = [
       true, //tdot - 0
       //q1 mod 23
       () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost), //q1 - 1
@@ -50,73 +51,70 @@ class fiSim extends theoryClass<theory> {
       //n mod 11 - 5
       () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost, this.variables[4].cost) //n - 5
     ]
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
-      FI: new Array(6).fill(true),
-      // ["tdot", "q1", "q2", "k", "m", "n"]
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+      FI: idleStrat,
       FId: activeStrat2,
-      FIPermaSwap: new Array(6).fill(true),
+      FIPermaSwap: idleStrat,
       FIdPermaSwap: activeStrat2,
-      FIMS: new Array(6).fill(true),
-      // ["tdot", "q1", "q2", "k", "m", "n"]
+      FIMS: idleStrat,
       FIMSd: activeStrat2,
-      FIMSPermaSwap: new Array(6).fill(true),
+      FIMSPermaSwap: idleStrat,
       FIMSdPermaSwap: activeStrat2
     };
-    return conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => this.variables[0].level < 4,
       () => true,
       () => true,
-      () => Math.max(this.maxRho, this.lastPub) > 20,
       () => this.milestones[1] > 0,
-      () => this.milestones[2] > 0,
+      () => this.milestones[3] > 0,
+      () => this.milestones[4] > 0,
     ];
     return conditions;
   }
 
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 0.1625);
   }
-  updateMilestones() {
-    //q1 m n fx lambda
-    let avaliable = [3, 1, 1, 0, 0];
-    const unlock = [[Infinity], [Infinity], [Infinity], [100, 450, 1050], [350, 750]];
-    const pointUnlocks = [30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
-    //20 70 fx 210 300 lambda 425 fx 530 700 lambda 800 950 fx 1150
+  getMilestonePriority(): number[] {
+    const rho = Math.max(this.maxRho, this.lastPub);
+    const total_points = binaryInsertionSearch(this.milestoneUnlocks, rho);
 
-    const maxVal = Math.max(this.lastPub, this.maxRho);
-    for (let i = 0; i < avaliable.length; i++) {
-      for (let j = 0; j < unlock[i].length; j++) if (maxVal >= unlock[i][j]) avaliable[i]++;
-    }
-    let points = 0;
-    for (let i = 0; i < pointUnlocks.length; i++) if (maxVal > pointUnlocks[i]) points++;
+    let available_fx = binaryInsertionSearch([100, 450, 1050], rho);
+    const avaliable_lambda = binaryInsertionSearch([350, 750], rho);
+    const use_fx_level3 = this.strat.includes("PermaSwap") ? this.maxRho >= 1076 : rho >= 1150;
+    if (!use_fx_level3) available_fx = Math.min(available_fx, 2);
+    this.milestonesMax = [1, 1, 3, 1, 1, available_fx, avaliable_lambda];
 
-    let fx;
-
-    if (this.strat.includes("PermaSwap")) {
-      fx = Math.min(avaliable[3], points, maxVal > 1050 ? 3 : 2);
-      if (this.maxRho < 1076 && fx == 3) {
-        fx -= 1;
+    const q1mn_points = total_points - (2 + available_fx + avaliable_lambda);
+    const q1m23 = this.variables[1].level % 23;
+    const qf = q1m23 < 5 ? 4 : q1m23 < 10 ? 3 : q1m23 < 20 ? 2.5 : 2;
+    const qpriority = [0, 1, 5, 6, 2, 3, 4];
+    const rhopriority = [0, 1, 5, 6, 3, 4, 2];
+    if (this.strat.includes("MS") && q1mn_points > 0 && q1mn_points < 5 && this.msstate > 0) {
+      if (this.msstate == 1) // start q build
+      {
+        this.msstate = 2;
+        this.msq = this.q;
+        return qpriority;
+      }
+      else if (this.msstate == 2 && this.msq + l10(qf) < this.q) // end q build
+      {
+        this.msstate = 0;
+        return rhopriority;
+      }
+      else { // continue q build
+        return qpriority;
       }
     }
-    else {
-      fx = Math.min(avaliable[3], points, maxVal >= 1150 ? 3 : 2);
-    }
-
-    points -= fx;
-
-    if(this.strat.includes("PermaSwap")) {
-      // Swap back.
-      if (this.maxFx === 3 && this.maxRho < 1074) {
-        this.variables[2].data.cost = new ExponentialCost(1e-10, 2.27e3);
-        this.variables[2].reset();
-        this.q = 0;
-        this.maxFx = fx;
-      }
-    }
-
+    return rhopriority;
+  }
+  updateMilestones(): void {
+    super.updateMilestones();
+    const fx = this.milestones[5];
+    const lambda = this.milestones[6];
     if (fx > this.maxFx) {
       if (fx === 1) {
         this.variables[2].data.cost = new ExponentialCost(1e7, 3e3);
@@ -127,93 +125,33 @@ class fiSim extends theoryClass<theory> {
         this.variables[2].reset();
         this.q = 0;
       } else if (fx === 3) {
-        if(this.strat.includes("PermaSwap") || this.maxFx < 2) {
-          this.variables[2].data.cost = new ExponentialCost(1e95, 1.08e3);
-          this.variables[2].reset();
-          this.q = 0;
-        }
+        this.variables[2].data.cost = new ExponentialCost(1e95, 1.08e3);
+        this.variables[2].reset();
+        this.q = 0;
+        this.msq = 0;
       }
       this.maxFx = fx;
     }
-
-    let lambda_base = Math.min(avaliable[4], points);
-    points -= lambda_base;
-
-    if (lambda_base > this.maxLambda) {
-      if (lambda_base === 1) {
+    if (lambda > this.maxLambda) {
+      if (lambda === 1) {
         this.variables[3].data.cost = new ExponentialCost(1e-5, 37);
         this.variables[3].reset();
-      } else if (lambda_base === 2) {
+      } else if (lambda === 2) {
         this.variables[3].data.cost = new ExponentialCost(1e-10, 95);
         this.variables[3].reset();
       }
-      this.maxLambda = lambda_base;
+      this.maxLambda = lambda;
     }
-
-    let qf, q1m23, q1exp, mterm, nterm;
-    q1m23 = this.variables[1].level % 23;
-    qf = q1m23 < 5 ? 4 : q1m23 < 10 ? 3 : q1m23 < 20 ? 2.5 : 2;
-
-    if (this.strat.includes("MS") && points > 0 && points < 5 && this.msstate > 0)
-    {
-      if (this.msstate == 1) // start q build
-      {
-        q1exp = Math.min(avaliable[0], points);
-        points -= q1exp;
-        mterm = Math.min(avaliable[1], points);
-        points -= mterm;
-        nterm = Math.min(avaliable[2], points);
-        points -= nterm;
-
-        this.msstate = 2;
-        this.msq = this.q;
-      }
-      else if (this.msstate == 2 && this.msq + l10(qf) < this.q) // end q build
-      {
-        mterm = Math.min(avaliable[1], points);
-        points -= mterm;
-
-        nterm = Math.min(avaliable[2], points);
-        points -= nterm;
-
-        q1exp = Math.min(avaliable[0], points);
-        points -= q1exp;
-
-        this.msstate = 0;
-      }
-      else { // continue q build
-        q1exp = Math.min(avaliable[0], points);
-        points -= q1exp;
-        mterm = Math.min(avaliable[1], points);
-        points -= mterm;
-        nterm = Math.min(avaliable[2], points);
-        points -= nterm;
-      }
-    }
-    else // no MS
-    {
-      mterm = Math.min(avaliable[1], points);
-      points -= mterm;
-
-      nterm = Math.min(avaliable[2], points);
-      points -= nterm;
-
-      q1exp = Math.min(avaliable[0], points);
-      points -= q1exp;
-    }
-    
-
-    this.milestones = [q1exp, mterm, nterm, fx, lambda_base];
   }
 
-  fact(num: number) {
+  fact(num: number): number {
     if (num >= factoriallogs.length) {
       throw "Error in fact().";
     }
     return factoriallogs[num];
   }
   norm_int(limit: number): number {
-    switch (this.milestones[3]) {
+    switch (this.milestones[5]) {
       case 0:
         return this.approxCos(limit);
       case 1:
@@ -227,52 +165,42 @@ class fiSim extends theoryClass<theory> {
     }
   }
 
-  approx(k_v: number, base: number) {
+  approx(k_v: number, base: number): number {
     return -this.norm_int(l10(Math.PI)) - 1 / (Math.E + 1.519) + k_v * l10(base);
   }
 
-  approxEX(limit: number) {
+  approxEX(limit: number): number {
     return add(
-      add(
-        add(add(add(limit * 6 - this.fact(6), limit * 5 - this.fact(5)), limit * 4 - this.fact(4)), limit * 3 - this.fact(3)),
-        limit * 2 - this.fact(2)
-      ),
-      limit
+        limit * 6 - this.fact(6), limit * 5 - this.fact(5), limit * 4 - this.fact(4), limit * 3 - this.fact(3),
+        limit * 2 - this.fact(2), limit
     );
   }
 
-  approxSin(limit: number) {
+  approxSin(limit: number): number {
     let positives = add(limit * 2 - this.fact(2), limit * 6 - this.fact(6));
     let negatives = limit * 4 - this.fact(4);
     return subtract(positives, negatives);
   }
 
-  approxCos(limit: number) {
+  approxCos(limit: number): number {
     let positives = add(limit, limit * 5 - this.fact(5));
     let negatives = limit * 3 - this.fact(3);
     return subtract(positives, negatives);
   }
 
-  approxL10(limit: number) {
-    let positives = add(limit * 2 - l10(2), add(limit * 4 - l10(12), limit * 6 - l10(30)));
+  approxL10(limit: number): number {
+    let positives = add(limit * 2 - l10(2), limit * 4 - l10(12), limit * 6 - l10(30));
     let negatives = add(limit * 3 - l10(6), limit * 5 - l10(20));
     return subtract(positives, negatives) - l10(Math.log(10));
   }
 
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 8;
     this.q = 0;
     this.r = 0;
     this.tval = 0;
-
-    this.maxFx = 0;
-    this.maxLambda = 0;
-
-    this.msstate = 0;
-    this.msq = 0;
-
-    //initialize variables
+    this.pubUnlock = 8;
+    this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.variables = [
       new Variable({ name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "q1",   cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
@@ -282,41 +210,41 @@ class fiSim extends theoryClass<theory> {
       new Variable({ name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
     ];
     this.variables[5].buy();
+
+    this.maxFx = 0;
+    this.maxLambda = 0;
+    this.msstate = 0;
+    this.msq = 0;
+
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    this.trimBoughtVars();
+    return this.createResult();
   }
   tick() {
-    let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[0]);
-    let vden = this.approx(this.variables[3].value, 2 + this.milestones[4]);
+    let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[2]);
+    let vden = this.approx(this.variables[3].value, 2 + this.milestones[6]);
 
     this.tval += ((this.variables[0].value + 1) / 5) * this.dt;
     this.q = add(this.q, vq1 + this.variables[2].value + l10(this.dt));
     this.r = add(this.r, vden + l10(this.dt));
 
-    const vm = this.milestones[1] ? this.variables[4].value : 0;
-    const vn = this.milestones[2] ? this.variables[5].value : 0;
+    const integral = (this.milestones[0] 
+      ? this.norm_int(this.q - (this.milestones[5] < 3 ? l10(Math.PI) : 0)) 
+      : this.q - l10(Math.PI)) 
+      * (1 / Math.PI);
+    const vm = this.milestones[3] ? this.variables[4].value : 0;
+    const vn = this.milestones[4] ? this.variables[5].value : 0;
 
-    let rhodot =
-      l10(this.tval) +
-      (Math.max(this.maxRho, this.lastPub) >= 10 ? this.norm_int(this.q - (this.milestones[3] < 3 ? l10(Math.PI) : 0)) : this.q - l10(Math.PI)) *
-        (1 / Math.PI) +
-      this.r +
-      vm +
-      vn;
+    let rhodot = l10(this.tval) + integral + this.r + vm + vn;
 
     this.rho.add(this.totMult + rhodot + l10(this.dt));
   }

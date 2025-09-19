@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, sleep } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import { ExponentialCost } from "../../Utils/cost.js";
-import theoryClass from "../theory.js";
+import { ExponentialCost } from "../../Utils/cost";
+import { add, l10, toCallables } from "../../Utils/helpers";
 
 export default async function tc(data: theoryData): Promise<simResult> {
   const sim = new tcSim(data);
@@ -22,7 +22,7 @@ class tcSim extends theoryClass<theory> {
 
   // System parameters
   systemDt: number;
-  error: Array<number>;
+  error: [number, number];
   timer: number;
   integral: number;
   amplitude: number;
@@ -33,8 +33,8 @@ class tcSim extends theoryClass<theory> {
   T: number;
   setPoint: number;
 
-  getBuyingConditions() {
-    const conditions = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       TC: new Array(11).fill(true),
       TCd: [
         true, 
@@ -42,11 +42,10 @@ class tcSim extends theoryClass<theory> {
         ...new Array(9).fill(true)
       ]
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
 
-  getVariableAvailability() {
+  getVariableAvailability(): conditionFunction[] {
     return [
       () => true, // c1
       () => true, // r1
@@ -62,17 +61,8 @@ class tcSim extends theoryClass<theory> {
     ];
   }
 
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.2 - l10(2));
-  }
-
-  updateMilestones() {
-    let stage = 0;
-    const points = [10, 50, 100, 400, 420, 440, 950, 1150];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
 
   recomputeC1Base() {
@@ -82,7 +72,7 @@ class tcSim extends theoryClass<theory> {
     }
   }
 
-  getPidValues(strat: string) {
+  getPidValues(strat: string): [number, number, number, number] {
     switch (strat) {
       case "TC":
       case "TCd":
@@ -92,7 +82,7 @@ class tcSim extends theoryClass<theory> {
     }
   }
 
-  getAutomationSettings(strat: string) {
+  getAutomationSettings(strat: string): [number, number] {
     switch (strat) {
       case "TC":
       case "TCd":
@@ -102,26 +92,9 @@ class tcSim extends theoryClass<theory> {
     }
   }
 
-  getMilestoneTree() {
-    // [autokick, ki, kd, rexp, c2, Pformula]
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0, 0], 
-      [1, 0, 0, 0, 0, 0], // Automation
-      [1, 1, 0, 0, 0, 0], // ki unlock
-      [1, 1, 1, 0, 0, 0], // kd unlock
-      [1, 1, 1, 1, 0, 0], // r1 exponent
-      [1, 1, 1, 2, 0, 0], 
-      [1, 1, 1, 2, 1, 0], // c2
-      [1, 1, 1, 2, 1, 1], // P formula
-      [1, 1, 1, 2, 1, 2] // P formula
-    ];
-    const tree = {
-      TC: globalOptimalRoute,
-      TCd: globalOptimalRoute
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4, 5];
   }
-
   constructor(data: theoryData) {
     super(data);
     this.totMult = this.getTotMult(data.rho);
@@ -158,7 +131,8 @@ class tcSim extends theoryClass<theory> {
       new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
       new Variable({ name: "c1base", cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
     ];
-    this.milestoneTree = this.getMilestoneTree();
+    this.milestoneUnlocks = [10, 50, 100, 400, 420, 440, 950, 1150];
+    this.milestonesMax = [1, 1, 1, 2, 1, 2];
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);
     for (let i=7; i<11; i++) {
@@ -170,21 +144,16 @@ class tcSim extends theoryClass<theory> {
     this.updateMilestones();
   }
 
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
-      if ((this.ticks + 1) % 500000 === 0) await sleep();
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 500) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = Math.pow(10, this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-    
-    return result;
+    this.trimBoughtVars();
+    return this.createResult();
   }
 
   tick() {
@@ -243,11 +212,11 @@ class tcSim extends theoryClass<theory> {
     const mrexp = this.milestones[3];
     this.rho.add(
       this.P +
-        this.r * (1 + mrexp * 0.001) +
-        (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
-        l10(this.dt) +
-        this.totMult +
-        l10(this.achievementMulti)
+      this.r * (1 + mrexp * 0.001) +
+      (vc1 + vc2 + l10(dT) * (2 + this.variables[4].value)) / 2 +
+      l10(this.dt) +
+      this.totMult +
+      l10(this.achievementMulti)
     );
   }
   onVariablePurchased(id: number): void {
