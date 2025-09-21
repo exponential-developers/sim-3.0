@@ -1,50 +1,120 @@
-import Variable from "../Utils/variable";
-import { global } from "../Sim/main.js";
-import jsonData from "../Data/data.json";
+import { global } from "../Sim/main";
 import Currency from "../Utils/currency";
+import Variable from "../Utils/variable";
+import { binaryInsertionSearch, convertTime, formatNumber, logToExp } from "../Utils/helpers";
+import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
-export default abstract class theoryClass<theory extends theoryType, milestoneType = Array<number>> {
+export default abstract class theoryClass<theory extends theoryType> {
+  /** Array of buying conditions for each variable */
   buyingConditions: conditionFunction[];
+  /** Array of variable availability for each variable */
   variableAvailability: conditionFunction[];
-  milestoneTree: Array<milestoneType>;
+  /** Current strategy */
   strat: stratType[theory];
+  /** Theory */
   theory: theoryType;
+  /** tau/rho conversion rate */
   tauFactor: number;
-  //theory
-  pubUnlock: number;
-  cap: number;
-  recovery: { value: number; time: number; recoveryTime: boolean };
-  lastPub: number;
-  sigma: number;
-  totMult: number;
-  curMult: number;
-  dt: number;
-  ddt: number;
-  t: number;
-  ticks: number;
-  //currencies
-  rho: Currency;
-  maxRho: number;
-  //initialize variables
-  variables: Array<Variable>;
-  boughtVars: Array<varBuy>;
-  //pub values
-  tauH: number;
-  maxTauH: number;
-  pubT: number;
-  pubRho: number;
-  //pub conditions
-  forcedPubConditions: Array<conditionFunction>;
-  pubConditions: Array<conditionFunction>;
-  simEndConditions: Array<conditionFunction>;
-  doSimEndConditions: conditionFunction;
-  //milestones  [terms, c1exp, multQdot]
-  milestones: milestoneType;
-  pubMulti: number;
 
+  // Theory
+  /** rho at which publications are unlocked */
+  pubUnlock: number;
+  /** cap at which simulation will stop */
+  cap: number;
+  /** recovery data */
+  recovery: { value: number; time: number; recoveryTime: boolean };
+  /** rho of the last publication */
+  lastPub: number;
+  /** number of students */
+  sigma: number;
+  /** current total multiplier */
+  totMult: number;
+  /** current publication multiplier increase for the next pub */
+  curMult: number;
+  /** tick length */
+  dt: number;
+  /** tick growth speed */
+  ddt: number;
+  /** real elapsed time of the publication */
+  t: number;
+  /** number of elapsed ticks */
+  ticks: number;
+
+  // Currencies
+  /** Main currency of the theory */
+  rho: Currency;
+  /** max value of rho for this publication */
+  maxRho: number;
+
+  // Variables
+  /** List of variables */
+  variables: Variable[];
+  /** List of recorded variable purchases */
+  boughtVars: varBuy[];
+
+  // Publication values
+  /** Average tau/hr gain at this point in the publication (can be negative) */
+  tauH: number;
+  /** Maximum tau/hr gain in the publication (can be negative) */
+  maxTauH: number;
+  /** final publication time */
+  pubT: number;
+  /** final rho of the publication */
+  pubRho: number;
+
+  // Publication conditions
+  /** 
+   * Prevents the sim from publishing if one of these conditions is not satisfied
+   */
+  forcedPubConditions: conditionFunction[];
+  /** 
+   * If one of these conditions is reached, the publication ends at that point
+   */
+  pubConditions: conditionFunction[];
+  /**
+   * If one of these conditions is reached, the simulation ends
+   * and the publication point is set at the last peak of tau/hr
+   */
+  simEndConditions: conditionFunction[];
+  /**
+   * Determines if `simEndConditions` are checked
+   */
+  doSimEndConditions: conditionFunction;
+
+  // Milestones
+  /** Level of each milestone */
+  milestones: number[];
+  /** Maximum level for each milestone */
+  milestonesMax: number[];
+  /** 
+   * Milestone unlock points 
+   * 
+   * This is overwritten if `milestoneUnlockSteps` is set
+   * */
+  milestoneUnlocks: number[];
+  /** 
+   * Steps of rho at which milestones are unlocked
+   * 
+   * Takes priority over `milestoneUnlocks`
+   */
+  milestoneUnlockSteps: number;
+
+  /** 
+   * Returns the buying conditions for each variable.
+   * 
+   * This is only called once during the simulation.
+   * */
   abstract getBuyingConditions(): conditionFunction[];
+  /**
+   * Returns the variable availability of each variable.
+   * 
+   * This is only called once during the simulation.
+   */
   abstract getVariableAvailability(): conditionFunction[];
+  /**
+   * Returns the total multiplier for a given rho value
+   */
   abstract getTotMult(val: number): number;
 
   constructor(data: theoryData) {
@@ -85,13 +155,44 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     this.simEndConditions = [() => this.t > this.pubT * 2];
     this.doSimEndConditions = () => true;
 
-    this.milestones = [] as unknown as milestoneType;
-    this.pubMulti = 0;
+    this.milestones = [];
+    this.milestonesMax = [];
+    this.milestoneUnlocks = [];
+    this.milestoneUnlockSteps = -1;
+
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
-    this.milestoneTree = [] as unknown as Array<milestoneType>;
   }
 
+  /**
+   * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
+   * It does not need to feature all milestones.
+   * 
+   * This is called each time `updateMilestones` is called.
+   */
+  abstract getMilestonePriority(): number[];
+
+  /**
+   * Updates milestones
+   */
+  updateMilestones(): void {
+    const rho = Math.max(this.maxRho, this.lastPub);
+    const priority = this.getMilestonePriority();
+    let milestoneCount = this.milestoneUnlockSteps > 0 
+      ? Math.floor(rho / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.milestones = new Array(this.milestonesMax.length).fill(0);
+    for (let i = 0; i < priority.length; i++) {
+        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+            this.milestones[priority[i]]++;
+            milestoneCount--;
+        }
+    }
+  }
+
+  /**
+   * Copies the base attributes from `other`
+   */
   copyFrom(other: this): void {
     this.cap = other.cap;
     this.totMult = other.totMult;
@@ -109,10 +210,9 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     this.maxTauH = other.maxTauH;
     this.pubT = other.pubT;
     this.pubRho = other.pubRho;
-    
-    this.pubMulti = other.pubMulti;
   }
 
+  /** Returns the theoryData needed to create a copy */
   getDataForCopy(): theoryData {
     return {
       theory: this.theory,
@@ -137,15 +237,25 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     return this.simEndConditions.some((cond) => cond())
   }
 
+  /**
+   * Evaluates the publication/sim end conditions to determine if the simulation loop should end or not
+   * @returns true if it will break out of the simulation loop
+   */
   endSimulation(): boolean {
     return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() || (this.doSimEndConditions() && this.evaluateSimEndConditions()));
   }
 
+  /**
+   * Updates `t` and `dt`
+   */
   updateT() {
     this.t += this.dt / 1.5;
     this.dt *= this.ddt;
   }
 
+  /**
+   * Updates several sim status parameters
+   */
   updateSimStatus() {
     if (this.rho.value > this.maxRho) this.maxRho = this.rho.value;
     this.updateT();
@@ -159,14 +269,31 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     }
     
     this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
+    this.ticks++;
   }
 
+  /**
+   * Runs each time a variable is purchased
+   * @param id id of the purchased variable
+   */
   onVariablePurchased(id: number) {}
 
+  /**
+   * Runs once per tick if a variable was bought
+   */
   onAnyVariablePurchased() {}
 
+  /**
+   * Extra buying condition if needed.
+   * @param id id of the variable to be purchased
+   */
   extraBuyingCondition(id: number): boolean {return true;};
 
+  /** 
+   * Buys variables. 
+   * 
+   * Variables are bought from the end of the variable list.
+   * */
   buyVariables() {
     let bought = false;
     for (let i = this.variables.length - 1; i >= 0; i--) {
@@ -192,8 +319,18 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     if (bought) this.onAnyVariablePurchased();
   }
 
+  /**
+   * Returns the weights for the costs when using `buyVariablesWeight`.
+   * 
+   * This function is called each time `buyVariablesWeight` is ran.
+   */
   getVariableWeights?(): number[];
 
+  /**
+   * Buys variables using a weighted cost algorithm.
+   * 
+   * The weight of the cost of each variable must be defined by `getVariableWeights`.
+   */
   buyVariablesWeight() {
     if (!this.getVariableWeights) throw "Cannot use buyVariabllesWeight if getVariableWeights is undefined";
     while (true) {
@@ -219,9 +356,14 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
     }
   }
 
+  /**
+   * @deprecated This behavior will be changed in a future sim update
+   */
   async confirmPurchase?(id: number): Promise<boolean>;
 
-  // Change this at some point (maybe in the Web Workers update)
+  /**
+   * @deprecated This behavior will be changed in a future sim update
+   */
   async buyVariablesFork() {
     if (!this.confirmPurchase) throw "Cannot use buyVariablesFork if confirmPurchase is undefined";
     let bought = false;
@@ -248,5 +390,35 @@ export default abstract class theoryClass<theory extends theoryType, milestoneTy
       }
     }
     if (bought) this.onAnyVariablePurchased();
+  }
+
+  /**
+   * Removes the variable purchases that occured after the publication point
+   */
+  trimBoughtVars() {
+    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+  }
+
+  /**
+   * Creates a sim result from the sim class
+   * @param stratExtra Extra string to append to the "strat" column
+   */
+  createResult(stratExtra: string = ""): simResult {
+    return {
+      theory: this.theory,
+      sigma: this.sigma,
+      lastPub: logToExp(this.lastPub, 2),
+      pubRho: logToExp(this.pubRho, 2),
+      deltaTau: logToExp((this.pubRho - this.lastPub) * this.tauFactor, 2),
+      pubMulti: formatNumber(10 ** (this.getTotMult(this.pubRho) - this.totMult)),
+      strat: this.strat as String + stratExtra,
+      tauH: this.maxTauH === 0 ? 0 : Number(formatNumber(this.maxTauH)),
+      time: convertTime(Math.max(0, this.pubT - this.recovery.time)),
+      rawData: {
+        pubRho: this.pubRho,
+        time: this.recovery.recoveryTime ? this.recovery.time : Math.max(0, this.pubT - this.recovery.time)
+      },
+      boughtVars: this.boughtVars
+    }
   }
 }

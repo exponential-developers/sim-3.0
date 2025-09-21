@@ -1,44 +1,57 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 
+/** Raises an exception */
 const raise = (err: string) => {
   throw new Error(err);
 };
+/** Alias of document.querySelector */
 export const qs = <T extends HTMLElement>(name: string) => document.querySelector<T>(name) ?? raise(`HtmlElement ${name} not found.`);
+/** Alias of document.querySelectorAll */
 export const qsa = <T extends HTMLElement>(name: string) => document.querySelectorAll<T>(name);
+/** Alias of document.createElement */
 export const ce = <T extends HTMLElement>(type: string) => (document.createElement(type) as T) ?? raise(`HtmlElement ${type} could not be created.`);
-
+/** Adds an event listener to `element` */
 export const event = <T>(element: HTMLElement, eventType: string, callback: (e: T) => void) => element.addEventListener(eventType, (e) => callback(e as T));
 
-export function findIndex(arr: Array<string | number | boolean>, val: string | number | boolean) {
+/** Returns the index of the first occurrence of `val` in `arr`, or -1 if not found */
+export function findIndex<T>(arr: T[], val: T): number {
   for (let i = 0; i < arr.length; i++) if (val === arr[i]) return i;
   return -1;
 }
+/** Sleeps the given number of seconds */
 export function sleep(time = 0) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+/** Alias of Math.log10 */
 export let l10 = Math.log10;
+/** Alias of Math.log2 */
 export let l2 = Math.log2;
 
-export function getIndexFromTheory(theory: string) {
-  return theory in Object.keys(jsonData.theories);
+/** Returns the index matching the theory */
+export function getIndexFromTheory(theory: string): number {
+  return findIndex(Object.keys(jsonData.theories), theory);
 }
-export function getTheoryFromIndex(index: number) {
+/** Returns the theory matching the index */
+export function getTheoryFromIndex(index: number): theoryType {
   return Object.keys(jsonData.theories)[index] as theoryType;
 }
 
+/** Parses a value of the form x.xex to a log10 value */
 export function parseLog10String(num: string): number {
-  const split = String(num).split("e");
+  const split = num.split("e");
   const result = Number(split[1]) + l10(Math.max(1, Number(split[0])));
-  return Number(result);
+  return result;
 }
 
+/** Formats a log10 value as a string */
 export function logToExp(num: number, dec = 3): string {
-  const wholePart: number = Math.floor(num);
-  const fractionalPart: number = num - wholePart;
-  const frac1: number = round(10 ** fractionalPart, dec);
+  const wholePart = Math.floor(num);
+  const fractionalPart = num - wholePart;
+  const frac1 = round(10 ** fractionalPart, dec);
   return (frac1 >= 10 ? frac1 / 10 : frac1) + "e" + (frac1 >= 10 ? wholePart + 1 : wholePart);
 }
+/** Returns a time string for the given number of seconds */
 export function convertTime(secs: number): string {
   const mins = Math.floor((secs / 60) % 60);
   const hrs = Math.floor((secs / 3600) % 24);
@@ -54,15 +67,31 @@ export function convertTime(secs: number): string {
   if (years === 0) result += (mins < 10 ? "0" : "") + mins + "m";
   return result;
 }
+
+/** 
+ * Formats a number to the given precision 
+ * 
+ * This function removes the `+` in the scientific form
+ * */
 export function formatNumber(value: number, precision = 6): string {
   return value.toPrecision(precision).replace(/[+]/, "");
 }
 
+/** Rounds `number` to `decimals` decimals */
 export function round(number: number, decimals: number): number {
   return Math.round(number * 10 ** decimals) / 10 ** decimals;
 }
 
-export function add_old(value1: number, value2: number) {
+/** Converts an element to a function with no parameter returning this element, if it is not already a function */
+export function toCallable<T>(val: T | (() => T)): () => T {
+  return typeof val === "function" ? (val as () => T) : () => val;
+}
+/** Converts all elements in an array to a function with no parameter returning this element, if it is not already a function */
+export function toCallables<T>(arr: (T | (() => T))[]): (() => T)[] {
+  return arr.map((val) => toCallable(val));
+}
+
+export function add_old(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   const wholePart1 = Math.floor(max);
@@ -72,13 +101,30 @@ export function add_old(value1: number, value2: number) {
   return wholePart1 + l10(fractionalPart1 + fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
-export function add(value1: number, value2: number) {
+/** Adds two log10 values 
+ * @returns the result as a log10 value
+*/
+export function add2(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 + 10**(min-max)) : max;
 }
 
-export function subtract_old(value1: number, value2: number) {
+/** Adds multiple log10 values 
+ * @returns the result as a log10 value
+*/
+export function add(...values: number[]): number {
+  if (values.length === 0) return -Infinity;
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return add2(values[0], values[1]);
+  let sum = add2(values[0], values[1]);
+  for (let i = 2; i < values.length; i++) {
+    sum = add2(sum, values[i]);
+  }
+  return sum;
+}
+
+export function subtract_old(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   const wholePart1 = Math.floor(max);
@@ -88,14 +134,24 @@ export function subtract_old(value1: number, value2: number) {
   return wholePart1 + l10(fractionalPart1 - fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
-export function subtract(value1: number, value2: number) {
+/** Subtracts two log10 values
+ * @returns the result as a log10 value
+ */
+export function subtract(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
 }
 
-//written by propfeds
-export function binarySearch(arr: Array<number>, target: number) {
+/**
+ * Returns the index `target` would have if inserted in `arr`
+ * 
+ * This is equivalent to count how many elements in `arr` are strictly lower than `target`
+ * @param arr Number array sorted in increasing order with no repetitions
+ * @param target Target number
+ */
+export function binaryInsertionSearch(arr: number[], target: number): number {
+  if (target < arr[0]) return 0;
   let l = 0;
   let r = arr.length - 1;
   while (l < r) {
@@ -103,39 +159,7 @@ export function binarySearch(arr: Array<number>, target: number) {
     if (arr[m] <= target) l = m;
     else r = m - 1;
   }
-  return l;
-}
-
-interface simResultInterface {
-  sigma: number;
-  pubRho: number;
-  pubMulti: number;
-  lastPub: number;
-  recovery: { value: number; time: number; recoveryTime: boolean };
-  pubT: number;
-  strat: string;
-  maxTauH: number;
-  theory: theoryType;
-  boughtVars: Array<varBuy>;
-}
-
-export function createResult(data: simResultInterface, stratExtra: null | string): simResult {
-  return {
-    theory: data.theory,
-    sigma: data.sigma,
-    lastPub: logToExp(data.lastPub, 2),
-    pubRho: logToExp(data.pubRho, 2),
-    deltaTau: logToExp((data.pubRho - data.lastPub) * jsonData.theories[data.theory].tauFactor, 2),
-    pubMulti: formatNumber(data.pubMulti),
-    strat: data.strat + stratExtra,
-    tauH: data.maxTauH === 0 ? 0 : Number(formatNumber(data.maxTauH)),
-    time: convertTime(Math.max(0, data.pubT - data.recovery.time)),
-    rawData : {
-      pubRho: data.pubRho,
-      time: data.recovery.recoveryTime ? data.recovery.time : Math.max(0, data.pubT - data.recovery.time)
-    },
-    boughtVars: data.boughtVars
-  }
+  return l + 1;
 }
 
 export function resultIsSimResult(result: generalResult): result is simResult {
@@ -150,6 +174,7 @@ export function resultIsCombinedResult(result: generalResult): result is combine
   return Array.isArray(result);
 }
 
+/** Returns a default simResult */
 export function defaultResult(): simResult {
   return {
       theory: "",
@@ -166,6 +191,12 @@ export function defaultResult(): simResult {
     };
 }
 
+/**
+ * Return the result with the highest tau/hr.
+ * 
+ * If one result is null, returns the other result.
+ * If both results are null, returns the default result.
+ */
 export function getBestResult(res1: simResult | null, res2: simResult | null): simResult {
   if (res1 == null && res2 != null) {
     return res2;
@@ -185,7 +216,7 @@ export function getBestResult(res1: simResult | null, res2: simResult | null): s
  * @param arr The variable buy list
  * @returns The last level bought of the variable, or 0 if the variable was not found
  */
-export function getLastLevel(variable: string, arr:Array<varBuy>): number {
+export function getLastLevel(variable: string, arr: varBuy[]): number {
   for (let i = arr.length - 1; i >= 0; i--) {
     if (arr[i].variable == variable) {
       return arr[i].level;

@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, getBestResult } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
+import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
-import theoryClass from "../theory.js";
-import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function fp(data: theoryData): Promise<simResult> {
   const sim = new fpSim(data);
@@ -40,19 +40,9 @@ const stepwiseSum = (level: number, base: number, length: number) => {
   return base * (cycles + 1) * ((length * cycles) / 2 + mod) + length + level;
 };
 
-interface milestones {
-  snexp: number;
-  fractals: number;
-  nboost: number;
-  snboost: number;
-  sterm: number;
-  expterm: number;
-}
-
 type pubTable = {[key: string]: number};
 
-class fpSim extends theoryClass<theory, milestones> {
-  milestones: milestones;
+class fpSim extends theoryClass<theory> {
   // growing variables
   q: number;
   r: number;
@@ -65,12 +55,12 @@ class fpSim extends theoryClass<theory, milestones> {
   updateN_flag: boolean;
   // pub tables and coasting
   forcedPubRho: number;
-  coasting: Array<boolean>;
+  coasting: boolean[];
   bestRes: simResult | null;
   doContinuityFork: boolean;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FP: new Array(8).fill(true),
       FPcoast: new Array(8).fill(true),
       FPdMS: [
@@ -88,15 +78,15 @@ class fpSim extends theoryClass<theory, milestones> {
                 levelMinusMod + mod100 + 1,
                 levelMinusMod + 101
             )
-            if(totalCost < this.variables[2].cost + 0.1 && (this.milestones.sterm == 0 || totalCost < this.variables[7].cost)) {
+            if(totalCost < this.variables[2].cost + 0.1 && (this.milestones[4] == 0 || totalCost < this.variables[7].cost)) {
               return true;
             }
           }
           return (this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[2].cost) &&
-              (this.milestones.sterm == 0 || this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[7].cost)
+              (this.milestones[4] == 0 || this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[7].cost)
         }, // c1 - 1
         () => {
-          if(this.milestones.sterm == 0) return true;
+          if(this.milestones[4] == 0) return true;
           // s:
           return this.variables[2].cost + 0.1 < this.variables[7].cost;
         }, //c2 - 2
@@ -109,7 +99,7 @@ class fpSim extends theoryClass<theory, milestones> {
         () => {
           let cond1 = true; //this.variables[4].cost + 0.05 < this.variables[2].cost;
           let cond2 = true;
-          if(this.milestones.sterm != 0) {
+          if(this.milestones[4] != 0) {
             cond2 = this.variables[4].cost + 0.1 < this.variables[7].cost;
           }
           return cond1 && cond2;
@@ -121,62 +111,28 @@ class fpSim extends theoryClass<theory, milestones> {
         true, //s - 7
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => this.variables[0].level < 4,
       () => true,
       () => true,
-      () => this.milestones.fractals > 0,
-      () => this.milestones.fractals > 0,
-      () => this.milestones.fractals > 1,
+      () => this.milestones[0] > 0,
+      () => this.milestones[0] > 0,
+      () => this.milestones[0] > 1,
       () => true,
-      () => this.milestones.sterm > 0,
+      () => this.milestones[4] > 0,
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      { snexp: 0, fractals: 0, nboost: 0, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 0, fractals: 1, nboost: 0, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 0, fractals: 2, nboost: 0, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 0, fractals: 2, nboost: 1, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 0, fractals: 2, nboost: 2, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 1, fractals: 2, nboost: 2, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 2, fractals: 2, nboost: 2, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 3, fractals: 2, nboost: 2, snboost: 0, sterm: 0, expterm: 0 },
-      { snexp: 3, fractals: 2, nboost: 2, snboost: 1, sterm: 0, expterm: 0 },
-      { snexp: 3, fractals: 2, nboost: 2, snboost: 1, sterm: 1, expterm: 0 },
-      { snexp: 3, fractals: 2, nboost: 2, snboost: 1, sterm: 1, expterm: 1 },
-    ];
-    const tree: { [key in stratType[theory]]: Array<milestones> } = {
-      FP: globalOptimalRoute,
-      FPcoast: globalOptimalRoute,
-      FPdMS: globalOptimalRoute,
-      FPmodBurstC1MS: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
-
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.331 + l10(5));
   }
-  updateMilestones(): void {
-    let stage = 0;
-    const points = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-
-    // if (this.lastPub > 700 && this.lastPub < 900) {
-    //   if (this.ticks % 40 < 20) this.milestones.sterm = 0;
-    //   else this.milestones.sterm = 1;
-    // }
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4, 5];
   }
-  approx(n: number) {
+  approx(n: number): number {
     n++;
     return l10(1 / 6) + add(l10(2) * (2 * n), l10(2));
   }
@@ -194,12 +150,12 @@ class fpSim extends theoryClass<theory, milestones> {
     const i = n - 2 ** Math.floor(log2N);
     return 2 ** (2 * Math.floor(log2N)) + 3 * this.V(i);
   }
-  U(n: number) {
+  U(n: number): number {
     return (4/3)*this.V(n) - (1/3);
   }
-  S(n: number) {
+  S(n: number): number {
     if (n === 0) return 0;
-    if (this.milestones.snboost === 0) return l10(3) * (n - 1);
+    if (this.milestones[3] === 0) return l10(3) * (n - 1);
     return l10(1 / 3) + subtract(l10(2) + l10(3) * n, l10(3));
   }
   updateN() {
@@ -209,10 +165,17 @@ class fpSim extends theoryClass<theory, milestones> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 12;
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
+    this.T_n = 1;
+    this.U_n = 1;
+    this.S_n = 0;
+    this.n = 1;
+    this.updateN_flag = true;
+    this.pubUnlock = 12;
+    this.milestoneUnlocks = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
+    this.milestonesMax = [2, 2, 3, 1, 1, 1];
     this.variables = [
       new Variable({ name: "tdot", cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
@@ -227,11 +190,7 @@ class fpSim extends theoryClass<theory, milestones> {
       new Variable({ name: "n", cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
-    this.T_n = 1;
-    this.U_n = 1;
-    this.S_n = 0;
-    this.n = 1;
-    this.updateN_flag = true;
+
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
@@ -242,8 +201,7 @@ class fpSim extends theoryClass<theory, milestones> {
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
-    this.milestones = { snexp: 0, fractals: 0, nboost: 0, snboost: 0, sterm: 0, expterm: 0 };
-    this.milestoneTree = this.getMilestoneTree();
+
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
@@ -268,7 +226,7 @@ class fpSim extends theoryClass<theory, milestones> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
@@ -288,26 +246,24 @@ class fpSim extends theoryClass<theory, milestones> {
         const res = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, res);
       }
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
+    this.trimBoughtVars();
+    const result = this.createResult();
     return getBestResult(result, this.bestRes);
   }
   tick() {
     if (this.updateN_flag) {
-      const term2 = this.milestones.nboost > 0 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 30), 1, 35) * 2) : 0;
-      const term3 = this.milestones.nboost > 1 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 69), 1, 30) * 2.4) : 0;
-      this.n = Math.min(20000, 1 + stepwiseSum(this.variables[6].level, 1, 40) + term2 + term3);
+      const term1 = stepwiseSum(this.variables[6].level, 1, 40);
+      const term2 = this.milestones[1] > 0 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 30), 1, 35) * 2) : 0;
+      const term3 = this.milestones[1] > 1 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 69), 1, 30) * 2.4) : 0;
+      this.n = Math.min(20000, 1 + term1 + term2 + term3);
       this.updateN();
       this.updateN_flag = false;
     }
 
     if (["FPdMS", "FPmodBurstC1MS"].includes(this.strat) && this.lastPub > 700 && this.variables[7].value < 2) {
-      this.milestones.sterm = 1;
-      if (this.ticks % 20 < 10 / this.variables[7].value) this.milestones.sterm = 0;
+      this.milestones[4] = 1;
+      if (this.ticks % 20 < 10 / this.variables[7].value) this.milestones[4] = 0;
     }
 
     const vq1 = this.variables[3].value - l10(1 + 1000 / this.variables[3].level ** 1.5);
@@ -316,22 +272,23 @@ class fpSim extends theoryClass<theory, milestones> {
 
     this.t_var += (this.variables[0].level / 5 + 0.2) * this.dt;
 
-    const qdot = vq1 + A + l10(this.U_n) * (7 + (this.milestones.sterm > 0 ? this.variables[7].value : 0)) - 3;
-    this.q = this.milestones.fractals > 0 ? add(this.q, qdot + l10(this.dt)) : this.q;
+    const qdot = vq1 + A + l10(this.U_n) * (7 + (this.milestones[4] > 0 ? this.variables[7].value : 0)) - 3;
+    this.q = this.milestones[0] > 0 ? add(this.q, qdot + l10(this.dt)) : this.q;
 
     let rdot: number;
-    if (this.milestones.expterm < 1) rdot = vr1 + (l10(this.T_n) + l10(this.U_n)) * l10(this.n) + this.S_n * (1 + 0.6 * this.milestones.snexp);
-    else rdot = vr1 + (l10(this.T_n) + l10(this.U_n)) * (l10(this.U_n * 2) / 2) + this.S_n * (1 + 0.6 * this.milestones.snexp);
-    this.r = this.milestones.fractals > 1 ? add(this.r, rdot + l10(this.dt)) : this.r;
+    const vSn = this.S_n * (1 + 0.6 * this.milestones[2]);
+    if (this.milestones[5] < 1) rdot = vr1 + (l10(this.T_n) + l10(this.U_n)) * l10(this.n) + vSn;
+    else rdot = vr1 + (l10(this.T_n) + l10(this.U_n)) * (l10(this.U_n * 2) / 2) + vSn;
+    this.r = this.milestones[0] > 1 ? add(this.r, rdot + l10(this.dt)) : this.r;
 
     let rhodot =
       this.totMult +
       this.variables[1].value +
       this.variables[2].value +
-      l10(this.T_n) * (7 + (this.milestones.sterm > 0 ? this.variables[7].value - 2 : 0)) +
+      l10(this.T_n) * (7 + (this.milestones[4] > 0 ? this.variables[7].value - 2 : 0)) +
       l10(this.t_var);
-    rhodot += this.milestones.fractals > 0 ? this.q : 0;
-    rhodot += this.milestones.fractals > 1 ? this.r : 0;
+    rhodot += this.milestones[0] > 0 ? this.q : 0;
+    rhodot += this.milestones[0] > 1 ? this.r : 0;
 
     this.rho.add(rhodot + l10(this.dt));
   }

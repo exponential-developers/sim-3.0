@@ -4,7 +4,7 @@ export default class Terminal {
   terminal_element: HTMLElement;
   output_container: HTMLElement;
   input: HTMLInputElement;
-  history: Array<string>;
+  history: string[];
   historyIndex: number;
 
   constructor() {

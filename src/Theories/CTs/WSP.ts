@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10 } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, toCallables } from "../../Utils/helpers";
 
 export default async function wsp(data: theoryData): Promise<simResult> {
   const sim = new wspSim(data);
@@ -18,14 +18,14 @@ class wspSim extends theoryClass<theory> {
   S: number;
   updateS_flag: boolean;
 
-  getBuyingConditions() {
+  getBuyingConditions(): conditionFunction[] {
     let c1weight = 0;
     if (this.lastPub >= 25) c1weight = l10(3);
     if (this.lastPub >= 40) c1weight = 1;
     if (this.lastPub >= 200) c1weight = l10(50);
     if (this.lastPub >= 400) c1weight = 3;
     if (this.lastPub >= 700) c1weight = 10000;
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       WSP: [true, true, true, true, true],
       WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
       WSPdStopC1: [
@@ -40,50 +40,24 @@ class wspSim extends theoryClass<theory> {
         true,
       ],
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0],
-      [0, 0, 1],
-      [0, 0, 2],
-      [0, 0, 3],
-      [0, 1, 3],
-      [1, 1, 3],
-      [2, 1, 3],
-      [3, 1, 3],
-      [4, 1, 3],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      WSP: globalOptimalRoute,
-      WSPStopC1: globalOptimalRoute,
-      WSPdStopC1: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [2, 1, 0];
   }
-
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 0.375);
   }
-  updateMilestones() {
-    let stage = 0;
-    const points = [10, 25, 40, 55, 70, 100, 140, 200];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) stage = i + 1;
-    }
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-  }
-  srK_helper = (x: number) => {
+  srK_helper(x: number): number {
     const x2 = x * x;
     return Math.log(x2 + 1 / 6 + 1 / 120 / x2 + 1 / 810 / x2 / x2) / 2 - 1;
   };
 
-  sineRatioK = (n: number, x: number, K = 5) => {
+  sineRatioK(n: number, x: number, K = 5): number {
     if (n < 1 || x >= n + 1) return 0;
     const N = n + 1 + K,
       x2 = x * x,
@@ -102,10 +76,10 @@ class wspSim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 8;
     this.q = 0;
-    this.updateS_flag = false;
-    //initialize variables
+    this.pubUnlock = 8;
+    this.milestoneUnlocks = [10, 25, 40, 55, 70, 100, 140, 200];
+    this.milestonesMax = [4, 1, 3];
     this.variables = [
       new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 3.38 / 4, true)), valueScaling: new StepwisePowerSumValue()}),
       new Variable({ name: "q2", cost: new ExponentialCost(1000, 3.38 * 3, true), valueScaling: new ExponentialValue(2) }),
@@ -114,7 +88,8 @@ class wspSim extends theoryClass<theory> {
       new Variable({ name: "c2", cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;
-    this.milestoneTree = this.getMilestoneTree();
+    this.updateS_flag = false;
+    
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }
@@ -125,13 +100,9 @@ class wspSim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    this.trimBoughtVars();
+    return this.createResult();
   }
   tick() {
     if (this.updateS_flag) {

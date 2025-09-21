@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, getR9multiplier } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Currency from "../../Utils/currency";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
-import Currency from "../../Utils/currency.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t3(data: theoryData): Promise<simResult> {
   const sim = new t3Sim(data);
@@ -18,8 +18,8 @@ class t3Sim extends theoryClass<theory> {
   rho2: Currency;
   rho3: Currency;
 
-  getBuyingConditions() {
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+  getBuyingConditions(): conditionFunction[] {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T3Play2: [
         () => (this.lastPub - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
         () => (this.curMult < 1.2 ? this.variables[1].cost + l10(5) < this.variables[10].cost : this.variables[1].cost + l10(8) < this.variables[4].cost) || this.curMult > 2.4,
@@ -36,7 +36,10 @@ class t3Sim extends theoryClass<theory> {
       ],
       T3Play: [
         () => (this.curMult < 2 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
-        () => (this.curMult < 2 ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost) && this.variables[1].cost + l10(2) < this.variables[7].cost : true),
+        () => this.curMult < 2 
+          ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost) 
+            && this.variables[1].cost + l10(2) < this.variables[7].cost 
+          : true,
         () => this.variables[2].cost + l10(8) < this.variables[8].cost && this.variables[2].cost + l10(2) < this.variables[11].cost,
         false,
         true,
@@ -210,11 +213,10 @@ class t3Sim extends theoryClass<theory> {
       T3C11C12C21: [true, true, false, true, true, false, true, false, false, false, false, false],
       T3: new Array(12).fill(true), //t3
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
       () => true,
       () => true,
       () => this.milestones[0] > 0,
@@ -230,54 +232,21 @@ class t3Sim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 2, 0, 0],
-      [0, 2, 1, 0],
-      [0, 2, 2, 0],
-      [1, 2, 2, 0],
-      [1, 2, 2, 1],
-      [1, 2, 2, 2],
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      T3Play2: globalOptimalRoute,
-      T3Play: globalOptimalRoute,
-      T3Snax: globalOptimalRoute,
-      T3SnaxdC12: globalOptimalRoute,
-      T3Snax2: globalOptimalRoute,
-      T3P2C23d: globalOptimalRoute,
-      T3P2C23C33d: globalOptimalRoute,
-      T3P2C23: globalOptimalRoute,
-      T3P2C23C33: globalOptimalRoute,
-      T3noC11C13C21C33d: globalOptimalRoute,
-      T3noC11C13C21C33: globalOptimalRoute,
-      T3noC13C33d: globalOptimalRoute,
-      T3noC13C33: globalOptimalRoute,
-      T3noC11C13C33d: globalOptimalRoute,
-      T3noC11C13C33: globalOptimalRoute,
-      T3noC13C32C33d: globalOptimalRoute,
-      T3noC13C32C33: globalOptimalRoute,
-      T3C11C12C21d: globalOptimalRoute,
-      T3C11C12C21: globalOptimalRoute,
-      T3: globalOptimalRoute,
-    };
-    return tree[this.strat];
+  getMilestonePriority(): number[] {
+    return [1, 2, 0, 3];
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
-  }
-  updateMilestones() {
-    const stage = Math.min(7, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 9;
     this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
+    this.pubUnlock = 9;
+    this.milestoneUnlockSteps = 25;
+    //milestones  [dimensions, b1exp, b2exp, b3exp]
+    this.milestonesMax = [1, 2, 2, 2];
     this.variables = [
       new Variable({ name: "b1",  currency: this.rho,  cost: new FirstFreeCost(new ExponentialCost(10, 1.18099)), valueScaling: new StepwisePowerSumValue() }), //b1
       new Variable({ name: "b2",  currency: this.rho2, cost: new ExponentialCost(10, 1.308), valueScaling: new StepwisePowerSumValue() }), //b2
@@ -292,38 +261,32 @@ class t3Sim extends theoryClass<theory> {
       new Variable({ name: "c32", currency: this.rho2, cost: new ExponentialCost(1e3, 6.81744), valueScaling: new ExponentialValue(2) }), //c32
       new Variable({ name: "c33", currency: this.rho3, cost: new ExponentialCost(1e5, 2.98), valueScaling: new ExponentialValue(2) }), //c33
     ];
-    //milestones  [dimensions, b1exp, b2exp, b3exp]
-    this.milestones = [0, 0, 0, 0];
-    this.milestoneTree = this.getMilestoneTree();
+
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, "");
-
-    return result;
+    this.trimBoughtVars();
+    return this.createResult();
   }
   tick() {
     const vb1 = this.variables[0].value * (1 + 0.05 * this.milestones[1]);
     const vb2 = this.variables[1].value * (1 + 0.05 * this.milestones[2]);
     const vb3 = this.variables[2].value * (1 + 0.05 * this.milestones[3]);
 
-    const rhodot = add(add(this.variables[3].value + vb1, this.variables[4].value + vb2), this.variables[5].value + vb3);
+    const rhodot = add(this.variables[3].value + vb1, this.variables[4].value + vb2, this.variables[5].value + vb3);
     this.rho.add(l10(this.dt) + this.totMult + rhodot);
 
-    const rho2dot = add(add(this.variables[6].value + vb1, this.variables[7].value + vb2), this.variables[8].value + vb3);
+    const rho2dot = add(this.variables[6].value + vb1, this.variables[7].value + vb2, this.variables[8].value + vb3);
     this.rho2.add(l10(this.dt) + this.totMult + rho2dot);
 
-    const rho3dot = add(add(this.variables[9].value + vb1, this.variables[10].value + vb2), this.variables[11].value + vb3);
+    const rho3dot = add(this.variables[9].value + vb1, this.variables[10].value + vb2, this.variables[11].value + vb3);
     if (this.milestones[0] > 0) this.rho3.add(l10(this.dt) + this.totMult + rho3dot);
   }
 }

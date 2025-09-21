@@ -1,10 +1,10 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, subtract, getBestResult, getLastLevel } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { LinearValue, ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, subtract, getBestResult, getLastLevel, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/CSR2pubtable.json" assert { type: "json" };
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
 
 export default async function csr2(data: theoryData): Promise<simResult> {
   const sim = new csr2Sim(data);
@@ -17,18 +17,18 @@ type theory = "CSR2";
 type pubTable = {[key: string]: number};
 
 class csr2Sim extends theoryClass<theory> {
-  recursionValue: Array<number>;
-  bestCoast: Array<number>;
+  recursionValue: number[];
+  bestCoast: number[];
   q: number;
   updateError_flag: boolean;
   error: number;
 
   forcedPubRho: number;
-  coasting: Array<boolean>;
+  coasting: boolean[];
   bestRes: simResult | null;
   doContinuityFork: boolean;
 
-  getBuyingConditions() {
+  getBuyingConditions(): conditionFunction[] {
     const idlestrat = [true, true, true, true, true];
     const activeStrat = [
         () =>
@@ -53,30 +53,32 @@ class csr2Sim extends theoryClass<theory> {
         true,
       ];
     
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       CSR2: idlestrat,
       CSR2PT: idlestrat,
       CSR2d: activeStrat,
       CSR2XL: activeXLstrat,
       CSR2XLPT: activeXLstrat
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = [
+      () => true, 
+      () => true, 
+      () => true, 
+      () => true, 
+      () => this.milestones[1] > 0
+    ];
     return conditions;
   }
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return Math.max(0, val * this.tauFactor * 0.55075 - l10(200));
   }
-  updateMilestones(): void {
-    let milestoneCount = 0;
-    const points = [10, 45, 80, 115, 220, 500];
-    for (let i = 0; i < points.length; i++) {
-      if (Math.max(this.lastPub, this.maxRho) >= points[i]) milestoneCount = i + 1;
-    }
-    let priority = [2, 3, 1];
+  getMilestonePriority(): number[] {
+    const c2priority = [1, 2, 0];
+    const q1priority = [0, 1, 2];
+
     if (this.lastPub < 500 && this.strat === "CSR2XL") {
       let msCond = 0;
       if (this.lastPub > 45) msCond = 4;
@@ -84,23 +86,21 @@ class csr2Sim extends theoryClass<theory> {
       if (this.lastPub > 115) msCond = 20;
       if (this.lastPub > 220) msCond = 40;
       if (
-        ((this.rho.value + l10(msCond * 0.5) > this.variables[3].cost ||
-          (this.rho.value + l10(msCond) > this.variables[4].cost && this.milestones[1] > 0) ||
-          (this.curMult > 1 && this.rho.value + l10(2) > this.variables[1].cost)) &&
-          this.rho.value < Math.min(this.variables[3].cost, this.variables[4].cost)) ||
-        this.t > this.recursionValue[0]
+        (
+          (
+            this.rho.value + l10(msCond * 0.5) > this.variables[3].cost 
+            || (this.rho.value + l10(msCond) > this.variables[4].cost && this.milestones[1] > 0)
+            || (this.curMult > 1 && this.rho.value + l10(2) > this.variables[1].cost)
+          ) 
+          && this.rho.value < Math.min(this.variables[3].cost, this.variables[4].cost)
+        ) 
+        || this.t > this.recursionValue[0]
       ) {
-        priority = [1, 2, 3];
-      } else priority = [2, 3, 1];
+        return q1priority;
+      } else return c2priority;
     }
-    this.milestones = [0, 0, 0];
-    const max = [3, 1, 2];
-    for (let i = 0; i < priority.length; i++) {
-      while (this.milestones[priority[i] - 1] < max[priority[i] - 1] && milestoneCount > 0) {
-        this.milestones[priority[i] - 1]++;
-        milestoneCount--;
-      }
-    }
+
+    return c2priority;
   }
   updateError(n: number) {
     const root8 = Math.sqrt(8)
@@ -145,9 +145,12 @@ class csr2Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.pubUnlock = 10;
     this.q = 0;
-    //initialize variables
+    this.updateError_flag = true;
+    this.error = 0;
+    this.pubUnlock = 10;
+    this.milestoneUnlocks = [10, 45, 80, 115, 220, 500];
+    this.milestonesMax = [3, 1, 2];
     this.variables = [
       new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 5)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "q2", cost: new ExponentialCost(15, 128), valueScaling: new ExponentialValue(2) }),
@@ -155,16 +158,14 @@ class csr2Sim extends theoryClass<theory> {
       new Variable({ name: "n",  cost: new ExponentialCost(50, 2 ** (Math.log2(256) * 3.346)), valueScaling: new LinearValue(1, 1)}),
       new Variable({ name: "c2", cost: new ExponentialCost(1e3, 10 ** 5.65), valueScaling: new ExponentialValue(2) }),
     ];
-    this.recursionValue = <Array<number>>data.recursionValue ?? [Infinity, 0];
+    
+    this.recursionValue = <number[]>data.recursionValue ?? [Infinity, 0];
     this.bestCoast = [0, 0];
-    this.updateError_flag = true;
-    this.error = 0;
 
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
     this.doContinuityFork = true;
-
     if (this.strat.includes("PT") && this.lastPub >= 500 && this.lastPub < 1499.5) {
       let newpubtable: pubTable = pubtable.csr2data;
       let pubseek = Math.round(this.lastPub * 16);
@@ -175,7 +176,7 @@ class csr2Sim extends theoryClass<theory> {
     this.doSimEndConditions = () => this.forcedPubRho == Infinity;
     this.updateMilestones();
   }
-  copyFrom(other: this): void {
+  copyFrom(other: this) {
     super.copyFrom(other);
 
     this.milestones = [...other.milestones];
@@ -194,7 +195,7 @@ class csr2Sim extends theoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate(data: theoryData) {
+  async simulate(data: theoryData): Promise<simResult> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
@@ -209,9 +210,9 @@ class csr2Sim extends theoryClass<theory> {
       this.tick();
       this.updateSimStatus();
       if (
-        (this.recursionValue !== null && this.recursionValue !== undefined && this.t < this.recursionValue[0]) ||
-        this.curMult < 0.7 ||
-        this.recursionValue[1] === 0
+        (this.recursionValue !== null && this.recursionValue !== undefined && this.t < this.recursionValue[0])
+        || this.curMult < 0.7
+        || this.recursionValue[1] === 0
       ) await this.buyVariablesFork();
       if (this.lastPub < 500) this.updateMilestones();
       if (this.forcedPubRho == 1500 && this.maxRho >= 1495 && this.doContinuityFork) {
@@ -221,25 +222,23 @@ class csr2Sim extends theoryClass<theory> {
         const res = await fork.simulate(this.getDataForCopy());
         this.bestRes = getBestResult(this.bestRes, res);
       }
-      this.ticks++;
-    }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    let lastBuy = 0;
-    for (let i = 0; i < this.variables.length; i++) {
-      const costIncs = [5, 128, 16, 2 ** (Math.log2(256) * 3.346), 10 ** 5.65];
-      lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
     }
     if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
-      while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+      this.trimBoughtVars();
+
     let stratExtra = " ";
     if (this.strat === "CSR2XL") {
-      stratExtra += Math.min(this.pubMulti, 10 ** (this.getTotMult(lastBuy) - this.totMult)).toFixed(2);
+      let lastBuy = 0;
+      for (let i = 0; i < this.variables.length; i++) {
+        const costIncs = [5, 128, 16, 2 ** (Math.log2(256) * 3.346), 10 ** 5.65];
+        lastBuy = Math.max(lastBuy, this.variables[i].cost - l10(costIncs[i]));
+      }
+      stratExtra += (10 ** (this.getTotMult(Math.min(lastBuy, this.pubRho)) - this.totMult)).toFixed(2);
     }
     if (this.strat.includes("PT")) {
       stratExtra += `q1: ${getLastLevel("q1", this.boughtVars)} q2: ${getLastLevel("q2", this.boughtVars)} c1: ${getLastLevel("c1", this.boughtVars)}`;
     }
-    const result = createResult(this, stratExtra);
-
+    const result = this.createResult(stratExtra);
     return getBestResult(result, this.bestRes);
   }
   tick() {
@@ -250,7 +249,6 @@ class csr2Sim extends theoryClass<theory> {
       const c2level = this.milestones[1] > 0 ? this.variables[4].level : 0;
       const vn = this.variables[3].value + c2level;
       this.updateError(vn);
-
       this.updateError_flag = false;
     }
 

@@ -1,9 +1,9 @@
-import { global } from "../../Sim/main.js";
-import { add, createResult, l10, binarySearch, getBestResult, defaultResult } from "../../Utils/helpers.js";
+import { global } from "../../Sim/main";
+import theoryClass from "../theory";
+import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import Variable from "../../Utils/variable.js";
-import theoryClass from "../theory.js";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost.js';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
+import { add, l10, getBestResult, defaultResult, toCallable, toCallables } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -56,13 +56,13 @@ class mfSim extends theoryClass<theory> {
 
   bestRes: simResult | null;
 
-  getBuyingConditions() {
+  getBuyingConditions(): conditionFunction[] {
     const autobuyall = new Array(9).fill(true);
-    const idleStrat = [
+    const idleStrat: (boolean | conditionFunction)[] = [
       ...new Array(5).fill(() => !this.buyV),
       ...new Array(4).fill(() => this.buyV)
     ];
-    const activeStrat = [
+    const activeStrat: (boolean | conditionFunction)[] = [
       () => {
         if (this.buyV) { return false }
         if(this.normalPubRho != -1 && Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost) > this.normalPubRho - l10(2)) {
@@ -104,7 +104,7 @@ class mfSim extends theoryClass<theory> {
       },
       ...new Array(4).fill(() => this.buyV)
     ];
-    const activeStrat2 = [
+    const activeStrat2: (boolean | conditionFunction)[] = [
       () => {
         if (this.buyV) { return false }
         const dPower: number[] = [3.09152, 3.00238, 2.91940]
@@ -127,30 +127,24 @@ class mfSim extends theoryClass<theory> {
       },
       ...new Array(4).fill(() => this.buyV)
     ];
-    const tailActiveGen = (i: number, offset: number) => {
+    const tailActiveGen = (i: number, offset: number): conditionFunction => {
       return () => {
         if (this.maxRho <= this.lastPub + offset) {
-          if (idleStrat[i] == true) {
-            return true;
-          }
-          return idleStrat[i]();
+          return toCallable(idleStrat[i])();
         } else {
-          if (activeStrat[i] == true) {
-            return true;
-          }
-          return activeStrat[i]();
+          return toCallable(activeStrat[i])();
         }
       }
     }
-    function makeMFdPostRecovery(offset: number) {
-      let tailActive = []
+    function makeMFdPostRecovery(offset: number): conditionFunction[] {
+      let tailActive: conditionFunction[] = [];
       for(let i = 0; i < 9; i++) {
         tailActive.push(tailActiveGen(i, offset))
       }
       return tailActive;
     }
 
-    const conditions: { [key in stratType[theory]]: Array<boolean | conditionFunction> } = {
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       MF: idleStrat,
       MFd: activeStrat,
       MFd2: activeStrat2,
@@ -165,11 +159,10 @@ class mfSim extends theoryClass<theory> {
       MFdPostRecovery8: makeMFdPostRecovery(8),
       MFdPostRecovery9: makeMFdPostRecovery(9)
     };
-    const condition = conditions[this.strat].map((v) => (typeof v === "function" ? v : () => v));
-    return condition;
+    return toCallables(conditions[this.strat]);
   }
-  getVariableAvailability() {
-    const conditions: Array<conditionFunction> = 
+  getVariableAvailability(): conditionFunction[] {
+    const conditions: conditionFunction[] = 
     [
       () => true,
       () => true,
@@ -183,45 +176,17 @@ class mfSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getMilestoneTree() {
-    const globalOptimalRoute = [
-      [0, 0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0, 0],
-      [1, 1, 0, 0, 0, 0],
-      [1, 1, 1, 0, 0, 0],
-      [1, 1, 2, 0, 0, 0],
-      [1, 1, 2, 1, 0, 0],
-      [1, 1, 2, 2, 0, 0],
-      [1, 1, 2, 2, 1, 0],
-      [1, 1, 2, 2, 2, 0],
-      [1, 1, 2, 2, 2, 1]
-    ];
-    const tree: { [key in stratType[theory]]: Array<Array<number>> } = {
-      MF: globalOptimalRoute,
-      MFd: globalOptimalRoute,
-      MFd2: globalOptimalRoute,
-      MFdPostRecovery0: globalOptimalRoute,
-      MFdPostRecovery1: globalOptimalRoute,
-      MFdPostRecovery2: globalOptimalRoute,
-      MFdPostRecovery3: globalOptimalRoute,
-      MFdPostRecovery4: globalOptimalRoute,
-      MFdPostRecovery5: globalOptimalRoute,
-      MFdPostRecovery6: globalOptimalRoute,
-      MFdPostRecovery7: globalOptimalRoute,
-      MFdPostRecovery8: globalOptimalRoute,
-      MFdPostRecovery9: globalOptimalRoute,
-    };
-    return tree[this.strat];
-  }
 
-  getTotMult(val: number) {
+  getTotMult(val: number): number {
     return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.17);
   }
+
+  getMilestonePriority(): number[] {
+    return [0, 1, 2, 3, 4, 5];
+  }
   updateMilestones(): void {
-    const points = [0, 20, 50, 175, 225, 275, 325, 425, 475, 525];
-    const stage = binarySearch(points, Math.max(this.lastPub, this.maxRho));
-    this.milestones = this.milestoneTree[Math.min(this.milestoneTree.length - 1, stage)];
-    this.updateC()
+    super.updateMilestones();
+    this.updateC();
   }
 
   omegaexp(): number {
@@ -265,21 +230,15 @@ class mfSim extends theoryClass<theory> {
 
   constructor(data: theoryData, resetBundle: resetBundle) {
     super(data);
-    this.pubUnlock = 8;
     this.c = 0;
     this.x = 0;
     this.i = 0;
     this.vx = 0;
     this.vz = 0;
     this.vtot = 0;
-    this.resets = 0;
-    this.normalPubRho = -1;
-    this.resetBundle = resetBundle;
-    this.stopReset = false;
-    this.goalBundle = [0, 0, 0, 0];
-    this.goalBundleCost = 0;
-    this.buyV = true;
-    this.bestRes = null;
+    this.pubUnlock = 8;
+    this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
+    this.milestonesMax = [1, 1, 2, 2, 2, 1];
     this.variables =
     [
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
@@ -292,7 +251,14 @@ class mfSim extends theoryClass<theory> {
       new Variable({ name: "v3", cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
       new Variable({ name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
-    this.milestoneTree = this.getMilestoneTree();
+    this.resets = 0;
+    this.normalPubRho = -1;
+    this.resetBundle = resetBundle;
+    this.stopReset = false;
+    this.goalBundle = [0, 0, 0, 0];
+    this.goalBundleCost = 0;
+    this.buyV = true;
+    this.bestRes = null;
     this.updateMilestones();
     this.resetParticle();
   }
@@ -322,7 +288,7 @@ class mfSim extends theoryClass<theory> {
     return newsim;
   }
 
-  async simulate() {
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
@@ -330,11 +296,9 @@ class mfSim extends theoryClass<theory> {
       this.updateMilestones();
       this.buyVariables();
       await this.checkForReset();
-      this.ticks++;
     }
-    this.pubMulti = 10 ** (this.getTotMult(this.pubRho) - this.totMult);
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
-    const result = createResult(this, ` Depth: ${global.mfResetDepth}`);
+    this.trimBoughtVars();
+    const result = this.createResult(` Depth: ${global.mfResetDepth}`);
     return getBestResult(result, this.bestRes);
   }
   tick() {
@@ -359,10 +323,10 @@ class mfSim extends theoryClass<theory> {
     const rhodot = this.totMult + this.c + vc1 + vc2 + xterm + omegaterm + vterm;
     this.rho.add(rhodot + l10(this.dt));
   }
-  calcBundleCost(bundle: resetBundle):number {
+  calcBundleCost(bundle: resetBundle): number {
     let cost = 0.;
     for (let i = 0; i < 4; i++) {
-      if (bundle[i] == 0) { continue }
+      if (bundle[i] == 0) continue;
       cost = add(cost, this.variables[5+i].getCostForLevels(this.variables[5+i].level, this.variables[5+i].level + bundle[i] - 1))
     }
     return cost
