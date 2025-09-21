@@ -1,8 +1,9 @@
-import { qs, qsa, event, ce, findIndex } from "../Utils/helpers.js";
+import { findIndex } from "../Utils/helpers";
+import { qs, qsa, event, ce } from "../Utils/DOMhelpers";
 import data from "../Data/data.json" assert { type: "json" };
-import { updateTimeDiffTable } from "../Sim/parsers.js";
-import { global } from "../Sim/main.js";
-import { getSimState } from "./simState.js";
+import { global } from "../Sim/main";
+import { updateTimeDiffTable } from "../Sim/parsers";
+import { getSimState } from "./simState";
 
 type TheoryDataStructure = {
   [key in theoryType]: {

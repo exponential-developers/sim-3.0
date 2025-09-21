@@ -1,8 +1,7 @@
-import { getR9multiplier, getTheoryFromIndex, parseLog10String, l10 } from "../Utils/helpers.js";
 import jsonData from "../Data/data.json" assert { type: "json" };
-import { global } from "./main.js";
-import { qs, qsa } from "../Utils/helpers.js";
-import { inputData, parsedData } from "./main.js";
+import { global, inputData, parsedData } from "./main";
+import { getR9multiplier, getTheoryFromIndex, parseLog10String, l10 } from "../Utils/helpers";
+import { qs, qsa } from "../Utils/DOMhelpers";
 
 export function parseData(data: inputData) {
   const parsedDataObj: parsedData = {

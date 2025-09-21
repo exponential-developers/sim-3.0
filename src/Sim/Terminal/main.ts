@@ -1,8 +1,9 @@
 /*eslint-disable no-inner-declarations*/
-import { event, qs, sleep, resultIsSimResult, resultIsCombinedResult } from "../../Utils/helpers.js";
-import { global, inputData, simulate } from "../main.js";
-import { parseSimParams } from "./parsers.js";
-import Terminal from "./terminal.js";
+import { global, inputData, simulate } from "../main";
+import { parseSimParams } from "./parsers";
+import Terminal from "./terminal";
+import { sleep, resultIsSimResult, resultIsCombinedResult } from "../../Utils/helpers";
+import { event, qs } from "../../Utils/DOMhelpers";
 
 if (localStorage.getItem("dev") === "true") {
   const terminal = new Terminal();

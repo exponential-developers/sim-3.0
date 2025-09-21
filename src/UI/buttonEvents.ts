@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import { qs, event } from "../Utils/helpers.js";
+import { qs, event } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");

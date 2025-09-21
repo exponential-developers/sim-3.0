@@ -1,5 +1,6 @@
 import { simulate, inputData, global } from "../Sim/main.js";
-import { qs, event, sleep, ce, qsa, convertTime, logToExp, resultIsSimResult, resultIsSimAllResult, resultIsCombinedResult } from "../Utils/helpers.js";
+import { sleep, convertTime, logToExp, resultIsSimResult, resultIsSimAllResult, resultIsCombinedResult } from "../Utils/helpers.js";
+import { qs, qsa, ce, event } from "../Utils/DOMhelpers.js";
 import { setSimState } from "./simState.js";
 import jsondata from "../Data/data.json" assert { type: "json" };
 import { theoryUpdate } from "./render.js";

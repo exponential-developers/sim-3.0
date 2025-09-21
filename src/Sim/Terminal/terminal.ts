@@ -1,4 +1,4 @@
-import { qs, ce } from "../../Utils/helpers.js";
+import { qs, ce } from "../../Utils/DOMhelpers";
 
 export default class Terminal {
   terminal_element: HTMLElement;

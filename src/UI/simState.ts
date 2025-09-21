@@ -1,4 +1,5 @@
-import { qs, round } from "../Utils/helpers.js";
+import { round } from "../Utils/helpers.js";
+import { qs } from "../Utils/DOMhelpers.js";
 import { global } from "../Sim/main.js";
 
 //Setting Inputs
