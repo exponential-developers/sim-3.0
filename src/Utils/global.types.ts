@@ -8,6 +8,49 @@ declare global {
     [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
   };
 
+  type SimQueryType = "all" | "single" | "chain" | "step";
+
+  type BaseSimQuery = {
+    queryType: SimQueryType;
+    sigma: number;
+    settings: Settings;
+  }
+
+  type SingleSimQuery = BaseSimQuery & {
+    queryType: "single";
+    theory: theoryType;
+    strat: string;
+    rho: number;
+    cap: number | null;
+  }
+
+  type ChainSimQuery = BaseSimQuery & {
+    queryType: "chain";
+    theory: theoryType;
+    strat: string;
+    rho: number;
+    cap: number;
+    hardCap: boolean;
+  }
+
+  type StepSimQuery = BaseSimQuery & {
+    queryType: "step";
+    theory: theoryType;
+    strat: string;
+    rho: number;
+    cap: number;
+    step: number;
+  }
+
+  type SimQueryAll = BaseSimQuery & {
+    queryType: "all";
+    values: number[];
+  }
+
+  type SimQueryU = SingleSimQuery | ChainSimQuery | StepSimQuery | SimQueryAll;
+  type SimQuery<T extends BaseSimQuery> = T;
+  
+
   interface varBuy {
     variable: string;
     level: number;

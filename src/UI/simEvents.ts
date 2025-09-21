@@ -34,12 +34,8 @@ let tbody = qs(".simTable > tbody");
 const simulateButton = qs(".simulate");
 
 //Setting Inputs
-const dtOtp = qs(".dtOtp");
-const ddtOtp = qs(".ddtOtp");
-const mfDepthOtp = qs(".mfDepthOtp");
 const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
 const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
-const showA23 = qs<HTMLInputElement>(".a23");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 const theories = Object.keys(jsondata.theories) as theoryType[];
@@ -71,7 +67,7 @@ event(showUnofficials, "click", async () => {
       theoryUpdate();
     }
   }
-})
+});
 
 event(simulateButton, "click", async () => {
   global.stratFilter = true;

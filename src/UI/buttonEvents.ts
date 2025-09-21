@@ -6,13 +6,10 @@ const clear = qs(".clear");
 const copyImage = qs(".imageC");
 const downloadImage = qs(".imageD");
 
-//Other elements
-let tbody: HTMLElement;
-
 const output = qs(".output");
 
 event(clear, "pointerdown", () => {
-  tbody = qs("tbody");
+  const tbody = qs("tbody");
   while (tbody.firstChild) tbody.firstChild.remove();
   output.textContent = "";
   console.clear();

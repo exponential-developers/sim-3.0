@@ -22,3 +22,4 @@ export function parseSettings(): Settings {
         showUnofficials: showUnofficials.checked
     }
 }
+

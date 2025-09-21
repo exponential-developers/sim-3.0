@@ -169,32 +169,6 @@ export default abstract class theoryClass<theory extends theoryType> {
   }
 
   /**
-   * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
-   * It does not need to feature all milestones.
-   * 
-   * This is called each time `updateMilestones` is called.
-   */
-  abstract getMilestonePriority(): number[];
-
-  /**
-   * Updates milestones
-   */
-  updateMilestones(): void {
-    const rho = Math.max(this.maxRho, this.lastPub);
-    const priority = this.getMilestonePriority();
-    let milestoneCount = this.milestoneUnlockSteps > 0 
-      ? Math.floor(rho / this.milestoneUnlockSteps)
-      : binaryInsertionSearch(this.milestoneUnlocks, rho);
-    this.milestones = new Array(this.milestonesMax.length).fill(0);
-    for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
-            this.milestones[priority[i]]++;
-            milestoneCount--;
-        }
-    }
-  }
-
-  /**
    * Copies the base attributes from `other`
    */
   copyFrom(other: this): void {
@@ -228,6 +202,32 @@ export default abstract class theoryClass<theory extends theoryType> {
       recursionValue: null,
       settings: this.settings
     };
+  }
+
+  /**
+   * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
+   * It does not need to feature all milestones.
+   * 
+   * This is called each time `updateMilestones` is called.
+   */
+  abstract getMilestonePriority(): number[];
+
+  /**
+   * Updates milestones
+   */
+  updateMilestones(): void {
+    const rho = Math.max(this.maxRho, this.lastPub);
+    const priority = this.getMilestonePriority();
+    let milestoneCount = this.milestoneUnlockSteps > 0 
+      ? Math.floor(rho / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.milestones = new Array(this.milestonesMax.length).fill(0);
+    for (let i = 0; i < priority.length; i++) {
+        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+            this.milestones[priority[i]]++;
+            milestoneCount--;
+        }
+    }
   }
 
   evaluateForcedPubConditions(): boolean {

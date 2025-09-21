@@ -1,6 +1,8 @@
-import { formatNumber, getddtFromSlider, getdtFromSlider, round } from "../Utils/helpers.js";
+import { formatNumber, getddtFromSlider, getdtFromSlider } from "../Utils/helpers.js";
 import { qs, event } from "../Utils/DOMhelpers.js";
 import { setSimState } from "./simState.js";
+
+// Settings menu
 
 const settingsBtn = qs<HTMLButtonElement>(".settingsBtn");
 const settingsCloseBtn = qs<HTMLButtonElement>(".settingsCloseBtn");
@@ -17,6 +19,8 @@ event(settingsCloseBtn, "pointerdown", () => {
   document.body.style.overflow = "auto";
 });
 
+// Instructions menu
+
 const instructionsBtn = qs<HTMLButtonElement>(".instructionsBtn");
 const instructionsCloseBtn = qs<HTMLButtonElement>(".instructionsCloseBtn");
 const instructionsModal = qs<HTMLDialogElement>(".instructions");
@@ -31,6 +35,8 @@ event(instructionsCloseBtn, "pointerdown", () => {
   document.body.style.overflow = "auto";
 });
 
+// Settings inputs
+
 const dtSlider = qs<HTMLInputElement>(".dt");
 const dtOtp = qs(".dtOtp");
 
@@ -40,23 +46,15 @@ const ddtOtp = qs(".ddtOtp");
 const mfDepthSlider = qs<HTMLInputElement>(".mfDepth");
 const mfDepthOpt = qs(".mfDepthOtp");
 
-event(
-  dtSlider,
-  "input",
-  () => (dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(dtSlider.value)), 4))
-);
+event(dtSlider, "input", () => {
+  dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(dtSlider.value)), 4);
+});
 
-event(
-  ddtSlider,
-  "input",
-  () => (ddtOtp.textContent = formatNumber(getddtFromSlider(parseFloat(ddtSlider.value)), 7))
-);
+event(ddtSlider, "input", () => {
+  ddtOtp.textContent = formatNumber(getddtFromSlider(parseFloat(ddtSlider.value)), 7)
+});
 
-event(
-  mfDepthSlider,
-  "input",
-  () => mfDepthOpt.textContent = mfDepthSlider.value
-)
+event(mfDepthSlider, "input", () => mfDepthOpt.textContent = mfDepthSlider.value);
 
 event(qs(".resetSettings"), "pointerdown", () => {
   dtSlider.value = "8.1943";

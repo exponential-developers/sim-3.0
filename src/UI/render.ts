@@ -41,6 +41,8 @@ const modeInputDescription = qs(".extraInputDescription");
 const theories = Object.keys(data.theories) as theoryType[];
 
 window.onload = () => {
+  // Initialize theme selector
+
   for (let i = 0; i < data.themes.length; i++) {
     const option = ce<HTMLSelectElement>("option");
     option.value = data.themes[i];
