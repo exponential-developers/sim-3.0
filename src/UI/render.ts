@@ -1,5 +1,5 @@
 import { findIndex } from "../Utils/helpers";
-import { qs, qsa, event, ce } from "../Utils/DOMhelpers";
+import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
 import data from "../Data/data.json" assert { type: "json" };
 import { global } from "../Sim/main";
 import { updateTimeDiffTable } from "../Sim/parsers";
@@ -18,12 +18,12 @@ type TheoryDataStructure = {
 }
 
 //Inputs
-const theory = qs<HTMLSelectElement>(".theory");
-const strat = qs<HTMLSelectElement>(".strat");
-const cap = qs(".capWrapper");
-const mode = qs<HTMLSelectElement>(".mode");
+const theorySelector = qs<HTMLSelectElement>(".theory");
+const stratSelector = qs<HTMLSelectElement>(".strat");
+const capInputWrapper = qs(".capWrapper");
+const modeSelector = qs<HTMLSelectElement>(".mode");
 const modeInput = <HTMLInputElement>qs("textarea");
-const hardCap = qs(".hardCapWrapper");
+const hardCapWrapper = qs(".hardCapWrapper");
 const semi_idle = qs<HTMLInputElement>(".semi-idle");
 const hard_active = qs<HTMLInputElement>(".hard-active");
 const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
@@ -38,13 +38,11 @@ const simAllInputs = qs(".simAllInputs");
 const modeInputDescription = qs(".extraInputDescription");
 
 
-//Renders theories, strats and modes options on page load
-
 const theories = Object.keys(data.theories) as theoryType[];
 
 /** Populates a select element with the given items */
-function populateSelectElement(select: HTMLSelectElement, items: string[]) {
-  while (select.firstChild) select.firstChild.remove();
+function populateSelectElement(select: HTMLSelectElement, items: string[], clear = true) {
+  if (clear) removeAllChilds(select);
   for (let item of items) {
     const option = ce<HTMLOptionElement>("option");
     option.value = item;
@@ -53,21 +51,23 @@ function populateSelectElement(select: HTMLSelectElement, items: string[]) {
   }
 }
 function populateTheoryList(showUnofficials: boolean) {
-  populateSelectElement(theory, theories.filter((item) => (data.theories as TheoryDataStructure)[item].UI_visible !== false || showUnofficials))
+  populateSelectElement(theorySelector, theories.filter((item) => (data.theories as TheoryDataStructure)[item].UI_visible !== false || showUnofficials))
 }
+
+//Renders theories, strats and modes options on page load
 
 populateSelectElement(themeSelector, data.themes);
 event(themeSelector, "change", themeUpdate);
 
 getSimState();
 
-populateSelectElement(mode, data.modes);
+populateSelectElement(modeSelector, data.modes);
 modeUpdate();
-event(mode, "input", modeUpdate);
+event(modeSelector, "input", modeUpdate);
 
 populateTheoryList(global.showUnofficials);
 theoryUpdate();
-event(theory, "change", theoryUpdate);
+event(theorySelector, "change", theoryUpdate);
 
 const simAllSettings: [boolean, boolean] = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
 semi_idle.checked = simAllSettings[0];
@@ -92,46 +92,35 @@ function modeUpdate(): void {
   singleInput.style.display = "none";
   extraInputs.style.display = "none";
   timeDiffWrapper.style.display = "none";
-  hardCap.style.display = "none";
+  hardCapWrapper.style.display = "none";
   simAllInputs.style.display = "none";
   modeInputDescription.style.display = "inline";
   modeInput.style.height = "1.8em";
   modeInput.style.width = "6rem";
-  cap.style.display = "none";
-  if (mode.value === "Chain" || mode.value === "Steps") {
-    cap.style.display = "inline";
+  capInputWrapper.style.display = "none";
+  if (modeSelector.value === "Chain" || modeSelector.value === "Steps") {
+    capInputWrapper.style.display = "inline";
   }
-  if (mode.value !== "Single sim" && mode.value !== "Time diff." && mode.value !== "Chain") extraInputs.style.display = "flex";
-  if (mode.value === "Time diff.") timeDiffWrapper.style.display = "grid";
-  if (mode.value !== "All" && mode.value !== "Time diff.") singleInput.style.display = "grid";
-  if (mode.value === "Chain") hardCap.style.display = "block";
-  if (mode.value === "All") {
+  if (modeSelector.value !== "Single sim" && modeSelector.value !== "Time diff." && modeSelector.value !== "Chain") extraInputs.style.display = "flex";
+  if (modeSelector.value === "Time diff.") timeDiffWrapper.style.display = "grid";
+  if (modeSelector.value !== "All" && modeSelector.value !== "Time diff.") singleInput.style.display = "grid";
+  if (modeSelector.value === "Chain") hardCapWrapper.style.display = "block";
+  if (modeSelector.value === "All") {
     simAllInputs.style.display = "grid";
     modeInputDescription.style.display = "none";
     modeInput.style.height = "4rem";
     modeInput.style.width = "20rem";
   }
-  modeInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, mode.value)];
-  modeInputDescription.textContent = data.modeInputDescriptions[findIndex(data.modes, mode.value)];
+  modeInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, modeSelector.value)];
+  modeInputDescription.textContent = data.modeInputDescriptions[findIndex(data.modes, modeSelector.value)];
 }
 
 function theoryUpdate() {
-  while (strat.firstChild) strat.firstChild.remove();
-  for (let i = 0; i < 4; i++) {
-    const option = ce<HTMLSelectElement>("option");
-    option.value = data.stratCategories[i];
-    option.textContent = data.stratCategories[i];
-    strat.appendChild(option);
-  }
-  const currentTheory = theory.value as theoryType;
-  const strats = Object.keys(data.theories[currentTheory].strats);
-  for (let i = 0; i < strats.length; i++) {
-    if ((data.theories as TheoryDataStructure)[currentTheory].strats[strats[i]].UI_visible === false) continue;
-    const option = ce<HTMLSelectElement>("option");
-    option.value = strats[i];
-    option.textContent = strats[i];
-    strat.appendChild(option);
-  }
+  const currentTheory = theorySelector.value as theoryType;
+  const currentTheoryStrats = Object.keys(data.theories[currentTheory].strats).filter(
+    (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
+  );
+  populateSelectElement(stratSelector, data.stratCategories.concat(currentTheoryStrats));
 }
 
 function themeUpdate() {

@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import { qs, event } from "../Utils/DOMhelpers";
+import { qs, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");
@@ -7,10 +7,11 @@ const copyImage = qs(".imageC");
 const downloadImage = qs(".imageD");
 
 const output = qs(".output");
+const table = qs(".simTable")
+const tbody = qs("tbody");
 
 event(clear, "pointerdown", () => {
-  const tbody = qs("tbody");
-  while (tbody.firstChild) tbody.firstChild.remove();
+  removeAllChilds(tbody);
   output.textContent = "";
   console.clear();
 });
@@ -19,10 +20,10 @@ event(copyImage, "pointerdown", () => createImage(""));
 event(downloadImage, "pointerdown", () => createImage("download"));
 
 function createImage(mode: string) {
-  html2canvas(qs(".simTable")).then((canvas) =>
+  html2canvas(table).then((canvas) =>
     canvas.toBlob((blob) => {
       if (mode === "download") {
-        const a = document.createElement("a");
+        const a = ce<HTMLAnchorElement>("a");
         a.href = canvas.toDataURL("image/png");
         a.download = "output.png";
         a.click();
@@ -53,7 +54,7 @@ event(saveDist, "pointerdown", () => {
   setTimeout(() => {
     saveDist.disabled = false;
     saveDist.innerHTML = "Save distribution"
-  }, 1500);
+  }, 1000);
 });
 event(getDist, "pointerdown", () => {
   modeInput.value = localStorage.getItem("savedDistribution") ?? modeInput.value;
@@ -61,7 +62,6 @@ event(getDist, "pointerdown", () => {
 
 event(loadSave, "pointerdown", () => {
   let presumedSaveFile = modeInput.value;
-  const output = qs(".output");
 
   fetch("https://ex-save-loader.hotab.pw/load",{
     method: "POST",

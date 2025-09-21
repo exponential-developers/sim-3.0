@@ -10,3 +10,8 @@ export const qsa = <T extends HTMLElement>(name: string) => document.querySelect
 export const ce = <T extends HTMLElement>(type: string) => (document.createElement(type) as T) ?? raise(`HtmlElement ${type} could not be created.`);
 /** Adds an event listener to `element` */
 export const event = <T>(element: HTMLElement, eventType: string, callback: (e: T) => void) => element.addEventListener(eventType, (e) => callback(e as T));
+
+/** Removes all childs of `element` */
+export const removeAllChilds = (element: HTMLElement) => {
+  while (element.firstChild) element.firstChild.remove();
+}

@@ -1,22 +1,15 @@
 import { simulate, inputData, global } from "../Sim/main.js";
 import { sleep, convertTime, logToExp, resultIsSimResult, resultIsSimAllResult, resultIsCombinedResult } from "../Utils/helpers.js";
-import { qs, qsa, ce, event } from "../Utils/DOMhelpers.js";
+import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers.js";
 import { setSimState } from "./simState.js";
-import jsondata from "../Data/data.json" assert { type: "json" };
-
-type TheoryDataStructure = {
-  [key in theoryType]: {
-    UI_visible?: boolean;
-  }
-}
 
 //Inputs
-const theory = qs<HTMLSelectElement>(".theory");
-const strat = qs<HTMLSelectElement>(".strat");
+const modeSelector = qs<HTMLSelectElement>(".mode");
+const theorySelector = qs<HTMLSelectElement>(".theory");
+const stratSelector = qs<HTMLSelectElement>(".strat");
 const sigma = qs<HTMLInputElement>(".sigma");
 const input = qs<HTMLInputElement>(".input");
 const cap = qs<HTMLInputElement>(".cap");
-const mode = qs<HTMLSelectElement>(".mode");
 const modeInput = qs<HTMLInputElement>("textarea");
 const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
 const hardCap = qs<HTMLInputElement>(".hardCap");
@@ -25,9 +18,9 @@ const hard_active = qs<HTMLInputElement>(".hard-active");
 
 //Outputs
 const output = qs(".output");
-let table = qs(".simTable");
-let thead = qs(".simTable > thead");
-let tbody = qs(".simTable > tbody");
+const table = qs(".simTable");
+const thead = qs(".simTable > thead");
+const tbody = qs(".simTable > tbody");
 
 //Buttons
 const simulateButton = qs(".simulate");
@@ -35,8 +28,6 @@ const simulateButton = qs(".simulate");
 //Setting Inputs
 const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
 const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
-
-const theories = Object.keys(jsondata.theories) as theoryType[];
 
 let prevMode = "All";
 
@@ -57,12 +48,12 @@ event(simulateButton, "click", async () => {
   global.skipCompletedCTs = skipCompletedCTs.checked;
   localStorage.setItem("simAllSettings", JSON.stringify([semi_idle.checked, hard_active.checked]));
   const data: inputData = {
-    theory: theory.value as theoryType,
-    strat: strat.value,
+    theory: theorySelector.value as theoryType,
+    strat: stratSelector.value,
     sigma: sigma.value.replace(" ", ""),
     rho: input.value.replace(" ", ""),
     cap: cap.value.replace(" ", ""),
-    mode: mode.value,
+    mode: modeSelector.value,
     modeInput: modeInput.value,
     simAllInputs: [semi_idle.checked, hard_active.checked],
     timeDiffInputs: [],
@@ -85,9 +76,9 @@ event(simulateButton, "click", async () => {
 });
 
 function updateTablePreprocess(): void {
-  if (prevMode !== mode.value) clearTable();
-  prevMode = mode.value;
-  if (mode.value === "All") {
+  if (prevMode !== modeSelector.value) clearTable();
+  prevMode = modeSelector.value;
+  if (modeSelector.value === "All") {
     table.classList.add("big");
     table.classList.remove("small");
     thead.innerHTML = tableHeaders.all;
@@ -99,7 +90,7 @@ function updateTablePreprocess(): void {
     table.classList.add("small");
     thead.innerHTML = tableHeaders.single;
   }
-  if (mode.value !== "Single sim") clearTable();
+  if (modeSelector.value !== "Single sim") clearTable();
 }
 
 function updateTable(arr: generalResult[]): void {
@@ -125,7 +116,7 @@ function updateTable(arr: generalResult[]): void {
     lastChild.style.cursor = "pointer";
   }
 
-  if(mode.value == "All") {
+  if(modeSelector.value == "All") {
     for (let i = 0; i < arr.length; i++) {
       let res: generalResult = arr[i];
       if (resultIsSimAllResult(res)) {
@@ -280,5 +271,5 @@ event(qs(".boughtVarsCloseBtn"), "pointerdown", () => {
   document.body.style.overflow = "auto";
 });
 function clearTable(): void {
-  while (tbody.firstChild) tbody.firstChild.remove();
+  removeAllChilds(tbody);
 }
