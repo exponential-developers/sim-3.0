@@ -3,8 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, toCallables } from "../../Utils/helpers";
-import { parseValue } from "../../Sim/parsers";
+import { l10, toCallables, parseLog10String } from "../../Utils/helpers";
 
 export default async function bt(data: theoryData): Promise<simResult> {
   const sim = new btSim(data);
@@ -72,8 +71,8 @@ class btSim extends theoryClass<theory> {
     const rhodot = this.totMult + vtai + vrao + vtay;
 
     this.rho.add(rhodot + l10(this.dt));
-    if (this.milestones[3] == 1 && Math.max(this.maxRho, this.lastPub) * this.tauFactor < parseValue("9e599")) {
-      this.rho.value = parseValue("1.05e1500");
+    if (this.milestones[3] == 1 && Math.max(this.maxRho, this.lastPub) * this.tauFactor < parseLog10String("9e599")) {
+      this.rho.value = parseLog10String("1.05e1500");
     }
   }
 }

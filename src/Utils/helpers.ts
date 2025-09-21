@@ -219,3 +219,11 @@ export function getLastLevel(variable: string, arr: varBuy[]): number {
 export function getR9multiplier(sigma: number): number {
   return l10((sigma / 20) ** (sigma < 65 ? 0 : sigma < 75 ? 1 : sigma < 85 ? 2 : 3))
 }
+
+export function getdtFromSlider(val: number): number {
+  return val == 0 ? 0.15 : val == 10 ? 5 : 0.15 + (2 ** val) * (4.85 / 2 ** 10);
+}
+
+export function getddtFromSlider(val: number): number {
+  return val == 0 ? 1 : val == 10 ? 1.3 : round(1 + (3 ** val) * (0.3 / 3 ** 10), 7)
+}

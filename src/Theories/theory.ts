@@ -1,4 +1,3 @@
-import { global } from "../Sim/main";
 import Currency from "../Utils/currency";
 import Variable from "../Utils/variable";
 import { binaryInsertionSearch, convertTime, formatNumber, logToExp } from "../Utils/helpers";
@@ -6,16 +5,14 @@ import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
 export default abstract class theoryClass<theory extends theoryType> {
-  /** Array of buying conditions for each variable */
-  buyingConditions: conditionFunction[];
-  /** Array of variable availability for each variable */
-  variableAvailability: conditionFunction[];
-  /** Current strategy */
-  strat: stratType[theory];
   /** Theory */
-  theory: theoryType;
+  readonly theory: theoryType;
+  /** Current strategy */
+  readonly strat: stratType[theory];
   /** tau/rho conversion rate */
-  tauFactor: number;
+  readonly tauFactor: number;
+  /** Sim settings used in the simulation */
+  readonly settings: Settings;
 
   // Theory
   /** rho at which publications are unlocked */
@@ -52,6 +49,12 @@ export default abstract class theoryClass<theory extends theoryType> {
   variables: Variable[];
   /** List of recorded variable purchases */
   boughtVars: varBuy[];
+
+  // Buying conditions
+  /** Array of buying conditions for each variable */
+  buyingConditions: conditionFunction[];
+  /** Array of variable availability for each variable */
+  variableAvailability: conditionFunction[];
 
   // Publication values
   /** Average tau/hr gain at this point in the publication (can be negative) */
@@ -117,10 +120,11 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   abstract getTotMult(val: number): number;
 
-  constructor(data: theoryData) {
-    this.strat = data.strat as stratType[theory];
+  constructor(readonly data: theoryData) {
     this.theory = data.theory;
+    this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
+    this.settings = data.settings;
 
     //theory
     this.pubUnlock = 1;
@@ -130,8 +134,8 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.sigma = data.sigma;
     this.totMult = this.getTotMult(data.rho);
     this.curMult = 0;
-    this.dt = global.dt;
-    this.ddt = global.ddt;
+    this.dt = this.settings.dt;
+    this.ddt = this.settings.ddt;
     this.t = 0;
     this.ticks = 0;
 
@@ -222,6 +226,7 @@ export default abstract class theoryClass<theory extends theoryType> {
       recovery: { ...this.recovery },
       cap: this.cap,
       recursionValue: null,
+      settings: this.settings
     };
   }
 

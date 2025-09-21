@@ -24,6 +24,18 @@ declare global {
     recovery: null | { value: number; time: number; recoveryTime: boolean };
     cap: null | number;
     recursionValue: null | number | number[];
+    settings: Settings;
+  }
+
+  type Settings = {
+    dt: number;
+    ddt: number;
+    mfResetDepth: number;
+    theme: string;
+    simAllStrats: string;
+    skipCompletedCTs: boolean;
+    showA23: boolean;
+    showUnofficials: boolean;
   }
 
   type combinedResult = [string, string, string];

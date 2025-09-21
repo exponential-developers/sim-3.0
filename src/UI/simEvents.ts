@@ -74,13 +74,9 @@ event(showUnofficials, "click", async () => {
 })
 
 event(simulateButton, "click", async () => {
-  global.dt = parseFloat(dtOtp.textContent ?? "1.5");
-  global.ddt = parseFloat(ddtOtp.textContent ?? "1.0001");
-  global.mfResetDepth = parseInt(mfDepthOtp.textContent ?? "0");
   global.stratFilter = true;
   global.simAllStrats = simAllStrats.value;
   global.skipCompletedCTs = skipCompletedCTs.checked;
-  global.showA23 = showA23.checked;
   localStorage.setItem("simAllSettings", JSON.stringify([semi_idle.checked, hard_active.checked]));
   const data: inputData = {
     theory: theory.value as theoryType,

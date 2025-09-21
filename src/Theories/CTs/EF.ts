@@ -219,7 +219,7 @@ class efSim extends theoryClass<theory> {
     const result = this.createResult(
       this.strat !== "EF"
         ? ` q1: ${lastLevels[1]} q2: ${lastLevels[2]} a1: ${lastLevels[7]}` +
-            (global.showA23 ? ` a2: ${lastLevels[8]} a3: ${lastLevels[9]}` : "")
+            (this.settings.showA23 ? ` a2: ${lastLevels[8]} a3: ${lastLevels[9]}` : "")
         : ""
     );
     return getBestResult(result, this.bestRes);

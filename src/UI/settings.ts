@@ -1,4 +1,4 @@
-import { formatNumber, round } from "../Utils/helpers.js";
+import { formatNumber, getddtFromSlider, getdtFromSlider, round } from "../Utils/helpers.js";
 import { qs, event } from "../Utils/DOMhelpers.js";
 import { setSimState } from "./simState.js";
 
@@ -43,14 +43,13 @@ const mfDepthOpt = qs(".mfDepthOtp");
 event(
   dtSlider,
   "input",
-  () => (dtOtp.textContent = dtSlider.value === "0" ? "0.15" : dtSlider.value === "10" ? "5" : String(formatNumber(0.15 + 2 ** parseFloat(dtSlider.value) * (4.9 / (1 + 2 ** parseFloat(dtSlider.max))), 4)))
+  () => (dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(dtSlider.value)), 4))
 );
 
 event(
   ddtSlider,
   "input",
-  () =>
-    (ddtOtp.textContent = ddtSlider.value === "0" ? "1" : ddtSlider.value === "10" ? "1.3" : String(round(1 + Number(formatNumber(3 ** parseFloat(ddtSlider.value) * (0.3 / 3 ** parseFloat(ddtSlider.max)), 2)), 7)))
+  () => (ddtOtp.textContent = formatNumber(getddtFromSlider(parseFloat(ddtSlider.value)), 7))
 );
 
 event(

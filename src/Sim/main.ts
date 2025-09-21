@@ -22,16 +22,13 @@ import mf from "../Theories/CTs/MF";
 import bap from "../Theories/CTs/BaP";
 import bt from "../Theories/Unofficial-CTs/BT";
 import tc from "../Theories/Unofficial-CTs/TC";
+import { parseSettings } from "./parse";
 
 const output = qs(".output");
 
 export const global = {
-  dt: 1.5,
-  ddt: 1.0001,
-  mfResetDepth: 0,
   stratFilter: true,
   simulating: false,
-  showA23: false,
   showUnofficials: false,
   simAllStrats: "all",
   skipCompletedCTs: false,
@@ -109,6 +106,7 @@ async function singleSim(data: Omit<parsedData, "simAllInputs">): Promise<simRes
     recursionValue: null,
     recovery: data.recovery ?? { value: 0, time: 0, recoveryTime: false },
     cap: data.hardCap ? data.cap : null,
+    settings: parseSettings()
   };
   switch (data.theory) {
     case "T1":

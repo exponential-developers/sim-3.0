@@ -1,6 +1,6 @@
-import { round } from "../Utils/helpers.js";
-import { qs } from "../Utils/DOMhelpers.js";
-import { global } from "../Sim/main.js";
+import { round } from "../Utils/helpers";
+import { qs } from "../Utils/DOMhelpers";
+import { global } from "../Sim/main";
 
 //Setting Inputs
 const dtSlider = qs<HTMLInputElement>(".dt");
@@ -49,7 +49,7 @@ export function getSimState() {
   showA23.checked = state.settings.showA23;
   showUnofficials.checked = state.settings.showUnofficials ?? false;
   global.showUnofficials = showUnofficials.checked;
-  // Determines the slider position based on the stored value (see settings.ts)
+  // Determines the slider position based on the stored value (see helpers.ts)
   dtSlider.value = String(round(Math.log2((state.settings.dt - 0.15) / (4.9 / (1 + 2 ** parseFloat(dtSlider.max)))), 4));
   ddtSlider.value = String(round(Math.log((state.settings.ddt - 1) / (0.3 / 3 ** parseFloat(ddtSlider.max))) / Math.log(3), 4));
   mfDepthSlider.value = mfDepthOpt.textContent ?? "0";
