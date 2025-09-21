@@ -3,7 +3,6 @@ import { sleep, convertTime, logToExp, resultIsSimResult, resultIsSimAllResult, 
 import { qs, qsa, ce, event } from "../Utils/DOMhelpers.js";
 import { setSimState } from "./simState.js";
 import jsondata from "../Data/data.json" assert { type: "json" };
-import { theoryUpdate } from "./render.js";
 
 type TheoryDataStructure = {
   [key in theoryType]: {
@@ -36,7 +35,6 @@ const simulateButton = qs(".simulate");
 //Setting Inputs
 const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
 const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
-const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 const theories = Object.keys(jsondata.theories) as theoryType[];
 
@@ -52,22 +50,6 @@ const tableHeaders = {
 };
 thead.innerHTML = tableHeaders.all;
 table.classList.add("big");
-
-event(showUnofficials, "click", async () => {
-  if (global.showUnofficials != showUnofficials.checked)
-  {
-    global.showUnofficials = showUnofficials.checked;
-    while (theory.firstChild) theory.firstChild.remove();
-    for (let i = 0; i < theories.length; i++) {
-      if ((jsondata.theories as TheoryDataStructure)[theories[i]].UI_visible === false && !global.showUnofficials) continue;
-      const option = ce<HTMLSelectElement>("option");
-      option.value = theories[i];
-      option.textContent = theories[i];
-      theory.appendChild(option);
-      theoryUpdate();
-    }
-  }
-});
 
 event(simulateButton, "click", async () => {
   global.stratFilter = true;

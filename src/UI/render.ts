@@ -20,7 +20,7 @@ type TheoryDataStructure = {
 //Inputs
 const theory = qs<HTMLSelectElement>(".theory");
 const strat = qs<HTMLSelectElement>(".strat");
-const cap = qs<HTMLInputElement>(".cap");
+const cap = qs(".capWrapper");
 const mode = qs<HTMLSelectElement>(".mode");
 const modeInput = <HTMLInputElement>qs("textarea");
 const hardCap = qs(".hardCapWrapper");
@@ -28,6 +28,7 @@ const semi_idle = qs<HTMLInputElement>(".semi-idle");
 const hard_active = qs<HTMLInputElement>(".hard-active");
 const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
+const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 //Other containers/elements
 const extraInputs = qs(".extraInputs");
@@ -36,61 +37,58 @@ const singleInput = qsa(".controls")[0];
 const simAllInputs = qs(".simAllInputs");
 const modeInputDescription = qs(".extraInputDescription");
 
+
 //Renders theories, strats and modes options on page load
 
 const theories = Object.keys(data.theories) as theoryType[];
 
-window.onload = () => {
-  // Initialize theme selector
-
-  for (let i = 0; i < data.themes.length; i++) {
-    const option = ce<HTMLSelectElement>("option");
-    option.value = data.themes[i];
-    option.textContent = data.themes[i];
-    themeSelector.appendChild(option);
+/** Populates a select element with the given items */
+function populateSelectElement(select: HTMLSelectElement, items: string[]) {
+  while (select.firstChild) select.firstChild.remove();
+  for (let item of items) {
+    const option = ce<HTMLOptionElement>("option");
+    option.value = item;
+    option.textContent = item;
+    select.appendChild(option);
   }
-  event(themeSelector, "change", themeUpdate);
-  
-  getSimState();
+}
+function populateTheoryList(showUnofficials: boolean) {
+  populateSelectElement(theory, theories.filter((item) => (data.theories as TheoryDataStructure)[item].UI_visible !== false || showUnofficials))
+}
 
-  for (let i = 0; i < theories.length; i++) {
-    if ((data.theories as TheoryDataStructure)[theories[i]].UI_visible === false && !global.showUnofficials) continue;
-    const option = ce<HTMLSelectElement>("option");
-    option.value = theories[i];
-    option.textContent = theories[i];
-    theory.appendChild(option);
+populateSelectElement(themeSelector, data.themes);
+event(themeSelector, "change", themeUpdate);
+
+getSimState();
+
+populateSelectElement(mode, data.modes);
+modeUpdate();
+event(mode, "input", modeUpdate);
+
+populateTheoryList(global.showUnofficials);
+theoryUpdate();
+event(theory, "change", theoryUpdate);
+
+const simAllSettings: [boolean, boolean] = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
+semi_idle.checked = simAllSettings[0];
+hard_active.checked = simAllSettings[1];
+
+for (const elem of timeDiffInputs) {
+  event(elem, "input", () => {
+    updateTimeDiffTable();
+  });
+}
+
+event(showUnofficials, "click", () => {
+  if (global.showUnofficials != showUnofficials.checked)
+  {
+    global.showUnofficials = showUnofficials.checked;
+    populateTheoryList(global.showUnofficials);
+    theoryUpdate();
   }
-  const T1strats = Object.keys(data.theories.T1.strats);
-  for (let i = 0; i < T1strats.length; i++) {
-    const option = ce<HTMLSelectElement>("option");
-    option.value = T1strats[i];
-    option.textContent = T1strats[i];
-    strat.appendChild(option);
-  }
-  for (let i = 0; i < data.modes.length; i++) {
-    const option = ce<HTMLSelectElement>("option");
-    option.value = data.modes[i];
-    option.textContent = data.modes[i];
-    mode.appendChild(option);
-  }
-  modeUpdate();
+});
 
-  event(mode, "input", modeUpdate);
-
-  event(theory, "change", theoryUpdate);
-
-  const simAllSettings: [boolean, boolean] = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
-  semi_idle.checked = simAllSettings[0];
-  hard_active.checked = simAllSettings[1];
-
-  for (const elem of timeDiffInputs) {
-    event(elem, "input", () => {
-      updateTimeDiffTable();
-    });
-  }
-};
-
-export function modeUpdate(): void {
+function modeUpdate(): void {
   singleInput.style.display = "none";
   extraInputs.style.display = "none";
   timeDiffWrapper.style.display = "none";
@@ -100,10 +98,8 @@ export function modeUpdate(): void {
   modeInput.style.height = "1.8em";
   modeInput.style.width = "6rem";
   cap.style.display = "none";
-  qs(".capDesc").style.display = "none";
   if (mode.value === "Chain" || mode.value === "Steps") {
     cap.style.display = "inline";
-    qs(".capDesc").style.display = "inline";
   }
   if (mode.value !== "Single sim" && mode.value !== "Time diff." && mode.value !== "Chain") extraInputs.style.display = "flex";
   if (mode.value === "Time diff.") timeDiffWrapper.style.display = "grid";
@@ -119,7 +115,7 @@ export function modeUpdate(): void {
   modeInputDescription.textContent = data.modeInputDescriptions[findIndex(data.modes, mode.value)];
 }
 
-export function theoryUpdate() {
+function theoryUpdate() {
   while (strat.firstChild) strat.firstChild.remove();
   for (let i = 0; i < 4; i++) {
     const option = ce<HTMLSelectElement>("option");
@@ -138,7 +134,7 @@ export function theoryUpdate() {
   }
 }
 
-export function themeUpdate() {
+function themeUpdate() {
   const root = document.documentElement;
   root.setAttribute("theme", themeSelector.value);
 }
