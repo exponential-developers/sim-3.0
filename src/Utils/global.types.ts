@@ -42,14 +42,42 @@ declare global {
     step: number;
   }
 
-  type SimQueryAll = BaseSimQuery & {
+  type SimAllQuery = BaseSimQuery & {
     queryType: "all";
     values: number[];
+    veryActive: boolean;
+    semiIdle: boolean;
+    stratType: string;
   }
 
-  type SimQueryU = SingleSimQuery | ChainSimQuery | StepSimQuery | SimQueryAll;
-  type SimQuery<T extends BaseSimQuery> = T;
-  
+  type SimQuery = SingleSimQuery | ChainSimQuery | StepSimQuery | SimAllQuery;
+
+  type SingleSimResponse = {
+    responseType: "single";
+    result: simResult;
+  }
+
+  type ChainSimResponse = {
+    responseType: "chain";
+    results: simResult[];
+    deltaTau: number;
+    averageRate: number;
+    totalTime: number;
+  }
+
+  type StepSimResponse = {
+    responseType: "step";
+    results: simResult[];
+  }
+
+  type SimAllResponse = {
+    responseType: "all";
+    sigma: number;
+    stratType: string;
+    results: simAllResult[];
+  }
+
+  type SimResponse = SingleSimResponse | ChainSimResponse | StepSimResponse | SimAllResponse;
 
   interface varBuy {
     variable: string;
