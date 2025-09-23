@@ -149,7 +149,7 @@ function writeChainSimResponse(response: ChainSimResponse) {
     fillTableRow(labelRow, 2);
     fillTableRow(resRow, 2);
     addTableCell(labelRow, `Average ${tau}/h`);
-    addTableCell(resRow, formatNumber(response.averageRate));
+    addTableCell(resRow, formatNumber(response.averageRate, 5));
     addTableCell(labelRow, `Total Time`);
     addTableCell(resRow, convertTime(response.totalTime));
 }

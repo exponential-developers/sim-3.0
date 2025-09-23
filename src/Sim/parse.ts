@@ -103,7 +103,6 @@ function parseSingleSim(): SingleSimQuery {
         strat: stratSelector.value,
         sigma: sigma,
         rho: parseCurrency(input.value, theory, sigma),
-        cap: null,
         settings: parseSettings()
     }
 }

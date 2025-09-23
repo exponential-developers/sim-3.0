@@ -21,7 +21,8 @@ declare global {
     theory: theoryType;
     strat: string;
     rho: number;
-    cap: number | null;
+    cap?: number;
+    lastStrat?: string;
   }
 
   type ChainSimQuery = BaseSimQuery & {
