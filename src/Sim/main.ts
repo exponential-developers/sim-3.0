@@ -1,8 +1,8 @@
-import { qs, event } from "../Utils/DOMhelpers";
 import { parseQuery } from "./parse";
 import { simulate } from "./simulate";
 import { writeSimResponse } from "./write";
 import { setSimState } from "../UI/simState";
+import { qs, event } from "../Utils/DOMhelpers";
 
 const output = qs(".output");
 

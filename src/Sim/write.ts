@@ -1,5 +1,5 @@
-import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
+import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
 // Outputs
 const table = qs(".simTable");

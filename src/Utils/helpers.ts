@@ -149,18 +149,6 @@ export function binaryInsertionSearch(arr: number[], target: number): number {
   return l + 1;
 }
 
-export function resultIsSimResult(result: generalResult): result is simResult {
-  return "strat" in result;
-}
-
-export function resultIsSimAllResult(result: generalResult): result is simAllResult {
-  return "ratio" in result;
-}
-
-export function resultIsCombinedResult(result: generalResult): result is combinedResult {
-  return Array.isArray(result);
-}
-
 /** Returns a default simResult */
 export function defaultResult(): simResult {
   return {

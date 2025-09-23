@@ -1,6 +1,6 @@
+import data from "../Data/data.json" assert { type: "json" };
 import { findIndex } from "../Utils/helpers";
 import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
-import data from "../Data/data.json" assert { type: "json" };
 import { getSimState } from "./simState";
 
 type TheoryDataStructure = {

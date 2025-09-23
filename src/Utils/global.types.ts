@@ -110,22 +110,6 @@ declare global {
     showUnofficials: boolean;
   }
 
-  type combinedResult = [string, string, string];
-
-  /*interface simResult {
-    theory: string;
-    sigma: number;
-    lastPub: string;
-    pubRho: string;
-    deltaTau: string;
-    pubMulti: string;
-    strat: string;
-    tauH: number;
-    time: string;
-    rawData: { pubRho: number; time: number };
-    boughtVars: varBuy[];
-  }*/
-
   interface simResult {
     theory: theoryType;
     sigma: number;
@@ -146,6 +130,4 @@ declare global {
     active: simResult;
     idle: simResult;
   }
-
-  type generalResult = simResult | combinedResult | simAllResult;
 }

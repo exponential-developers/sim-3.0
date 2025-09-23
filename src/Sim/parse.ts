@@ -1,6 +1,6 @@
-import { qs, qsa } from "../Utils/DOMhelpers";
-import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
 import jsonData from "../Data/data.json" assert { type: "json" };
+import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
+import { qs } from "../Utils/DOMhelpers";
 
 type TheoryDataStructure = {
     [key in theoryType]: {
