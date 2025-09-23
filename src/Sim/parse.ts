@@ -46,11 +46,11 @@ function parseSettings(): Settings {
 }
 
 function parseExponentialValue(str: string): number {
-    if (/^e?\d+(.\d+)?$/.test(str)) {
+    if (/^e?\d+(\.\d+)?$/.test(str)) {
         if (str.charAt(0) == 'e') str = str.slice(1);
         return parseFloat(str);
     }
-    else if (/^\d+(.\d+)?e\d+$/.test(str)) {
+    else if (/^\d+(\.\d+)?e\d+$/.test(str)) {
         return parseLog10String(str);
     }
     else {
