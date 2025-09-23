@@ -56,7 +56,7 @@ export function convertTime(secs: number): string {
 }
 
 /** 
- * Formats a number to the given precision 
+ * Formats a number to the given precision (default 6 digits)
  * 
  * This function removes the `+` in the scientific form
  * */
@@ -164,16 +164,15 @@ export function resultIsCombinedResult(result: generalResult): result is combine
 /** Returns a default simResult */
 export function defaultResult(): simResult {
   return {
-      theory: "",
+      theory: "T1",
       sigma: 0,
-      lastPub: "",
-      pubRho: "",
-      deltaTau: "",
-      pubMulti: "",
+      lastPub: 0,
+      pubRho: 0,
+      deltaTau: 0,
+      pubMulti: 0,
       strat: "Result undefined",
       tauH: 0,
-      time: "",
-      rawData: { pubRho: 0, time: 0 },
+      time: 0,
       boughtVars: []
     };
 }

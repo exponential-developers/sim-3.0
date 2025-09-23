@@ -16,7 +16,7 @@ export default async function t2(data: theoryData): Promise<simResult> {
     data.strat = savedStrat;
     if(savedStrat == "T2MCAlt2") {
       bestSim = new t2Sim(data);
-      bestSim.targetRho = res.rawData.pubRho;
+      bestSim.targetRho = res.pubRho;
       bestSimRes = await bestSim.simulate();
     }
     else {
@@ -25,7 +25,7 @@ export default async function t2(data: theoryData): Promise<simResult> {
       bestSim.stop3 = 1700;
       bestSim.stop2 = 2650;
       bestSim.stop1 = 3700;
-      bestSim.targetRho = res.rawData.pubRho;
+      bestSim.targetRho = res.pubRho;
       bestSimRes = await bestSim.simulate();
     }
   }

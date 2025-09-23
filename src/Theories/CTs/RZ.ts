@@ -224,7 +224,7 @@ export default async function rz(data: theoryData) {
         let coastRets = [];
         for(let i = 0; i < normalRets.length; i++) {
             let ss = new rzSim(data);
-            ss.normalPubRho = normalRets[i].rawData.pubRho;
+            ss.normalPubRho = normalRets[i].pubRho;
             ss.swapPointDelta = swapPointDeltas[i];
             coastRets.push(await ss.simulate());
         }

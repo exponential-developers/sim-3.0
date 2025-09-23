@@ -412,6 +412,21 @@ export default abstract class theoryClass<theory extends theoryType> {
     return {
       theory: this.theory,
       sigma: this.sigma,
+      lastPub: this.lastPub,
+      pubRho: this.pubRho,
+      deltaTau: (this.pubRho - this.lastPub) * this.tauFactor,
+      pubMulti: 10 ** (this.getTotMult(this.pubRho) - this.totMult),
+      strat: this.strat as String + stratExtra,
+      tauH: this.maxTauH,
+      time: Math.max(0, this.pubT - this.recovery.time),
+      boughtVars: this.boughtVars
+    }
+  }
+
+  /*createResult(stratExtra: string = ""): simResult {
+    return {
+      theory: this.theory,
+      sigma: this.sigma,
       lastPub: logToExp(this.lastPub, 2),
       pubRho: logToExp(this.pubRho, 2),
       deltaTau: logToExp((this.pubRho - this.lastPub) * this.tauFactor, 2),
@@ -425,5 +440,7 @@ export default abstract class theoryClass<theory extends theoryType> {
       },
       boughtVars: this.boughtVars
     }
-  }
+  }*/
+
+  
 }

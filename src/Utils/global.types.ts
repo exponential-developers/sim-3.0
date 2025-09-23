@@ -111,7 +111,7 @@ declare global {
 
   type combinedResult = [string, string, string];
 
-  interface simResult {
+  /*interface simResult {
     theory: string;
     sigma: number;
     lastPub: string;
@@ -123,12 +123,25 @@ declare global {
     time: string;
     rawData: { pubRho: number; time: number };
     boughtVars: varBuy[];
+  }*/
+
+  interface simResult {
+    theory: theoryType;
+    sigma: number;
+    lastPub: number;
+    pubRho: number;
+    deltaTau: number;
+    pubMulti: number;
+    strat: string;
+    tauH: number;
+    time: number;
+    boughtVars: varBuy[];
   }
 
   interface simAllResult {
-    theory: string;
-    ratio: string;
-    lastPub: string;
+    theory: theoryType;
+    ratio: number;
+    lastPub: number;
     active: simResult;
     idle: simResult;
   }

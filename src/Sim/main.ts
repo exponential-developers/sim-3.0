@@ -168,9 +168,9 @@ async function chainSim(data: parsedData): Promise<(simResult | combinedResult)[
     if (!global.simulating) break;
     if (typeof res.strat === "string") cache.lastStrat = res.strat.split(" ")[0];
     result.push(res);
-    lastPub = res.rawData.pubRho;
+    lastPub = res.pubRho;
     data.rho = lastPub;
-    time += res.rawData.time;
+    time += res.time;
   }
   cache.lastStrat = "";
   result.push(["ΔTau Total", `Average <span style="font-size:0.9rem; font-style:italics">&tau;</span>/h`, "Total Time"]);
@@ -230,10 +230,11 @@ async function simAll(data: parsedData): Promise<generalResult[]> {
   return res;
 }
 function createSimAllOutput(arr: simResult[]): simResult | simAllResult {
+  //ratio: formatNumber(arr[0].tauH / arr[1].tauH, 4),
   if (global.simAllStrats === "all") {
     return {
       theory: arr[0].theory,
-      ratio: formatNumber(arr[0].tauH / arr[1].tauH, 4),
+      ratio: arr[0].tauH / arr[1].tauH,
       lastPub: arr[0].lastPub,
       active: arr[0],
       idle: arr[1]
