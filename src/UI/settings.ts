@@ -1,6 +1,6 @@
-import { formatNumber, getddtFromSlider, getdtFromSlider } from "../Utils/helpers.js";
-import { qs, event } from "../Utils/DOMhelpers.js";
-import { setSimState } from "./simState.js";
+import { formatNumber, getddtFromSlider, getdtFromSlider } from "../Utils/helpers";
+import { qs, event } from "../Utils/DOMhelpers";
+import { setSimState } from "./simState";
 
 // Settings menu
 

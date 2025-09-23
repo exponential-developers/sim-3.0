@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Build with tsc/webpack
+    - name: Build with webpack
       run: npm run prod
 
     - name: Setup GitHub Pages
