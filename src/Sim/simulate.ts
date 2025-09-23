@@ -1,6 +1,6 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 import { global } from "./main";
-import { defaultResult, getBestResult, getTheoryFromIndex, logToExp } from "../Utils/helpers";
+import { defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
 import { qs } from "../Utils/DOMhelpers";
 import { getStrats } from "./strats";
 import t1 from "../Theories/T1-T8/T1";
@@ -87,6 +87,7 @@ async function chainSim(query: ChainSimQuery): Promise<ChainSimResponse> {
         if (ts - lastLog > 250) {
             lastLog = ts;
             output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            await sleep();
         }
 
         const res = (await singleSim({
@@ -130,6 +131,7 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
         if (ts - lastLog > 250) {
             lastLog = ts;
             output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            await sleep();
         }
 
         const res = (await singleSim({
@@ -156,12 +158,16 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
 
 async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     const results: simAllResult[] = [];
+    const lastTheory = getTheoryFromIndex(query.values.length - 1 - query.values.slice().reverse().findIndex(v => v > 0));
 
     for (let i = 0; i < query.values.length; i++) {
         const theory = getTheoryFromIndex(i);
         const rho = query.values[i];
         if (rho <= 0) continue;
         if (!global.simulating) break;
+        
+        output.innerText = `Simulating ${theory}/${lastTheory}`;
+        await sleep();
 
         const queryData: Omit<SingleSimQuery, "strat"> = {
             queryType: "single",
@@ -200,7 +206,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     }
 }
 
-async function simulate(query: SimQuery): Promise<SimResponse> {
+export async function simulate(query: SimQuery): Promise<SimResponse> {
     switch (query.queryType) {
         case "single": return await singleSim(query);
         case "chain": return await chainSim(query);

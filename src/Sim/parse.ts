@@ -32,7 +32,7 @@ const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
 const showA23 = qs<HTMLInputElement>(".a23");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
-export function parseSettings(): Settings {
+function parseSettings(): Settings {
     return {
         dt: parseFloat(dtOtp.textContent ?? "1.5"),
         ddt: parseFloat(ddtOtp.textContent ?? "1.0001"),
@@ -142,7 +142,7 @@ function parseStepSim(): StepSimQuery {
 function parseSimAll(): SimAllQuery {
     const settings = parseSettings();
     const str = modeInput.value;
-    let split = str.split(" ").map((s) => s.replace("\n", "")).filter((s) => s != "");
+    let split = str.split(" ").map(s => s.replace("\n", "")).filter(s => s != "");
     
     const sigmaStr = split.shift() ?? "";
     if (split.length < 1) throw "Student count and at least one theory value that is not 0 is required.";
@@ -157,12 +157,13 @@ function parseSimAll(): SimAllQuery {
     let values = split.map((val, i) => parseCurrency(val, getTheoryFromIndex(i), sigma, 't'));
 
     values = values.map((val, i) => {
-        if (settings.skipCompletedCTs && i > 8 && val >= 600) return 0;
-        if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[getTheoryFromIndex(i)].UI_visible === false) return 0;
+        const theory = getTheoryFromIndex(i);
+        if (settings.skipCompletedCTs && i > 8 && val * jsonData.theories[theory].tauFactor >= 600) return 0;
+        if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[theory].UI_visible === false) return 0;
         return val;
     })
 
-    if (values.length - values.filter((val) => val > 0).length < 1) throw "Student count and at least one theory value that is not 0 is required.";
+    if (values.length - values.filter(val => val <= 0).length < 1) throw "Student count and at least one theory value that is not 0 is required.";
 
     return {
         queryType: "all",
@@ -175,7 +176,7 @@ function parseSimAll(): SimAllQuery {
     }
 }
 
-function parseQuery(): SimQuery {
+export function parseQuery(): SimQuery {
     switch (modeSelector.value) {
         case "All": return parseSimAll();
         case "Single sim": return parseSingleSim();

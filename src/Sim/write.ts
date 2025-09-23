@@ -2,9 +2,7 @@ import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
 
 // Outputs
-const output = qs(".output");
 const table = qs(".simTable");
-const thead = qs(".simTable > thead");
 const theadRow = <HTMLTableRowElement>qs(".simTable > thead > tr");
 const tbody = qs(".simTable > tbody");
 
@@ -178,8 +176,8 @@ function writeSimAllResponse(response: SimAllResponse) {
             const rowPassive = ce<HTMLTableRowElement>("tr");
 
             addTableCell(rowActive, res.theory, 2);
-            addTableCell(rowActive, logToExp(res.lastPub, 2));
-            addTableCell(rowActive, formatNumber(res.ratio, 4));
+            addTableCell(rowActive, logToExp(res.lastPub, 2), 2);
+            addTableCell(rowActive, formatNumber(res.ratio, 4), 2);
 
             completeSimAllLine(rowActive, res.active);
             completeSimAllLine(rowPassive, res.idle);
@@ -191,9 +189,8 @@ function writeSimAllResponse(response: SimAllResponse) {
             const uniqueRes = response.stratType == "active" ? res.active : res.idle;
             const row = ce<HTMLTableRowElement>("tr");
 
-            addTableCell(row, res.theory, 2);
+            addTableCell(row, res.theory);
             addTableCell(row, logToExp(res.lastPub, 2));
-            addTableCell(row, formatNumber(res.ratio, 4));
             completeSimAllLine(row, uniqueRes);
 
             tbody.appendChild(row);

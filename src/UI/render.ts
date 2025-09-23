@@ -1,8 +1,6 @@
 import { findIndex } from "../Utils/helpers";
 import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
 import data from "../Data/data.json" assert { type: "json" };
-import { global } from "../Sim/main";
-import { updateTimeDiffTable } from "../Sim/parsers";
 import { getSimState } from "./simState";
 
 type TheoryDataStructure = {
@@ -65,27 +63,13 @@ populateSelectElement(modeSelector, data.modes);
 modeUpdate();
 event(modeSelector, "input", modeUpdate);
 
-populateTheoryList(global.showUnofficials);
+populateTheoryList(showUnofficials.checked);
 theoryUpdate();
 event(theorySelector, "change", theoryUpdate);
 
-const simAllSettings: [boolean, boolean] = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
-semi_idle.checked = simAllSettings[0];
-hard_active.checked = simAllSettings[1];
-
-for (const elem of timeDiffInputs) {
-  event(elem, "input", () => {
-    updateTimeDiffTable();
-  });
-}
-
 event(showUnofficials, "click", () => {
-  if (global.showUnofficials != showUnofficials.checked)
-  {
-    global.showUnofficials = showUnofficials.checked;
-    populateTheoryList(global.showUnofficials);
+    populateTheoryList(showUnofficials.checked);
     theoryUpdate();
-  }
 });
 
 function modeUpdate(): void {
