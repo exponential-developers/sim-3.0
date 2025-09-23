@@ -22,9 +22,6 @@ const capInputWrapper = qs(".capWrapper");
 const modeSelector = qs<HTMLSelectElement>(".mode");
 const modeInput = <HTMLInputElement>qs("textarea");
 const hardCapWrapper = qs(".hardCapWrapper");
-const semi_idle = qs<HTMLInputElement>(".semi-idle");
-const hard_active = qs<HTMLInputElement>(".hard-active");
-const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
