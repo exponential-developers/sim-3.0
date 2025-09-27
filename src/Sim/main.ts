@@ -18,6 +18,7 @@ async function simCall() {
   if (global.simulating) {
     global.simulating = false;
     output.textContent = "Sim stopped.";
+    return;
   }
 
   global.simulating = true;
@@ -31,7 +32,7 @@ async function simCall() {
     output.textContent = "";
   }
   catch (err) {
-    output.textContent = String(err);
+    output.textContent = global.simulating ? String(err) : "Sim stopped.";
   }
   
   global.simulating = false;
