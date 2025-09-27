@@ -150,6 +150,9 @@ function writeChainSimResponse(response: ChainSimResponse) {
     addTableCell(resRow, formatNumber(response.averageRate, 5));
     addTableCell(labelRow, `Total Time`);
     addTableCell(resRow, convertTime(response.totalTime));
+
+    tbody.append(labelRow);
+    tbody.append(resRow);
 }
 
 function writeStepSimResponse(response: StepSimResponse) {
