@@ -1,4 +1,3 @@
-import { global } from "../Sim/main";
 import Currency from "../Utils/currency";
 import Variable from "../Utils/variable";
 import { binaryInsertionSearch, convertTime, formatNumber, logToExp } from "../Utils/helpers";
@@ -6,16 +5,14 @@ import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
 export default abstract class theoryClass<theory extends theoryType> {
-  /** Array of buying conditions for each variable */
-  buyingConditions: conditionFunction[];
-  /** Array of variable availability for each variable */
-  variableAvailability: conditionFunction[];
-  /** Current strategy */
-  strat: stratType[theory];
   /** Theory */
-  theory: theoryType;
+  readonly theory: theoryType;
+  /** Current strategy */
+  readonly strat: stratType[theory];
   /** tau/rho conversion rate */
-  tauFactor: number;
+  readonly tauFactor: number;
+  /** Sim settings used in the simulation */
+  readonly settings: Settings;
 
   // Theory
   /** rho at which publications are unlocked */
@@ -52,6 +49,12 @@ export default abstract class theoryClass<theory extends theoryType> {
   variables: Variable[];
   /** List of recorded variable purchases */
   boughtVars: varBuy[];
+
+  // Buying conditions
+  /** Array of buying conditions for each variable */
+  buyingConditions: conditionFunction[];
+  /** Array of variable availability for each variable */
+  variableAvailability: conditionFunction[];
 
   // Publication values
   /** Average tau/hr gain at this point in the publication (can be negative) */
@@ -117,10 +120,11 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   abstract getTotMult(val: number): number;
 
-  constructor(data: theoryData) {
-    this.strat = data.strat as stratType[theory];
+  constructor(readonly data: theoryData) {
     this.theory = data.theory;
+    this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
+    this.settings = data.settings;
 
     //theory
     this.pubUnlock = 1;
@@ -130,8 +134,8 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.sigma = data.sigma;
     this.totMult = this.getTotMult(data.rho);
     this.curMult = 0;
-    this.dt = global.dt;
-    this.ddt = global.ddt;
+    this.dt = this.settings.dt;
+    this.ddt = this.settings.ddt;
     this.t = 0;
     this.ticks = 0;
 
@@ -162,32 +166,6 @@ export default abstract class theoryClass<theory extends theoryType> {
 
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
-  }
-
-  /**
-   * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
-   * It does not need to feature all milestones.
-   * 
-   * This is called each time `updateMilestones` is called.
-   */
-  abstract getMilestonePriority(): number[];
-
-  /**
-   * Updates milestones
-   */
-  updateMilestones(): void {
-    const rho = Math.max(this.maxRho, this.lastPub);
-    const priority = this.getMilestonePriority();
-    let milestoneCount = this.milestoneUnlockSteps > 0 
-      ? Math.floor(rho / this.milestoneUnlockSteps)
-      : binaryInsertionSearch(this.milestoneUnlocks, rho);
-    this.milestones = new Array(this.milestonesMax.length).fill(0);
-    for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
-            this.milestones[priority[i]]++;
-            milestoneCount--;
-        }
-    }
   }
 
   /**
@@ -222,7 +200,34 @@ export default abstract class theoryClass<theory extends theoryType> {
       recovery: { ...this.recovery },
       cap: this.cap,
       recursionValue: null,
+      settings: this.settings
     };
+  }
+
+  /**
+   * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
+   * It does not need to feature all milestones.
+   * 
+   * This is called each time `updateMilestones` is called.
+   */
+  abstract getMilestonePriority(): number[];
+
+  /**
+   * Updates milestones
+   */
+  updateMilestones(): void {
+    const rho = Math.max(this.maxRho, this.lastPub);
+    const priority = this.getMilestonePriority();
+    let milestoneCount = this.milestoneUnlockSteps > 0 
+      ? Math.floor(rho / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.milestones = new Array(this.milestonesMax.length).fill(0);
+    for (let i = 0; i < priority.length; i++) {
+        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+            this.milestones[priority[i]]++;
+            milestoneCount--;
+        }
+    }
   }
 
   evaluateForcedPubConditions(): boolean {
@@ -407,17 +412,13 @@ export default abstract class theoryClass<theory extends theoryType> {
     return {
       theory: this.theory,
       sigma: this.sigma,
-      lastPub: logToExp(this.lastPub, 2),
-      pubRho: logToExp(this.pubRho, 2),
-      deltaTau: logToExp((this.pubRho - this.lastPub) * this.tauFactor, 2),
-      pubMulti: formatNumber(10 ** (this.getTotMult(this.pubRho) - this.totMult)),
+      lastPub: this.lastPub,
+      pubRho: this.pubRho,
+      deltaTau: (this.pubRho - this.lastPub) * this.tauFactor,
+      pubMulti: 10 ** (this.getTotMult(this.pubRho) - this.totMult),
       strat: this.strat as String + stratExtra,
-      tauH: this.maxTauH === 0 ? 0 : Number(formatNumber(this.maxTauH)),
-      time: convertTime(Math.max(0, this.pubT - this.recovery.time)),
-      rawData: {
-        pubRho: this.pubRho,
-        time: this.recovery.recoveryTime ? this.recovery.time : Math.max(0, this.pubT - this.recovery.time)
-      },
+      tauH: this.maxTauH,
+      time: Math.max(0, this.pubT - this.recovery.time),
       boughtVars: this.boughtVars
     }
   }

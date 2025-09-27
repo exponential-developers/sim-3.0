@@ -1,5 +1,5 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
-import { global } from "./main.js";
+import { global } from "./main";
 
 type TheoryDataRawType = {
   [key: string]: {

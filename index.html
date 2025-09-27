@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="./Styles/controls.css" />
     <link rel="stylesheet" href="./Styles/output.css" />
     <link rel="stylesheet" href="./Styles/narrow.css" />
-    <link rel="stylesheet" href="./Styles/terminal.css" />
     <link rel="stylesheet" href="./Styles/themes.css" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7TELWBF6QQ"></script>
     <script>
@@ -67,8 +66,8 @@
           <span class="description">Input: </span>
           <input type="text" class="input" style="width: 5rem" placeholder="<rho>[r/t/m]>" />
         </div>
-        <div>
-          <span class="description capDesc">Cap: </span>
+        <div class="capWrapper">
+          <span class="description">Cap: </span>
           <input type="text" class="cap" style="width: 5rem" placeholder="<rho>[r/t/m]>" />
         </div>
       </div>
@@ -109,7 +108,7 @@
       </div>
       <span class="output" style="display: block"></span>
       <table class="simTable">
-        <thead></thead>
+        <thead><tr></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -241,11 +240,5 @@
         </li>
       </ul>
     </dialog>
-    <div class="terminal">
-      <div class="terminalOutputWrapper">
-        <div class="terminalOutputs"></div>
-      </div>
-      <input type="text" class="terminalInput" />
-    </div>
   </body>
 </html>

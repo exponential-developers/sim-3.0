@@ -1,4 +1,4 @@
-import { add } from "./helpers.js";
+import { add } from "./helpers";
 import { BaseCost, FirstFreeCost } from "./cost";
 import { BaseValue } from "./value";
 import Currency from "./currency";

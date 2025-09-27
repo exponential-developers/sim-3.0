@@ -145,7 +145,7 @@ class t4Sim extends theoryClass<theory> {
     if ((this.recursionValue === null || this.recursionValue === undefined) && ["T4C3d66", "T4C3coast"].includes(this.strat)) {
       data.recursionValue = Number.MAX_VALUE;
       const tempSim = await new t4Sim(data).simulate(data);
-      this.recursionValue = tempSim.rawData.pubRho;
+      this.recursionValue = tempSim.pubRho;
     }
     while (!this.endSimulation()) {
       if (!global.simulating) break;
