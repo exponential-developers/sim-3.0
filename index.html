@@ -13,18 +13,6 @@
     <link rel="stylesheet" href="./Styles/output.css" />
     <link rel="stylesheet" href="./Styles/narrow.css" />
     <link rel="stylesheet" href="./Styles/themes.css" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7TELWBF6QQ"></script>
-    <script>
-      if (window.location.href === "https://tredec.github.io/sim-3.0/") {
-        window.dataLayer = window.dataLayer || [];
-        function gtag() {
-          dataLayer.push(arguments);
-        }
-        gtag("js", new Date());
-
-        gtag("config", "G-7TELWBF6QQ");
-      }
-    </script>
     <script>
       const defaultTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "classic";
       const state = JSON.parse(localStorage.getItem("simState") ?? `{}`);
