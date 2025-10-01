@@ -368,7 +368,7 @@
       "tauFactor": 0.4,
       "strats": {
         "CSR2": {
-          "stratFilterCondition": "((Idle || Semi-Idle) || rho < 10) && (rho < 500 || rho >= 1499)"
+          "stratFilterCondition": "rho < 10 || Idle || (Semi-Idle && (rho < 500 || rho >= 1499))"
         },
         "CSR2PT": {
           "stratFilterCondition": "Semi-Idle && rho >= 500 && rho < 1499"
