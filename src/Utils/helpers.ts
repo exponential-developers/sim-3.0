@@ -179,7 +179,7 @@ export function getBestResult(res1: simResult | null, res2: simResult | null): s
     return res1;
   }
   if (res1 != null && res2 != null) {
-    return res1.tauH > res2.tauH ? res1 : res2;
+    return res1.tauH >= res2.tauH ? res1 : res2;
   }
   return defaultResult();
 }

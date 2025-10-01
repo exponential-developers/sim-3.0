@@ -60,56 +60,60 @@ class fpSim extends theoryClass<theory> {
   doContinuityFork: boolean;
 
   getBuyingConditions(): conditionFunction[] {
+    const idleStrat = new Array(8).fill(true);
+    const activeStrat = [
+      true,
+      () => this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[2].cost,
+      ...new Array(6).fill(true),
+    ];
+    const activeBurstStrat = [
+      true, // t - 0
+      () => {
+        const mod100 = this.variables[1].level % 100;
+        if(mod100 > 85) {
+          const levelMinusMod = this.variables[1].level - mod100;
+          const totalCost = this.variables[1].getCostForLevels(
+              levelMinusMod + mod100 + 1,
+              levelMinusMod + 101
+          )
+          if(totalCost < this.variables[2].cost + 0.1 && (this.milestones[4] == 0 || totalCost < this.variables[7].cost)) {
+            return true;
+          }
+        }
+        return (this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[2].cost) &&
+            (this.milestones[4] == 0 || this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[7].cost)
+      }, // c1 - 1
+      () => {
+        if(this.milestones[4] == 0) return true;
+        // s:
+        return this.variables[2].cost + 0.1 < this.variables[7].cost;
+      }, //c2 - 2
+      //q1 - 3
+      () => {
+        let cond1 = this.variables[3].cost + l10((this.variables[3].level % 10) + 1)*1.5 < this.variables[4].cost
+        //let cond2 = this.variables[3].cost + l10((this.variables[3].level % 10) + 1) < this.variables[2].cost
+        return cond1;
+      }, //q1
+      () => {
+        let cond1 = true; //this.variables[4].cost + 0.05 < this.variables[2].cost;
+        let cond2 = true;
+        if(this.milestones[4] != 0) {
+          cond2 = this.variables[4].cost + 0.1 < this.variables[7].cost;
+        }
+        return cond1 && cond2;
+      }, //q2 - 4
+      true, //r1 - 5
+      true, //n1 - 6
+      true, //s - 7
+    ];
+
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      FP: new Array(8).fill(true),
-      FPcoast: new Array(8).fill(true),
-      FPdMS: [
-        true,
-        () => this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[2].cost,
-        ...new Array(6).fill(true),
-      ],
-      FPmodBurstC1MS: [
-        true, // t - 0
-        () => {
-          let mod100 = this.variables[1].level % 100;
-          if(mod100 > 85) {
-            let levelMinusMod = this.variables[1].level - mod100;
-            let totalCost = this.variables[1].getCostForLevels(
-                levelMinusMod + mod100 + 1,
-                levelMinusMod + 101
-            )
-            if(totalCost < this.variables[2].cost + 0.1 && (this.milestones[4] == 0 || totalCost < this.variables[7].cost)) {
-              return true;
-            }
-          }
-          return (this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[2].cost) &&
-              (this.milestones[4] == 0 || this.variables[1].cost + l10((this.variables[1].level % 100) + 1) < this.variables[7].cost)
-        }, // c1 - 1
-        () => {
-          if(this.milestones[4] == 0) return true;
-          // s:
-          return this.variables[2].cost + 0.1 < this.variables[7].cost;
-        }, //c2 - 2
-        //q1 - 3
-        () => {
-          let cond1 = this.variables[3].cost + l10((this.variables[3].level % 10) + 1)*1.5 < this.variables[4].cost
-          //let cond2 = this.variables[3].cost + l10((this.variables[3].level % 10) + 1) < this.variables[2].cost
-          return cond1;
-        }, //q1
-        () => {
-          let cond1 = true; //this.variables[4].cost + 0.05 < this.variables[2].cost;
-          let cond2 = true;
-          if(this.milestones[4] != 0) {
-            cond2 = this.variables[4].cost + 0.1 < this.variables[7].cost;
-          }
-          return cond1 && cond2;
-        }, //q2 - 4
-        () => {
-          return true;
-        }, //r1 - 5
-        true, //n1 - 6
-        true, //s - 7
-      ],
+      FP: idleStrat,
+      FPcoast: idleStrat,
+      FPd: activeStrat,
+      FPdMS: activeStrat,
+      FPmodBurstC1: activeBurstStrat,
+      FPmodBurstC1MS: activeBurstStrat
     };
     return toCallables(conditions[this.strat]);
   }
@@ -261,7 +265,7 @@ class fpSim extends theoryClass<theory> {
       this.updateN_flag = false;
     }
 
-    if (["FPdMS", "FPmodBurstC1MS"].includes(this.strat) && this.lastPub > 700 && this.variables[7].value < 2) {
+    if (this.strat.includes("MS") && this.lastPub > 700 && this.variables[7].value < 2) {
       this.milestones[4] = 1;
       if (this.ticks % 20 < 10 / this.variables[7].value) this.milestones[4] = 0;
     }

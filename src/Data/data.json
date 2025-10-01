@@ -406,10 +406,10 @@
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
         "FIMSPermaSwap":{
-          "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho < 1150"
+          "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
         "FIMSdPermaSwap":{
-          "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho < 1150"
+          "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         }
       }}
     ,
@@ -422,11 +422,17 @@
         "FPcoast": {
           "stratFilterCondition": "Semi-Idle && rho >= 1200 && rho < 1990"
         },
+        "FPd": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
         "FPdMS": {
+          "stratFilterCondition": "(Active || Very-Active) && rho > 700 && rho < 1050"
+        },
+        "FPmodBurstC1": {
           "stratFilterCondition": "Active || Very-Active"
         },
         "FPmodBurstC1MS": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 700 && rho < 1050"
         }
       }
     },
