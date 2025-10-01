@@ -202,6 +202,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         responseType: "all",
         sigma: query.sigma,
         stratType: query.stratType,
+        completedCTs: query.settings.completedCTs,
         results: results
     }
 }

@@ -19,11 +19,11 @@ const mfDepthOpt = qs(".mfDepthOtp");
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 
 const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
-const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
+const completedCTs = qs<HTMLInputElement>(".completedcts");
 const showA23 = qs<HTMLInputElement>(".a23");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
-const defaultState = `{"settings":{"dt":"1.5","ddt":"1.0001","skipCompletedCTs":false,"showA23":false,"showUnofficials":false}}`;
+const defaultState = `{"settings":{"dt":"1.5","ddt":"1.0001","showA23":false,"showUnofficials":false}}`;
 const defaultTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "classic";
 
 export function setSimState() {
@@ -36,7 +36,7 @@ export function setSimState() {
         ddt: ddtOtp.textContent,
         mfResetDepth: mfDepthOpt.textContent,
         simAllStrats: simAllStrats.value,
-        skipCompletedCTs: skipCompletedCTs.checked,
+        completedCTs: completedCTs.value,
         showA23: showA23.checked,
         showUnofficials: showUnofficials.checked,
         theme: themeSelector.value
@@ -63,7 +63,8 @@ export function getSimState() {
 
   themeSelector.value = state.settings.theme ?? defaultTheme;
   simAllStrats.value = state.settings.simAllStrats ?? "all";
-  skipCompletedCTs.checked = state.settings.skipCompletedCTs ?? false;
+  completedCTs.value = state.settings.completedCTs ?? (state.settings.skipCompletedCTs === true ? "no" : "in");
+  //skipCompletedCTs.checked = state.settings.skipCompletedCTs ?? false;
   showA23.checked = state.settings.showA23;
   showUnofficials.checked = state.settings.showUnofficials ?? false;
 }

@@ -1,3 +1,4 @@
+import jsonData from "../Data/data.json" assert { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
 import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
@@ -173,46 +174,57 @@ function writeSimAllResponse(response: SimAllResponse) {
         bindVarBuy(row, res.boughtVars);
     }
 
+    let sets: simAllResult[][] = [[], [], []];
     response.results.forEach((res, i) => {
-        if (response.stratType == "all") {
-            const rowActive = ce<HTMLTableRowElement>("tr");
-            const rowPassive = ce<HTMLTableRowElement>("tr");
-
-            addTableCell(rowActive, res.theory, 2);
-            addTableCell(rowActive, logToExp(res.lastPub, 2), 2);
-            addTableCell(rowActive, formatNumber(res.ratio, 4), 2);
-
-            completeSimAllLine(rowActive, res.active);
-            completeSimAllLine(rowPassive, res.idle);
-
-            tbody.appendChild(rowActive);
-            tbody.appendChild(rowPassive);
+        if (isMainTheory(res.theory)) {
+            sets[0].push(res);
         }
         else {
-            const uniqueRes = response.stratType == "active" ? res.active : res.idle;
-            const row = ce<HTMLTableRowElement>("tr");
-
-            addTableCell(row, res.theory);
-            addTableCell(row, logToExp(res.lastPub, 2));
-            completeSimAllLine(row, uniqueRes);
-
-            tbody.appendChild(row);
-        }
-
-        if (i < response.results.length - 1) {
-            const next = response.results[i + 1];
-            const lastTheory = res.theory;
-            const nextTheory = next.theory;
-            if (isMainTheory(lastTheory) && !isMainTheory(nextTheory)){
-                const bufferRow1 = ce<HTMLTableRowElement>("tr");
-                const bufferRow2 = ce<HTMLTableRowElement>("tr");
-                
-                bufferRow1.style.display = "none";
-                addTableCell(bufferRow2, "---");
-
-                tbody.appendChild(bufferRow1);
-                tbody.appendChild(bufferRow2)
+            if (response.completedCTs === "end" && res.lastPub * jsonData.theories[res.theory].tauFactor >= 600) {
+                sets[2].push(res);
             }
+            else sets[1].push(res);
+        }
+    });
+    sets = sets.filter(set => set.length > 0);
+
+    sets.forEach((set, i) => {
+        set.forEach(res => {
+            if (response.stratType == "all") {
+                const rowActive = ce<HTMLTableRowElement>("tr");
+                const rowPassive = ce<HTMLTableRowElement>("tr");
+    
+                addTableCell(rowActive, res.theory, 2);
+                addTableCell(rowActive, logToExp(res.lastPub, 2), 2);
+                addTableCell(rowActive, formatNumber(res.ratio, 4), 2);
+    
+                completeSimAllLine(rowActive, res.active);
+                completeSimAllLine(rowPassive, res.idle);
+    
+                tbody.appendChild(rowActive);
+                tbody.appendChild(rowPassive);
+            }
+            else {
+                const uniqueRes = response.stratType == "active" ? res.active : res.idle;
+                const row = ce<HTMLTableRowElement>("tr");
+    
+                addTableCell(row, res.theory);
+                addTableCell(row, logToExp(res.lastPub, 2));
+                completeSimAllLine(row, uniqueRes);
+    
+                tbody.appendChild(row);
+            }
+        })
+
+        if (i < sets.length - 1) {
+            const bufferRow1 = ce<HTMLTableRowElement>("tr");
+            const bufferRow2 = ce<HTMLTableRowElement>("tr");
+            
+            bufferRow1.style.display = "none";
+            addTableCell(bufferRow2, "---");
+
+            tbody.appendChild(bufferRow1);
+            tbody.appendChild(bufferRow2);
         }
     })
 }

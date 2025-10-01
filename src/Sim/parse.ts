@@ -28,7 +28,7 @@ const ddtOtp = qs(".ddtOtp");
 const mfDepthOtp = qs(".mfDepthOtp");
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
-const skipCompletedCTs = qs<HTMLInputElement>(".skipcompletedcts");
+const completedCTs = qs<HTMLSelectElement>(".completedcts");
 const showA23 = qs<HTMLInputElement>(".a23");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
@@ -38,8 +38,8 @@ function parseSettings(): Settings {
         ddt: parseFloat(ddtOtp.textContent ?? "1.0001"),
         mfResetDepth: parseInt(mfDepthOtp.textContent ?? "0"),
         theme: themeSelector.value,
-        simAllStrats: simAllStrats.value,
-        skipCompletedCTs: skipCompletedCTs.checked,
+        simAllStrats: simAllStrats.value as SettingsSimAllStratsMode,
+        completedCTs: completedCTs.value as SettingsCompletedCTsMode,
         showA23: showA23.checked,
         showUnofficials: showUnofficials.checked
     }
@@ -158,7 +158,7 @@ function parseSimAll(): SimAllQuery {
 
     values = values.map((val, i) => {
         const theory = getTheoryFromIndex(i);
-        if (settings.skipCompletedCTs && i > 8 && val * jsonData.theories[theory].tauFactor >= 600) return 0;
+        if (settings.completedCTs === "no" && i > 8 && val * jsonData.theories[theory].tauFactor >= 600) return 0;
         if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[theory].UI_visible === false) return 0;
         return val;
     })
@@ -171,7 +171,7 @@ function parseSimAll(): SimAllQuery {
         values: values,
         veryActive: hard_active.checked,
         semiIdle: semi_idle.checked,
-        stratType: simAllStrats.value,
+        stratType: settings.simAllStrats,
         settings: settings
     }
 }

@@ -48,7 +48,7 @@ declare global {
     values: number[];
     veryActive: boolean;
     semiIdle: boolean;
-    stratType: string;
+    stratType: SettingsSimAllStratsMode;
   }
 
   type SimQuery = SingleSimQuery | ChainSimQuery | StepSimQuery | SimAllQuery;
@@ -74,7 +74,8 @@ declare global {
   type SimAllResponse = {
     responseType: "all";
     sigma: number;
-    stratType: string;
+    stratType: SettingsSimAllStratsMode;
+    completedCTs: SettingsCompletedCTsMode;
     results: simAllResult[];
   }
 
@@ -99,13 +100,15 @@ declare global {
     settings: Settings;
   }
 
+  type SettingsSimAllStratsMode = "all" | "active" | "idle";
+  type SettingsCompletedCTsMode = "in" | "end" | "no";
   type Settings = {
     dt: number;
     ddt: number;
     mfResetDepth: number;
     theme: string;
-    simAllStrats: string;
-    skipCompletedCTs: boolean;
+    simAllStrats: SettingsSimAllStratsMode;
+    completedCTs: SettingsCompletedCTsMode;
     showA23: boolean;
     showUnofficials: boolean;
   }
