@@ -90,7 +90,7 @@ function populateSingleSimFields(rewriteCurrency: boolean = false): void {
       const str = splits[theoryIndex + 1];
       const match = str.match(/^e?\d+(\.\d+)?[rtm]?$/) || str.match(/^\d+(\.\d+)?e\d+[rtm]?$/);
       if (match) {
-        currencyInput.value = match[0].replace(/[rtm]/, "").concat("t");
+        currencyInput.value = /[rtm]/.test(str) ? str : str.concat("t");
       }
     }
     else if (rewriteCurrency) {
