@@ -20,7 +20,8 @@ const theorySelector = qs<HTMLSelectElement>(".theory");
 const stratSelector = qs<HTMLSelectElement>(".strat");
 const capInputWrapper = qs(".capWrapper");
 const modeSelector = qs<HTMLSelectElement>(".mode");
-const modeInput = <HTMLInputElement>qs("textarea");
+const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
+const modeInput = qs<HTMLTextAreaElement>(".modeInput");
 const hardCapWrapper = qs(".hardCapWrapper");
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
@@ -46,7 +47,8 @@ function populateSelectElement(select: HTMLSelectElement, items: string[], clear
   }
 }
 function populateTheoryList(showUnofficials: boolean) {
-  populateSelectElement(theorySelector, theories.filter((item) => (data.theories as TheoryDataStructure)[item].UI_visible !== false || showUnofficials))
+  populateSelectElement(theorySelector, theories.filter(theory => 
+    (data.theories as TheoryDataStructure)[theory].UI_visible !== false || showUnofficials));
 }
 
 //Renders theories, strats and modes options on page load
@@ -70,30 +72,41 @@ event(showUnofficials, "click", () => {
 });
 
 function modeUpdate(): void {
+  const newMode = modeSelector.value;
+
   singleInput.style.display = "none";
-  extraInputs.style.display = "none";
-  timeDiffWrapper.style.display = "none";
-  hardCapWrapper.style.display = "none";
-  simAllInputs.style.display = "none";
-  modeInputDescription.style.display = "inline";
-  modeInput.style.height = "1.8em";
-  modeInput.style.width = "6rem";
   capInputWrapper.style.display = "none";
-  if (modeSelector.value === "Chain" || modeSelector.value === "Steps") {
-    capInputWrapper.style.display = "inline";
-  }
-  if (modeSelector.value !== "Single sim" && modeSelector.value !== "Time diff." && modeSelector.value !== "Chain") extraInputs.style.display = "flex";
-  if (modeSelector.value === "Time diff.") timeDiffWrapper.style.display = "grid";
-  if (modeSelector.value !== "All" && modeSelector.value !== "Time diff.") singleInput.style.display = "grid";
-  if (modeSelector.value === "Chain") hardCapWrapper.style.display = "block";
-  if (modeSelector.value === "All") {
+  hardCapWrapper.style.display = "none";
+
+  extraInputs.style.display = "none";
+  simAllInputs.style.display = "none";
+  simAllInputArea.style.display = "none";
+  modeInputDescription.style.display = "inline";
+  modeInput.style.display = "none";
+  timeDiffWrapper.style.display = "none";
+
+  // Displays the single-theory inputs
+  if (newMode !== "All" && newMode !== "Time diff.") singleInput.style.display = "grid";
+  // Displays the cap input for chain/steps mode
+  if (newMode === "Chain" || newMode === "Steps") capInputWrapper.style.display = "inline";
+  // Displays the hard cap input
+  if (newMode === "Chain") hardCapWrapper.style.display = "block";
+
+  // Extra Inputs
+  if (newMode !== "Single sim" && newMode !== "Time diff." && newMode !== "Chain") extraInputs.style.display = "flex";
+  if (newMode === "All") {
     simAllInputs.style.display = "grid";
     modeInputDescription.style.display = "none";
-    modeInput.style.height = "4rem";
-    modeInput.style.width = "20rem";
+    simAllInputArea.style.display = "block";
+    simAllInputArea.placeholder = data.modeInputPlaceholder[0];
   }
-  modeInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, modeSelector.value)];
-  modeInputDescription.textContent = data.modeInputDescriptions[findIndex(data.modes, modeSelector.value)];
+  else {
+    modeInput.style.display = "block";
+  }
+  modeInputDescription.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
+  modeInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
+  
+  if (newMode === "Time diff.") timeDiffWrapper.style.display = "grid";
 }
 
 function theoryUpdate() {

@@ -44,24 +44,25 @@ function createImage(mode: string) {
 const saveDist = qs<HTMLButtonElement>(".saveDist");
 const getDist = qs(".getDist");
 const loadSave = qs(".loadSave");
-const modeInput = qs<HTMLTextAreaElement>("textarea");
+const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea");
 
 event(saveDist, "pointerdown", () => {
-  if (modeInput.value.replace(" ", "").length === 0) return;
+  const saveString = simAllInputArea.value;
+  if (saveString.replace(" ", "").length === 0) return;
   saveDist.disabled = true;
   saveDist.innerHTML = "Saved!"
-  localStorage.setItem("savedDistribution", modeInput.value);
+  localStorage.setItem("savedDistribution", saveString);
   setTimeout(() => {
     saveDist.disabled = false;
     saveDist.innerHTML = "Save distribution"
   }, 1000);
 });
 event(getDist, "pointerdown", () => {
-  modeInput.value = localStorage.getItem("savedDistribution") ?? modeInput.value;
+  simAllInputArea.value = localStorage.getItem("savedDistribution") ?? simAllInputArea.value;
 });
 
 event(loadSave, "pointerdown", () => {
-  let presumedSaveFile = modeInput.value;
+  let presumedSaveFile = simAllInputArea.value;
 
   fetch("https://ex-save-loader.hotab.pw/load",{
     method: "POST",
@@ -74,7 +75,7 @@ event(loadSave, "pointerdown", () => {
     if(!r[1] || r[1] == "Not a savefile") {
       output.textContent = "Error loading save file.";
     } else {
-      modeInput.value = r[1];
+      simAllInputArea.value = r[1];
     }
   }).catch(e => {
     output.textContent = "Error loading save file.";

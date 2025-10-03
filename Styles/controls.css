@@ -66,12 +66,19 @@
 
 textarea {
   resize: none;
-  width: 6rem;
-  height: 1.8em;
+  margin-block: auto;
   padding: 0.2em;
   font-size: 0.7rem;
   background-color: var(--input-bg);
   color: var(--input-f-clr)
+}
+textarea.simAllInputArea {
+  width: 20rem;
+  height: 4rem;
+}
+textarea.modeInput {
+  width: 6rem;
+  height: 1.8em;
 }
 textarea::placeholder {
   font-size: 0.6rem;
