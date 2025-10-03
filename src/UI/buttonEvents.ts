@@ -5,6 +5,17 @@ import { qs, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 const clear = qs(".clear");
 const copyImage = qs(".imageC");
 const downloadImage = qs(".imageD");
+const clearInput = qs(".clearInput");
+
+const saveDist = qs<HTMLButtonElement>(".saveDist");
+const getDist = qs(".getDist");
+const loadSave = qs(".loadSave");
+const sigmaInput = qs<HTMLInputElement>(".sigma");
+const currencyInput = qs<HTMLInputElement>(".input");
+const capInput = qs<HTMLInputElement>(".cap");
+const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea");
+const modeInput = qs<HTMLTextAreaElement>(".modeInput");
+
 
 const output = qs(".output");
 const table = qs(".simTable")
@@ -15,6 +26,14 @@ event(clear, "pointerdown", () => {
   output.textContent = "";
   console.clear();
 });
+
+event(clearInput, "pointerdown", () => {
+  sigmaInput.value = "";
+  currencyInput.value = "";
+  capInput.value = "";
+  simAllInputArea.value = "";
+  modeInput.value = "";
+})
 
 event(copyImage, "pointerdown", () => createImage(""));
 event(downloadImage, "pointerdown", () => createImage("download"));
@@ -41,27 +60,23 @@ function createImage(mode: string) {
   .catch(() => console.log("Failed creating image."));
 }
 
-const saveDist = qs<HTMLButtonElement>(".saveDist");
-const getDist = qs(".getDist");
-const loadSave = qs(".loadSave");
-const modeInput = qs<HTMLTextAreaElement>("textarea");
-
 event(saveDist, "pointerdown", () => {
-  if (modeInput.value.replace(" ", "").length === 0) return;
+  const saveString = simAllInputArea.value;
+  if (saveString.replace(" ", "").length === 0) return;
   saveDist.disabled = true;
   saveDist.innerHTML = "Saved!"
-  localStorage.setItem("savedDistribution", modeInput.value);
+  localStorage.setItem("savedDistribution", saveString);
   setTimeout(() => {
     saveDist.disabled = false;
     saveDist.innerHTML = "Save distribution"
   }, 1000);
 });
 event(getDist, "pointerdown", () => {
-  modeInput.value = localStorage.getItem("savedDistribution") ?? modeInput.value;
+  simAllInputArea.value = localStorage.getItem("savedDistribution") ?? simAllInputArea.value;
 });
 
 event(loadSave, "pointerdown", () => {
-  let presumedSaveFile = modeInput.value;
+  let presumedSaveFile = simAllInputArea.value;
 
   fetch("https://ex-save-loader.hotab.pw/load",{
     method: "POST",
@@ -74,7 +89,7 @@ event(loadSave, "pointerdown", () => {
     if(!r[1] || r[1] == "Not a savefile") {
       output.textContent = "Error loading save file.";
     } else {
-      modeInput.value = r[1];
+      simAllInputArea.value = r[1];
     }
   }).catch(e => {
     output.textContent = "Error loading save file.";

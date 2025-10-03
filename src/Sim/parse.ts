@@ -16,7 +16,8 @@ const stratSelector = qs<HTMLSelectElement>(".strat");
 const sigma = qs<HTMLInputElement>(".sigma");
 const input = qs<HTMLInputElement>(".input");
 const cap = qs<HTMLInputElement>(".cap");
-const modeInput = qs<HTMLInputElement>("textarea");
+const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
+const modeInput = qs<HTMLTextAreaElement>(".modeInput");
 //const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
 const hardCap = qs<HTMLInputElement>(".hardCap");
 const semi_idle = qs<HTMLInputElement>(".semi-idle");
@@ -141,7 +142,7 @@ function parseStepSim(): StepSimQuery {
 
 function parseSimAll(): SimAllQuery {
     const settings = parseSettings();
-    const str = modeInput.value;
+    const str = simAllInputArea.value;
     let split = str.split(" ").map(s => s.replace("\n", "")).filter(s => s != "");
     
     const sigmaStr = split.shift() ?? "";
