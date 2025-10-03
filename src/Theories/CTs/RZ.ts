@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
-import { l10, binaryInsertionSearch, getBestResult, toCallables } from "../../Utils/helpers";
+import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
 
@@ -588,7 +588,7 @@ class rzSim extends theoryClass<theory> {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
         if (this.strat.includes("MS") && this.swapPointDelta != 0) {
-            stratExtra += ` swap:${(this.lastPub + this.swapPointDelta).toFixed(2)}`
+            stratExtra += ` swap:${logToExp(this.lastPub + this.swapPointDelta, 2)}`
         }
         if (this.normalPubRho != -1) {
             // if(this.maxC1LevelActual == -1)

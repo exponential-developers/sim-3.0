@@ -5,6 +5,17 @@ import { qs, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 const clear = qs(".clear");
 const copyImage = qs(".imageC");
 const downloadImage = qs(".imageD");
+const clearInput = qs(".clearInput");
+
+const saveDist = qs<HTMLButtonElement>(".saveDist");
+const getDist = qs(".getDist");
+const loadSave = qs(".loadSave");
+const sigmaInput = qs<HTMLInputElement>(".sigma");
+const currencyInput = qs<HTMLInputElement>(".input");
+const capInput = qs<HTMLInputElement>(".cap");
+const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea");
+const modeInput = qs<HTMLTextAreaElement>(".modeInput");
+
 
 const output = qs(".output");
 const table = qs(".simTable")
@@ -15,6 +26,14 @@ event(clear, "pointerdown", () => {
   output.textContent = "";
   console.clear();
 });
+
+event(clearInput, "pointerdown", () => {
+  sigmaInput.value = "";
+  currencyInput.value = "";
+  capInput.value = "";
+  simAllInputArea.value = "";
+  modeInput.value = "";
+})
 
 event(copyImage, "pointerdown", () => createImage(""));
 event(downloadImage, "pointerdown", () => createImage("download"));
@@ -40,11 +59,6 @@ function createImage(mode: string) {
   )
   .catch(() => console.log("Failed creating image."));
 }
-
-const saveDist = qs<HTMLButtonElement>(".saveDist");
-const getDist = qs(".getDist");
-const loadSave = qs(".loadSave");
-const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea");
 
 event(saveDist, "pointerdown", () => {
   const saveString = simAllInputArea.value;

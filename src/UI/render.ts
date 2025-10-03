@@ -1,5 +1,5 @@
 import data from "../Data/data.json" assert { type: "json" };
-import { findIndex } from "../Utils/helpers";
+import { findIndex, getIndexFromTheory } from "../Utils/helpers";
 import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
 
@@ -20,6 +20,8 @@ const theorySelector = qs<HTMLSelectElement>(".theory");
 const stratSelector = qs<HTMLSelectElement>(".strat");
 const capInputWrapper = qs(".capWrapper");
 const modeSelector = qs<HTMLSelectElement>(".mode");
+const sigmaInput = qs<HTMLInputElement>(".sigma");
+const currencyInput = qs<HTMLInputElement>(".input");
 const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
 const modeInput = qs<HTMLTextAreaElement>(".modeInput");
 const hardCapWrapper = qs(".hardCapWrapper");
@@ -71,6 +73,32 @@ event(showUnofficials, "click", () => {
     theoryUpdate();
 });
 
+function populateSingleSimFields(rewriteCurrency: boolean = false): void {
+  // Sigma field
+  const splits = simAllInputArea.value.replace("\n", "").split(" ").filter(s => s != "")
+
+  if (sigmaInput.value == "" && splits.length > 0) {
+    const match = splits[0].match(/^\d+$/g);
+    if (match) {
+      sigmaInput.value = match[0];
+    }
+  }
+
+  if ((currencyInput.value == "" || rewriteCurrency) && theorySelector.value) {
+    const theoryIndex = getIndexFromTheory(theorySelector.value);
+    if (splits.length > theoryIndex + 1) {
+      const str = splits[theoryIndex + 1];
+      const match = str.match(/^e?\d+(\.\d+)?[rtm]?$/) || str.match(/^\d+(\.\d+)?e\d+[rtm]?$/);
+      if (match) {
+        currencyInput.value = match[0].replace(/[rtm]/, "").concat("t");
+      }
+    }
+    else if (rewriteCurrency) {
+      currencyInput.value = "";
+    }
+  }
+}
+
 function modeUpdate(): void {
   const newMode = modeSelector.value;
 
@@ -107,6 +135,8 @@ function modeUpdate(): void {
   modeInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
   
   if (newMode === "Time diff.") timeDiffWrapper.style.display = "grid";
+
+  populateSingleSimFields();
 }
 
 function theoryUpdate() {
@@ -115,6 +145,7 @@ function theoryUpdate() {
     (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
   );
   populateSelectElement(stratSelector, data.stratCategories.concat(currentTheoryStrats));
+  populateSingleSimFields(true);
 }
 
 function themeUpdate() {
