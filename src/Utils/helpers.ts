@@ -166,22 +166,16 @@ export function defaultResult(): simResult {
 }
 
 /**
- * Return the result with the highest tau/hr.
+ * Returns the result with the highest tau/hr.
  * 
- * If one result is null, returns the other result.
- * If both results are null, returns the default result.
+ * Null values are replaced with a default result of tau/hr = 0.
+ * 
+ * If tau/hr are identical, the first result is returned.
  */
 export function getBestResult(res1: simResult | null, res2: simResult | null): simResult {
-  if (res1 == null && res2 != null) {
-    return res2;
-  }
-  if (res2 == null && res1 != null) {
-    return res1;
-  }
-  if (res1 != null && res2 != null) {
-    return res1.tauH >= res2.tauH ? res1 : res2;
-  }
-  return defaultResult();
+  if (res1 == null) res1 = defaultResult();
+  if (res2 == null) res2 = defaultResult();
+  return res1.tauH >= res2.tauH ? res1 : res2;
 }
 
 /**

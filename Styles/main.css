@@ -36,6 +36,10 @@ button {
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out, transform 0.1s;
 }
 
+button.buttongreen {
+  background-color: var(--button-green-bg);
+}
+
 .content-wrapper {
   padding: min(3vw, 1.5rem * 0.85);
 }

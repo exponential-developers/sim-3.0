@@ -3,7 +3,7 @@ import { qs, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");
-const copyImage = qs(".imageC");
+const copyImage = qs<HTMLButtonElement>(".imageC");
 const downloadImage = qs(".imageD");
 const clearInput = qs(".clearInput");
 
@@ -39,6 +39,10 @@ event(copyImage, "pointerdown", () => createImage(""));
 event(downloadImage, "pointerdown", () => createImage("download"));
 
 function createImage(mode: string) {
+  if (table.children[0].children[0].childElementCount == 0) {
+    return;
+  }
+
   html2canvas(table).then((canvas) =>
     canvas.toBlob((blob) => {
       if (mode === "download") {
@@ -52,6 +56,14 @@ function createImage(mode: string) {
           .write([new ClipboardItem({ "image/png": blob })])
           .then(() => {
             console.log("Sucsessfully created image and copied to clipboard!");
+            copyImage.disabled = true;
+            copyImage.innerHTML = "Copied!";
+            copyImage.classList.add("buttongreen");
+            setTimeout(() => {
+              copyImage.disabled = false;
+              copyImage.innerHTML = "Copy Image";
+              copyImage.classList.remove("buttongreen");
+            }, 1000);
           })
           .catch(() => console.log("Failed creating image."));
       }
@@ -64,11 +76,13 @@ event(saveDist, "pointerdown", () => {
   const saveString = simAllInputArea.value;
   if (saveString.replace(" ", "").length === 0) return;
   saveDist.disabled = true;
-  saveDist.innerHTML = "Saved!"
+  saveDist.innerHTML = "Saved!";
+  saveDist.classList.add("buttongreen");
   localStorage.setItem("savedDistribution", saveString);
   setTimeout(() => {
     saveDist.disabled = false;
-    saveDist.innerHTML = "Save distribution"
+    saveDist.innerHTML = "Save distribution";
+    saveDist.classList.remove("buttongreen")
   }, 1000);
 });
 event(getDist, "pointerdown", () => {

@@ -394,10 +394,10 @@
           "stratFilterCondition":"Active || Very-Active"
         },
         "FIPermaSwap":{
-          "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000"
+          "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
         },
         "FIdPermaSwap":{
-          "stratFilterCondition":"(Active || Very-Active) && rho >= 1000"
+          "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
         "FIMS":{
           "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950"

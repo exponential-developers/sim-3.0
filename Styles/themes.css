@@ -8,6 +8,7 @@
     --input-f-clr: black;
 
     --button-bg: white;
+    --button-green-bg: #afa;
     --button-f-clr: black;
     --btn-border-clr: rgb(161, 161, 161); /* button border */
 
@@ -49,6 +50,7 @@
     --input-f-clr: rgb(233, 233, 244);
 
     --button-bg: rgb(48, 48, 48);
+    --button-green-bg: #363;
     --button-f-clr: rgb(244, 244, 255);
     --btn-border-clr: rgb(88, 88, 88); /* button border */
 
