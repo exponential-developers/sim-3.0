@@ -5,7 +5,6 @@ import { qs } from "../Utils/DOMhelpers";
 const semiIdle = qs<HTMLInputElement>(".semi-idle");
 const hardActive = qs<HTMLInputElement>(".hard-active");
 
-
 //Setting Inputs
 const dtSlider = qs<HTMLInputElement>(".dt");
 const dtOtp = qs(".dtOtp");

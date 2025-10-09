@@ -3,18 +3,6 @@ import { findIndex, getIndexFromTheory } from "../Utils/helpers";
 import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
 
-type TheoryDataStructure = {
-  [key in theoryType]: {
-    tauFactor: number,
-    UI_visible?: boolean,
-    strats: {
-      [key: string]: {
-        UI_visible?: boolean;
-      }
-    }
-  };
-}
-
 //Inputs
 const theorySelector = qs<HTMLSelectElement>(".theory");
 const stratSelector = qs<HTMLSelectElement>(".strat");

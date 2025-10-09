@@ -2,23 +2,15 @@ import jsonData from "../Data/data.json" assert { type: "json" };
 import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
 import { qs } from "../Utils/DOMhelpers";
 
-type TheoryDataStructure = {
-    [key in theoryType]: {
-      tauFactor: number,
-      UI_visible?: boolean,
-    };
-  }
-
 //Inputs
 const modeSelector = qs<HTMLSelectElement>(".mode");
 const theorySelector = qs<HTMLSelectElement>(".theory");
 const stratSelector = qs<HTMLSelectElement>(".strat");
-const sigma = qs<HTMLInputElement>(".sigma");
-const input = qs<HTMLInputElement>(".input");
-const cap = qs<HTMLInputElement>(".cap");
+const sigmaInput = qs<HTMLInputElement>(".sigma");
+const currencyInput = qs<HTMLInputElement>(".input");
+const capInput = qs<HTMLInputElement>(".cap");
 const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
 const modeInput = qs<HTMLTextAreaElement>(".modeInput");
-//const timeDiffInputs = qsa<HTMLInputElement>(".timeDiffInput");
 const hardCap = qs<HTMLInputElement>(".hardCap");
 const semi_idle = qs<HTMLInputElement>(".semi-idle");
 const hard_active = qs<HTMLInputElement>(".hard-active");
@@ -81,7 +73,7 @@ function parseCurrency(str: string, theory: theoryType, sigma: number, defaultTy
 }
 
 function parseSigma(required: boolean): number {
-    const str = sigma.value.replace(" ", "");
+    const str = sigmaInput.value.replace(" ", "");
     const match = str.match(/^\d+$/g);
     if (match) {
         return parseInt(match[0]);
@@ -103,7 +95,7 @@ function parseSingleSim(): SingleSimQuery {
         theory: theory,
         strat: stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(input.value, theory, sigma),
+        rho: parseCurrency(currencyInput.value, theory, sigma),
         settings: parseSettings()
     }
 }
@@ -117,8 +109,8 @@ function parseChainSim(): ChainSimQuery {
         theory: theory,
         strat: stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(input.value, theory, sigma),
-        cap: parseCurrency(cap.value, theory, sigma),
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        cap: parseCurrency(capInput.value, theory, sigma),
         hardCap: hardCap.checked,
         settings: parseSettings()
     }
@@ -133,8 +125,8 @@ function parseStepSim(): StepSimQuery {
         theory: theory,
         strat: stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(input.value, theory, sigma),
-        cap: parseCurrency(cap.value, theory, sigma),
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        cap: parseCurrency(capInput.value, theory, sigma),
         step: parseExponentialValue(modeInput.value),
         settings: parseSettings()
     }

@@ -16,7 +16,6 @@ const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
 const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
 
 // Utils
-
 function clearTable() {
     removeAllChilds(tbody);
 }

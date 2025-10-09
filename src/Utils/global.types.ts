@@ -8,10 +8,21 @@ declare global {
     [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
   };
 
-  type SimQueryType = "all" | "single" | "chain" | "step";
+  type TheoryDataStructure = {
+    [key: string]: {
+      tauFactor: number;
+      UI_visible?: boolean;
+      strats: {
+        [key: string]: {
+          stratFilterCondition: string;
+          forcedCondition?: string;
+          UI_visible?: boolean;
+        }
+      }
+    }
+  }
 
   type BaseSimQuery = {
-    queryType: SimQueryType;
     sigma: number;
     settings: Settings;
   }
