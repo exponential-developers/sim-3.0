@@ -72,7 +72,7 @@ function populateSingleSimFields(rewriteCurrency: boolean = false): void {
     }
   }
 
-  if ((currencyInput.value == "" || rewriteCurrency) && theorySelector.value) {
+  if ((currencyInput.value == "" || rewriteCurrency) && theorySelector.value && splits.length > 1) {
     const theoryIndex = getIndexFromTheory(theorySelector.value);
     if (splits.length > theoryIndex + 1) {
       const str = splits[theoryIndex + 1];
