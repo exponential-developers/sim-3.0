@@ -19,6 +19,7 @@ const hard_active = qs<HTMLInputElement>(".hard-active");
 const dtOtp = qs(".dtOtp");
 const ddtOtp = qs(".ddtOtp");
 const mfDepthOtp = qs(".mfDepthOtp");
+const boughtVarsDeltaSlider = qs<HTMLInputElement>(".boughtVarsDelta");
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
 const completedCTs = qs<HTMLSelectElement>(".completedcts");
@@ -30,6 +31,7 @@ function parseSettings(): Settings {
         dt: parseFloat(dtOtp.textContent ?? "1.5"),
         ddt: parseFloat(ddtOtp.textContent ?? "1.0001"),
         mfResetDepth: parseInt(mfDepthOtp.textContent ?? "0"),
+        boughtVarsDelta: parseInt(boughtVarsDeltaSlider.value),
         theme: themeSelector.value,
         simAllStrats: simAllStrats.value as SettingsSimAllStratsMode,
         completedCTs: completedCTs.value as SettingsCompletedCTsMode,

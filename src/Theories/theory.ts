@@ -305,7 +305,7 @@ export default abstract class theoryClass<theory extends theoryType> {
       let currency = this.variables[i].currency ?? this.rho;
       while (true) {
         if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
-          if (this.maxRho + 5 > this.lastPub) {
+          if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
             this.boughtVars.push({ 
               variable: this.variables[i].name, 
               level: this.variables[i].level + 1, 
@@ -348,7 +348,7 @@ export default abstract class theoryClass<theory extends theoryType> {
         }
       if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
         this.rho.subtract(this.variables[minCost[1]].cost);
-        if (this.maxRho + 5 > this.lastPub) {
+        if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
           this.boughtVars.push({ 
             variable: this.variables[minCost[1]].name, 
             level: this.variables[minCost[1]].level + 1, 
@@ -378,7 +378,7 @@ export default abstract class theoryClass<theory extends theoryType> {
         if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
           let confirmPurchase = await this.confirmPurchase(i);
           if (!confirmPurchase) break;
-          if (this.maxRho + 5 > this.lastPub) {
+          if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
             this.boughtVars.push({ 
               variable: this.variables[i].name, 
               level: this.variables[i].level + 1, 

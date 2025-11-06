@@ -117,6 +117,7 @@ declare global {
     dt: number;
     ddt: number;
     mfResetDepth: number;
+    boughtVarsDelta: number;
     theme: string;
     simAllStrats: SettingsSimAllStratsMode;
     completedCTs: SettingsCompletedCTsMode;

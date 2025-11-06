@@ -13,7 +13,10 @@ const ddtSlider = qs<HTMLInputElement>(".ddt");
 const ddtOtp = qs(".ddtOtp");
 
 const mfDepthSlider = qs<HTMLInputElement>(".mfDepth");
-const mfDepthOpt = qs(".mfDepthOtp");
+const mfDepthOtp = qs(".mfDepthOtp");
+
+const boughtVarsDeltaSlider = qs<HTMLInputElement>(".boughtVarsDelta");
+const boughtVarsDeltaOtp = qs(".boughtVarsDeltaOtp");
 
 const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 
@@ -33,7 +36,8 @@ export function setSimState() {
       settings: {
         dt: dtOtp.textContent,
         ddt: ddtOtp.textContent,
-        mfResetDepth: mfDepthOpt.textContent,
+        mfResetDepth: mfDepthOtp.textContent,
+        boughtVarsDelta: boughtVarsDeltaSlider.value,
         simAllStrats: simAllStrats.value,
         completedCTs: completedCTs.value,
         showA23: showA23.checked,
@@ -54,11 +58,13 @@ export function getSimState() {
 
   dtOtp.textContent = state.settings.dt;
   ddtOtp.textContent = state.settings.ddt;
-  mfDepthOpt.textContent = state.settings.mfResetDepth ?? "0";
+  mfDepthOtp.textContent = state.settings.mfResetDepth ?? "0";
+  boughtVarsDeltaOtp.textContent = `e${state.settings.boughtVarsDelta ?? 5}ρ`;
   // Determines the slider position based on the stored value (see helpers.ts)
   dtSlider.value = String(round(Math.log2((state.settings.dt - 0.15) / (4.9 / (1 + 2 ** parseFloat(dtSlider.max)))), 4));
   ddtSlider.value = String(round(Math.log((state.settings.ddt - 1) / (0.3 / 3 ** parseFloat(ddtSlider.max))) / Math.log(3), 4));
-  mfDepthSlider.value = mfDepthOpt.textContent ?? "0";
+  mfDepthSlider.value = mfDepthOtp.textContent ?? "0";
+  boughtVarsDeltaSlider.value = state.settings.boughtVarsDelta ?? 5;
 
   themeSelector.value = state.settings.theme ?? defaultTheme;
   simAllStrats.value = state.settings.simAllStrats ?? "all";

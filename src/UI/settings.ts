@@ -44,7 +44,10 @@ const ddtSlider = qs<HTMLInputElement>(".ddt");
 const ddtOtp = qs(".ddtOtp");
 
 const mfDepthSlider = qs<HTMLInputElement>(".mfDepth");
-const mfDepthOpt = qs(".mfDepthOtp");
+const mfDepthOtp = qs(".mfDepthOtp");
+
+const boughtVarsDeltaSlider = qs<HTMLInputElement>(".boughtVarsDelta");
+const boughtVarsDeltaOtp = qs(".boughtVarsDeltaOtp");
 
 event(dtSlider, "input", () => {
   dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(dtSlider.value)), 4);
@@ -54,13 +57,17 @@ event(ddtSlider, "input", () => {
   ddtOtp.textContent = formatNumber(getddtFromSlider(parseFloat(ddtSlider.value)), 7)
 });
 
-event(mfDepthSlider, "input", () => mfDepthOpt.textContent = mfDepthSlider.value);
+event(mfDepthSlider, "input", () => mfDepthOtp.textContent = mfDepthSlider.value);
+
+event(boughtVarsDeltaSlider, "input", () => boughtVarsDeltaOtp.textContent = `e${boughtVarsDeltaSlider.value}ρ`);
 
 event(qs(".resetSettings"), "pointerdown", () => {
   dtSlider.value = "8.1943";
   dtOtp.textContent = "1.5";
   ddtSlider.value = "2.71233";
   ddtOtp.textContent = "1.0001";
+  boughtVarsDeltaSlider.value = "5";
+  boughtVarsDeltaOtp.textContent = "e5ρ";
   mfDepthSlider.value = "0";
-  mfDepthOpt.textContent = "0";
+  mfDepthOtp.textContent = "0";
 });
