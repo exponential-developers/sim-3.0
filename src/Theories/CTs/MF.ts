@@ -340,19 +340,19 @@ class mfSim extends theoryClass<theory> {
 
     let bundleCost = this.calcBundleCost(goalBundle);
 
-    while (this.variables[6].getCostForLevel(this.variables[6].level + goalBundle[1]) < bundleCost) {
+    while (this.variables[6].getCostForLevel(this.variables[6].level + goalBundle[1]) < bundleCost + 0.01) {
       goalBundle[1]++;
     }
     bundleCost = this.calcBundleCost(goalBundle);
-    while (this.variables[8].getCostForLevel(this.variables[8].level + goalBundle[3]) < bundleCost) {
+    while (this.variables[8].getCostForLevel(this.variables[8].level + goalBundle[3]) < bundleCost + 0.01) {
       goalBundle[3]++;
     }
     bundleCost = this.calcBundleCost(goalBundle);
-    while (this.variables[5].getCostForLevel(this.variables[5].level + goalBundle[0]) < bundleCost) {
+    while (this.variables[5].getCostForLevel(this.variables[5].level + goalBundle[0]) < bundleCost + 0.01) {
       goalBundle[0]++;
     }
     bundleCost = this.calcBundleCost(goalBundle);
-    while (this.variables[7].getCostForLevel(this.variables[7].level + goalBundle[2]) < bundleCost) {
+    while (this.variables[7].getCostForLevel(this.variables[7].level + goalBundle[2]) < bundleCost + 0.01) {
       goalBundle[2]++;
     }
     return goalBundle;
