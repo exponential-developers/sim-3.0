@@ -330,6 +330,9 @@
         },
         "WSPdStopC1SkipQ1": {
           "stratFilterCondition": "Active || Very-Active"
+        },
+        "WSPPostRecoveryStopC1SkipQ1": {
+          "stratFilterCondition": "false"
         }
       }
     },

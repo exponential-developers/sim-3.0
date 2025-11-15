@@ -9,7 +9,7 @@ export default async function wsp(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("SkipQ1")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("SkipQ1", "");
+    data2.strat = data2.strat.replace("SkipQ1", "").replace("PostRecovery", "");
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -56,39 +56,48 @@ class wspSim extends theoryClass<theory> {
     if (this.lastPub >= 200) c1weight = l10(50);
     if (this.lastPub >= 400) c1weight = 3;
     if (this.lastPub >= 700) c1weight = 10000;
-    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      WSP: [true, true, true, true, true],
-      WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
-      WSPStopC1SkipQ1: [
-        () => this.variables[0].level < this.lastQ1,
-        true,
-        true,
-        () => this.lastPub < 450 || this.t < 15,
-        true
-      ],
-      WSPdStopC1: [
-        () =>
-          this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
-          Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity),
-        true,
-        true,
-        () =>
-          this.variables[3].cost + c1weight <
-            Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
-        true,
-      ],
-      WSPdStopC1SkipQ1: [
-        () =>
-          this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
-          Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
-        true,
-        true,
-        () =>
-          this.variables[3].cost + c1weight <
+    let conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {} as any;
+    conditions.WSP = [true, true, true, true, true];
+    conditions.WSP = [true, true, true, true, true];
+    conditions.WSPStopC1 = [true, true, true, () => this.lastPub < 450 || this.t < 15, true];
+    conditions.WSPStopC1SkipQ1 = [
+      () => this.variables[0].level < this.lastQ1,
+      true,
+      true,
+      () => this.lastPub < 450 || this.t < 15,
+      true
+    ];
+    conditions.WSPPostRecoveryStopC1SkipQ1 = [
+      // @ts-ignore
+      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1SkipQ1[0]() : conditions.WSPdStopC1SkipQ1[0](),
+      true,
+      true,
+      // @ts-ignore
+      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1SkipQ1[3]() : conditions.WSPdStopC1SkipQ1[3](),
+      true,
+    ];
+    conditions.WSPdStopC1 = [
+      () =>
+        this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
+        Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity),
+      true,
+      true,
+      () =>
+        this.variables[3].cost + c1weight <
           Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
-        true,
-      ]
-    };
+      true,
+    ];
+    conditions.WSPdStopC1SkipQ1 = [
+      () =>
+        this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
+        Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
+      true,
+      true,
+      () =>
+        this.variables[3].cost + c1weight <
+        Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
+      true,
+    ]
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
