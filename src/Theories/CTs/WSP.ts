@@ -79,7 +79,7 @@ class wspSim extends theoryClass<theory> {
       ],
       WSPdStopC1SkipQ1: [
         () =>
-          this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
+          this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
           Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
         true,
         true,
