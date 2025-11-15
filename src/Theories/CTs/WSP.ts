@@ -3,11 +3,40 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, toCallables } from "../../Utils/helpers";
+import { add, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 export default async function wsp(data: theoryData): Promise<simResult> {
-  const sim = new wspSim(data);
-  const res = await sim.simulate();
+  let res;
+  if(data.strat.includes("SkipQ1")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("SkipQ1", "");
+    const sim1 = new wspSim(data2);
+    const res1 = await sim1.simulate();
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    const sim2 = new wspSim(data);
+    sim2.lastQ1 = lastQ1 - 1;
+    res = await sim2.simulate();
+    let limit = 20;
+    if(data.strat.includes("WSPd")) {
+      limit = 8;
+    }
+    for(let i = 2; i < limit; i++) {
+      if(lastQ1 - i <= 1) {
+        break;
+      }
+      const simN = new wspSim(data);
+      simN.lastQ1 = lastQ1 - i;
+      const resN = await simN.simulate();
+      if(resN.tauH > res.tauH) {
+        res = resN;
+      }
+    }
+
+  }
+  else {
+    const sim = new wspSim(data);
+    res = await sim.simulate();
+  }
   return res;
 }
 
@@ -16,6 +45,8 @@ type theory = "WSP";
 class wspSim extends theoryClass<theory> {
   q: number;
   S: number;
+  lastQ1: number;
+  targetPub: number;
   updateS_flag: boolean;
 
   getBuyingConditions(): conditionFunction[] {
@@ -28,6 +59,13 @@ class wspSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       WSP: [true, true, true, true, true],
       WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
+      WSPStopC1SkipQ1: [
+        () => this.variables[0].level < this.lastQ1,
+        true,
+        true,
+        () => this.lastPub < 450 || this.t < 15,
+        true
+      ],
       WSPdStopC1: [
         () =>
           this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
@@ -39,6 +77,17 @@ class wspSim extends theoryClass<theory> {
             Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
         true,
       ],
+      WSPdStopC1SkipQ1: [
+        () =>
+          this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
+          Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
+        true,
+        true,
+        () =>
+          this.variables[3].cost + c1weight <
+          Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
+        true,
+      ]
     };
     return toCallables(conditions[this.strat]);
   }
@@ -76,6 +125,8 @@ class wspSim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
+    this.lastQ1 = -1;
+    this.targetPub = -1;
     this.q = 0;
     this.pubUnlock = 8;
     this.milestoneUnlocks = [10, 25, 40, 55, 70, 100, 140, 200];
@@ -102,7 +153,11 @@ class wspSim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars();
-    return this.createResult();
+    let extra = '';
+    if(this.lastQ1 != -1 && this.strat.includes("SkipQ1")) {
+      extra = ` q1: ${this.lastQ1}`;
+    }
+    return this.createResult(extra);
   }
   tick() {
     if (this.updateS_flag) {

@@ -320,9 +320,15 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 525"
         },
         "WSPStopC1": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 475"
+          "stratFilterCondition": "(Idle || Semi-Idle)"
+        },
+        "WSPStopC1SkipQ1": {
+          "stratFilterCondition": "(Idle || Semi-Idle)"
         },
         "WSPdStopC1": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "WSPdStopC1SkipQ1": {
           "stratFilterCondition": "Active || Very-Active"
         }
       }
