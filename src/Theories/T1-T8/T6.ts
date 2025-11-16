@@ -3,11 +3,63 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, subtract, logToExp, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, subtract, logToExp, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
+
+async function runT6CoastQ1R1(
+    data: theoryData,
+    targetQ1: number,
+    origQ1: number,
+    targetR1: number,
+    origR1: number,
+): Promise<simResult> {
+  const sim = new t6Sim(data);
+  sim.lastQ1 = targetQ1;
+  sim.lastQ1Orig = origQ1;
+  sim.lastR1 = targetR1;
+  sim.lastR1Orig = origR1;
+  return sim.simulate();
+}
 
 export default async function t6(data: theoryData): Promise<simResult> {
-  const sim = new t6Sim(data);
-  const res = await sim.simulate();
+  let res;
+  if(data.strat.includes("CoastQ1R1")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("CoastQ1R1", "");
+    const sim1 = new t6Sim(data2);
+    const res1 = await sim1.simulate();
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    const lastR1 = getLastLevel("r1", res1.boughtVars);
+    let startQ = 0;
+    let limitQ = 15;
+    let startR = 0;
+    let limitR = 2;
+    if(data2.strat.includes("T6C5d") || data2.strat.includes("IdleRecovery") || data2.strat.includes("T6AI")) {
+      // There is little use in coasting too many levels with T6C5d.
+      // In testing, we only needed 1-2 levels of q1 and 0-1 levels of r1, but in this case we do include more levels
+      // for q for just in case.
+      limitQ = 5;
+    }
+    // Originally, we start with no coasting at all:
+    res = res1;
+    for(let qLim = startQ; qLim < limitQ; qLim++) {
+      if(lastQ1 - qLim <= 1) {
+        break;
+      }
+      for(let rLim = startR; rLim < limitR; rLim++) {
+        if(lastR1 - rLim <= 1) {
+          break;
+        }
+        const resN = await runT6CoastQ1R1(data, lastQ1 - qLim, lastQ1, lastR1 - rLim, lastR1);
+        if(resN.tauH > res.tauH) {
+          res = resN;
+        }
+      }
+    }
+  }
+  else {
+    const sim = new t6Sim(data);
+    res = await sim.simulate();
+  }
   return res;
 }
 
@@ -17,6 +69,10 @@ class t6Sim extends theoryClass<theory> {
   q: number;
   r: number;
   k: number;
+  lastQ1: number;
+  lastQ1Orig: number;
+  lastR1: number;
+  lastR1Orig: number;
   stopC12: [number, number, boolean];
 
   getBuyingConditions(): conditionFunction[] {
@@ -27,7 +83,29 @@ class t6Sim extends theoryClass<theory> {
       T6C125: [true, true, true, true, true, true, false, false, true],
       T6C12: [true, true, true, true, true, true, false, false, false],
       T6C5: [true, true, true, true, false, false, false, false, true],
+      T6C5CoastQ1R1: [
+        () => this.variables[0].level < this.lastQ1,
+        true,
+        () => this.variables[2].level < this.lastR1,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
       T6Snax: [true, true, true, true, () => this.stopC12[2], () => this.stopC12[2], false, false, true],
+      T6SnaxCoastQ1R1: [
+        () => this.variables[0].level < this.lastQ1,
+        true,
+        () => this.variables[2].level < this.lastR1,
+        true,
+        () => this.stopC12[2],
+        () => this.stopC12[2],
+        false,
+        false,
+        true
+      ],
       T6C3d: [
         () => this.variables[0].cost + l10(3) < Math.min(this.variables[1].cost, this.milestones[0] > 0 ? this.variables[3].cost : Infinity, this.variables[6].cost),
         true,
@@ -88,6 +166,19 @@ class t6Sim extends theoryClass<theory> {
         false,
         true,
       ],
+      T6C5dCoastQ1R1: [
+        () => (this.variables[0].level < this.lastQ1) && (this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+          < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
+        true,
+        () => (this.variables[2].level < this.lastR1) && (this.variables[2].cost + l10(5)
+          < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+      ],
       T6C5dIdleRecovery: [
         () => {
           if (this.lastPub >= this.maxRho) return true;
@@ -107,7 +198,29 @@ class t6Sim extends theoryClass<theory> {
         false,
         true,
       ],
+      T6C5dIdleRecoveryCoastQ1R1: [
+        () => {
+          if (this.variables[0].level >= this.lastQ1) return false;
+          if (this.lastPub >= this.maxRho) return true;
+          return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+              < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
+        },
+        true,
+        () => {
+          if (this.variables[2].level >= this.lastR1) return false;
+          if (this.lastPub >= this.maxRho) return true;
+          return this.variables[2].cost + l10(5)
+              < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
+        },
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+      ],
       T6AI: [],
+      T6AICoastQ1R1: [],
     };
     return toCallables(conditions[this.strat]);
   }
@@ -134,14 +247,19 @@ class t6Sim extends theoryClass<theory> {
       case "T6C125": return [0, 2, 3];
       case "T6C12": return [0, 3];
       case "T6C5": return [0, 2];
+      case "T6C5CoastQ1R1": return [0, 2];
       case "T6Snax": return [0, 3, 2];
+      case "T6SnaxCoastQ1R1": return [0, 3, 2];
       case "T6C3d": return [0];
       case "T6C4d": return [1, 0];
       case "T6C125d": return [0, 2, 3];
       case "T6C12d": return [0, 3];
       case "T6C5d": return [0, 2];
+      case "T6C5dCoastQ1R1": return [0, 2];
       case "T6AI": return [0, 3, 2];
+      case "T6AICoastQ1R1": return [0, 3, 2];
       case "T6C5dIdleRecovery": return [0, 2];
+      case "T6C5dIdleRecoveryCoastQ1R1": return [0, 2];
     }
   }
   getTotMult(val: number): number {
@@ -157,6 +275,10 @@ class t6Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
+    this.lastQ1 = -1;
+    this.lastQ1Orig = -1;
+    this.lastR1 = -1;
+    this.lastR1Orig = -1;
     this.q = -Infinity;
     this.r = 0;
     this.pubUnlock = 12;
@@ -187,7 +309,11 @@ class t6Sim extends theoryClass<theory> {
       this.ticks++;
     }
     this.trimBoughtVars();
-    const stratExtra = this.strat === "T6Snax" ? " " + logToExp(this.stopC12[0], 1) : "";
+    let stratExtra = this.strat === "T6Snax" ? " " + logToExp(this.stopC12[0], 1) : "";
+    if(this.strat.includes("CoastQ1R1")) {
+      stratExtra += ` q1: ${this.lastQ1} r1: ${this.lastR1}`;
+      // stratExtra += ` q1: ${this.lastQ1} q1delta: ${this.lastQ1Orig - this.lastQ1} r1: ${this.lastR1} r1delta: ${this.lastR1Orig - this.lastR1} `
+    }
     return this.createResult(stratExtra);
   }
   tick() {
@@ -212,7 +338,7 @@ class t6Sim extends theoryClass<theory> {
     }
   }
   getVariableWeights(): number[] {
-    const weights = [
+    let weights = [
       l10(7 + (this.variables[0].level % 10)), //q1
       0, //q2
       l10(5 + (this.variables[2].level % 10)), //r1
@@ -223,10 +349,17 @@ class t6Sim extends theoryClass<theory> {
       Infinity, //c4
       -Math.min(0, this.k), //c5
     ];
+    // Not buying r1 and q1 past limit conditions:
+    if (this.variables[0].level >= this.lastQ1 && this.lastQ1 != -1) {
+      weights[0] = Infinity;
+    }
+    if (this.variables[2].level >= this.lastR1 && this.lastR1 != -1) {
+      weights[2] = Infinity;
+    }
     return weights;
   }
   buyVariables() {
-    if (this.strat !== "T6AI") super.buyVariables();
+    if (this.strat !== "T6AI" && this.strat != "T6AICoastQ1R1") super.buyVariables();
     else super.buyVariablesWeight();
   }
 }
