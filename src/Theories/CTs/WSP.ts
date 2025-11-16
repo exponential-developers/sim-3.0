@@ -73,38 +73,15 @@ class wspSim extends theoryClass<theory> {
     if (this.lastPub >= 200) c1weight = l10(50);
     if (this.lastPub >= 400) c1weight = 3;
     if (this.lastPub >= 700) c1weight = 10000;
-    let conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {} as any;
-    conditions.WSP = [true, true, true, true, true];
-    conditions.WSP = [true, true, true, true, true];
-    conditions.WSPStopC1 = [true, true, true, () => this.lastPub < 450 || this.t < 15, true];
-    conditions.WSPStopC1CoastQ1 = [
+
+    const WSPStopC1CoastQ1 = toCallables([
       () => this.variables[0].level < this.lastQ1,
       true,
       true,
       () => this.lastPub < 450 || this.t < 15,
       true
-    ];
-    conditions.WSPPostRecoveryStopC1CoastQ1 = [
-      // @ts-ignore
-      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1CoastQ1[0]() : conditions.WSPdStopC1CoastQ1[0](),
-      true,
-      true,
-      // @ts-ignore
-      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1CoastQ1[3]() : conditions.WSPdStopC1CoastQ1[3](),
-      true,
-    ];
-    conditions.WSPdStopC1 = [
-      () =>
-        this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
-        Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity),
-      true,
-      true,
-      () =>
-        this.variables[3].cost + c1weight <
-          Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
-      true,
-    ];
-    conditions.WSPdStopC1CoastQ1 = [
+    ]);
+    const WSPdStopC1CoastQ1 = toCallables([
       () =>
         this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
         Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
@@ -114,7 +91,33 @@ class wspSim extends theoryClass<theory> {
         this.variables[3].cost + c1weight <
         Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
       true,
-    ]
+    ]);
+
+    let conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+      WSP: [true, true, true, true, true],
+      WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
+      WSPStopC1CoastQ1: WSPStopC1CoastQ1,
+      WSPPostRecoveryStopC1CoastQ1: [
+        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
+        true,
+        true,
+        // @ts-ignore
+        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[3]() : WSPdStopC1CoastQ1[3](),
+        true,
+      ],
+      WSPdStopC1: [
+        () =>
+          this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
+          Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity),
+        true,
+        true,
+        () =>
+          this.variables[3].cost + c1weight <
+            Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
+        true,
+      ],
+      WSPdStopC1CoastQ1: WSPdStopC1CoastQ1
+    };
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
