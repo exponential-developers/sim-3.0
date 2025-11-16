@@ -3,11 +3,40 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, subtract, logToExp, getR9multiplier, toCallable, toCallables } from "../../Utils/helpers";
+import { l10, subtract, logToExp, getR9multiplier, toCallable, toCallables, getLastLevel } from "../../Utils/helpers";
+
+async function runT5CoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
+  const sim = new t5Sim(data);
+  sim.lastQ1 = targetQ1;
+  sim.lastQ1Orig = origQ1;
+  return sim.simulate();
+}
 
 export default async function t5(data: theoryData): Promise<simResult> {
-  const sim = new t5Sim(data);
-  const res = await sim.simulate();
+  let res;
+  if(data.strat.includes("CoastQ1")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("CoastQ1", "");
+    const sim1 = new t5Sim(data2);
+    const res1 = await sim1.simulate();
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    res = await runT5CoastQ1(data, lastQ1 - 1, lastQ1);
+    let limit = 14;
+    let start = 2;
+    for(let i = start; i < limit; i++) {
+      if(lastQ1 - i <= 1) {
+        break;
+      }
+      const resN = await runT5CoastQ1(data, lastQ1 - i, lastQ1);
+      if(resN.tauH > res.tauH) {
+        res = resN;
+      }
+    }
+  }
+  else {
+    const sim = new t5Sim(data);
+    res = await sim.simulate();
+  }
   return res;
 }
 
@@ -15,6 +44,8 @@ type theory = "T5";
 
 class t5Sim extends theoryClass<theory> {
   q: number;
+  lastQ1: number;
+  lastQ1Orig: number;
   c2worth: boolean;
   c2Counter: number;
   nc3: number;
@@ -29,9 +60,24 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth, 
         true
       ],
+      T5IdleCoastQ1: [
+        () => this.variables[0].level < this.lastQ1,
+        true,
+        () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
+        () => this.c2worth,
+        true
+      ],
       T5AI2: [
         () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) 
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
+        true,
+        () => this.q + l10(1.5) < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
+        () => this.c2worth,
+        true,
+      ],
+      T5AI2CoastQ1: [
+        () => this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
+            <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
         true,
         () => this.q + l10(1.5) < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
         () => this.c2worth,
@@ -70,6 +116,8 @@ class t5Sim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.q = 0;
+    this.lastQ1 = -1;
+    this.lastQ1Orig = -1;
     this.pubUnlock = 7;
     this.milestoneUnlockSteps = 25;
     //milestones  [q1exp,c3term,c3exp]
@@ -96,7 +144,10 @@ class t5Sim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars();
-    const stratExtra = this.strat === "T5Idle" ? " " + logToExp(this.variables[2].cost, 1) : "";
+    let stratExtra = this.strat.includes("T5Idle") ? " " + logToExp(this.variables[2].cost, 1) : "";
+    if(this.strat.includes("CoastQ1")) {
+      stratExtra += " q1: " + this.lastQ1;
+    }
     return this.createResult(stratExtra);
   }
   tick() {

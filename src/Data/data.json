@@ -180,7 +180,13 @@
         "T5Idle": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "T5IdleCoastQ1": {
+          "stratFilterCondition": "Semi-Idle"
+        },
         "T5AI2": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "T5AI2CoastQ1": {
           "stratFilterCondition": "Active || Very-Active"
         }
       }
