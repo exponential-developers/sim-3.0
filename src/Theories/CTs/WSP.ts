@@ -5,6 +5,13 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
+async function runWSPCoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
+  const sim1 = new wspSim(data);
+  sim1.lastQ1 = targetQ1;
+  sim1.lastQ1Orig = origQ1;
+  return sim1.simulate();
+}
+
 export default async function wsp(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("CoastQ1")) {
@@ -13,10 +20,7 @@ export default async function wsp(data: theoryData): Promise<simResult> {
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    const sim2 = new wspSim(data);
-    sim2.lastQ1 = lastQ1 - 1;
-    sim2.lastQ1Orig = lastQ1;
-    res = await sim2.simulate();
+    res = await runWSPCoastQ1(data, lastQ1 - 1, lastQ1);
     let limit = 20;
     let start = 2;
     if(data.strat.includes("WSPd")) {
@@ -38,10 +42,7 @@ export default async function wsp(data: theoryData): Promise<simResult> {
       if(lastQ1 - i <= 1) {
         break;
       }
-      const simN = new wspSim(data);
-      simN.lastQ1 = lastQ1 - i;
-      simN.lastQ1Orig = lastQ1;
-      const resN = await simN.simulate();
+      const resN = await runWSPCoastQ1(data, lastQ1 - i, lastQ1);
       if(resN.tauH > res.tauH) {
         res = resN;
       }
@@ -130,6 +131,9 @@ class wspSim extends theoryClass<theory> {
     const x2 = x * x;
     return Math.log(x2 + 1 / 6 + 1 / 120 / x2 + 1 / 810 / x2 / x2) / 2 - 1;
   };
+  setTargetRho(targetRho: number) {
+    this.forcedPubConditions.push(() => this.maxRho >= targetRho);
+  }
 
   sineRatioK(n: number, x: number, K = 5): number {
     if (n < 1 || x >= n + 1) return 0;
