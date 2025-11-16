@@ -7,9 +7,9 @@ import { add, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 export default async function wsp(data: theoryData): Promise<simResult> {
   let res;
-  if(data.strat.includes("SkipQ1")) {
+  if(data.strat.includes("CoastQ1")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("SkipQ1", "").replace("PostRecovery", "");
+    data2.strat = data2.strat.replace("CoastQ1", "").replace("PostRecovery", "");
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -76,20 +76,20 @@ class wspSim extends theoryClass<theory> {
     conditions.WSP = [true, true, true, true, true];
     conditions.WSP = [true, true, true, true, true];
     conditions.WSPStopC1 = [true, true, true, () => this.lastPub < 450 || this.t < 15, true];
-    conditions.WSPStopC1SkipQ1 = [
+    conditions.WSPStopC1CoastQ1 = [
       () => this.variables[0].level < this.lastQ1,
       true,
       true,
       () => this.lastPub < 450 || this.t < 15,
       true
     ];
-    conditions.WSPPostRecoveryStopC1SkipQ1 = [
+    conditions.WSPPostRecoveryStopC1CoastQ1 = [
       // @ts-ignore
-      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1SkipQ1[0]() : conditions.WSPdStopC1SkipQ1[0](),
+      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1CoastQ1[0]() : conditions.WSPdStopC1CoastQ1[0](),
       true,
       true,
       // @ts-ignore
-      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1SkipQ1[3]() : conditions.WSPdStopC1SkipQ1[3](),
+      () => this.maxRho <= this.lastPub ? conditions.WSPStopC1CoastQ1[3]() : conditions.WSPdStopC1CoastQ1[3](),
       true,
     ];
     conditions.WSPdStopC1 = [
@@ -103,7 +103,7 @@ class wspSim extends theoryClass<theory> {
           Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
       true,
     ];
-    conditions.WSPdStopC1SkipQ1 = [
+    conditions.WSPdStopC1CoastQ1 = [
       () =>
         this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
         Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
@@ -180,7 +180,7 @@ class wspSim extends theoryClass<theory> {
     }
     this.trimBoughtVars();
     let extra = '';
-    if(this.lastQ1 != -1 && this.strat.includes("SkipQ1")) {
+    if(this.lastQ1 != -1 && this.strat.includes("CoastQ1")) {
       extra = ` q1: ${this.lastQ1}`;
       // Debug output, useful when developing skip ranges:
       // extra = ` q1: ${this.lastQ1} q1delta:${this.lastQ1Orig - this.lastQ1}`;

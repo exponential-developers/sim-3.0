@@ -322,16 +322,16 @@
         "WSPStopC1": {
           "stratFilterCondition": "(Idle || Semi-Idle)"
         },
-        "WSPStopC1SkipQ1": {
+        "WSPStopC1CoastQ1": {
           "stratFilterCondition": "(Idle || Semi-Idle)"
         },
         "WSPdStopC1": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "WSPdStopC1SkipQ1": {
+        "WSPdStopC1CoastQ1": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "WSPPostRecoveryStopC1SkipQ1": {
+        "WSPPostRecoveryStopC1CoastQ1": {
           "stratFilterCondition": "false"
         }
       }
