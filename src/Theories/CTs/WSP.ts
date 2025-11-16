@@ -15,17 +15,32 @@ export default async function wsp(data: theoryData): Promise<simResult> {
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
     const sim2 = new wspSim(data);
     sim2.lastQ1 = lastQ1 - 1;
+    sim2.lastQ1Orig = lastQ1;
     res = await sim2.simulate();
     let limit = 20;
+    let start = 2;
     if(data.strat.includes("WSPd")) {
-      limit = 8;
+      limit = 3; // For WSPd, it is always either skip 0, 1 or 2.
     }
-    for(let i = 2; i < limit; i++) {
+    else {
+      if(data.rho >= 300) {
+        // For WSP semi idle, past rho == 300, we always either skip 8 or 9 levels. 10 is kept just-in-case.
+        start = 8;
+        limit = 11;
+      }
+      if(data.rho >= 500) {
+        // For WSP semi idle, past rho == 500, we always either skip 9 or 10 levels.
+        start = 9;
+        limit = 11;
+      }
+    }
+    for(let i = start; i < limit; i++) {
       if(lastQ1 - i <= 1) {
         break;
       }
       const simN = new wspSim(data);
       simN.lastQ1 = lastQ1 - i;
+      simN.lastQ1Orig = lastQ1;
       const resN = await simN.simulate();
       if(resN.tauH > res.tauH) {
         res = resN;
@@ -46,6 +61,7 @@ class wspSim extends theoryClass<theory> {
   q: number;
   S: number;
   lastQ1: number;
+  lastQ1Orig: number;
   targetPub: number;
   updateS_flag: boolean;
 
@@ -135,6 +151,7 @@ class wspSim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.lastQ1 = -1;
+    this.lastQ1Orig = -1;
     this.targetPub = -1;
     this.q = 0;
     this.pubUnlock = 8;
@@ -165,6 +182,8 @@ class wspSim extends theoryClass<theory> {
     let extra = '';
     if(this.lastQ1 != -1 && this.strat.includes("SkipQ1")) {
       extra = ` q1: ${this.lastQ1}`;
+      // Debug output, useful when developing skip ranges:
+      // extra = ` q1: ${this.lastQ1} q1delta:${this.lastQ1Orig - this.lastQ1}`;
     }
     return this.createResult(extra);
   }
