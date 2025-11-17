@@ -111,16 +111,6 @@ export function add(...values: number[]): number {
   return sum;
 }
 
-export function subtract_old(value1: number, value2: number): number {
-  const max = value1 > value2 ? value1 : value2;
-  const min = value1 > value2 ? value2 : value1;
-  const wholePart1 = Math.floor(max);
-  const fractionalPart1 = 10 ** (max - wholePart1);
-  const wholePart2 = Math.floor(min);
-  const fractionalPart2 = 10 ** (min - wholePart2);
-  return wholePart1 + l10(fractionalPart1 - fractionalPart2 / 10 ** (wholePart1 - wholePart2));
-}
-
 /** Subtracts two log10 values
  * @returns the result as a log10 value
  */

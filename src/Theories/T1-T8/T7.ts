@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add_old, l10, subtract_old, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add_old, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
 
 export default async function t7(data: theoryData): Promise<simResult> {
   const sim = new t7Sim(data);
@@ -15,7 +15,6 @@ export default async function t7(data: theoryData): Promise<simResult> {
 type theory = "T7";
 
 const add = add_old;
-const subtract = subtract_old;
 
 class t7Sim extends theoryClass<theory> {
   rho2: Currency;
