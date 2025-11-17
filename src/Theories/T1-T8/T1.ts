@@ -5,10 +5,18 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, logToExp, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
 
-async function runT1CoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
+async function runT1CoastQ1(
+    data: theoryData,
+    targetQ1: number,
+    origQ1: number,
+    targetC3: number,
+    origC3: number,
+): Promise<simResult> {
   const sim = new t1Sim(data);
   sim.lastQ1 = targetQ1;
   sim.lastQ1Orig = origQ1;
+  sim.lastC3 = targetC3;
+  sim.lastC3Orig = origC3;
   return sim.simulate();
 }
 
@@ -16,20 +24,28 @@ export default async function t1(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("CoastQ1")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("CoastQ1", "");
+    data2.strat = data2.strat.replace("CoastQ1C3", "").replace("CoastQ1", "");
     const sim1 = new t1Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    res = await runT1CoastQ1(data, lastQ1 - 1, lastQ1);
+    const lastC3 = getLastLevel("c3", res1.boughtVars)
+    res = await runT1CoastQ1(data, lastQ1 - 1, lastQ1, lastC3, lastC3);
     let limit = 19;
     let start = 2;
-    for(let i = start; i < limit; i++) {
-      if(lastQ1 - i <= 1) {
+    let limitC3 = 4;
+    let startC3 = 0;
+    for(let iC3 = startC3; iC3 < limitC3; iC3++) {
+      if(lastC3 - iC3 < 0) {
         break;
       }
-      const resN = await runT1CoastQ1(data, lastQ1 - i, lastQ1);
-      if(resN.tauH > res.tauH) {
-        res = resN;
+      for (let i = start; i < limit; i++) {
+        if (lastQ1 - i <= 1) {
+          break;
+        }
+        const resN = await runT1CoastQ1(data, lastQ1 - i, lastQ1, lastC3 - iC3, lastC3);
+        if (resN.tauH > res.tauH) {
+          res = resN;
+        }
       }
     }
   }
@@ -45,6 +61,8 @@ type theory = "T1";
 class t1Sim extends theoryClass<theory> {
   lastQ1: number;
   lastQ1Orig: number;
+  lastC3: number;
+  lastC3Orig: number;
   term1: number;
   term2: number;
   term3: number;
@@ -53,18 +71,19 @@ class t1Sim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const q1CoastCond = () => this.variables[0].level < this.lastQ1;
+    const c3CoastCond = () => this.variables[4].level < this.lastC3;
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T1: new Array(6).fill(true),
-      T1CoastQ1: [
+      T1CoastQ1C3: [
         q1CoastCond,
         true,
         true,
         true,
-        true,
+        c3CoastCond,
         true,
       ],
       T1C34: [true, true, false, false, true, true],
-      T1C34CoastQ1: [q1CoastCond, true, false, false, true, true],
+      T1C34CoastQ1C3: [q1CoastCond, true, false, false, c3CoastCond, true],
       T1C4: [true, true, false, false, false, true],
       T1C4CoastQ1: [q1CoastCond, true, false, false, false, true],
       T1Ratio: [
@@ -75,12 +94,12 @@ class t1Sim extends theoryClass<theory> {
         () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
         true,
       ],
-      T1RatioCoastQ1: [
+      T1RatioCoastQ1C3: [
         () => q1CoastCond() && (this.variables[0].cost + 1 < this.rho.value), // q1
         () => this.variables[1].cost + l10(1.11) < this.rho.value,
         () => this.variables[2].cost + this.termRatio + 1 <= this.rho.value,
         () => this.variables[3].cost + this.termRatio <= this.rho.value,
-        () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
+        () => c3CoastCond() && (this.variables[4].cost + l10(this.c3Ratio) < this.rho.value),
         true,
       ],
       T1SolarXLII: [
@@ -94,15 +113,15 @@ class t1Sim extends theoryClass<theory> {
         () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
         true,
       ],
-      T1SolarXLIICoastQ1: [
+      T1SolarXLIICoastQ1C3: [
         () => // q1
             q1CoastCond() && (this.variables[0].cost + l10(5) <= this.rho.value &&
             this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <= this.variables[1].cost &&
             this.variables[0].cost + l10(15 + (this.variables[0].level % 10)) < (this.milestones[3] > 0 ? this.variables[5].cost : 1000)),
         () => this.variables[1].cost + l10(1.11) < this.rho.value,
         () => this.variables[2].cost + this.termRatio + 1 <= this.rho.value,
-        () => this.variables[3].cost + this.termRatio <= this.rho.value,
-        () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
+        () => (this.variables[3].cost + this.termRatio <= this.rho.value),
+        () => c3CoastCond() && (this.variables[4].cost + l10(this.c3Ratio) < this.rho.value),
         true,
       ],
     };
@@ -129,6 +148,8 @@ class t1Sim extends theoryClass<theory> {
     super(data);
     this.lastQ1 = -1;
     this.lastQ1Orig = -1;
+    this.lastC3 = -1;
+    this.lastC3Orig = -1;
     this.pubUnlock = 10;
     this.milestoneUnlockSteps = 25;
     //milestones  [logterm, c1exp, c3term, c4term]
@@ -171,6 +192,11 @@ class t1Sim extends theoryClass<theory> {
     if(this.strat.includes("CoastQ1")) {
       stratExtra += ` q1: ${this.lastQ1}`;
       // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`
+      if(this.strat.includes("CoastQ1C3")) {
+        stratExtra += ` c3: ${this.lastC3}`;
+        // stratExtra += ` c3delta: ${this.lastC3Orig - this.lastC3}`
+      }
+
     }
     return this.createResult(stratExtra);
   }
