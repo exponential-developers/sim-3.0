@@ -162,7 +162,7 @@ class t7Sim extends theoryClass<theory> {
     let stratExtra = this.strat.includes("T7PlaySpqcey") && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
     if(this.strat.includes("CoastQ1")) {
       stratExtra += ` q1: ${this.lastQ1}`;
-      stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`;
+      // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`;
     }
     return this.createResult(stratExtra);
   }
