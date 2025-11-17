@@ -3,11 +3,40 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, binaryInsertionSearch, l10, subtract, toCallables } from "../../Utils/helpers";
+import { add, binaryInsertionSearch, getLastLevel, l10, subtract, toCallables } from "../../Utils/helpers";
+
+async function runFICoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
+  const sim = new fiSim(data);
+  sim.lastQ1 = targetQ1;
+  sim.lastQ1Orig = origQ1;
+  return sim.simulate();
+}
 
 export default async function fi(data: theoryData): Promise<simResult> {
-  const sim = new fiSim(data);
-  const res = await sim.simulate();
+  let res;
+  if(data.strat.includes("CoastQ1")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("CoastQ1", "");
+    const sim1 = new fiSim(data2);
+    const res1 = await sim1.simulate();
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    res = await runFICoastQ1(data, lastQ1 - 1, lastQ1);
+    let limit = 7; // Maximum seen in the wild is 4, we test 5 and 6 to be safe.
+    let start = 2;
+    for(let i = start; i < limit; i++) {
+      if(lastQ1 - i <= 1) {
+        break;
+      }
+      const resN = await runFICoastQ1(data, lastQ1 - i, lastQ1);
+      if(resN.tauH > res.tauH) {
+        res = resN;
+      }
+    }
+  }
+  else {
+    const sim = new fiSim(data);
+    res = await sim.simulate();
+  }
   return res;
 }
 
@@ -22,6 +51,8 @@ class fiSim extends theoryClass<theory> {
   q: number;
   r: number;
   tval: number;
+  lastQ1: number;
+  lastQ1Orig: number;
 
   maxFx: number;
   maxLambda: number;
@@ -31,16 +62,8 @@ class fiSim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const idleStrat = new Array(6).fill(true);
-    const activeStrat = [
-      true, //tdot - 0
-      //q1 mod 23
-      () => this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < this.variables[2].cost, //q1 - 1
-      true, //q2 - 2
-      true, //k - 3
-      true, //m - 4
-      //n mod 11 - 5
-      () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < this.variables[4].cost //n - 5
-    ]
+    const idleCoastStrat = new Array(6).fill(true);
+    idleCoastStrat[1] = () => this.variables[1].level < this.lastQ1;
     const activeStrat2 = [
       true, //tdot - 0
       //q1 mod 23
@@ -51,15 +74,33 @@ class fiSim extends theoryClass<theory> {
       //n mod 11 - 5
       () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost, this.variables[4].cost) //n - 5
     ]
+    const activeCoastStrat2 = [
+      true, //tdot - 0
+      //q1 mod 23
+      () => (this.variables[1].level < this.lastQ1) && (this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost)), //q1 - 1
+      true, //q2 - 2
+      true, //k - 3
+      true, //m - 4
+      //n mod 11 - 5
+      () => this.variables[5].cost + l10((this.variables[5].level % 11) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost, this.variables[4].cost) //n - 5
+    ]
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FI: idleStrat,
+      FICoastQ1: idleCoastStrat,
       FId: activeStrat2,
+      FIdCoastQ1: activeCoastStrat2,
       FIPermaSwap: idleStrat,
+      FIPermaSwapCoastQ1: idleCoastStrat,
       FIdPermaSwap: activeStrat2,
+      FIdPermaSwapCoastQ1: activeCoastStrat2,
       FIMS: idleStrat,
+      FIMSCoastQ1: idleCoastStrat,
       FIMSd: activeStrat2,
+      FIMSdCoastQ1: activeCoastStrat2,
       FIMSPermaSwap: idleStrat,
-      FIMSdPermaSwap: activeStrat2
+      FIMSPermaSwapCoastQ1: idleCoastStrat,
+      FIMSdPermaSwap: activeStrat2,
+      FIMSdPermaSwapCoastQ1: activeCoastStrat2
     };
     return toCallables(conditions[this.strat]);
   }
@@ -199,6 +240,8 @@ class fiSim extends theoryClass<theory> {
     this.q = 0;
     this.r = 0;
     this.tval = 0;
+    this.lastQ1 = -1;
+    this.lastQ1Orig = -1;
     this.pubUnlock = 8;
     this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.variables = [
@@ -227,7 +270,12 @@ class fiSim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars();
-    return this.createResult();
+    let stratExtra = "";
+    if (this.strat.includes("CoastQ1")) {
+      stratExtra += ` q1: ${this.lastQ1}`;
+      // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`;
+    }
+    return this.createResult(stratExtra);
   }
   tick() {
     let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[2]);
