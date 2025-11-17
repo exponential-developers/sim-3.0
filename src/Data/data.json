@@ -284,10 +284,20 @@
         "T7": {
           "stratFilterCondition": "false"
         },
+        "T7CoastQ1": {
+          "stratFilterCondition": "false"
+        },
         "T7C12": {
           "stratFilterCondition": "(Idle || Semi-Idle) && (rho < 25 || (rho >= 75 && rho < 100))"
         },
+        "T7C12CoastQ1": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && (rho < 25 || (rho >= 75 && rho < 100))"
+        },
         "T7C3": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 25 && rho < 75",
+          "forcedCondition": "rho >= 25"
+        },
+        "T7C3CoastQ1": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 25 && rho < 75",
           "forcedCondition": "rho >= 25"
         },
@@ -295,7 +305,15 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 550",
           "forcedCondition": "rho >= 25"
         },
+        "T7noC12CoastQ1": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 550",
+          "forcedCondition": "rho >= 25"
+        },
         "T7noC123": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 500 && rho < 625",
+          "forcedCondition": "rho >= 75"
+        },
+        "T7noC123CoastQ1": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 500 && rho < 625",
           "forcedCondition": "rho >= 75"
         },
@@ -303,14 +321,29 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 525",
           "forcedCondition": "rho >= 75"
         },
+        "T7noC1234CoastQ1": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 525",
+          "forcedCondition": "rho >= 75"
+        },
         "T7C12d": {
+          "stratFilterCondition": "(Active || Very-Active) && (rho < 25 || (rho >= 75 && rho < 150))"
+        },
+        "T7C12dCoastQ1": {
           "stratFilterCondition": "(Active || Very-Active) && (rho < 25 || (rho >= 75 && rho < 150))"
         },
         "T7C3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 25 && rho < 75",
           "forcedCondition": "rho >= 25"
         },
+        "T7C3dCoastQ1": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 25 && rho < 75",
+          "forcedCondition": "rho >= 25"
+        },
         "T7PlaySpqcey": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 100",
+          "forcedCondition": "rho >= 100"
+        },
+        "T7PlaySpqceyCoastQ1": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 100",
           "forcedCondition": "rho >= 100"
         }

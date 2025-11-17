@@ -4,11 +4,41 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add_old, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add_old, l10, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
+
+async function runT7CoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
+  const sim = new t7Sim(data);
+  sim.lastQ1 = targetQ1;
+  sim.lastQ1Orig = origQ1;
+  return sim.simulate();
+}
 
 export default async function t7(data: theoryData): Promise<simResult> {
-  const sim = new t7Sim(data);
-  const res = await sim.simulate();
+  let res;
+  if(data.strat.includes("CoastQ1")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("CoastQ1", "");
+    const sim1 = new t7Sim(data2);
+    const res1 = await sim1.simulate();
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    res = await runT7CoastQ1(data, lastQ1 - 1, lastQ1);
+    let limit = 14;
+    let start = 2;
+    for(let i = start; i < limit; i++) {
+      if(lastQ1 - i <= 1) {
+        break;
+      }
+      const resN = await runT7CoastQ1(data, lastQ1 - i, lastQ1);
+      if(resN.tauH > res.tauH) {
+        res = resN;
+      }
+    }
+  }
+  else {
+    const sim = new t7Sim(data);
+    res = await sim.simulate();
+  }
+
   return res;
 }
 
@@ -18,11 +48,14 @@ const add = add_old;
 
 class t7Sim extends theoryClass<theory> {
   rho2: Currency;
+  lastQ1: number;
+  lastQ1Orig: number;
   drho13: number;
   drho23: number;
   c2ratio: number;
 
   getBuyingConditions(): conditionFunction[] {
+    const q1CoastCond = () => this.variables[0].level < this.lastQ1;
     if (this.lastPub >= 100) this.c2ratio = 100;
     if (this.lastPub >= 175) this.c2ratio = 10;
     if (this.lastPub >= 250) this.c2ratio = 20;
@@ -30,15 +63,32 @@ class t7Sim extends theoryClass<theory> {
     if (this.lastPub >= 300) this.c2ratio = Infinity;
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T7: [true, true, true, true, true, true, true],
+      T7CoastQ1: [q1CoastCond, true, true, true, true, true, true],
       T7C12: [true, true, true, false, false, false, false],
+      T7C12CoastQ1: [q1CoastCond, true, true, false, false, false, false],
       T7C3: [true, false, false, true, false, false, false],
+      T7C3CoastQ1: [q1CoastCond, false, false, true, false, false, false],
       T7noC12: [true, false, false, true, true, true, true],
+      T7noC12CoastQ1: [q1CoastCond, false, false, true, true, true, true],
       T7noC123: [true, false, false, false, true, true, true],
+      T7noC123CoastQ1: [q1CoastCond, false, false, false, true, true, true],
       T7noC1234: [true, false, false, false, false, true, true],
+      T7noC1234CoastQ1: [q1CoastCond, false, false, false, false, true, true],
       T7C12d: [() => this.variables[0].cost + 1 < this.variables[2].cost, () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
+      T7C12dCoastQ1: [() => q1CoastCond() && (this.variables[0].cost + 1 < this.variables[2].cost), () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
       T7C3d: [() => this.variables[0].cost + 1 < this.variables[3].cost, false, false, true, false, false, false],
+      T7C3dCoastQ1: [() => q1CoastCond() && (this.variables[0].cost + 1 < this.variables[3].cost), false, false, true, false, false, false],
       T7PlaySpqcey: [
         () => this.variables[0].cost + l10(4) < this.variables[6].cost,
+        () => this.variables[1].cost + l10(10 + this.variables[2].level) < this.variables[2].cost,
+        () => this.variables[2].cost + l10(this.c2ratio) < this.variables[6].cost,
+        () => this.variables[3].cost + 1 < this.variables[6].cost,
+        () => this.variables[4].cost + 1 < this.variables[6].cost,
+        () => this.variables[5].cost + l10(4) < this.variables[6].cost,
+        true,
+      ],
+      T7PlaySpqceyCoastQ1: [
+        () => q1CoastCond() && (this.variables[0].cost + l10(4) < this.variables[6].cost),
         () => this.variables[1].cost + l10(10 + this.variables[2].level) < this.variables[2].cost,
         () => this.variables[2].cost + l10(this.c2ratio) < this.variables[6].cost,
         () => this.variables[3].cost + 1 < this.variables[6].cost,
@@ -63,15 +113,15 @@ class t7Sim extends theoryClass<theory> {
   }
   getMilestonePriority(): number[] {
     switch (this.strat) {
-      case "T7": return [1, 0, 2, 3, 4];
-      case "T7C12": return [4];
-      case "T7C3": return [1];
-      case "T7noC12": return [1, 0, 2, 3];
-      case "T7noC123": return [0, 2, 3];
-      case "T7noC1234": return [0, 2, 3];
-      case "T7C12d": return [4];
-      case "T7C3d": return [1];
-      case "T7PlaySpqcey": return [1, 0, 2, 3, 4]; 
+      case "T7": case "T7CoastQ1": return [1, 0, 2, 3, 4];
+      case "T7C12": case "T7C12CoastQ1": return [4];
+      case "T7C3": case "T7C3CoastQ1": return [1];
+      case "T7noC12": case "T7noC12CoastQ1": return [1, 0, 2, 3];
+      case "T7noC123": case "T7noC123CoastQ1": return [0, 2, 3];
+      case "T7noC1234": case "T7noC1234CoastQ1": return [0, 2, 3];
+      case "T7C12d": case "T7C12dCoastQ1": return [4];
+      case "T7C3d": case "T7C3dCoastQ1": return [1];
+      case "T7PlaySpqcey": case "T7PlaySpqceyCoastQ1": return [1, 0, 2, 3, 4];
     }
   }
   getTotMult(val: number): number {
@@ -79,6 +129,8 @@ class t7Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
+    this.lastQ1 = -1;
+    this.lastQ1Orig = -1;
     this.rho2 = new Currency;
     this.pubUnlock = 10;
     this.milestoneUnlockSteps = 25;
@@ -107,7 +159,11 @@ class t7Sim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars()
-    const stratExtra = this.strat === "T7PlaySpqcey" && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
+    let stratExtra = this.strat.includes("T7PlaySpqcey") && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
+    if(this.strat.includes("CoastQ1")) {
+      stratExtra += ` q1: ${this.lastQ1}`;
+      stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`;
+    }
     return this.createResult(stratExtra);
   }
   tick() {
