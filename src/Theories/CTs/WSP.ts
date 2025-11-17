@@ -101,7 +101,6 @@ class wspSim extends theoryClass<theory> {
         () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
         true,
         true,
-        // @ts-ignore
         () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[3]() : WSPdStopC1CoastQ1[3](),
         true,
       ],
