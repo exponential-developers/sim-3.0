@@ -146,7 +146,7 @@ class t5Sim extends theoryClass<theory> {
     this.trimBoughtVars();
     let stratExtra = this.strat.includes("T5Idle") ? " " + logToExp(this.variables[2].cost, 1) : "";
     if(this.strat.includes("CoastQ1")) {
-      stratExtra += " q1: " + this.lastQ1;
+      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
     }
     return this.createResult(stratExtra);
   }

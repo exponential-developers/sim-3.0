@@ -272,7 +272,7 @@ class fiSim extends theoryClass<theory> {
     this.trimBoughtVars();
     let stratExtra = "";
     if (this.strat.includes("CoastQ1")) {
-      stratExtra += ` q1: ${this.lastQ1}`;
+      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
       // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`;
     }
     return this.createResult(stratExtra);

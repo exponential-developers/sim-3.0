@@ -187,7 +187,7 @@ class wspSim extends theoryClass<theory> {
     this.trimBoughtVars();
     let extra = '';
     if(this.lastQ1 != -1 && this.strat.includes("CoastQ1")) {
-      extra = ` q1: ${this.lastQ1}`;
+      extra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
       // Debug output, useful when developing skip ranges:
       // extra = ` q1: ${this.lastQ1} q1delta:${this.lastQ1Orig - this.lastQ1}`;
     }

@@ -311,7 +311,7 @@ class t6Sim extends theoryClass<theory> {
     this.trimBoughtVars();
     let stratExtra = this.strat.includes("T6Snax") ? " " + logToExp(this.stopC12[0], 1) : "";
     if(this.strat.includes("CoastQ1R1")) {
-      stratExtra += ` q1: ${this.lastQ1} r1: ${this.lastR1}`;
+      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1} r1: ${getLastLevel("r1", this.boughtVars) || this.lastR1}`;
       // stratExtra += ` q1: ${this.lastQ1} q1delta: ${this.lastQ1Orig - this.lastQ1} r1: ${this.lastR1} r1delta: ${this.lastR1Orig - this.lastR1} `
     }
     return this.createResult(stratExtra);

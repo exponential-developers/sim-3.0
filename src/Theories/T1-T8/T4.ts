@@ -5,9 +5,63 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getLastLevel, getR9multiplier, toCallables } from "../../Utils/helpers";
 
-export default async function t4(data: theoryData): Promise<simResult> {
+async function runT4CoastQ1Q2C3(
+    data: theoryData,
+    targetQ1: number,
+    origQ1: number,
+    targetQ2: number,
+    origQ2: number,
+    targetC3: number,
+    origC3: number,
+): Promise<simResult> {
   const sim = new t4Sim(data);
-  const res = await sim.simulate(data);
+  sim.lastQ1 = targetQ1;
+  sim.lastQ1Orig = origQ1;
+  sim.lastQ2 = targetQ2;
+  sim.lastQ2Orig = origQ2;
+  sim.lastC3 = targetC3;
+  sim.lastC3Orig = origC3;
+  return sim.simulate(data); // Data is here for compatibility, it will not be used by underlying theory.
+}
+
+export default async function t4(data: theoryData): Promise<simResult> {
+  let res;
+  if(!data.strat.includes("coast2")) {
+    const sim = new t4Sim(data);
+    res = await sim.simulate(data);
+  }
+  else {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("coast2", "");
+    const sim1 = new t4Sim(data2);
+    const res1 = await sim1.simulate(data2);
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    const lastQ2 = getLastLevel("q2", res1.boughtVars);
+    const lastC3 = getLastLevel("c3", res1.boughtVars);
+    res = res1;
+    for(let limQ1 = 0; limQ1 < 5; limQ1++) {
+      if(lastQ1 - limQ1 <= 1) {
+        break;
+      }
+      for(let limQ2 = 0; limQ2 < 2; limQ2++) {
+        if(lastQ2 - limQ2 <= 1) {
+          break;
+        }
+        for(let limC3 = 0; limC3 < 4; limC3++) {
+          if(lastC3 - limC3 <= 1) {
+            break;
+          }
+          if(limQ1 === limQ2 && limQ2 === limC3 && limQ1 === 0) {
+            continue;
+          }
+          const resN = await runT4CoastQ1Q2C3(data, lastQ1 - limQ1, lastQ1, lastQ2 - limQ2, lastQ2, lastC3 - limC3, lastC3)
+          if(resN.tauH > res.tauH) {
+            res = resN;
+          }
+        }
+      }
+    }
+  }
   return res;
 }
 
@@ -16,6 +70,12 @@ type theory = "T4";
 class t4Sim extends theoryClass<theory> {
   recursionValue: number;
   q: number;
+  lastQ1: number;
+  lastQ1Orig: number;
+  lastQ2: number;
+  lastQ2Orig: number;
+  lastC3: number;
+  lastC3Orig: number;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -29,6 +89,24 @@ class t4Sim extends theoryClass<theory> {
           this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) + 1 < (this.recursionValue ?? Infinity),
         () => this.variables[7].cost + 0.5 < (this.recursionValue ?? Infinity) && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
       ],
+      T4C3d: [
+        false,
+        false,
+        true,
+        ...new Array(3).fill(false),
+        () =>
+            this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost),
+        () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost,
+      ],
+      T4C3dcoast2: [
+        false,
+        false,
+        () => this.variables[2].level < this.lastC3,
+        ...new Array(3).fill(false),
+        () => (this.variables[6].level < this.lastQ1) &&
+            (this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
+        () => (this.variables[7].level < this.lastQ2) && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
+      ],
       T4C3coast: [
         false,
         false,
@@ -36,6 +114,14 @@ class t4Sim extends theoryClass<theory> {
         ...new Array(3).fill(false),
         () => this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) + 1 < (this.recursionValue ?? Infinity),
         () => this.variables[7].cost + 0.5 < (this.recursionValue ?? Infinity),
+      ],
+      T4C3coast2: [
+        false,
+        false,
+        () => this.variables[2].level < this.lastC3,
+        ...new Array(3).fill(false),
+        () => this.variables[6].level < this.lastQ1,
+        () => this.variables[7].level < this.lastQ2,
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
       T4C3dC12rcv: [
@@ -95,8 +181,11 @@ class t4Sim extends theoryClass<theory> {
   }
   getMilestonePriority(): number[] {
     switch (this.strat) {
+      case "T4C3d": return [2];
       case "T4C3d66": return [2];
       case "T4C3coast": return [2];
+      case "T4C3coast2": return [2];
+      case "T4C3dcoast2": return [2];
       case "T4C3": return [2];
       case "T4C3dC12rcv": return [1, 2];
       case "T4C356dC12rcv": return [1, 2, 0];
@@ -124,6 +213,12 @@ class t4Sim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.q = 0;
+    this.lastQ1 = -1;
+    this.lastQ1Orig = -1;
+    this.lastQ2 = -1;
+    this.lastQ2Orig = -1;
+    this.lastC3 = -1;
+    this.lastC3Orig = -1;
     this.pubUnlock = 9;
     this.milestoneUnlockSteps = 25;
     //milestones  [terms, c1exp, multQdot]
@@ -155,8 +250,21 @@ class t4Sim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars();
-    const stratExtra = ["T4C3d66", "T4C3coast"].includes(this.strat) 
+    let stratExtra = ["T4C3d66", "T4C3coast"].includes(this.strat)
       ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "";
+    if(this.strat.includes("coast2")) {
+      for(let v of ["q1", "q2", "c3"]) {
+        let level = getLastLevel(v, this.boughtVars);
+        if (level == 0) {
+          let k = ("last"+v.toUpperCase()) as ("lastQ1" | "lastQ2" | "lastC3");
+          level = this[k];
+        }
+        stratExtra += ` ${v}:${level}`;
+        // let origLevel = this[("last"+v.toUpperCase()+"Orig") as ("lastQ1Orig" | "lastQ2Orig" | "lastC3Orig")];
+        // stratExtra += ` ${v}delta:${origLevel-level}`;
+      }
+
+    }
     return this.createResult(stratExtra);
   }
   tick() {

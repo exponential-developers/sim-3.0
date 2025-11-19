@@ -190,10 +190,10 @@ class t1Sim extends theoryClass<theory> {
     this.trimBoughtVars();
     let stratExtra = this.strat.includes("T1SolarXLII") ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "";
     if(this.strat.includes("CoastQ1")) {
-      stratExtra += ` q1: ${this.lastQ1}`;
+      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
       // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`
       if(this.strat.includes("CoastQ1C3")) {
-        stratExtra += ` c3: ${this.lastC3}`;
+        stratExtra += ` c3: ${getLastLevel("c3", this.boughtVars) || this.lastC3}`;
         // stratExtra += ` c3delta: ${this.lastC3Orig - this.lastC3}`
       }
 
