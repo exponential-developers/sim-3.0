@@ -99,6 +99,9 @@
         "T3P2C23C33": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 400"
         },
+        "T3P2C23C33Coast": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 400"
+        },
         "T3noC11C13C21C33d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 150 && rho < 350",
           "forcedCondition": "rho >= 125"

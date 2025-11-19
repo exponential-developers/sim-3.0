@@ -4,11 +4,55 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
+
+async function runT3Coast(
+    data: theoryData,
+    targetB2: number,
+    origB2: number,
+    targetB3: number,
+    origB3: number,
+): Promise<simResult> {
+  const sim = new t3Sim(data);
+  sim.lastB2 = targetB2;
+  sim.lastB2Orig = origB2;
+  sim.lastB3 = targetB3;
+  sim.lastB3Orig = origB3;
+  return sim.simulate();
+}
 
 export default async function t3(data: theoryData): Promise<simResult> {
-  const sim = new t3Sim(data);
-  const res = await sim.simulate();
+  let res;
+  if(!data.strat.includes("Coast")) {
+    const sim = new t3Sim(data);
+    res = await sim.simulate();
+  }
+  else {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "");
+    const sim1 = new t3Sim(data2);
+    const res1 = await sim1.simulate();
+    const lastB2 = getLastLevel("b2", res1.boughtVars);
+    const lastB3 = getLastLevel("b3", res1.boughtVars);
+    res = res1;
+    for(let limB2 = 0; limB2 < 10; limB2++) {
+      if(lastB2 - limB2 <= 1) {
+        break;
+      }
+      for(let limB3 = 0; limB3 < 10; limB3++) {
+        if(lastB3 - limB3 <= 1) {
+          break;
+        }
+        if(limB2 === limB3 && limB2 === 0) {
+          continue;
+        }
+        const resN = await runT3Coast(data, lastB2 - limB2, lastB2, lastB3 - limB3, lastB3)
+        if(resN.tauH > res.tauH) {
+          res = resN;
+        }
+      }
+    }
+  }
   return res;
 }
 
@@ -17,6 +61,10 @@ type theory = "T3";
 class t3Sim extends theoryClass<theory> {
   rho2: Currency;
   rho3: Currency;
+  lastB2: number;
+  lastB2Orig: number;
+  lastB3: number;
+  lastB3Orig: number;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -123,6 +171,12 @@ class t3Sim extends theoryClass<theory> {
       ],
       T3P2C23: [false, true, true, false, true, false, false, true, true, false, true, false],
       T3P2C23C33: [false, true, true, false, true, false, false, true, true, false, true, true],
+      T3P2C23C33Coast: [
+        false,
+        () => this.variables[1].level < this.lastB2,
+        () => this.variables[2].level < this.lastB3,
+        false, true, false, false, true, true, false, true, true
+      ],
       T3noC11C13C21C33d: [
         () => this.variables[0].cost + l10(8) < this.variables[9].cost,
         () => this.variables[1].cost + l10(5) < Math.min(this.variables[4].cost, this.variables[7].cost, this.variables[10].cost),
@@ -240,6 +294,10 @@ class t3Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
+    this.lastB2 = -1;
+    this.lastB2Orig = -1;
+    this.lastB3 = -1;
+    this.lastB3Orig = -1;
     this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
@@ -273,7 +331,17 @@ class t3Sim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars();
-    return this.createResult();
+    let stratExtra = "";
+    if(this.strat.includes("Coast")) {
+      let lastB2Level = getLastLevel("b2", this.boughtVars) || this.lastB2;
+      stratExtra += ` b2: ${lastB2Level}`;
+      stratExtra += ` b2delta: ${this.lastB2Orig - lastB2Level}`;
+
+      let lastB3Level = getLastLevel("b3", this.boughtVars) || this.lastB3;
+      stratExtra += ` b3: ${lastB3Level}`;
+      stratExtra += ` b3delta: ${this.lastB3Orig - lastB3Level}`;
+    }
+    return this.createResult(stratExtra);
   }
   tick() {
     const vb1 = this.variables[0].value * (1 + 0.05 * this.milestones[1]);
