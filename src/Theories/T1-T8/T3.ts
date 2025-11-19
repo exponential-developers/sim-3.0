@@ -335,11 +335,11 @@ class t3Sim extends theoryClass<theory> {
     if(this.strat.includes("Coast")) {
       let lastB2Level = getLastLevel("b2", this.boughtVars) || this.lastB2;
       stratExtra += ` b2: ${lastB2Level}`;
-      stratExtra += ` b2delta: ${this.lastB2Orig - lastB2Level}`;
+      // stratExtra += ` b2delta: ${this.lastB2Orig - lastB2Level}`;
 
       let lastB3Level = getLastLevel("b3", this.boughtVars) || this.lastB3;
       stratExtra += ` b3: ${lastB3Level}`;
-      stratExtra += ` b3delta: ${this.lastB3Orig - lastB3Level}`;
+      // stratExtra += ` b3delta: ${this.lastB3Orig - lastB3Level}`;
     }
     return this.createResult(stratExtra);
   }
