@@ -394,6 +394,9 @@
         "T8Play": {
           "stratFilterCondition": "Active && rho >= 220"
         },
+        "T8PlayCoast": {
+          "stratFilterCondition": "Active && rho >= 220"
+        },
         "T8PlaySolarswap": {
           "stratFilterCondition": "Very-Active"
         },
