@@ -3,11 +3,65 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getR9multiplier, toCallables } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
+
+async function runT8Coast(
+    data: theoryData,
+    targetC1: number,
+    origC1: number,
+    targetC3: number,
+    origC3: number,
+    targetC5: number,
+    origC5: number,
+): Promise<simResult> {
+  const sim = new t8Sim(data);
+  sim.lastC1 = targetC1;
+  sim.lastC1Orig = origC1;
+  sim.lastC3 = targetC3;
+  sim.lastC3Orig = origC3;
+  sim.lastC5 = targetC5;
+  sim.lastC5Orig = origC5;
+  return sim.simulate();
+}
 
 export default async function t8(data: theoryData): Promise<simResult> {
-  const sim = new t8Sim(data);
-  const res = await sim.simulate();
+  let res;
+  if(!data.strat.includes("Coast")) {
+    const sim = new t8Sim(data);
+    res = await sim.simulate();
+  }
+  else {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "");
+    const sim1 = new t8Sim(data2);
+    const res1 = await sim1.simulate();
+    const lastC1 = getLastLevel("c1", res1.boughtVars);
+    const lastC3 = getLastLevel("c3", res1.boughtVars);
+    const lastC5 = getLastLevel("c5", res1.boughtVars);
+    res = res1;
+    for(let limC1 = 0; limC1 < 14; limC1++) {
+      if(lastC1 - limC1 <= 1) {
+        break;
+      }
+      for(let limC3 = 0; limC3 < 5; limC3++) {
+        if(lastC3 - limC3 <= 1) {
+          break;
+        }
+        for(let limC5 = 0; limC5 < 2; limC5++) {
+          if(lastC5 - limC5 <= 1) {
+            break;
+          }
+          if(limC1 === limC3 && limC3 === limC5 && limC1 === 0) {
+            continue;
+          }
+          const resN = await runT8Coast(data, lastC1 - limC1, lastC1, lastC3 - limC3, lastC3, lastC5 - limC5, lastC5)
+          if(resN.tauH > res.tauH) {
+            res = resN;
+          }
+        }
+      }
+    }
+  }
   return res;
 }
 
@@ -24,6 +78,12 @@ class t8Sim extends theoryClass<theory> {
   dy: number;
   dz: number;
   msTimer: number;
+  lastC1: number;
+  lastC1Orig: number;
+  lastC3: number;
+  lastC3Orig: number;
+  lastC5: number;
+  lastC5Orig: number;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -32,6 +92,13 @@ class t8Sim extends theoryClass<theory> {
       T8noC5: [true, true, true, true, false],
       T8noC35: [true, true, false, true, false],
       T8Snax: [() => this.curMult < 1.6, true, () => this.curMult < 2.3, true, () => this.curMult < 2.3],
+      T8Coast: [
+        () => this.variables[0].level < this.lastC1,
+        true,
+        () => this.variables[2].level < this.lastC3,
+        true,
+        () => this.variables[4].level < this.lastC5,
+      ],
       T8noC3d: [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, true],
       T8noC5d: [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, true, true, false],
       T8noC35d: [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, false],
@@ -50,6 +117,13 @@ class t8Sim extends theoryClass<theory> {
         true,
         () => this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
       ],
+      T8PlaySolarswapCoast: [
+        () => this.variables[0].level < this.lastC1 && (this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+        true,
+        () => this.variables[2].level < this.lastC3 && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+        true,
+        () => this.variables[4].level < this.lastC5 && (this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      ]
     };
     return toCallables(conditions[this.strat]);
   }
@@ -125,6 +199,12 @@ class t8Sim extends theoryClass<theory> {
       [-10.6, -4.4, 28.6],
       [-6, 15, 0],
     ];
+    this.lastC1 = -1;
+    this.lastC1Orig = -1;
+    this.lastC3 = -1;
+    this.lastC3Orig = -1;
+    this.lastC5 = -1;
+    this.lastC5Orig = -1;
     this.dts = [0.02, 0.002, 0.00014];
     this.x = this.defaultStates[0][0];
     this.y = this.defaultStates[0][1];
@@ -154,8 +234,22 @@ class t8Sim extends theoryClass<theory> {
       if (this.lastPub < 220) this.updateMilestones();
       this.buyVariables();
     }
+    let stratExtra = "";
+    if(this.strat.includes("Coast")) {
+      let lastC1Level = getLastLevel("c1", this.boughtVars) || this.lastC1;
+      stratExtra += ` c1: ${lastC1Level}`;
+      // stratExtra += ` c1delta: ${this.lastC1Orig - lastC1Level}`;
+
+      let lastC3Level = getLastLevel("c3", this.boughtVars) || this.lastC3;
+      stratExtra += ` c3: ${lastC3Level}`;
+      // stratExtra += ` c3delta: ${this.lastC3Orig - lastC3Level}`;
+
+      let lastC5Level = getLastLevel("c5", this.boughtVars) || this.lastC5;
+      stratExtra += ` c5: ${lastC5Level}`;
+      // stratExtra += ` c5delta: ${this.lastC5Orig - lastC5Level}`;
+    }
     this.trimBoughtVars();
-    return this.createResult();
+    return this.createResult(stratExtra);
   }
   tick() {
     this.dn();
@@ -188,7 +282,7 @@ class t8Sim extends theoryClass<theory> {
     this.dn();
 
     this.msTimer++;
-    if (this.msTimer === 335 && this.strat === "T8PlaySolarswap") {
+    if (this.msTimer === 335 && this.strat.includes("Solarswap")) {
       this.x = this.defaultStates[this.milestones[0]][0];
       this.y = this.defaultStates[this.milestones[0]][1];
       this.z = this.defaultStates[this.milestones[0]][2];

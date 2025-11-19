@@ -376,6 +376,9 @@
         "T8Snax": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "T8Coast": {
+          "stratFilterCondition": "Semi-Idle"
+        },
         "T8noC3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 60"
         },
@@ -392,6 +395,9 @@
           "stratFilterCondition": "Active && rho >= 220"
         },
         "T8PlaySolarswap": {
+          "stratFilterCondition": "Very-Active"
+        },
+        "T8PlaySolarswapCoast": {
           "stratFilterCondition": "Very-Active"
         }
       }
