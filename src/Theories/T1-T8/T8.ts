@@ -115,7 +115,7 @@ class t8Sim extends theoryClass<theory> {
         true,
         () => this.variables[2].level < this.lastC3 && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
         true,
-        () => this.variables[4].level < this.lastC5 && (this.variables[4].cost + l10(4) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+        () => this.variables[4].level < this.lastC5 && (this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       ],
       T8PlaySolarswap: [
         () => this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost),
