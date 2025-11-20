@@ -19,7 +19,16 @@ export default async function mf(data: theoryData): Promise<simResult> {
     if (data.rho <= 100 && resetBundle[3] > 0) {
       continue;
     }
+    let isCoastStrat = data.strat.includes("Coast");
     let sim = new mfSim(data, resetBundle);
+    if(isCoastStrat && sim.mfResetDepth > 0) {
+      let tempSim = new mfSim(data, resetBundle);
+      tempSim.mfResetDepth = 0;
+      let tempRes = await tempSim.simulate();
+      if (tempRes.strat.includes("c1: ")) {
+        sim.lastC1 = parseInt(tempRes.strat.split("c1: ")[1].split(" ")[0]);
+      }
+    }
     let res = await sim.simulate();
     bestRes = getBestResult(bestRes, res);
   }
@@ -45,20 +54,21 @@ class mfSim extends theoryClass<theory> {
   resetBundle: resetBundle;
   goalBundle: resetBundle;
   goalBundleCost: number;
+  mfResetDepth: number;
   buyV: boolean;
 
   bestRes: simResult | null;
 
   getBuyingConditions(): conditionFunction[] {
     const idleStrat: (boolean | conditionFunction)[] = [
-      () => !this.buyV && this.lastC1 === -1,
+      () => !this.buyV && (this.lastC1 === -1 || this.variables[0].level < this.lastC1),
       ...new Array(4).fill(() => !this.buyV),
       ...new Array(4).fill(() => this.buyV)
     ];
     const dPower: number[] = [3.09152, 3.00238, 2.91940]
     const activeStrat: (boolean | conditionFunction)[] = [
       () => {
-        if (this.buyV || this.lastC1 !== -1) { return false }
+        if (this.buyV || (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1)) { return false }
         return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
       },
       () => !this.buyV,
@@ -75,7 +85,7 @@ class mfSim extends theoryClass<theory> {
     ];
     const activeStrat2: (boolean | conditionFunction)[] = [
       () => {
-        if (this.buyV || this.lastC1 !== -1) { return false }
+        if (this.buyV || (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1)) { return false }
         return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
       },
       () => !this.buyV,
@@ -196,6 +206,7 @@ class mfSim extends theoryClass<theory> {
 
   constructor(data: theoryData, resetBundle: resetBundle) {
     super(data);
+    this.mfResetDepth = this.settings.mfResetDepth;
     this.c = 0;
     this.x = 0;
     this.i = 0;
@@ -232,6 +243,7 @@ class mfSim extends theoryClass<theory> {
   copyFrom(other: this) {
     super.copyFrom(other)
 
+    this.mfResetDepth = other.mfResetDepth;
     this.milestones = [...other.milestones];
     this.pubUnlock = other.pubUnlock;
     this.c = other.c;
@@ -278,7 +290,7 @@ class mfSim extends theoryClass<theory> {
       }
     }
     this.trimBoughtVars();
-    let stratExtra = ` Depth: ${this.settings.mfResetDepth}`;
+    let stratExtra = ` Depth: ${this.mfResetDepth}`;
     if(this.lastC1 !== -1) {
       stratExtra += ` c1: ${this.lastC1}`
     }
@@ -286,7 +298,7 @@ class mfSim extends theoryClass<theory> {
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
-    if(id === 0 && this.strat.includes("Coast")) {
+    if(id === 0 && this.strat.includes("Coast") && this.lastC1 === -1 && this.mfResetDepth === 0) {
       if(this.maxRho > this.lastPub + 6) {
         this.forkOnC1 = true;
       }
@@ -350,7 +362,7 @@ class mfSim extends theoryClass<theory> {
     return goalBundle;
   }
   async checkForReset() {
-    const depth = this.settings.mfResetDepth;
+    const depth = this.mfResetDepth;
     if (this.rho.value >= this.goalBundleCost + 0.0001) {
       if (this.maxRho >= this.lastPub) {
         let fork = this.copy();
