@@ -253,7 +253,9 @@ class mfSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      await this.checkForReset();
+      if (!this.stopReset) {
+        await this.checkForReset();
+      }
     }
     this.trimBoughtVars();
     const result = this.createResult(` Depth: ${this.settings.mfResetDepth}`);
@@ -317,14 +319,11 @@ class mfSim extends theoryClass<theory> {
   }
   async checkForReset() {
     const depth = this.settings.mfResetDepth;
-    if (this.stopReset) {
-      this.buyV = false;
-      return;
-    }
     if (this.rho.value >= this.goalBundleCost + 0.0001) {
       if (this.maxRho >= this.lastPub) {
         let fork = this.copy();
         fork.stopReset = true;
+        fork.buyV = false;
         const forkres = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, forkres);
       }
