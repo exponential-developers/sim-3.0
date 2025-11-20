@@ -21,14 +21,6 @@ export default async function mf(data: theoryData): Promise<simResult> {
     }
     let sim = new mfSim(data, resetBundle);
     let res = await sim.simulate();
-    // Unnecessary additional coasting attempt
-    // let internalSim = new mfSim(data, resetCombination)
-    // internalSim.normalPubRho = bestSim.pubRho;
-    // let res = await internalSim.simulate();
-    // if (bestSim.maxTauH < internalSim.maxTauH) {
-    //   bestSim = internalSim;
-    //   bestSimRes = res;
-    // }
     bestRes = getBestResult(bestRes, res);
   }
   return bestRes
@@ -52,77 +44,45 @@ class mfSim extends theoryClass<theory> {
   goalBundle: resetBundle;
   goalBundleCost: number;
   buyV: boolean;
-  normalPubRho: number;
 
   bestRes: simResult | null;
 
   getBuyingConditions(): conditionFunction[] {
-    const autobuyall = new Array(9).fill(true);
     const idleStrat: (boolean | conditionFunction)[] = [
       ...new Array(5).fill(() => !this.buyV),
       ...new Array(4).fill(() => this.buyV)
     ];
+    const dPower: number[] = [3.09152, 3.00238, 2.91940]
     const activeStrat: (boolean | conditionFunction)[] = [
       () => {
         if (this.buyV) { return false }
-        if(this.normalPubRho != -1 && Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost) > this.normalPubRho - l10(2)) {
-            return this.variables[0].cost +l10(10) <= this.normalPubRho;
-        }
-        else {
-            return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
-        }
+        return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
       },
+      () => !this.buyV,
       () => {
         if (this.buyV) { return false }
-        if(this.normalPubRho == -1) {
-            return true;
-        }
-        return this.variables[1].cost <= this.normalPubRho - l10(2);
+        return this.i/(i0*10 ** this.variables[3].value) < 0.5 || this.variables[2].cost+1<this.maxRho;
       },
+      () => !this.buyV,
       () => {
         if (this.buyV) { return false }
-        if(this.normalPubRho != -1 && Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost) > this.normalPubRho - l10(2)) {
-            return this.variables[2].cost +l10(10) <= this.normalPubRho;
-        }
-        else {
-            return this.i/(i0*10 ** this.variables[3].value) < 0.5 || this.variables[2].cost+1<this.maxRho;
-        }
-      },
-      () => {
-        if (this.buyV) { return false }
-        if(this.normalPubRho == -1) {
-            return true;
-        }
-        return this.variables[3].cost <= this.normalPubRho - l10(2);
-      },
-      () => {
-        if (this.buyV) { return false }
-        if(this.normalPubRho == -1) {
-            return this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost);
-        }
-        return (this.variables[4].cost <= this.normalPubRho - l10(2)) && this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost);
+        return this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost);
       },
       ...new Array(4).fill(() => this.buyV)
     ];
     const activeStrat2: (boolean | conditionFunction)[] = [
       () => {
         if (this.buyV) { return false }
-        const dPower: number[] = [3.09152, 3.00238, 2.91940]
         return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
       },
-      () => {
-        return !this.buyV;
-      },
+      () => !this.buyV,
       () => {
         if (this.buyV) { return false }
         return l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15);
       },
-      () => {
-        return !this.buyV;
-      },
+      () => !this.buyV,
       () => {
         if (this.buyV) { return false }
-        const dPower: number[] = [3.09152, 3.00238, 2.91940]
         return this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost);
       },
       ...new Array(4).fill(() => this.buyV)
@@ -252,7 +212,6 @@ class mfSim extends theoryClass<theory> {
       new Variable({ name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
     this.resets = 0;
-    this.normalPubRho = -1;
     this.resetBundle = resetBundle;
     this.stopReset = false;
     this.goalBundle = [0, 0, 0, 0];
@@ -275,7 +234,6 @@ class mfSim extends theoryClass<theory> {
     this.vtot = other.vtot;
     this.resets = other.resets;
 
-    this.normalPubRho = other.normalPubRho;
     this.resetBundle = other.resetBundle;
     this.stopReset = other.stopReset;
     this.goalBundle = [...other.goalBundle];
