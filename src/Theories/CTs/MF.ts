@@ -32,7 +32,9 @@ const i0 = 1e-15
 const m0 = 1e-3
 
 class mfSim extends theoryClass<theory> {
-  c: number
+  lastC1: number;
+  forkOnC1: boolean;
+  c: number;
   x: number;
   i: number;
   vx: number;
@@ -49,13 +51,14 @@ class mfSim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const idleStrat: (boolean | conditionFunction)[] = [
-      ...new Array(5).fill(() => !this.buyV),
+      () => !this.buyV && this.lastC1 === -1,
+      ...new Array(4).fill(() => !this.buyV),
       ...new Array(4).fill(() => this.buyV)
     ];
     const dPower: number[] = [3.09152, 3.00238, 2.91940]
     const activeStrat: (boolean | conditionFunction)[] = [
       () => {
-        if (this.buyV) { return false }
+        if (this.buyV || this.lastC1 !== -1) { return false }
         return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
       },
       () => !this.buyV,
@@ -72,7 +75,7 @@ class mfSim extends theoryClass<theory> {
     ];
     const activeStrat2: (boolean | conditionFunction)[] = [
       () => {
-        if (this.buyV) { return false }
+        if (this.buyV || this.lastC1 !== -1) { return false }
         return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
       },
       () => !this.buyV,
@@ -108,6 +111,9 @@ class mfSim extends theoryClass<theory> {
       MF: idleStrat,
       MFd: activeStrat,
       MFd2: activeStrat2,
+      MFCoast: idleStrat,
+      MFdCoast: activeStrat,
+      MFd2Coast: activeStrat2,
       MFdPostRecovery0: makeMFdPostRecovery(0),
       MFdPostRecovery1: makeMFdPostRecovery(1),
       MFdPostRecovery2: makeMFdPostRecovery(2),
@@ -197,6 +203,8 @@ class mfSim extends theoryClass<theory> {
     this.vz = 0;
     this.vtot = 0;
     this.pubUnlock = 8;
+    this.lastC1 = -1;
+    this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
     this.milestonesMax = [1, 1, 2, 2, 2, 1];
     this.variables =
@@ -233,6 +241,7 @@ class mfSim extends theoryClass<theory> {
     this.vz = other.vz;
     this.vtot = other.vtot;
     this.resets = other.resets;
+    this.lastC1 = other.lastC1;
 
     this.resetBundle = other.resetBundle;
     this.stopReset = other.stopReset;
@@ -245,6 +254,14 @@ class mfSim extends theoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
+  async doForkC1() {
+    const fork = this.copy();
+    fork.lastC1 = this.variables[0].level;
+    fork.forkOnC1 = false;
+    const res = await fork.simulate();
+    this.bestRes = getBestResult(this.bestRes, res);
+    this.forkOnC1 = false;
+  }
 
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
@@ -256,11 +273,26 @@ class mfSim extends theoryClass<theory> {
       if (!this.stopReset) {
         await this.checkForReset();
       }
+      if(this.forkOnC1) {
+        await this.doForkC1();
+      }
     }
     this.trimBoughtVars();
-    const result = this.createResult(` Depth: ${this.settings.mfResetDepth}`);
+    let stratExtra = ` Depth: ${this.settings.mfResetDepth}`;
+    if(this.lastC1 !== -1) {
+      stratExtra += ` c1: ${this.lastC1}`
+    }
+    const result = this.createResult(stratExtra);
     return getBestResult(result, this.bestRes);
   }
+  onVariablePurchased(id: number) {
+    if(id === 0 && this.strat.includes("Coast")) {
+      if(this.maxRho > this.lastPub + 6) {
+        this.forkOnC1 = true;
+      }
+    }
+  }
+
   tick() {
     const newdt = this.dt * 1;
 
