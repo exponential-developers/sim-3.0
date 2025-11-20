@@ -603,22 +603,22 @@
       "tauFactor": 1,
       "strats": {
         "MF": {
-          "stratFilterCondition": "Idle || Semi-Idle"
+          "stratFilterCondition": "false"
         },
         "MFd": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFd2": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFCoast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Idle || Semi-Idle"
         },
         "MFdCoast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Active || Very-Active"
         },
         "MFd2Coast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Active || Very-Active"
         },
         "MFdPostRecovery0": {
           "stratFilterCondition": "false"
