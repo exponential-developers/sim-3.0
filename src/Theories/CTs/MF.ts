@@ -64,6 +64,7 @@ class mfSim extends theoryClass<theory> {
   goalBundleCost: number;
   mfResetDepth: number;
   buyV: boolean;
+  isCoast: boolean;
 
   bestRes: simResult | null;
 
@@ -220,6 +221,7 @@ class mfSim extends theoryClass<theory> {
     this.i = 0;
     this.vx = 0;
     this.vz = 0;
+    this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
     this.pubUnlock = 8;
     this.lastC1 = -1;
@@ -307,25 +309,19 @@ class mfSim extends theoryClass<theory> {
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
-    if(id === 0 && this.strat.includes("Coast") && this.lastC1 === -1 && this.mfResetDepth === 0) {
-      if(this.maxRho > this.lastPub + 6) {
-        this.forkOnC1 = true;
-      }
+    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === -1 && (this.maxRho > this.lastPub + 6)) {
+      this.forkOnC1 = true;
     }
   }
 
   tick() {
-    const newdt = this.dt * 1;
-
     const va1 = 10 ** (this.variables[2].value * this.a1exp());
     const va2 = 10 ** this.variables[3].value;
-    const vc1 = this.variables[0].value;
-    const vc2 = this.variables[1].value;
 
-    this.x += newdt * this.vx
+    this.x += this.dt * this.vx
     let icap = va2*i0;
-    let scale = 1 - Math.E ** (-newdt*va1/(400*va2));
-    if (scale < 1e-13) scale = newdt*va1/(400*va2);
+    let scale = 1 - Math.E ** (-this.dt*va1/(400*va2));
+    if (scale < 1e-13) scale = this.dt*va1/(400*va2);
     this.i = this.i + scale*(icap - this.i)
     this.i = Math.min(this.i, icap);
 
@@ -333,7 +329,9 @@ class mfSim extends theoryClass<theory> {
     const omegaterm = (l10((q0/m0) * mu0 * this.i) + this.variables[4].value) * this.omegaexp()
     const vterm = this.milestones[0] ? l10(this.vtot) * this.vexp() : 0;
 
-    const rhodot = this.totMult + this.c + vc1 + vc2 + xterm + omegaterm + vterm;
+    // this.variables[0].value == vc1
+    // this.variables[1].value == vc2
+    const rhodot = this.totMult + this.c + this.variables[0].value + this.variables[1].value + xterm + omegaterm + vterm;
     this.rho.add(rhodot + l10(this.dt));
   }
   calcBundleCost(bundle: resetBundle): number {
