@@ -7,6 +7,14 @@ import { add, l10, getBestResult, defaultResult, toCallable, toCallables } from 
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
+const depthConvert = [
+    -99999,
+    8, // depth == 1
+    15, // depth == 2
+    25, // depth == 3
+    35, // depth == 4
+    45, // depth == 5
+]
 
 export default async function mf(data: theoryData): Promise<simResult> {
   let resetBundles: resetBundle[] = [
@@ -362,7 +370,7 @@ class mfSim extends theoryClass<theory> {
     return goalBundle;
   }
   async checkForReset() {
-    const depth = this.mfResetDepth;
+    const depth = depthConvert[this.mfResetDepth];
     if (this.rho.value >= this.goalBundleCost + 0.0001) {
       if (this.maxRho >= this.lastPub) {
         let fork = this.copy();
@@ -374,12 +382,12 @@ class mfSim extends theoryClass<theory> {
       this.buyV = true;
       this.buyVariables();
       this.resetParticle();
-      if (depth > 0 && this.lastPub - this.maxRho <= 25) {
+      if (depth > 0 && this.lastPub - this.maxRho <= depth) {
         let fork: mfSim;
         let forkres: simResult;
 
         // extra v1 test
-        if (this.lastPub - this.maxRho <= (depth == 1 ? 8 : depth == 2 ? 15 : 25)) {
+        if (this.lastPub - this.maxRho <= depth) {
           fork = this.copy();
           fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]]);
           fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
@@ -388,7 +396,7 @@ class mfSim extends theoryClass<theory> {
         }
         
         // extra v2 test
-        if (this.lastPub - this.maxRho <= (depth == 1 ? 8 : depth == 2 ? 15 : 25)) {
+        if (this.lastPub - this.maxRho <= depth) {
           fork = this.copy();
           fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]]);
           fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
