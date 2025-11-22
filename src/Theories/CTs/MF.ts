@@ -109,6 +109,21 @@ class mfSim extends theoryClass<theory> {
       },
       ...new Array(4).fill(() => this.buyV)
     ];
+    const activeStrat3: (boolean | conditionFunction)[] = [
+      // New active strat. Credits to Maimai.
+      activeStrat[0],
+      () => !this.buyV,
+      activeStrat2[2],
+      () => !this.buyV,
+      () => {
+        if (this.buyV) { return false }
+        return this.variables[4].cost < Math.min(
+            this.variables[3].cost + l10(0.6),
+            this.variables[1].cost + l10(0.75)
+        );
+      },
+      ...new Array(4).fill(() => this.buyV)
+    ];
     const tailActiveGen = (i: number, offset: number): conditionFunction => {
       return () => {
         if (this.maxRho <= this.lastPub + offset) {
@@ -130,9 +145,11 @@ class mfSim extends theoryClass<theory> {
       MF: idleStrat,
       MFd: activeStrat,
       MFd2: activeStrat2,
+      MFd3: activeStrat3,
       MFCoast: idleStrat,
       MFdCoast: activeStrat,
       MFd2Coast: activeStrat2,
+      MFd3Coast: activeStrat3,
       MFdPostRecovery0: makeMFdPostRecovery(0),
       MFdPostRecovery1: makeMFdPostRecovery(1),
       MFdPostRecovery2: makeMFdPostRecovery(2),
