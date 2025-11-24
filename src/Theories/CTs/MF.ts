@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getBestResult, defaultResult, toCallable, toCallables } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -122,7 +122,7 @@ class mfSim extends theoryClass<theory> {
       return tailActive;
     }
 
-    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+    const conditions: Record<stratType[theory], conditionFunction[]> = {
       MF: idleStrat,
       MFd: activeStrat,
       MFd2: activeStrat2,
@@ -142,11 +142,10 @@ class mfSim extends theoryClass<theory> {
       MFdPostRecovery8: makeMFdPostRecovery(8),
       MFdPostRecovery9: makeMFdPostRecovery(9)
     };
-    return toCallables(conditions[this.strat]);
+    return conditions[this.strat];
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = 
-    [
+    return [
       () => true,
       () => true,
       () => true,
@@ -157,7 +156,6 @@ class mfSim extends theoryClass<theory> {
       () => this.milestones[0] > 0,
       () => this.milestones[0] > 0
     ];
-    return conditions;
   }
 
   getTotMult(val: number): number {
