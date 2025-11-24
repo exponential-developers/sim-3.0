@@ -74,7 +74,7 @@ class mfSim extends theoryClass<theory> {
       ...new Array(8).fill(() => true), // Simplified condition (specifically, we rely on separate methods to buy v1-v4)
     ];
     const dPower: number[] = [3.09152, 3.00238, 2.91940]
-    const activeStrat: (boolean | conditionFunction)[] = [
+    const activeStrat: conditionFunction[] = [
       () => {
         if (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1) { return false }
         return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
@@ -85,7 +85,7 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    const activeStrat2: (boolean | conditionFunction)[] = [
+    const activeStrat2: conditionFunction[] = [
       () => {
         if (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1) { return false }
         return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
@@ -96,7 +96,7 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    const activeStrat3: (boolean | conditionFunction)[] = [
+    const activeStrat3: conditionFunction[] = [
       // New active strat. Credits to Maimai.
       activeStrat[0],
       () => true,
@@ -108,9 +108,9 @@ class mfSim extends theoryClass<theory> {
     const tailActiveGen = (i: number, offset: number): conditionFunction => {
       return () => {
         if (this.maxRho <= this.lastPub + offset) {
-          return toCallable(idleStrat[i])();
+          return idleStrat[i]();
         } else {
-          return toCallable(activeStrat[i])();
+          return activeStrat[i]();
         }
       }
     }
