@@ -37,6 +37,8 @@ export default abstract class theoryClass<theory extends theoryType> {
   t: number;
   /** number of elapsed ticks */
   ticks: number;
+  /** previous milestone count */
+  prevMilestoneCount: number;
 
   // Currencies
   /** Main currency of the theory */
@@ -125,6 +127,7 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     this.settings = data.settings;
+    this.prevMilestoneCount = -1;
 
     //theory
     this.pubUnlock = 1;
@@ -227,6 +230,31 @@ export default abstract class theoryClass<theory extends theoryType> {
             this.milestones[priority[i]]++;
             milestoneCount--;
         }
+    }
+  }
+
+  /**
+   * Update milestones, no MS
+   */
+  updateMilestonesNoMS(): boolean {
+    const rho = Math.max(this.maxRho, this.lastPub);
+    let milestoneCount = this.milestoneUnlockSteps > 0
+        ? Math.floor(rho / this.milestoneUnlockSteps)
+        : binaryInsertionSearch(this.milestoneUnlocks, rho);
+    if(milestoneCount != this.prevMilestoneCount) {
+      this.prevMilestoneCount = milestoneCount;
+      const priority = this.getMilestonePriority();
+      this.milestones = new Array(this.milestonesMax.length).fill(0);
+      for (let i = 0; i < priority.length; i++) {
+        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+          this.milestones[priority[i]]++;
+          milestoneCount--;
+        }
+      }
+      return true;
+    }
+    else {
+      return false;
     }
   }
 

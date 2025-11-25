@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getBestResult, defaultResult, toCallable, toCallables } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult, binaryInsertionSearch } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -63,73 +63,48 @@ class mfSim extends theoryClass<theory> {
   goalBundle: resetBundle;
   goalBundleCost: number;
   mfResetDepth: number;
-  buyV: boolean;
   isCoast: boolean;
+  normalVariables: Variable[];
 
   bestRes: simResult | null;
 
   getBuyingConditions(): conditionFunction[] {
-    const idleStrat: (boolean | conditionFunction)[] = [
-      () => !this.buyV && (this.lastC1 === -1 || this.variables[0].level < this.lastC1),
-      ...new Array(4).fill(() => !this.buyV),
-      ...new Array(4).fill(() => this.buyV)
+    const idleStrat: conditionFunction[] = [
+      () => this.variables[0].level < this.lastC1,
+      ...new Array(8).fill(() => true), // Simplified condition (specifically, we rely on separate methods to buy v1-v4)
     ];
     const dPower: number[] = [3.09152, 3.00238, 2.91940]
-    const activeStrat: (boolean | conditionFunction)[] = [
-      () => {
-        if (this.buyV || (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1)) { return false }
-        return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
-      },
-      () => !this.buyV,
-      () => {
-        if (this.buyV) { return false }
-        return this.i/(i0*10 ** this.variables[3].value) < 0.5 || this.variables[2].cost+1<this.maxRho;
-      },
-      () => !this.buyV,
-      () => {
-        if (this.buyV) { return false }
-        return this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost);
-      },
-      ...new Array(4).fill(() => this.buyV)
+    const activeStrat: conditionFunction[] = [
+      () => (this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost)),
+      () => true,
+      () => this.i/(i0*10 ** this.variables[3].value) < 0.5 || this.variables[2].cost+1<this.maxRho,
+      () => true,
+      () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
+      ...new Array(4).fill(() => true)
     ];
-    const activeStrat2: (boolean | conditionFunction)[] = [
-      () => {
-        if (this.buyV || (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1)) { return false }
-        return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
-      },
-      () => !this.buyV,
-      () => {
-        if (this.buyV) { return false }
-        return l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15);
-      },
-      () => !this.buyV,
-      () => {
-        if (this.buyV) { return false }
-        return this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost);
-      },
-      ...new Array(4).fill(() => this.buyV)
+    const activeStrat2: conditionFunction[] = [
+      () => (this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity)),
+      () => true,
+      () => l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15),
+      () => true,
+      () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
+      ...new Array(4).fill(() => true)
     ];
-    const activeStrat3: (boolean | conditionFunction)[] = [
+    const activeStrat3: conditionFunction[] = [
       // New active strat. Credits to Maimai.
       activeStrat[0],
-      () => !this.buyV,
+      () => true,
       activeStrat2[2],
-      () => !this.buyV,
-      () => {
-        if (this.buyV) { return false }
-        return this.variables[4].cost < Math.min(
-            this.variables[3].cost + l10(0.6),
-            this.variables[1].cost + l10(0.75)
-        );
-      },
-      ...new Array(4).fill(() => this.buyV)
+      () => true,
+      () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
+      ...new Array(4).fill(() => true)
     ];
     const tailActiveGen = (i: number, offset: number): conditionFunction => {
       return () => {
         if (this.maxRho <= this.lastPub + offset) {
-          return toCallable(idleStrat[i])();
+          return idleStrat[i]();
         } else {
-          return toCallable(activeStrat[i])();
+          return activeStrat[i]();
         }
       }
     }
@@ -141,7 +116,7 @@ class mfSim extends theoryClass<theory> {
       return tailActive;
     }
 
-    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+    const conditions: Record<stratType[theory], conditionFunction[]> = {
       MF: idleStrat,
       MFd: activeStrat,
       MFd2: activeStrat2,
@@ -161,11 +136,10 @@ class mfSim extends theoryClass<theory> {
       MFdPostRecovery8: makeMFdPostRecovery(8),
       MFdPostRecovery9: makeMFdPostRecovery(9)
     };
-    return toCallables(conditions[this.strat]);
+    return conditions[this.strat];
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = 
-    [
+    return [
       () => true,
       () => true,
       () => true,
@@ -176,7 +150,6 @@ class mfSim extends theoryClass<theory> {
       () => this.milestones[0] > 0,
       () => this.milestones[0] > 0
     ];
-    return conditions;
   }
 
   getTotMult(val: number): number {
@@ -186,9 +159,12 @@ class mfSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
-  updateMilestones(): void {
-    super.updateMilestones();
-    this.updateC();
+  updateMilestonesNoMS(): boolean {
+    const res = super.updateMilestonesNoMS();
+    if(res) {
+      this.updateC();
+    }
+    return res;
   }
 
   omegaexp(): number {
@@ -220,7 +196,6 @@ class mfSim extends theoryClass<theory> {
     }
     this.goalBundle = this.getGoalBundle();
     this.goalBundleCost = this.calcBundleCost(this.goalBundle);
-    this.buyV = false;
   }
 
   updateC(): void {
@@ -241,7 +216,7 @@ class mfSim extends theoryClass<theory> {
     this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
     this.pubUnlock = 8;
-    this.lastC1 = -1;
+    this.lastC1 = Infinity;
     this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
     this.milestonesMax = [1, 1, 2, 2, 2, 1];
@@ -257,19 +232,32 @@ class mfSim extends theoryClass<theory> {
       new Variable({ name: "v3", cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
       new Variable({ name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
+    this.normalVariables = [
+      this.variables[0],
+      this.variables[1],
+      this.variables[2],
+      this.variables[3],
+      this.variables[4],
+    ]
     this.resets = 0;
     this.resetBundle = resetBundle;
     this.stopReset = false;
     this.goalBundle = [0, 0, 0, 0];
     this.goalBundleCost = 0;
-    this.buyV = true;
     this.bestRes = null;
-    this.updateMilestones();
+    this.updateMilestonesNoMS();
     this.resetParticle();
   }
   copyFrom(other: this) {
     super.copyFrom(other)
 
+    this.normalVariables = [
+      this.variables[0],
+      this.variables[1],
+      this.variables[2],
+      this.variables[3],
+      this.variables[4],
+    ]
     this.mfResetDepth = other.mfResetDepth;
     this.milestones = [...other.milestones];
     this.pubUnlock = other.pubUnlock;
@@ -286,7 +274,6 @@ class mfSim extends theoryClass<theory> {
     this.stopReset = other.stopReset;
     this.goalBundle = [...other.goalBundle];
     this.goalBundleCost = other.goalBundleCost;
-    this.buyV = other.buyV;
   }
   copy(): mfSim {
     let newsim = new mfSim(super.getDataForCopy(), this.resetBundle);
@@ -307,8 +294,8 @@ class mfSim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      this.updateMilestones();
-      this.buyVariables();
+      this.updateMilestonesNoMS();
+      this.buyNormalVariables();
       // These checks are here for optimization:
       if (!this.stopReset && this.rho.value >= this.goalBundleCost + 0.0001) {
         await this.checkForReset();
@@ -319,14 +306,14 @@ class mfSim extends theoryClass<theory> {
     }
     this.trimBoughtVars();
     let stratExtra = ` Depth: ${this.mfResetDepth}`;
-    if(this.lastC1 !== -1) {
+    if(this.lastC1 !== Infinity) {
       stratExtra += ` c1: ${this.lastC1}`
     }
     const result = this.createResult(stratExtra);
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
-    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === -1 && (this.maxRho > this.lastPub + 6)) {
+    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === Infinity && (this.maxRho > this.lastPub + 6)) {
       this.forkOnC1 = true;
     }
   }
@@ -390,12 +377,10 @@ class mfSim extends theoryClass<theory> {
     if (this.maxRho >= this.lastPub) {
       let fork = this.copy();
       fork.stopReset = true;
-      fork.buyV = false;
       const forkres = await fork.simulate();
       this.bestRes = getBestResult(this.bestRes, forkres);
     }
-    this.buyV = true;
-    this.buyVariables();
+    this.buyVVariables();
     this.resetParticle();
     if (depth > 0 && this.lastPub - this.maxRho <= depth) {
       let fork: mfSim;
@@ -419,5 +404,66 @@ class mfSim extends theoryClass<theory> {
         this.bestRes = getBestResult(this.bestRes, forkres);
       }
     }
+  }
+  // Custom MF method to only buy the first 5 variables (excluding the v1-v4 from normal cycle for speed).
+  // This method also removes reliance on this.extraBuyingCondition.
+  buyNormalVariables() {
+    // let bought = false;
+    let boughtVarsDelta = this.settings.boughtVarsDelta;
+    for (let i = this.normalVariables.length - 1; i >= 0; i--) {
+      let currency = this.normalVariables[i].currency ?? this.rho;
+      while (true) {
+        if (currency.value > this.normalVariables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
+          if (this.maxRho + boughtVarsDelta > this.lastPub) {
+            this.boughtVars.push({
+              variable: this.normalVariables[i].name,
+              level: this.normalVariables[i].level + 1,
+              cost: this.normalVariables[i].cost,
+              timeStamp: this.t,
+              symbol: currency.symbol
+            });
+          }
+          currency.subtract(this.normalVariables[i].cost);
+          this.normalVariables[i].buy();
+          // There is no buy any hook for mf:
+          // bought = true;
+          this.onVariablePurchased(i);
+        } else break;
+      }
+    }
+    // We don't need this hook in MF:
+    // if (bought) this.onAnyVariablePurchased();
+  }
+
+  // Custom MF method to only buy v1-v4.
+  // This method also removes reliance on this.extraBuyingCondition and buyingConditions, because when we are buying v,
+  // we will always buy as many as we can.
+  buyVVariables() {
+    // let bought = false;
+    let boughtVarsDelta = this.settings.boughtVarsDelta;
+    for (let i = 8; i >= 5; i--) {
+      let currency = this.variables[i].currency ?? this.rho;
+      while (true) {
+        if (currency.value > this.variables[i].cost && this.variableAvailability[i]()) {
+          if (this.maxRho + boughtVarsDelta > this.lastPub) {
+            this.boughtVars.push({
+              variable: this.variables[i].name,
+              level: this.variables[i].level + 1,
+              cost: this.variables[i].cost,
+              timeStamp: this.t,
+              symbol: currency.symbol
+            });
+          }
+          currency.subtract(this.variables[i].cost);
+          this.variables[i].buy();
+          // There is no buy any hook for mf:
+          // bought = true;
+          // There is no need for this hook when we are buying V variables.
+          // this.onVariablePurchased(i);
+        } else break;
+      }
+    }
+    // We don't need this hook in MF:
+    // if (bought) this.onAnyVariablePurchased();
   }
 }
