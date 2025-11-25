@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult, binaryInsertionSearch } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -59,6 +59,7 @@ class mfSim extends theoryClass<theory> {
   vtot: number;
   resets: number;
   stopReset: boolean;
+  prevMilestoneCount: number;
   resetBundle: resetBundle;
   goalBundle: resetBundle;
   goalBundleCost: number;
@@ -160,8 +161,20 @@ class mfSim extends theoryClass<theory> {
     return [0, 1, 2, 3, 4, 5];
   }
   updateMilestones(): void {
-    super.updateMilestones();
-    this.updateC();
+    const rho = Math.max(this.maxRho, this.lastPub);
+    let milestoneCount = binaryInsertionSearch(this.milestoneUnlocks, rho);
+    if(milestoneCount != this.prevMilestoneCount) {
+      this.prevMilestoneCount = milestoneCount;
+      const priority = this.getMilestonePriority();
+      this.milestones = new Array(this.milestonesMax.length).fill(0);
+      for (let i = 0; i < priority.length; i++) {
+        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+          this.milestones[priority[i]]++;
+          milestoneCount--;
+        }
+      }
+      this.updateC();
+    }
   }
 
   omegaexp(): number {
@@ -217,6 +230,7 @@ class mfSim extends theoryClass<theory> {
     this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
     this.milestonesMax = [1, 1, 2, 2, 2, 1];
+    this.prevMilestoneCount = -1;
     this.variables =
     [
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
