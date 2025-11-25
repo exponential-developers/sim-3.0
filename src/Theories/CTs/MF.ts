@@ -216,7 +216,7 @@ class mfSim extends theoryClass<theory> {
     this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
     this.pubUnlock = 8;
-    this.lastC1 = 99999999;
+    this.lastC1 = Infinity;
     this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
     this.milestonesMax = [1, 1, 2, 2, 2, 1];
@@ -306,14 +306,14 @@ class mfSim extends theoryClass<theory> {
     }
     this.trimBoughtVars();
     let stratExtra = ` Depth: ${this.mfResetDepth}`;
-    if(this.lastC1 !== 99999999) {
+    if(this.lastC1 !== Infinity) {
       stratExtra += ` c1: ${this.lastC1}`
     }
     const result = this.createResult(stratExtra);
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
-    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === 99999999 && (this.maxRho > this.lastPub + 6)) {
+    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === Infinity && (this.maxRho > this.lastPub + 6)) {
       this.forkOnC1 = true;
     }
   }
