@@ -3,10 +3,12 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getBestResult, defaultResult, binaryInsertionSearch } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
+type resetLevels = [number, number, number, number];
+
 const depthConvert = [
     -99999,
     8, // depth == 1
@@ -15,6 +17,25 @@ const depthConvert = [
     35, // depth == 4
     45, // depth == 5
 ]
+
+export async function lastC1Level(data: theoryData, bundle: resetBundle): Promise<number> {
+  let data2 = JSON.parse(JSON.stringify(data));
+  data2.strat = data2.strat.replace("Resets");
+  let tempSim = new mfSim(data, bundle);
+  tempSim.mfResetDepth = 0;
+  const res = await tempSim.simulate();
+  if (res.strat.includes("c1: ")) {
+    return parseInt(res.strat.split("c1: ")[1].split(" ")[0]);
+  }
+  return Infinity;
+}
+export function runNonResets(data: theoryData, bundle: resetBundle, lastC1: number): mfSim {
+  let data2 = JSON.parse(JSON.stringify(data));
+  data2.strat = data2.strat.replace("Resets");
+  let sim = new mfSim(data, bundle);
+  sim.lastC1 = lastC1;
+  return sim;
+}
 
 export default async function mf(data: theoryData): Promise<simResult> {
   let resetBundles: resetBundle[] = [
@@ -28,16 +49,23 @@ export default async function mf(data: theoryData): Promise<simResult> {
       continue;
     }
     let isCoastStrat = data.strat.includes("Coast");
-    let sim = new mfSim(data, resetBundle);
-    if(isCoastStrat && sim.mfResetDepth > 0) {
-      let tempSim = new mfSim(data, resetBundle);
-      tempSim.mfResetDepth = 0;
-      let tempRes = await tempSim.simulate();
-      if (tempRes.strat.includes("c1: ")) {
-        sim.lastC1 = parseInt(tempRes.strat.split("c1: ")[1].split(" ")[0]);
-      }
+    let isCoastResetStrat = data.strat.includes("Resets");
+    let lastC1 = Infinity;
+    if(isCoastStrat && data.settings.mfResetDepth > 0) {
+      lastC1 = await lastC1Level(data, resetBundle);
     }
-    let res = await sim.simulate();
+    let nonResetSim = runNonResets(data, resetBundle, lastC1);
+    let nonResetRes = await nonResetSim.simulate();
+    let res;
+    if(isCoastResetStrat) {
+      let sim = new mfSim(data, resetBundle);
+      sim.lastC1 = lastC1;
+      // TODO: alter this when coasting is ready:
+      res = nonResetRes;
+    }
+    else {
+      res = nonResetRes;
+    }
     bestRes = getBestResult(bestRes, res);
   }
   return bestRes
@@ -65,6 +93,7 @@ class mfSim extends theoryClass<theory> {
   mfResetDepth: number;
   isCoast: boolean;
   normalVariables: Variable[];
+  resetLevelList: resetLevels[];
 
   bestRes: simResult | null;
 
@@ -187,6 +216,12 @@ class mfSim extends theoryClass<theory> {
     this.vtot = Math.sqrt(this.vx * this.vx + this.vz * this.vz);
     this.resets++;
     if (this.resets>1) {
+      this.resetLevelList.push([
+        this.variables[5].level,
+        this.variables[6].level,
+        this.variables[7].level,
+        this.variables[8].level
+      ])
       this.boughtVars.push({
         variable: 'Reset at V='+this.variables[5].level+","+this.variables[6].level+","+this.variables[7].level+","+this.variables[8].level,
         level: this.resets-1,
@@ -215,6 +250,7 @@ class mfSim extends theoryClass<theory> {
     this.vz = 0;
     this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
+    this.resetLevelList = [];
     this.pubUnlock = 8;
     this.lastC1 = Infinity;
     this.forkOnC1 = false;
@@ -251,6 +287,7 @@ class mfSim extends theoryClass<theory> {
   copyFrom(other: this) {
     super.copyFrom(other)
 
+    this.resetLevelList = [...other.resetLevelList];
     this.normalVariables = [
       this.variables[0],
       this.variables[1],
