@@ -70,15 +70,12 @@ class mfSim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const idleStrat: conditionFunction[] = [
-      () => this.lastC1 === -1 || this.variables[0].level < this.lastC1,
+      () => this.variables[0].level < this.lastC1,
       ...new Array(8).fill(() => true), // Simplified condition (specifically, we rely on separate methods to buy v1-v4)
     ];
     const dPower: number[] = [3.09152, 3.00238, 2.91940]
     const activeStrat: conditionFunction[] = [
-      () => {
-        if (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1) { return false }
-        return this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost);
-      },
+      () => (this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost)),
       () => true,
       () => this.i/(i0*10 ** this.variables[3].value) < 0.5 || this.variables[2].cost+1<this.maxRho,
       () => true,
@@ -86,10 +83,7 @@ class mfSim extends theoryClass<theory> {
       ...new Array(4).fill(() => true)
     ];
     const activeStrat2: conditionFunction[] = [
-      () => {
-        if (this.lastC1 !== -1 && this.variables[0].level >= this.lastC1) { return false }
-        return this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity);
-      },
+      () => (this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity)),
       () => true,
       () => l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15),
       () => true,
@@ -219,7 +213,7 @@ class mfSim extends theoryClass<theory> {
     this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
     this.pubUnlock = 8;
-    this.lastC1 = -1;
+    this.lastC1 = 99999999;
     this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
     this.milestonesMax = [1, 1, 2, 2, 2, 1];
@@ -309,14 +303,14 @@ class mfSim extends theoryClass<theory> {
     }
     this.trimBoughtVars();
     let stratExtra = ` Depth: ${this.mfResetDepth}`;
-    if(this.lastC1 !== -1) {
+    if(this.lastC1 !== 99999999) {
       stratExtra += ` c1: ${this.lastC1}`
     }
     const result = this.createResult(stratExtra);
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
-    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === -1 && (this.maxRho > this.lastPub + 6)) {
+    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === 99999999 && (this.maxRho > this.lastPub + 6)) {
       this.forkOnC1 = true;
     }
   }
