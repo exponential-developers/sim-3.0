@@ -3,64 +3,47 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, subtract, getLastLevel, getR9multiplier, toCallables } from "../../Utils/helpers";
-
-async function runT4CoastQ1Q2C3(
-    data: theoryData,
-    targetQ1: number,
-    origQ1: number,
-    targetQ2: number,
-    origQ2: number,
-    targetC3: number,
-    origC3: number,
-): Promise<simResult> {
-  const sim = new t4Sim(data);
-  sim.lastQ1 = targetQ1;
-  sim.lastQ1Orig = origQ1;
-  sim.lastQ2 = targetQ2;
-  sim.lastQ2Orig = origQ2;
-  sim.lastC3 = targetC3;
-  sim.lastC3Orig = origC3;
-  return sim.simulate(data); // Data is here for compatibility, it will not be used by underlying theory.
-}
+import {
+  add,
+  l10,
+  subtract,
+  getLastLevel,
+  getR9multiplier,
+  toCallables,
+  getBestResult,
+  defaultResult
+} from "../../Utils/helpers";
 
 export default async function t4(data: theoryData): Promise<simResult> {
   let res;
   if(!data.strat.includes("coast2")) {
     const sim = new t4Sim(data);
-    res = await sim.simulate(data);
+    res = await sim.simulate();
   }
   else {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
     data2.strat = data2.strat.replace("coast2", "");
     const sim1 = new t4Sim(data2);
-    const res1 = await sim1.simulate(data2);
+    const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
     const lastQ2 = getLastLevel("q2", res1.boughtVars);
     const lastC3 = getLastLevel("c3", res1.boughtVars);
-    res = res1;
-    for(let limQ1 = 0; limQ1 < 5; limQ1++) {
-      if(lastQ1 - limQ1 <= 1) {
-        break;
-      }
-      for(let limQ2 = 0; limQ2 < 2; limQ2++) {
-        if(lastQ2 - limQ2 <= 1) {
-          break;
-        }
-        for(let limC3 = 0; limC3 < 4; limC3++) {
-          if(lastC3 - limC3 <= 1) {
-            break;
-          }
-          if(limQ1 === limQ2 && limQ2 === limC3 && limQ1 === 0) {
-            continue;
-          }
-          const resN = await runT4CoastQ1Q2C3(data, lastQ1 - limQ1, lastQ1, lastQ2 - limQ2, lastQ2, lastC3 - limC3, lastC3)
-          if(resN.tauH > res.tauH) {
-            res = resN;
-          }
-        }
-      }
+    const sim2 = new t4Sim(data);
+    sim2.variables[2].setOriginalCap(lastC3);
+    sim2.variables[2].configureCap(3);
+
+    sim2.variables[6].setOriginalCap(lastQ1);
+    if(data2.strat.includes("T4C3d")) {
+      sim2.variables[6].configureCap(1);
     }
+    else {
+      sim2.variables[6].configureCap(3);
+    }
+
+    sim2.variables[7].setOriginalCap(lastQ2);
+    sim2.variables[7].configureCap(1);
+
+    res = getBestResult(await sim2.simulate(), res1);
   }
   return res;
 }
@@ -68,27 +51,11 @@ export default async function t4(data: theoryData): Promise<simResult> {
 type theory = "T4";
 
 class t4Sim extends theoryClass<theory> {
-  recursionValue: number;
   q: number;
-  lastQ1: number;
-  lastQ1Orig: number;
-  lastQ2: number;
-  lastQ2Orig: number;
-  lastC3: number;
-  lastC3Orig: number;
+  bestRes: simResult;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      T4C3d66: [
-        false,
-        false,
-        () => this.variables[2].cost + 0.1 < (this.recursionValue ?? Infinity),
-        ...new Array(3).fill(false),
-        () =>
-          this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost) &&
-          this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) + 1 < (this.recursionValue ?? Infinity),
-        () => this.variables[7].cost + 0.5 < (this.recursionValue ?? Infinity) && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
-      ],
       T4C3d: [
         false,
         false,
@@ -101,27 +68,19 @@ class t4Sim extends theoryClass<theory> {
       T4C3dcoast2: [
         false,
         false,
-        () => this.variables[2].level < this.lastC3,
+        () => this.variables[2].shouldBuy,
         ...new Array(3).fill(false),
-        () => (this.variables[6].level < this.lastQ1) &&
+        () => this.variables[6].shouldBuy &&
             (this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
-        () => (this.variables[7].level < this.lastQ2) && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
-      ],
-      T4C3coast: [
-        false,
-        false,
-        () => this.variables[2].cost + 0.1 < (this.recursionValue ?? Infinity),
-        ...new Array(3).fill(false),
-        () => this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) + 1 < (this.recursionValue ?? Infinity),
-        () => this.variables[7].cost + 0.5 < (this.recursionValue ?? Infinity),
+        () => this.variables[7].shouldBuy && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
       ],
       T4C3coast2: [
         false,
         false,
-        () => this.variables[2].level < this.lastC3,
+        () => this.variables[2].shouldBuy,
         ...new Array(3).fill(false),
-        () => this.variables[6].level < this.lastQ1,
-        () => this.variables[7].level < this.lastQ2,
+        () => this.variables[6].shouldBuy,
+        () => this.variables[7].shouldBuy,
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
       T4C3dC12rcv: [
@@ -182,8 +141,6 @@ class t4Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     switch (this.strat) {
       case "T4C3d": return [2];
-      case "T4C3d66": return [2];
-      case "T4C3coast": return [2];
       case "T4C3coast2": return [2];
       case "T4C3dcoast2": return [2];
       case "T4C3": return [2];
@@ -212,13 +169,8 @@ class t4Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
+    this.bestRes = defaultResult();
     this.q = 0;
-    this.lastQ1 = -1;
-    this.lastQ1Orig = -1;
-    this.lastQ2 = -1;
-    this.lastQ2Orig = -1;
-    this.lastC3 = -1;
-    this.lastC3Orig = -1;
     this.pubUnlock = 9;
     this.milestoneUnlockSteps = 25;
     //milestones  [terms, c1exp, multQdot]
@@ -233,39 +185,27 @@ class t4Sim extends theoryClass<theory> {
       new Variable({ name: "q1", cost: new ExponentialCost(1e3, 100), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "q2", cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
     ];
-    this.recursionValue = data.recursionValue as number;
     this.updateMilestones();
   }
-  async simulate(data: theoryData): Promise<simResult> {
-    if ((this.recursionValue === null || this.recursionValue === undefined) && ["T4C3d66", "T4C3coast"].includes(this.strat)) {
-      data.recursionValue = Number.MAX_VALUE;
-      const tempSim = await new t4Sim(data).simulate(data);
-      this.recursionValue = tempSim.pubRho;
-    }
+  async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       this.buyVariables();
+      if(this.variables[6].shouldFork) await this.doForkVariable(6);
+      if(this.variables[7].shouldFork) await this.doForkVariable(7);
+      if(this.variables[2].shouldFork) await this.doForkVariable(2);
     }
     this.trimBoughtVars();
-    let stratExtra = ["T4C3d66", "T4C3coast"].includes(this.strat)
-      ? ` q1:${getLastLevel("q1", this.boughtVars)} q2:${getLastLevel("q2", this.boughtVars)}` : "";
+    let stratExtra = '';
     if(this.strat.includes("coast2")) {
-      for(let v of ["q1", "q2", "c3"]) {
-        let level = getLastLevel(v, this.boughtVars);
-        if (level == 0) {
-          let k = ("last"+v.toUpperCase()) as ("lastQ1" | "lastQ2" | "lastC3");
-          level = this[k];
-        }
-        stratExtra += ` ${v}:${level}`;
-        // let origLevel = this[("last"+v.toUpperCase()+"Orig") as ("lastQ1Orig" | "lastQ2Orig" | "lastC3Orig")];
-        // stratExtra += ` ${v}delta:${origLevel-level}`;
-      }
-
+      stratExtra = this.variables[6].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
+          this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
+          this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars));
     }
-    return this.createResult(stratExtra);
+    return getBestResult(this.createResult(stratExtra), this.bestRes);
   }
   tick() {
     const vq1 = this.variables[6].value;
@@ -284,5 +224,38 @@ class t4Sim extends theoryClass<theory> {
 
     const rhodot = this.totMult + variableSum;
     this.rho.add(rhodot + l10(this.dt));
+  }
+
+  async doForkVariable(id: number) {
+    const fork = this.copy();
+    fork.variables[id].stopBuying();
+    fork.variables[id].shouldFork = false;
+    const res = await fork.simulate();
+    this.bestRes = getBestResult(res, this.bestRes);
+    this.variables[id].shouldFork = false;
+  }
+
+  onVariablePurchased(id: number) {
+    if(
+        [2, 6, 7].includes(id) &&
+        this.strat.includes("coast2") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached() &&
+        // For this strat, there is almost never use to get levels above cap. We can skip simming that for faster sim:
+        !this.variables[id].aboveOriginalCap()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
+  }
+
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.q = other.q;
+    this.bestRes = other.bestRes;
+  }
+  copy() {
+    let newsim = new t4Sim(super.getDataForCopy());
+    newsim.copyFrom(this);
+    return newsim;
   }
 }
