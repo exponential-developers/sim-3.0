@@ -6,35 +6,35 @@
         "T1": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25 || rho < 25"
         },
-        "T1CoastQ1C3": {
+        "T1Coast": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25 || rho < 25"
         },
         "T1C34": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 850",
           "forcedCondition": "rho >= 25"
         },
-        "T1C34CoastQ1C3": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho < 850",
+        "T1C34Coast": {
+          "stratFilterCondition": "(Idle || Semi-Idle)",
           "forcedCondition": "rho >= 25"
         },
         "T1C4": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 625",
           "forcedCondition": "rho >= 50"
         },
-        "T1C4CoastQ1": {
+        "T1C4Coast": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 625",
           "forcedCondition": "rho >= 50"
         },
         "T1Ratio": {
           "stratFilterCondition": "(Very-Active && rho < 250) || Active"
         },
-        "T1RatioCoastQ1C3": {
+        "T1RatioCoast": {
           "stratFilterCondition": "(Very-Active && rho < 250) || Active"
         },
         "T1SolarXLII": {
           "stratFilterCondition": "Very-Active"
         },
-        "T1SolarXLIICoastQ1C3": {
+        "T1SolarXLIICoast": {
           "stratFilterCondition": "Very-Active"
         }
       }

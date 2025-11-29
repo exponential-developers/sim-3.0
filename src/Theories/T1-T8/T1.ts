@@ -3,51 +3,31 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, logToExp, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
+import { add, l10, logToExp, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
 
-async function runT1CoastQ1(
-    data: theoryData,
-    targetQ1: number,
-    origQ1: number,
-    targetC3: number,
-    origC3: number,
-): Promise<simResult> {
-  const sim = new t1Sim(data);
-  sim.lastQ1 = targetQ1;
-  sim.lastQ1Orig = origQ1;
-  sim.lastC3 = targetC3;
-  sim.lastC3Orig = origC3;
-  return sim.simulate();
-}
 
 export default async function t1(data: theoryData): Promise<simResult> {
   let res;
-  if(data.strat.includes("CoastQ1")) {
+  if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("CoastQ1C3", "").replace("CoastQ1", "");
+    data2.strat = data2.strat.replace("Coast", "")
     const sim1 = new t1Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    const lastC3 = getLastLevel("c3", res1.boughtVars)
-    res = await runT1CoastQ1(data, lastQ1 - 1, lastQ1, lastC3, lastC3);
-    let limit = 19;
-    let start = 2;
-    let limitC3 = 4;
-    let startC3 = 0;
-    for(let iC3 = startC3; iC3 < limitC3; iC3++) {
-      if(lastC3 - iC3 < 0) {
-        break;
-      }
-      for (let i = start; i < limit; i++) {
-        if (lastQ1 - i <= 1) {
-          break;
-        }
-        const resN = await runT1CoastQ1(data, lastQ1 - i, lastQ1, lastC3 - iC3, lastC3);
-        if (resN.tauH > res.tauH) {
-          res = resN;
-        }
-      }
+    const lastC3 = getLastLevel("c3", res1.boughtVars);
+    let sim = new t1Sim(data);
+    if(["T1Coast", "T1C34Coast", "T1C4Coast"].includes(data.strat)) {
+      // We actually force-skip 2 levels due to better pub cycle.
+      sim.variables[0].setOriginalCap(lastQ1 - 2);
     }
+    else {
+      // For active strats, we do no such thing.
+      sim.variables[0].setOriginalCap(lastQ1);
+    }
+    sim.variables[0].configureCap(18);
+    sim.variables[4].setOriginalCap(lastC3);
+    sim.variables[4].configureCap(3);
+    res = await sim.simulate();
   }
   else {
     const sim = new t1Sim(data);
@@ -59,10 +39,6 @@ export default async function t1(data: theoryData): Promise<simResult> {
 type theory = "T1";
 
 class t1Sim extends theoryClass<theory> {
-  lastQ1: number;
-  lastQ1Orig: number;
-  lastC3: number;
-  lastC3Orig: number;
   term1: number;
   term2: number;
   term3: number;
@@ -70,11 +46,11 @@ class t1Sim extends theoryClass<theory> {
   c3Ratio: number;
 
   getBuyingConditions(): conditionFunction[] {
-    const q1CoastCond = () => this.variables[0].level < this.lastQ1;
-    const c3CoastCond = () => this.variables[4].level < this.lastC3;
+    const q1CoastCond = () => this.variables[0].shouldBuy;
+    const c3CoastCond = () => this.variables[4].shouldBuy;
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T1: new Array(6).fill(true),
-      T1CoastQ1C3: [
+      T1Coast: [
         q1CoastCond,
         true,
         true,
@@ -83,9 +59,9 @@ class t1Sim extends theoryClass<theory> {
         true,
       ],
       T1C34: [true, true, false, false, true, true],
-      T1C34CoastQ1C3: [q1CoastCond, true, false, false, c3CoastCond, true],
+      T1C34Coast: [q1CoastCond, true, false, false, c3CoastCond, true],
       T1C4: [true, true, false, false, false, true],
-      T1C4CoastQ1: [q1CoastCond, true, false, false, false, true],
+      T1C4Coast: [q1CoastCond, true, false, false, false, true],
       T1Ratio: [
         () => this.variables[0].cost + 1 < this.rho.value, // q1
         () => this.variables[1].cost + l10(1.11) < this.rho.value,
@@ -94,7 +70,7 @@ class t1Sim extends theoryClass<theory> {
         () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
         true,
       ],
-      T1RatioCoastQ1C3: [
+      T1RatioCoast: [
         () => q1CoastCond() && (this.variables[0].cost + 1 < this.rho.value), // q1
         () => this.variables[1].cost + l10(1.11) < this.rho.value,
         () => this.variables[2].cost + this.termRatio + 1 <= this.rho.value,
@@ -113,7 +89,7 @@ class t1Sim extends theoryClass<theory> {
         () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
         true,
       ],
-      T1SolarXLIICoastQ1C3: [
+      T1SolarXLIICoast: [
         () => // q1
             q1CoastCond() && (this.variables[0].cost + l10(5) <= this.rho.value &&
             this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <= this.variables[1].cost &&
@@ -128,7 +104,7 @@ class t1Sim extends theoryClass<theory> {
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = [
+    return [
       () => true, 
       () => true, 
       () => true, 
@@ -136,7 +112,6 @@ class t1Sim extends theoryClass<theory> {
       () => this.milestones[2] > 0, 
       () => this.milestones[3] > 0
     ];
-    return conditions;
   }
   getMilestonePriority(): number[] {
     return [2, 3, 0, 1];
@@ -146,10 +121,6 @@ class t1Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.lastQ1 = -1;
-    this.lastQ1Orig = -1;
-    this.lastC3 = -1;
-    this.lastC3Orig = -1;
     this.pubUnlock = 10;
     this.milestoneUnlockSteps = 25;
     //milestones  [logterm, c1exp, c3term, c4term]
@@ -186,19 +157,18 @@ class t1Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
       if (!this.strat.includes("T1SolarXLII") || this.rho.value < coast) this.buyVariables();
+      if (this.variables[0].shouldFork) await this.doForkVariable(0);
+      if (this.variables[4].shouldFork) await this.doForkVariable(4);
     }
     this.trimBoughtVars();
     let stratExtra = this.strat.includes("T1SolarXLII") ? ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, coast), 2)}` : "";
-    if(this.strat.includes("CoastQ1")) {
-      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
-      // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`
-      if(this.strat.includes("CoastQ1C3")) {
-        stratExtra += ` c3: ${getLastLevel("c3", this.boughtVars) || this.lastC3}`;
-        // stratExtra += ` c3delta: ${this.lastC3Orig - this.lastC3}`
+    if(this.strat.includes("Coast")) {
+      stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
+      if(this.variables[4].level !== 0) {
+        stratExtra += this.variables[4].prepareExtraForCap(getLastLevel("c3", this.boughtVars));
       }
-
     }
-    return this.createResult(stratExtra);
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   tick() {
     this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1]) 
@@ -212,5 +182,31 @@ class t1Sim extends theoryClass<theory> {
   }
   onAnyVariablePurchased(): void {
     this.termRatio = this.lastPub < 350 ? Math.max(l10(5), (this.term2 - this.term1) * Number(this.milestones[3] > 0)) : Infinity;
+  }
+
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.term1 = other.term1;
+    this.term2 = other.term2;
+    this.term3 = other.term3;
+    this.termRatio = other.termRatio;
+    this.c3Ratio = other.c3Ratio;
+  }
+  copy() {
+    let sim = new t1Sim(this.getDataForCopy());
+    sim.copyFrom(this);
+    return sim;
+  }
+  onVariablePurchased(id: number) {
+    if(
+        [0, 4].includes(id) &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached() &&
+        // For this theory, we don't want to go above original cap:
+        !this.variables[id].aboveOriginalCap()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
   }
 }
