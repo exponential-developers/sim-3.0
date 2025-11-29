@@ -3,35 +3,29 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, binaryInsertionSearch, getLastLevel, l10, subtract, toCallables } from "../../Utils/helpers";
-
-async function runFICoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
-  const sim = new fiSim(data);
-  sim.lastQ1 = targetQ1;
-  sim.lastQ1Orig = origQ1;
-  return sim.simulate();
-}
+import {
+  add,
+  binaryInsertionSearch,
+  getBestResult,
+  getLastLevel,
+  l10,
+  subtract,
+  toCallables
+} from "../../Utils/helpers";
 
 export default async function fi(data: theoryData): Promise<simResult> {
   let res;
-  if(data.strat.includes("CoastQ1")) {
+  if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("CoastQ1", "");
+    data2.strat = data2.strat.replace("Coast", "");
     const sim1 = new fiSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    res = await runFICoastQ1(data, lastQ1 - 1, lastQ1);
-    let limit = 7; // Maximum seen in the wild is 4, we test 5 and 6 to be safe.
-    let start = 2;
-    for(let i = start; i < limit; i++) {
-      if(lastQ1 - i <= 1) {
-        break;
-      }
-      const resN = await runFICoastQ1(data, lastQ1 - i, lastQ1);
-      if(resN.tauH > res.tauH) {
-        res = resN;
-      }
-    }
+    let sim = new fiSim(data);
+    sim.variables[1].setOriginalCap(lastQ1);
+    // Maximum seen in the wild is 4, we test 5 and 6 to be safe.
+    sim.variables[1].configureCap(6);
+    res = await sim.simulate();
   }
   else {
     const sim = new fiSim(data);
@@ -51,8 +45,6 @@ class fiSim extends theoryClass<theory> {
   q: number;
   r: number;
   tval: number;
-  lastQ1: number;
-  lastQ1Orig: number;
 
   maxFx: number;
   maxLambda: number;
@@ -63,7 +55,7 @@ class fiSim extends theoryClass<theory> {
   getBuyingConditions(): conditionFunction[] {
     const idleStrat = new Array(6).fill(true);
     const idleCoastStrat = new Array(6).fill(true);
-    idleCoastStrat[1] = () => this.variables[1].level < this.lastQ1;
+    idleCoastStrat[1] = () => this.variables[1].shouldBuy;
     const activeStrat2 = [
       true, //tdot - 0
       //q1 mod 23
@@ -77,7 +69,7 @@ class fiSim extends theoryClass<theory> {
     const activeCoastStrat2 = [
       true, //tdot - 0
       //q1 mod 23
-      () => (this.variables[1].level < this.lastQ1) && (this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost)), //q1 - 1
+      () => this.variables[1].shouldBuy && (this.variables[1].cost + l10((this.variables[1].level % 23) + 1) < Math.min(this.variables[2].cost, this.variables[3].cost)), //q1 - 1
       true, //q2 - 2
       true, //k - 3
       true, //m - 4
@@ -86,26 +78,26 @@ class fiSim extends theoryClass<theory> {
     ]
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FI: idleStrat,
-      FICoastQ1: idleCoastStrat,
+      FICoast: idleCoastStrat,
       FId: activeStrat2,
-      FIdCoastQ1: activeCoastStrat2,
+      FIdCoast: activeCoastStrat2,
       FIPermaSwap: idleStrat,
-      FIPermaSwapCoastQ1: idleCoastStrat,
+      FIPermaSwapCoast: idleCoastStrat,
       FIdPermaSwap: activeStrat2,
-      FIdPermaSwapCoastQ1: activeCoastStrat2,
+      FIdPermaSwapCoast: activeCoastStrat2,
       FIMS: idleStrat,
-      FIMSCoastQ1: idleCoastStrat,
+      FIMSCoast: idleCoastStrat,
       FIMSd: activeStrat2,
-      FIMSdCoastQ1: activeCoastStrat2,
+      FIMSdCoast: activeCoastStrat2,
       FIMSPermaSwap: idleStrat,
-      FIMSPermaSwapCoastQ1: idleCoastStrat,
+      FIMSPermaSwapCoast: idleCoastStrat,
       FIMSdPermaSwap: activeStrat2,
-      FIMSdPermaSwapCoastQ1: activeCoastStrat2
+      FIMSdPermaSwapCoast: activeCoastStrat2
     };
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = [
+    return [
       () => this.variables[0].level < 4,
       () => true,
       () => true,
@@ -113,7 +105,6 @@ class fiSim extends theoryClass<theory> {
       () => this.milestones[3] > 0,
       () => this.milestones[4] > 0,
     ];
-    return conditions;
   }
 
   getTotMult(val: number): number {
@@ -240,8 +231,6 @@ class fiSim extends theoryClass<theory> {
     this.q = 0;
     this.r = 0;
     this.tval = 0;
-    this.lastQ1 = -1;
-    this.lastQ1Orig = -1;
     this.pubUnlock = 8;
     this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.variables = [
@@ -268,14 +257,14 @@ class fiSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
+      if(this.variables[1].shouldFork) await this.doForkVariable(1);
     }
     this.trimBoughtVars();
     let stratExtra = "";
-    if (this.strat.includes("CoastQ1")) {
-      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
-      // stratExtra += ` q1delta: ${this.lastQ1Orig - this.lastQ1}`;
+    if (this.strat.includes("Coast")) {
+      stratExtra += this.variables[1].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
     }
-    return this.createResult(stratExtra);
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   tick() {
     let vq1 = this.variables[1].value * (1 + 0.01 * this.milestones[2]);
@@ -298,5 +287,28 @@ class fiSim extends theoryClass<theory> {
   }
   onVariablePurchased(id: number): void {
     if (id == 2 && this.msstate == 0) this.msstate = 1;
+    if(
+        id === 1 &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
+  }
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.q = other.q;
+    this.r = other.r;
+    this.tval = other.tval;
+    this.maxFx = other.maxFx;
+    this.maxLambda = other.maxLambda;
+    this.msstate = other.msstate;
+    this.msq = other.msq;
+  }
+  copy() {
+    let sim = new fiSim(this.getDataForCopy());
+    sim.copyFrom(this);
+    return sim;
   }
 }

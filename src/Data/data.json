@@ -488,49 +488,49 @@
         "FI":{
           "stratFilterCondition":"Idle || Semi-Idle || rho <= 30"
         },
-        "FICoastQ1":{
+        "FICoast":{
           "stratFilterCondition":"Idle || Semi-Idle || rho <= 30"
         },
         "FId": {
           "stratFilterCondition":"Active || Very-Active"
         },
-        "FIdCoastQ1": {
+        "FIdCoast": {
           "stratFilterCondition":"Active || Very-Active"
         },
         "FIPermaSwap":{
           "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
         },
-        "FIPermaSwapCoastQ1":{
+        "FIPermaSwapCoast":{
           "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
         },
         "FIdPermaSwap":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
-        "FIdPermaSwapCoastQ1":{
+        "FIdPermaSwapCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
         "FIMS":{
           "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950"
         },
-        "FIMSCoastQ1":{
+        "FIMSCoast":{
           "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950"
         },
         "FIMSd": {
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
-        "FIMSdCoastQ1": {
+        "FIMSdCoast": {
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
         "FIMSPermaSwap":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
-        "FIMSPermaSwapCoastQ1":{
+        "FIMSPermaSwapCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
         "FIMSdPermaSwap":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
-        "FIMSdPermaSwapCoastQ1":{
+        "FIMSdPermaSwapCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         }
       }}
