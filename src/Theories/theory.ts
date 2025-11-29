@@ -379,7 +379,7 @@ export default abstract class theoryClass<theory extends theoryType> {
    * The weight of the cost of each variable must be defined by `getVariableWeights`.
    */
   buyVariablesWeight() {
-    if (!this.getVariableWeights) throw "Cannot use buyVariabllesWeight if getVariableWeights is undefined";
+    if (!this.getVariableWeights) throw "Cannot use buyVariablesWeight if getVariableWeights is undefined";
     let bought = false;
     while (true) {
       const rawCost = this.variables.map((item) => item.cost);
