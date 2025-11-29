@@ -3,50 +3,31 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, getLastLevel, l10, toCallables } from "../../Utils/helpers";
-
-async function runWSPCoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
-  const sim1 = new wspSim(data);
-  sim1.lastQ1 = targetQ1;
-  sim1.lastQ1Orig = origQ1;
-  return sim1.simulate();
-}
+import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 export default async function wsp(data: theoryData): Promise<simResult> {
   let res;
-  if(data.strat.includes("CoastQ1")) {
+  if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("CoastQ1", "").replace("PostRecovery", "");
+    data2.strat = data2.strat.replace("Coast", "").replace("PostRecovery", "");
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    res = await runWSPCoastQ1(data, lastQ1 - 1, lastQ1);
-    let limit = 20;
-    let start = 2;
+    let sim = new wspSim(data);
+    sim.variables[0].setOriginalCap(lastQ1);
     if(data.strat.includes("WSPd")) {
-      limit = 3; // For WSPd, it is always either skip 0, 1 or 2.
+      // For WSPd, it is always either skip 0, 1 or 2.
+      sim.variables[0].configureCap(2);
     }
     else {
       if(data.rho >= 300) {
-        // For WSP semi idle, past rho == 300, we always either skip 8 or 9 levels. 10 is kept just-in-case.
-        start = 8;
-        limit = 11;
+        sim.variables[0].configureCap(10);
       }
-      if(data.rho >= 500) {
-        // For WSP semi idle, past rho == 500, we always either skip 9 or 10 levels.
-        start = 9;
-        limit = 11;
+      else {
+        sim.variables[0].configureCap(19);
       }
     }
-    for(let i = start; i < limit; i++) {
-      if(lastQ1 - i <= 1) {
-        break;
-      }
-      const resN = await runWSPCoastQ1(data, lastQ1 - i, lastQ1);
-      if(resN.tauH > res.tauH) {
-        res = resN;
-      }
-    }
+    res = await sim.simulate();
 
   }
   else {
@@ -61,9 +42,6 @@ type theory = "WSP";
 class wspSim extends theoryClass<theory> {
   q: number;
   S: number;
-  lastQ1: number;
-  lastQ1Orig: number;
-  targetPub: number;
   updateS_flag: boolean;
 
   getBuyingConditions(): conditionFunction[] {
@@ -75,7 +53,7 @@ class wspSim extends theoryClass<theory> {
     if (this.lastPub >= 700) c1weight = 10000;
 
     const WSPStopC1CoastQ1 = toCallables([
-      () => this.variables[0].level < this.lastQ1,
+      () => this.variables[0].shouldBuy,
       true,
       true,
       () => this.lastPub < 450 || this.t < 15,
@@ -83,7 +61,7 @@ class wspSim extends theoryClass<theory> {
     ]);
     const WSPdStopC1CoastQ1 = toCallables([
       () =>
-        this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
+          this.variables[0].shouldBuy && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
         Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
       true,
       true,
@@ -96,8 +74,8 @@ class wspSim extends theoryClass<theory> {
     let conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       WSP: [true, true, true, true, true],
       WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
-      WSPStopC1CoastQ1: WSPStopC1CoastQ1,
-      WSPPostRecoveryStopC1CoastQ1: [
+      WSPStopC1Coast: WSPStopC1CoastQ1,
+      WSPPostRecoveryStopC1Coast: [
         () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
         true,
         true,
@@ -115,13 +93,12 @@ class wspSim extends theoryClass<theory> {
             Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
         true,
       ],
-      WSPdStopC1CoastQ1: WSPdStopC1CoastQ1
+      WSPdStopC1Coast: WSPdStopC1CoastQ1
     };
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
-    return conditions;
+    return [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
   }
   getMilestonePriority(): number[] {
     return [2, 1, 0];
@@ -133,9 +110,6 @@ class wspSim extends theoryClass<theory> {
     const x2 = x * x;
     return Math.log(x2 + 1 / 6 + 1 / 120 / x2 + 1 / 810 / x2 / x2) / 2 - 1;
   };
-  setTargetRho(targetRho: number) {
-    this.forcedPubConditions.push(() => this.maxRho >= targetRho);
-  }
 
   sineRatioK(n: number, x: number, K = 5): number {
     if (n < 1 || x >= n + 1) return 0;
@@ -156,9 +130,6 @@ class wspSim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.lastQ1 = -1;
-    this.lastQ1Orig = -1;
-    this.targetPub = -1;
     this.q = 0;
     this.pubUnlock = 8;
     this.milestoneUnlocks = [10, 25, 40, 55, 70, 100, 140, 200];
@@ -183,15 +154,14 @@ class wspSim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();
       this.buyVariables();
+      if(this.variables[0].shouldFork) await this.doForkVariable(0);
     }
     this.trimBoughtVars();
     let extra = '';
-    if(this.lastQ1 != -1 && this.strat.includes("CoastQ1")) {
-      extra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
-      // Debug output, useful when developing skip ranges:
-      // extra = ` q1: ${this.lastQ1} q1delta:${this.lastQ1Orig - this.lastQ1}`;
+    if(this.strat.includes("Coast")) {
+      extra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
     }
-    return this.createResult(extra);
+    return getBestResult(this.createResult(extra), this.bestForkRes);
   }
   tick() {
     if (this.updateS_flag) {
@@ -210,5 +180,26 @@ class wspSim extends theoryClass<theory> {
   }
   onVariablePurchased(id: number): void {
     if (id === 2 || id === 4) this.updateS_flag = true;
+    if(
+        id === 0 &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached() &&
+        // For WSP: no need to go over original cap:
+        !this.variables[id].aboveOriginalCap()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
+  }
+  copyFrom(other: this) {
+    super.copyFrom(other)
+    this.updateS_flag = other.updateS_flag;
+    this.S = other.S;
+    this.q = other.q;
+  }
+  copy() {
+    let sim = new wspSim(this.getDataForCopy());
+    sim.copyFrom(this);
+    return sim;
   }
 }
