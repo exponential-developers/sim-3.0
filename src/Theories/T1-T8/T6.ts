@@ -3,58 +3,39 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, subtract, logToExp, getR9multiplier, toCallables, getLastLevel } from "../../Utils/helpers";
-
-async function runT6CoastQ1R1(
-    data: theoryData,
-    targetQ1: number,
-    origQ1: number,
-    targetR1: number,
-    origR1: number,
-): Promise<simResult> {
-  const sim = new t6Sim(data);
-  sim.lastQ1 = targetQ1;
-  sim.lastQ1Orig = origQ1;
-  sim.lastR1 = targetR1;
-  sim.lastR1Orig = origR1;
-  return sim.simulate();
-}
+import {
+  add,
+  l10,
+  subtract,
+  logToExp,
+  getR9multiplier,
+  toCallables,
+  getLastLevel,
+  getBestResult
+} from "../../Utils/helpers";
 
 export default async function t6(data: theoryData): Promise<simResult> {
   let res;
-  if(data.strat.includes("CoastQ1R1")) {
+  if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("CoastQ1R1", "");
+    data2.strat = data2.strat.replace("Coast", "");
     const sim1 = new t6Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
     const lastR1 = getLastLevel("r1", res1.boughtVars);
-    let startQ = 0;
-    let limitQ = 15;
-    let startR = 0;
-    let limitR = 2;
-    if(data2.strat.includes("T6C5d") || data2.strat.includes("IdleRecovery") || data2.strat.includes("T6AI")) {
-      // There is little use in coasting too many levels with T6C5d.
-      // In testing, we only needed 1-2 levels of q1 and 0-1 levels of r1, but in this case we do include more levels
-      // for q for just in case.
-      limitQ = 5;
+    const sim2 = new t6Sim(data);
+    sim2.variables[0].setOriginalCap(lastQ1);
+    if(data.strat.includes("T6C5d") || data2.strat.includes("IdleRecovery") || data2.strat.includes("T6AI")) {
+      sim2.variables[0].configureCap(4);
     }
-    // Originally, we start with no coasting at all:
-    res = res1;
-    for(let qLim = startQ; qLim < limitQ; qLim++) {
-      if(lastQ1 - qLim <= 1) {
-        break;
-      }
-      for(let rLim = startR; rLim < limitR; rLim++) {
-        if(lastR1 - rLim <= 1) {
-          break;
-        }
-        const resN = await runT6CoastQ1R1(data, lastQ1 - qLim, lastQ1, lastR1 - rLim, lastR1);
-        if(resN.tauH > res.tauH) {
-          res = resN;
-        }
-      }
+    else {
+      // This is the observed max for best idle strat.
+      sim2.variables[0].configureCap(10);
     }
+    sim2.variables[2].setOriginalCap(lastR1);
+    sim2.variables[2].configureCap(1);
+    res = await sim2.simulate();
+
   }
   else {
     const sim = new t6Sim(data);
@@ -69,10 +50,6 @@ class t6Sim extends theoryClass<theory> {
   q: number;
   r: number;
   k: number;
-  lastQ1: number;
-  lastQ1Orig: number;
-  lastR1: number;
-  lastR1Orig: number;
   stopC12: [number, number, boolean];
 
   getBuyingConditions(): conditionFunction[] {
@@ -83,10 +60,10 @@ class t6Sim extends theoryClass<theory> {
       T6C125: [true, true, true, true, true, true, false, false, true],
       T6C12: [true, true, true, true, true, true, false, false, false],
       T6C5: [true, true, true, true, false, false, false, false, true],
-      T6C5CoastQ1R1: [
-        () => this.variables[0].level < this.lastQ1,
+      T6C5Coast: [
+        () => this.variables[0].shouldBuy,
         true,
-        () => this.variables[2].level < this.lastR1,
+        () => this.variables[2].shouldBuy,
         true,
         false,
         false,
@@ -95,10 +72,10 @@ class t6Sim extends theoryClass<theory> {
         true
       ],
       T6Snax: [true, true, true, true, () => this.stopC12[2], () => this.stopC12[2], false, false, true],
-      T6SnaxCoastQ1R1: [
-        () => this.variables[0].level < this.lastQ1,
+      T6SnaxCoast: [
+        () => this.variables[0].shouldBuy,
         true,
-        () => this.variables[2].level < this.lastR1,
+        () => this.variables[2].shouldBuy,
         true,
         () => this.stopC12[2],
         () => this.stopC12[2],
@@ -166,11 +143,11 @@ class t6Sim extends theoryClass<theory> {
         false,
         true,
       ],
-      T6C5dCoastQ1R1: [
-        () => (this.variables[0].level < this.lastQ1) && (this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+      T6C5dCoast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
           < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
         true,
-        () => (this.variables[2].level < this.lastR1) && (this.variables[2].cost + l10(5)
+        () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(5)
           < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
         true,
         false,
@@ -198,16 +175,16 @@ class t6Sim extends theoryClass<theory> {
         false,
         true,
       ],
-      T6C5dIdleRecoveryCoastQ1R1: [
+      T6C5dIdleRecoveryCoast: [
         () => {
-          if (this.variables[0].level >= this.lastQ1) return false;
+          if (!this.variables[0].shouldBuy) return false;
           if (this.lastPub >= this.maxRho) return true;
           return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
               < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
         },
         true,
         () => {
-          if (this.variables[2].level >= this.lastR1) return false;
+          if (!this.variables[2].shouldBuy) return false;
           if (this.lastPub >= this.maxRho) return true;
           return this.variables[2].cost + l10(5)
               < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
@@ -220,7 +197,7 @@ class t6Sim extends theoryClass<theory> {
         true,
       ],
       T6AI: [],
-      T6AICoastQ1R1: [],
+      T6AICoast: [],
     };
     return toCallables(conditions[this.strat]);
   }
@@ -247,19 +224,19 @@ class t6Sim extends theoryClass<theory> {
       case "T6C125": return [0, 2, 3];
       case "T6C12": return [0, 3];
       case "T6C5": return [0, 2];
-      case "T6C5CoastQ1R1": return [0, 2];
+      case "T6C5Coast": return [0, 2];
       case "T6Snax": return [0, 3, 2];
-      case "T6SnaxCoastQ1R1": return [0, 3, 2];
+      case "T6SnaxCoast": return [0, 3, 2];
       case "T6C3d": return [0];
       case "T6C4d": return [1, 0];
       case "T6C125d": return [0, 2, 3];
       case "T6C12d": return [0, 3];
       case "T6C5d": return [0, 2];
-      case "T6C5dCoastQ1R1": return [0, 2];
+      case "T6C5dCoast": return [0, 2];
       case "T6AI": return [0, 3, 2];
-      case "T6AICoastQ1R1": return [0, 3, 2];
+      case "T6AICoast": return [0, 3, 2];
       case "T6C5dIdleRecovery": return [0, 2];
-      case "T6C5dIdleRecoveryCoastQ1R1": return [0, 2];
+      case "T6C5dIdleRecoveryCoast": return [0, 2];
     }
   }
   getTotMult(val: number): number {
@@ -275,10 +252,6 @@ class t6Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.lastQ1 = -1;
-    this.lastQ1Orig = -1;
-    this.lastR1 = -1;
-    this.lastR1Orig = -1;
     this.q = -Infinity;
     this.r = 0;
     this.pubUnlock = 12;
@@ -307,14 +280,16 @@ class t6Sim extends theoryClass<theory> {
       if (this.lastPub < 150) this.updateMilestones();
       this.buyVariables();
       this.ticks++;
+      if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      if(this.variables[2].shouldFork) await this.doForkVariable(2);
     }
     this.trimBoughtVars();
     let stratExtra = this.strat.includes("T6Snax") ? " " + logToExp(this.stopC12[0], 1) : "";
-    if(this.strat.includes("CoastQ1R1")) {
-      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1} r1: ${getLastLevel("r1", this.boughtVars) || this.lastR1}`;
-      // stratExtra += ` q1: ${this.lastQ1} q1delta: ${this.lastQ1Orig - this.lastQ1} r1: ${this.lastR1} r1delta: ${this.lastR1Orig - this.lastR1} `
+    if(this.strat.includes("Coast")) {
+      stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
+          this.variables[2].prepareExtraForCap(getLastLevel("r1", this.boughtVars));
     }
-    return this.createResult(stratExtra);
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   tick() {
     const vc1 = this.variables[4].value * (1 + 0.05 * this.milestones[3]);
@@ -349,17 +324,39 @@ class t6Sim extends theoryClass<theory> {
       Infinity, //c4
       -Math.min(0, this.k), //c5
     ];
-    // Not buying r1 and q1 past limit conditions:
-    if (this.variables[0].level >= this.lastQ1 && this.lastQ1 != -1) {
-      weights[0] = Infinity;
-    }
-    if (this.variables[2].level >= this.lastR1 && this.lastR1 != -1) {
-      weights[2] = Infinity;
+    for(let varIndex of [0, 2]) {
+      if(!this.variables[varIndex].shouldBuy) {
+        weights[varIndex] = Infinity;
+      }
     }
     return weights;
   }
   buyVariables() {
-    if (this.strat !== "T6AI" && this.strat != "T6AICoastQ1R1") super.buyVariables();
+    if (this.strat !== "T6AI" && this.strat != "T6AICoast") super.buyVariables();
     else super.buyVariablesWeight();
+  }
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.q = other.q;
+    this.k = other.k;
+    this.r = other.r;
+    this.stopC12 = [...other.stopC12];
+  }
+  copy() {
+    let copySim = new t6Sim(this.getDataForCopy());
+    copySim.copyFrom(this);
+    return copySim;
+  }
+  onVariablePurchased(id: number) {
+    if(
+        [0, 2].includes(id) &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached() &&
+        // For this theory, going above original cap is mostly counterproductive:
+        !this.variables[id].aboveOriginalCap()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
   }
 }

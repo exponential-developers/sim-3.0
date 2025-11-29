@@ -59,7 +59,8 @@ export default class Variable {
     this.startCapAt = startCapAt;
   }
   prepareExtraForCap(lastLevel: number) {
-    return ` ${this.name}: ${lastLevel}`;// ${this.name}delta: ${this.originalCap - lastLevel}`
+    let actualLast = lastLevel || this.level;
+    return ` ${this.name}: ${actualLast}` // ${this.name}delta: ${this.originalCap - actualLast}`
   }
   coastingCapReached() {
     return this.level >= this.startCapAt;

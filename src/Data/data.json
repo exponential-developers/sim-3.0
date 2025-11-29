@@ -237,14 +237,14 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 800",
           "forcedCondition": "rho >= 125"
         },
-        "T6C5CoastQ1R1": {
+        "T6C5Coast": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 800",
           "forcedCondition": "rho >= 125"
         },
         "T6Snax": {
           "stratFilterCondition": "Semi-Idle && rho >= 400"
         },
-        "T6SnaxCoastQ1R1": {
+        "T6SnaxCoast": {
           "stratFilterCondition": "Semi-Idle && rho >= 400"
         },
         "T6C3d": {
@@ -264,7 +264,7 @@
           "stratFilterCondition": "Active && rho >= 800",
           "forcedCondition": "rho >= 125"
         },
-        "T6C5dCoastQ1R1": {
+        "T6C5dCoast": {
           "stratFilterCondition": "Active && rho >= 800",
           "forcedCondition": "rho >= 125"
         },
@@ -272,14 +272,14 @@
           "stratFilterCondition": "false",
           "forcedCondition": "rho >= 125"
         },
-        "T6C5dIdleRecoveryCoastQ1R1": {
+        "T6C5dIdleRecoveryCoast": {
           "stratFilterCondition": "false",
           "forcedCondition": "rho >= 125"
         },
         "T6AI": {
           "stratFilterCondition": "Very-Active && rho >= 100"
         },
-        "T6AICoastQ1R1": {
+        "T6AICoast": {
           "stratFilterCondition": "Very-Active && rho >= 100"
         }
       }
