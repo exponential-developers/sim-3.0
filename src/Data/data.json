@@ -238,11 +238,11 @@
           "forcedCondition": "rho >= 125"
         },
         "T6C5Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 800",
+          "stratFilterCondition": "false",
           "forcedCondition": "rho >= 125"
         },
         "T6Snax": {
-          "stratFilterCondition": "Semi-Idle && rho >= 400"
+          "stratFilterCondition": "false"
         },
         "T6SnaxCoast": {
           "stratFilterCondition": "Semi-Idle && rho >= 400"
