@@ -380,6 +380,7 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   buyVariablesWeight() {
     if (!this.getVariableWeights) throw "Cannot use buyVariabllesWeight if getVariableWeights is undefined";
+    let bought = false;
     while (true) {
       const rawCost = this.variables.map((item) => item.cost);
       const weights = this.getVariableWeights();
@@ -399,8 +400,11 @@ export default abstract class theoryClass<theory extends theoryType> {
           });
         }
         this.variables[minCost[1]].buy();
+        bought = true;
+        this.onVariablePurchased(minCost[1]);
       } else break;
     }
+    if(bought) this.onAnyVariablePurchased();
   }
 
   /**
