@@ -11,7 +11,6 @@ import {
   getR9multiplier,
   toCallables,
   getBestResult,
-  defaultResult
 } from "../../Utils/helpers";
 
 export default async function t4(data: theoryData): Promise<simResult> {
@@ -52,7 +51,6 @@ type theory = "T4";
 
 class t4Sim extends theoryClass<theory> {
   q: number;
-  bestRes: simResult;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -169,7 +167,6 @@ class t4Sim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
-    this.bestRes = defaultResult();
     this.q = 0;
     this.pubUnlock = 9;
     this.milestoneUnlockSteps = 25;
@@ -205,7 +202,7 @@ class t4Sim extends theoryClass<theory> {
           this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
           this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars));
     }
-    return getBestResult(this.createResult(stratExtra), this.bestRes);
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   tick() {
     const vq1 = this.variables[6].value;
@@ -226,15 +223,6 @@ class t4Sim extends theoryClass<theory> {
     this.rho.add(rhodot + l10(this.dt));
   }
 
-  async doForkVariable(id: number) {
-    const fork = this.copy();
-    fork.variables[id].stopBuying();
-    fork.variables[id].shouldFork = false;
-    const res = await fork.simulate();
-    this.bestRes = getBestResult(res, this.bestRes);
-    this.variables[id].shouldFork = false;
-  }
-
   onVariablePurchased(id: number) {
     if(
         [2, 6, 7].includes(id) &&
@@ -251,7 +239,6 @@ class t4Sim extends theoryClass<theory> {
   copyFrom(other: this) {
     super.copyFrom(other);
     this.q = other.q;
-    this.bestRes = other.bestRes;
   }
   copy() {
     let newsim = new t4Sim(super.getDataForCopy());

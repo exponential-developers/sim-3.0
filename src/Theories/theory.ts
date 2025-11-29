@@ -1,6 +1,13 @@
 import Currency from "../Utils/currency";
 import Variable from "../Utils/variable";
-import { binaryInsertionSearch, convertTime, formatNumber, logToExp } from "../Utils/helpers";
+import {
+  binaryInsertionSearch,
+  convertTime,
+  defaultResult,
+  formatNumber,
+  getBestResult,
+  logToExp
+} from "../Utils/helpers";
 import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
@@ -122,7 +129,13 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   abstract getTotMult(val: number): number;
 
+  /**
+   * Best result (tracked for sims that fork)
+   */
+  bestForkRes: simResult;
+
   constructor(readonly data: theoryData) {
+    this.bestForkRes = defaultResult();
     this.theory = data.theory;
     this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
@@ -191,6 +204,7 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.maxTauH = other.maxTauH;
     this.pubT = other.pubT;
     this.pubRho = other.pubRho;
+    this.bestForkRes = other.bestForkRes;
   }
 
   /** Returns the theoryData needed to create a copy */
@@ -449,5 +463,17 @@ export default abstract class theoryClass<theory extends theoryType> {
       time: Math.max(0, this.pubT - this.recovery.time),
       boughtVars: this.boughtVars
     }
+  }
+
+  copy(): any {
+    throw new Error("Please implement `copy` method");
+  }
+
+  async doForkVariable(id: number) {
+    this.variables[id].shouldFork = false;
+    const fork = this.copy();
+    fork.variables[id].stopBuying();
+    const res = await fork.simulate();
+    this.bestForkRes = getBestResult(res, this.bestForkRes);
   }
 }
