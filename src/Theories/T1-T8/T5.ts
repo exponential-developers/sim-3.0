@@ -3,35 +3,29 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, subtract, logToExp, getR9multiplier, toCallable, toCallables, getLastLevel } from "../../Utils/helpers";
-
-async function runT5CoastQ1(data: theoryData, targetQ1: number, origQ1: number): Promise<simResult> {
-  const sim = new t5Sim(data);
-  sim.lastQ1 = targetQ1;
-  sim.lastQ1Orig = origQ1;
-  return sim.simulate();
-}
+import {
+  l10,
+  subtract,
+  logToExp,
+  getR9multiplier,
+  toCallable,
+  toCallables,
+  getLastLevel,
+  getBestResult
+} from "../../Utils/helpers";
 
 export default async function t5(data: theoryData): Promise<simResult> {
   let res;
-  if(data.strat.includes("CoastQ1")) {
+  if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("CoastQ1", "");
+    data2.strat = data2.strat.replace("Coast", "");
     const sim1 = new t5Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    res = await runT5CoastQ1(data, lastQ1 - 1, lastQ1);
-    let limit = 14;
-    let start = 2;
-    for(let i = start; i < limit; i++) {
-      if(lastQ1 - i <= 1) {
-        break;
-      }
-      const resN = await runT5CoastQ1(data, lastQ1 - i, lastQ1);
-      if(resN.tauH > res.tauH) {
-        res = resN;
-      }
-    }
+    const sim2 = new t5Sim(data);
+    sim2.variables[0].setOriginalCap(lastQ1);
+    sim2.variables[0].configureCap(13);
+    res = await sim2.simulate();
   }
   else {
     const sim = new t5Sim(data);
@@ -44,8 +38,6 @@ type theory = "T5";
 
 class t5Sim extends theoryClass<theory> {
   q: number;
-  lastQ1: number;
-  lastQ1Orig: number;
   c2worth: boolean;
   c2Counter: number;
   nc3: number;
@@ -60,8 +52,8 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth, 
         true
       ],
-      T5IdleCoastQ1: [
-        () => this.variables[0].level < this.lastQ1,
+      T5IdleCoast: [
+        () => this.variables[0].shouldBuy,
         true,
         () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
         () => this.c2worth,
@@ -75,8 +67,8 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth,
         true,
       ],
-      T5AI2CoastQ1: [
-        () => this.variables[0].level < this.lastQ1 && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
+      T5AI2Coast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
             <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
         true,
         () => this.q + l10(1.5) < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
@@ -116,8 +108,6 @@ class t5Sim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.q = 0;
-    this.lastQ1 = -1;
-    this.lastQ1Orig = -1;
     this.pubUnlock = 7;
     this.milestoneUnlockSteps = 25;
     //milestones  [q1exp,c3term,c3exp]
@@ -142,13 +132,14 @@ class t5Sim extends theoryClass<theory> {
       if (this.lastPub < 150) this.updateMilestones();
       this.c2Counter = 0;
       this.buyVariables();
+      if(this.variables[0].shouldFork) await this.doForkVariable(0);
     }
     this.trimBoughtVars();
     let stratExtra = this.strat.includes("T5Idle") ? " " + logToExp(this.variables[2].cost, 1) : "";
-    if(this.strat.includes("CoastQ1")) {
-      stratExtra += ` q1: ${getLastLevel("q1", this.boughtVars) || this.lastQ1}`;
+    if(this.strat.includes("Coast")) {
+      stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars))
     }
-    return this.createResult(stratExtra);
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   tick() {
     const vq1 = this.variables[0].value * (1 + 0.05 * this.milestones[0]);
@@ -168,5 +159,26 @@ class t5Sim extends theoryClass<theory> {
       const iq = this.calculateQ(this.variables[2].value, this.variables[3].value + l10(2) * this.c2Counter, this.nc3);
       this.c2worth = iq >= this.variables[3].value + l10(2) * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + l10(2 / 3);
     }
+    if(
+        id === 0 &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached()
+        // (this.variables[id].underOriginalCap() || this.maxRho >= 1000)
+    ) {
+      this.variables[id].shouldFork = true;
+    }
+  }
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.q = other.q;
+    this.nc3 = other.nc3;
+    this.c2worth = other.c2worth;
+    this.c2Counter = other.c2Counter;
+  }
+  copy() {
+    let copySim = new t5Sim(this.getDataForCopy());
+    copySim.copyFrom(this);
+    return copySim;
   }
 }
