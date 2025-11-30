@@ -444,10 +444,10 @@ export default abstract class theoryClass<theory extends theoryType> {
   }
 
   /**
-   * Removes the variable purchases that occured after the publication point
+   * Removes the variable purchases that occurred after the publication point
    */
   trimBoughtVars() {
-    while (this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
+    while (this.boughtVars.length && this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
   }
 
   /**
