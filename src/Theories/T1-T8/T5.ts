@@ -30,7 +30,7 @@ export default async function t5(data: theoryData): Promise<simResult> {
     sim2.variables[0].configureCap(13);
     if(data.strat.includes("Coast2")) {
       sim2.variables[2].setOriginalCap(lastC1 + 10); // Lie to the strat that there is more level of C1 that were bought
-      sim2.variables[2].configureCap(15); // Also test up to 5 levels below original.
+      sim2.variables[2].configureCap(25); // Also test up to 5 levels below original.
     }
     res = await sim2.simulate();
   }
