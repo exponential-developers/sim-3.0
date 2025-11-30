@@ -323,15 +323,16 @@ class t3Sim extends theoryClass<theory> {
     const vb1 = this.variables[0].value * (1 + 0.05 * this.milestones[1]);
     const vb2 = this.variables[1].value * (1 + 0.05 * this.milestones[2]);
     const vb3 = this.variables[2].value * (1 + 0.05 * this.milestones[3]);
+    const l10dt = l10(this.dt);
 
     const rhodot = add(this.variables[3].value + vb1, this.variables[4].value + vb2, this.variables[5].value + vb3);
-    this.rho.add(l10(this.dt) + this.totMult + rhodot);
+    this.rho.add(l10dt + this.totMult + rhodot);
 
     const rho2dot = add(this.variables[6].value + vb1, this.variables[7].value + vb2, this.variables[8].value + vb3);
-    this.rho2.add(l10(this.dt) + this.totMult + rho2dot);
+    this.rho2.add(l10dt + this.totMult + rho2dot);
 
     const rho3dot = add(this.variables[9].value + vb1, this.variables[10].value + vb2, this.variables[11].value + vb3);
-    if (this.milestones[0] > 0) this.rho3.add(l10(this.dt) + this.totMult + rho3dot);
+    if (this.milestones[0] > 0) this.rho3.add(l10dt + this.totMult + rho3dot);
   }
   copyFrom(other: this) {
     super.copyFrom(other);
