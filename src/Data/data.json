@@ -79,6 +79,9 @@
         "T3Snax": {
           "stratFilterCondition": "Semi-Idle && rho >= 175"
         },
+        "T3SnaxCoast": {
+          "stratFilterCondition": "Semi-Idle && rho >= 175"
+        },
         "T3SnaxdC12": {
           "stratFilterCondition": "Active && rho >= 175"
         },
