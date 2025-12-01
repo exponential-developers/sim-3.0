@@ -3,11 +3,89 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, subtract, l2, toCallables } from "../../Utils/helpers";
+import { add, l10, subtract, l2, toCallables, getBestResult, getLastLevel } from "../../Utils/helpers";
 
 export default async function sl(data: theoryData): Promise<simResult> {
-  const sim = new slSim(data);
-  const res = await sim.simulate();
+  let res;
+  if(!data.strat.includes("Coast")) {
+    const sim = new slSim(data);
+    res = await sim.simulate();
+  }
+  else {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    if(data2.strat == "SLCoast") {
+      data2.strat = "SLStopA";
+    }
+    else if(data.strat == "SLdCoast") {
+      data2.strat = "SLStopAd";
+    }
+    const sim1 = new slSim(data2);
+    const res1 = await sim1.simulate();
+    const lastA1 = getLastLevel("a1", res1.boughtVars);
+    const lastA2 = getLastLevel("a2", res1.boughtVars);
+    const lastB1 = getLastLevel("b1", res1.boughtVars);
+    const lastB2 = getLastLevel("b2", res1.boughtVars);
+    const sim2 = new slSim(data);
+
+    sim2.variables[0].setOriginalCap(lastA1);
+    sim2.variables[1].setOriginalCap(lastA2);
+    sim2.variables[2].setOriginalCap(lastB1);
+    sim2.variables[3].setOriginalCap(lastB2);
+
+    if(data.strat == "SLCoast") {
+      // These are based on sim results:
+      if (data.rho <= 10) {
+        sim2.variables[0].configureCap(5);
+      } else if (data.rho <= 110) {
+        sim2.variables[0].configureCap(4);
+      } else if (data.rho <= 200) {
+        sim2.variables[0].configureCap(3);
+      } else {
+        sim2.variables[0].configureCap(2);
+      }
+
+      sim2.variables[1].configureCap(1);
+
+      if (data.rho <= 50) {
+        sim2.variables[2].configureCap(3);
+      } else if (data.rho <= 100) {
+        sim2.variables[2].configureCap(2);
+      } else {
+        sim2.variables[2].configureCap(1);
+      }
+
+      if (data.rho <= 150 || data.rho >= 1400) {
+        sim2.variables[3].configureCap(1);
+      } else {
+        sim2.variables[3].configureCap(0);
+      }
+    }
+    else if(data.strat == "SLdCoast") {
+      if (data.rho <= 110) {
+        sim2.variables[0].configureCap(4);
+      } else if (data.rho <= 220) {
+        sim2.variables[0].configureCap(3);
+      } else {
+        sim2.variables[0].configureCap(2);
+      }
+      sim2.variables[1].configureCap(1);
+
+      if (data.rho <= 50) {
+        sim2.variables[2].configureCap(3);
+      } else if (data.rho <= 120) {
+        sim2.variables[2].configureCap(2);
+      } else {
+        sim2.variables[2].configureCap(1);
+      }
+
+      if (data.rho <= 120 || data.rho >= 1450) {
+        sim2.variables[3].configureCap(1);
+      } else {
+        sim2.variables[3].configureCap(0);
+      }
+    }
+    res = await sim2.simulate();
+  }
   return res;
 }
 
@@ -21,14 +99,36 @@ class slSim extends theoryClass<theory> {
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       SL: [true, true, true, true],
-      SLStopA: [() => this.curMult < 4.5, () => this.curMult < 4.5, () => this.curMult < 6, () => this.curMult < 6],
+      SLStopA: [
+        () => this.curMult < 4.5,
+        () => this.curMult < 4.5,
+        () => this.curMult < 6,
+        () => this.curMult < 6
+      ],
+      SLCoast: [
+        () => this.variables[0].shouldBuy,
+        () => this.variables[1].shouldBuy,
+        () => this.variables[2].shouldBuy,
+        () => this.variables[3].shouldBuy
+      ],
       SLStopAd: [
         () => this.curMult < 4.5 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
         () => this.curMult < 4.5,
         () => this.curMult < 6 && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,
         () => this.curMult < 6,
       ],
-      SLMS: [() => this.curMult < 4, () => this.curMult < 4, () => this.curMult < 7.5, () => this.curMult < 7.5],
+      SLdCoast: [
+        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
+        () => this.variables[1].shouldBuy,
+        () => this.variables[2].shouldBuy && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,
+        () => this.variables[3].shouldBuy,
+      ],
+      SLMS: [
+        () => this.curMult < 4,
+        () => this.curMult < 4,
+        () => this.curMult < 7.5,
+        () => this.curMult < 7.5
+      ],
       SLMSd: [
         () => this.curMult < 4 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
         () => this.curMult < 4,
@@ -47,7 +147,7 @@ class slSim extends theoryClass<theory> {
   }
   getMilestonePriority(): number[] {
     const maxVal = Math.max(this.lastPub, this.maxRho);
-    if ((this.strat === "SLMS" || this.strat === "SLMSd") && maxVal >= 25 && maxVal <= 300) {
+    if ((this.strat.includes("MS")) && maxVal >= 25 && maxVal <= 300) {
       //when to swap to a3exp (increasing rho2dot) before b1b2
       let emg_Before_b1b2 = 5;
       //when to swap to rho2 exp before b1b2
@@ -119,9 +219,19 @@ class slSim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 300) this.updateMilestones();
       this.buyVariables();
+      for(let varIndex = 0; varIndex < this.variables.length; varIndex++) {
+        if(this.variables[varIndex].shouldFork) await this.doForkVariable(varIndex);
+      }
     }
     this.trimBoughtVars();
-    return this.createResult();
+    let extra = '';
+    if(this.strat.includes("Coast")) {
+      extra += this.variables[0].prepareExtraForCap(getLastLevel("a1", this.boughtVars))
+      extra += this.variables[1].prepareExtraForCap(getLastLevel("a2", this.boughtVars))
+      extra += this.variables[2].prepareExtraForCap(getLastLevel("b1", this.boughtVars))
+      extra += this.variables[3].prepareExtraForCap(getLastLevel("b2", this.boughtVars))
+    }
+    return getBestResult(this.createResult(extra), this.bestForkRes);
   }
   tick() {
     const rho3dot = this.variables[2].value * (1 + 0.02 * this.milestones[2]) + this.variables[3].value * (1 + 0.02 * this.milestones[3]);
@@ -138,5 +248,40 @@ class slSim extends theoryClass<theory> {
 
     const rhodot = this.rho2 * (1 + this.milestones[0] * 0.02) * 0.5 + this.inverseE_Gamma;
     this.rho.add(rhodot + this.totMult + l10(this.dt));
+  }
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.rho2 = other.rho2;
+    this.rho3 = other.rho3;
+    this.inverseE_Gamma = other.inverseE_Gamma;
+  }
+  copy() {
+    let sim = new slSim(this.getDataForCopy());
+    sim.copyFrom(this);
+    return sim;
+  }
+  onVariablePurchased(id: number) {
+    if(
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached()
+    ) {
+      if(this.strat == "SLCoast") {
+        if(this.variables[id].level < this.variables[id].originalCap + (id === 0 ? 4 : 2)) {
+          this.variables[id].shouldFork = true;
+        }
+        else {
+          this.variables[id].stopBuying();
+        }
+      }
+      else {
+        if(this.variables[id].level < this.variables[id].originalCap + (id === 0 ? 3 : 2)) {
+          this.variables[id].shouldFork = true;
+        }
+        else {
+          this.variables[id].stopBuying();
+        }
+      }
+    }
   }
 }

@@ -437,7 +437,13 @@
         "SLStopA": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "SLCoast": {
+          "stratFilterCondition": "Semi-Idle"
+        },
         "SLStopAd": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 300"
+        },
+        "SLdCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 300"
         },
         "SLMS": {
