@@ -35,6 +35,10 @@ export default async function t5(data: theoryData): Promise<simResult> {
 }
 
 type theory = "T5";
+const L10_2_3 = l10(2 / 3);
+const L10_2 = l10(2);
+const L10_1_5 = l10(1.5);
+const L10_E = l10(Math.E);
 
 class t5Sim extends theoryClass<theory> {
   q: number;
@@ -63,7 +67,7 @@ class t5Sim extends theoryClass<theory> {
         () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) 
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
         true,
-        () => this.q + l10(1.5) < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
+        () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
         () => this.c2worth,
         true,
       ],
@@ -71,7 +75,7 @@ class t5Sim extends theoryClass<theory> {
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
             <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
         true,
-        () => this.q + l10(1.5) < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
+        () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
         () => this.c2worth,
         true,
       ],
@@ -79,8 +83,7 @@ class t5Sim extends theoryClass<theory> {
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
-    return conditions;
+    return [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
   }
   getMilestonePriority(): number[] {
     return [1, 0, 2];
@@ -93,11 +96,11 @@ class t5Sim extends theoryClass<theory> {
     const qcap = ic2 + ic3
     const gamma = 10 ** (ic1 + ic3 - ic2) // q growth speed characteristic parameter
     const adjust = this.q - subtract(qcap, this.q); // initial condition
-    const sigma = 10 ** (adjust + gamma * this.dt * l10(Math.E)) 
+    const sigma = 10 ** (adjust + gamma * this.dt * L10_E)
     let newq: number;
     // Approximation when q << qcap
     if (sigma < 1e-30){
-      newq = qcap + adjust + gamma * this.dt * l10(Math.E);
+      newq = qcap + adjust + gamma * this.dt * L10_E;
     }
     // Normal resolution
     else {
@@ -149,15 +152,15 @@ class t5Sim extends theoryClass<theory> {
     const rhodot = vq1 + this.variables[1].value + this.q;
     this.rho.add(rhodot + this.totMult + l10(this.dt));
 
-    this.nc3 = this.milestones[1] > 0 ? this.variables[4].value * (1 + 0.05 * this.milestones[2]) : 0;
-    const iq = this.calculateQ(this.variables[2].value, this.variables[3].value, this.nc3);
-    this.c2worth = iq >= this.variables[3].value + this.nc3 + l10(2 / 3);
+    this.nc3 = vc3;
+    const iq = this.calculateQ(this.variables[2].value, this.variables[3].value, vc3);
+    this.c2worth = iq >= this.variables[3].value + this.nc3 + L10_2_3;
   }
   onVariablePurchased(id: number): void {
     if (id == 3) {
       this.c2Counter++;
-      const iq = this.calculateQ(this.variables[2].value, this.variables[3].value + l10(2) * this.c2Counter, this.nc3);
-      this.c2worth = iq >= this.variables[3].value + l10(2) * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + l10(2 / 3);
+      const iq = this.calculateQ(this.variables[2].value, this.variables[3].value + L10_2 * this.c2Counter, this.nc3);
+      this.c2worth = iq >= this.variables[3].value + L10_2 * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + L10_2_3;
     }
     if(
         id === 0 &&
