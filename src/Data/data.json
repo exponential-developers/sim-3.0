@@ -635,6 +635,15 @@
         "MFd3Coast": {
           "stratFilterCondition": "Active || Very-Active"
         },
+        "MFdRCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFd2RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFd3RCCoast": {
+          "stratFilterCondition": "false"
+        },
         "MFdPostRecovery0": {
           "stratFilterCondition": "false"
         },

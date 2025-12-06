@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getBestResult, defaultResult, binaryInsertionSearch } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
 
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -76,7 +76,7 @@ class mfSim extends theoryClass<theory> {
     const idleRCStrat: conditionFunction[] = [
       () => this.variables[0].level < this.lastC1 && (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset),
       () => true,
-      () => this.variables[2].cost < (this.goalBundleCost - l10(10)) || this.stopReset,
+      () => (this.variables[2].cost < (this.goalBundleCost - l10(10)) || this.stopReset),
       () => true,
       () => true,
       ...new Array(4).fill(() => true), // Simplified condition (specifically, we rely on separate methods to buy v1-v4)
@@ -107,6 +107,31 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
+      const activeStratRC: conditionFunction[] = [
+          () => (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
+          () => true,
+          () => (this.variables[2].cost < (this.goalBundleCost - l10(10)) || this.stopReset) && (this.i/(i0*10 ** this.variables[3].value) < 0.5 || this.variables[2].cost+1<this.maxRho),
+          () => true,
+          () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
+          ...new Array(4).fill(() => true)
+      ];
+      const activeStrat2RC: conditionFunction[] = [
+          () => (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
+          () => true,
+          () => (this.variables[2].cost < (this.goalBundleCost - l10(10)) || this.stopReset) && (l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15)),
+          () => true,
+          () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
+          ...new Array(4).fill(() => true)
+      ];
+      const activeStrat3RC: conditionFunction[] = [
+          // New active strat. Credits to Maimai.
+          activeStratRC[0],
+          () => true,
+          activeStrat2RC[2],
+          () => true,
+          () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
+          ...new Array(4).fill(() => true)
+      ];
     const tailActiveGen = (i: number, offset: number): conditionFunction => {
       return () => {
         if (this.maxRho <= this.lastPub + offset) {
@@ -135,6 +160,9 @@ class mfSim extends theoryClass<theory> {
       MFdCoast: activeStrat,
       MFd2Coast: activeStrat2,
       MFd3Coast: activeStrat3,
+      MFdRCCoast: activeStratRC,
+      MFd2RCCoast: activeStrat2RC,
+      MFd3RCCoast: activeStrat3RC,
       MFdPostRecovery0: makeMFdPostRecovery(0),
       MFdPostRecovery1: makeMFdPostRecovery(1),
       MFdPostRecovery2: makeMFdPostRecovery(2),
