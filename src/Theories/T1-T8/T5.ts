@@ -18,13 +18,20 @@ export default async function t5(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    data2.strat = data2.strat.replace("Coast2", "").replace("Coast", "");
     const sim1 = new t5Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    // Directly take the level from the sim thanks to how condition is constructed in T5Idle. It will not buy any levels
+    // above max.
+    const lastC1 = sim1.variables[2].level;
     const sim2 = new t5Sim(data);
     sim2.variables[0].setOriginalCap(lastQ1);
     sim2.variables[0].configureCap(13);
+    if(data.strat.includes("Coast2")) {
+      sim2.variables[2].setOriginalCap(lastC1 + 10); // Lie to the strat that there is more level of C1 that were bought
+      sim2.variables[2].configureCap(25); // Also test up to 5 levels below original.
+    }
     res = await sim2.simulate();
   }
   else {
@@ -59,6 +66,13 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth,
         true
       ],
+      T5IdleCoast2: [
+        () => this.variables[0].shouldBuy,
+        true,
+        () => this.variables[2].shouldBuy,
+        () => this.c2worth,
+        true
+      ],
       T5AI2: [
         () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) 
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
@@ -79,8 +93,7 @@ class t5Sim extends theoryClass<theory> {
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
-    const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
-    return conditions;
+    return [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
   }
   getMilestonePriority(): number[] {
     return [1, 0, 2];
@@ -133,11 +146,15 @@ class t5Sim extends theoryClass<theory> {
       this.c2Counter = 0;
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      if(this.variables[2].shouldFork) await this.doForkVariable(2);
     }
     this.trimBoughtVars();
-    let stratExtra = this.strat.includes("T5Idle") ? " " + logToExp(this.variables[2].cost, 1) : "";
+    let stratExtra = ["T5Idle", "T5IdleCoast"].includes(this.strat) ? " " + logToExp(this.variables[2].cost, 1) : "";
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars))
+      if(this.strat.includes("Coast2")) {
+        stratExtra += this.variables[2].prepareExtraForCap(getLastLevel("c1", this.boughtVars)) // rely on variables[2].level in this case.
+      }
     }
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
@@ -160,13 +177,25 @@ class t5Sim extends theoryClass<theory> {
       this.c2worth = iq >= this.variables[3].value + l10(2) * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + l10(2 / 3);
     }
     if(
-        id === 0 &&
+        id == 0 &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()
-        // (this.variables[id].underOriginalCap() || this.maxRho >= 1000)
     ) {
       this.variables[id].shouldFork = true;
+    }
+    if(
+        id == 2 &&
+        this.strat.includes("Coast2") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached()
+    ) {
+      if(this.variables[id].level < this.variables[id].originalCap + 21) {
+        this.variables[id].shouldFork = true;
+      }
+      else {
+        this.variables[id].stopBuying();
+      }
     }
   }
   copyFrom(other: this) {

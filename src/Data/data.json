@@ -209,6 +209,9 @@
         "T5IdleCoast": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "T5IdleCoast2": {
+          "stratFilterCondition": "false"
+        },
         "T5AI2": {
           "stratFilterCondition": "Active || Very-Active"
         },
