@@ -1,4 +1,5 @@
 import { global } from "../../Sim/main";
+import { trueFunc } from "../../Utils/functions";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
@@ -8,8 +9,6 @@ import {
   subtract,
   logToExp,
   getR9multiplier,
-  toCallable,
-  toCallables,
   getLastLevel,
   getBestResult
 } from "../../Utils/helpers";
@@ -47,43 +46,49 @@ class t5Sim extends theoryClass<theory> {
   nc3: number;
 
   getBuyingConditions(): conditionFunction[] {
-    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      T5: [true, true, true, true, true],
+    const conditions: Record<stratType[theory], conditionFunction[]> = {
+      T5: [trueFunc, trueFunc, trueFunc, trueFunc, trueFunc],
       T5Idle: [
-        true, 
-        true, 
+        trueFunc,
+        trueFunc,
         () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub, 
-        () => this.c2worth, 
-        true
+        () => this.c2worth,
+        trueFunc
       ],
       T5IdleCoast: [
         () => this.variables[0].shouldBuy,
-        true,
+        trueFunc,
         () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
         () => this.c2worth,
-        true
+        trueFunc
       ],
       T5AI2: [
         () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) 
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
-        true,
+        trueFunc,
         () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
         () => this.c2worth,
-        true,
+        trueFunc,
       ],
       T5AI2Coast: [
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
             <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
-        true,
+        trueFunc,
         () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
         () => this.c2worth,
-        true,
+        trueFunc,
       ],
     };
-    return toCallables(conditions[this.strat]);
+    return conditions[this.strat];
   }
   getVariableAvailability(): conditionFunction[] {
-    return [() => true, () => true, () => true, () => true, () => this.milestones[1] > 0];
+    return [
+        trueFunc,
+        trueFunc,
+        trueFunc,
+        trueFunc,
+        () => this.milestones[1] > 0,
+    ];
   }
   getMilestonePriority(): number[] {
     return [1, 0, 2];
