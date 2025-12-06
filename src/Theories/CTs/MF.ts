@@ -73,6 +73,14 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[0].level < this.lastC1,
       ...new Array(8).fill(() => true), // Simplified condition (specifically, we rely on separate methods to buy v1-v4)
     ];
+    const idleRCStrat: conditionFunction[] = [
+      () => this.variables[0].level < this.lastC1 && (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset),
+      () => true,
+      () => this.variables[2].cost < (this.goalBundleCost - l10(10)) || this.stopReset,
+      () => true,
+      () => true,
+      ...new Array(4).fill(() => true), // Simplified condition (specifically, we rely on separate methods to buy v1-v4)
+   ];
     const dPower: number[] = [3.09152, 3.00238, 2.91940]
     const activeStrat: conditionFunction[] = [
       () => (this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost)),
@@ -122,6 +130,8 @@ class mfSim extends theoryClass<theory> {
       MFd2: activeStrat2,
       MFd3: activeStrat3,
       MFCoast: idleStrat,
+      MFRC: idleRCStrat,
+      MFRCCoast: idleRCStrat,
       MFdCoast: activeStrat,
       MFd2Coast: activeStrat2,
       MFd3Coast: activeStrat3,
@@ -372,16 +382,19 @@ class mfSim extends theoryClass<theory> {
     }
     return goalBundle;
   }
-  async checkForReset() {
-    const depth = depthConvert[this.mfResetDepth];
-    if (this.maxRho >= this.lastPub) {
+  async testFinalReset() {
       let fork = this.copy();
       fork.stopReset = true;
       const forkres = await fork.simulate();
       this.bestRes = getBestResult(this.bestRes, forkres);
-    }
+  }
+  async checkForReset() {
+    const depth = depthConvert[this.mfResetDepth];
     this.buyVVariables();
     this.resetParticle();
+    if (this.maxRho >= this.lastPub - 10) {
+       await this.testFinalReset();
+    }
     if (depth > 0 && this.lastPub - this.maxRho <= depth) {
       let fork: mfSim;
       let forkres: simResult;

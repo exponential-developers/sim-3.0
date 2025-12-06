@@ -608,6 +608,9 @@
         "MF": {
           "stratFilterCondition": "false"
         },
+        "MFRC": {
+          "stratFilterCondition": "false"
+        },
         "MFd": {
           "stratFilterCondition": "false"
         },
@@ -617,8 +620,11 @@
         "MFd3": {
           "stratFilterCondition": "false"
         },
-        "MFCoast": {
+        "MFRCCoast": {
           "stratFilterCondition": "Idle || Semi-Idle"
+        },
+        "MFCoast": {
+          "stratFilterCondition": "false"
         },
         "MFdCoast": {
           "stratFilterCondition": "Active || Very-Active"
