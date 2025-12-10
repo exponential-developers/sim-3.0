@@ -175,13 +175,7 @@ class fiSim extends theoryClass<theory> {
       this.maxLambda = lambda;
     }
   }
-
-  fact(num: number): number {
-    if (num >= factoriallogs.length) {
-      throw "Error in fact().";
-    }
-    return factoriallogs[num];
-  }
+  
   norm_int(limit: number): number {
     switch (this.milestones[5]) {
       case 0:
@@ -203,20 +197,20 @@ class fiSim extends theoryClass<theory> {
 
   approxEX(limit: number): number {
     return add(
-        limit * 6 - this.fact(6), limit * 5 - this.fact(5), limit * 4 - this.fact(4), limit * 3 - this.fact(3),
-        limit * 2 - this.fact(2), limit
+        limit * 6 - factoriallogs[6], limit * 5 - factoriallogs[5], limit * 4 - factoriallogs[4], limit * 3 - factoriallogs[3],
+        limit * 2 - factoriallogs[2], limit
     );
   }
 
   approxSin(limit: number): number {
-    let positives = add(limit * 2 - this.fact(2), limit * 6 - this.fact(6));
-    let negatives = limit * 4 - this.fact(4);
+    let positives = add(limit * 2 - factoriallogs[2], limit * 6 - factoriallogs[6]);
+    let negatives = limit * 4 - factoriallogs[4];
     return subtract(positives, negatives);
   }
 
   approxCos(limit: number): number {
-    let positives = add(limit, limit * 5 - this.fact(5));
-    let negatives = limit * 3 - this.fact(3);
+    let positives = add(limit, limit * 5 - factoriallogs[5]);
+    let negatives = limit * 3 - factoriallogs[3];
     return subtract(positives, negatives);
   }
 
