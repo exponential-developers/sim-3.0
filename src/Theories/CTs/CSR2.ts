@@ -264,7 +264,7 @@ class csr2Sim extends theoryClass<theory> {
   }
   async confirmPurchase(id: number): Promise<boolean> {
     const lowbounds = [0.65, 0.15, 0.85, 0, 0];
-    const highbounds = [1.45, 0.5, 1.8, 1.2, 1.2];
+    const highbounds = [2.85, 0.5, 3.3, 1.2, 1.2];
     if (this.forcedPubRho !== Infinity) {
       if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id]) {
         this.coasting[id] = true;
