@@ -302,7 +302,7 @@ class fpSim extends theoryClass<theory> {
   async confirmPurchase(id: number): Promise<boolean> {
     if (this.forcedPubRho !== Infinity) {
       const lowbounds = [0, 0.3, 0.15, 0.3, 0.3, 0.1, 0, 0];
-      const highbounds = [0, 1.5, 0.5, 1.5, 1, 1.5, 1.5, 0];
+      const highbounds = [0, 3.5, 0.5, 3.5, 1, 3.5, 1.5, 0];
       if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id]) {
         this.coasting[id] = true;
         return false;
