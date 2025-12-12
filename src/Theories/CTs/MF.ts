@@ -65,6 +65,10 @@ class mfSim extends theoryClass<theory> {
   mfResetDepth: number;
   isCoast: boolean;
   normalVariables: Variable[];
+  precomp_omegaexp: number;
+  precomp_xexp: number;
+  precomp_vexp: number;
+  precomp_a1exp: number;
 
   bestRes: simResult | null;
 
@@ -197,9 +201,16 @@ class mfSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
+  precomputeExps() {
+    this.precomp_a1exp = this.a1exp();
+    this.precomp_vexp = this.vexp();
+    this.precomp_xexp = this.xexp();
+    this.precomp_omegaexp = this.omegaexp();
+  }
   updateMilestonesNoMS(): boolean {
     const res = super.updateMilestonesNoMS();
     if(res) {
+      this.precomputeExps();
       this.updateC();
     }
     return res;
@@ -237,9 +248,9 @@ class mfSim extends theoryClass<theory> {
   }
 
   updateC(): void {
-    const xterm = l10(4e13)*this.xexp()
-    const omegaterm = (l10(m0 / (q0*mu0*i0)) - l10(900)) * this.omegaexp()
-    const vterm = this.milestones[0] ? l10(3e19) * 1.3 + l10(1e5)*(this.vexp() - 1.3) : 0
+    const xterm = l10(4e13)*this.precomp_xexp
+    const omegaterm = (l10(m0 / (q0*mu0*i0)) - l10(900)) * this.precomp_omegaexp
+    const vterm = this.milestones[0] ? l10(3e19) * 1.3 + l10(1e5)*(this.precomp_vexp - 1.3) : 0
     this.c = xterm + omegaterm + vterm + l10(8.67e23)
   }
 
@@ -283,7 +294,12 @@ class mfSim extends theoryClass<theory> {
     this.goalBundle = [0, 0, 0, 0];
     this.goalBundleCost = 0;
     this.bestRes = null;
+    this.precomp_vexp = -1;
+    this.precomp_xexp = -1;
+    this.precomp_omegaexp = -1;
+    this.precomp_a1exp = -1;
     this.updateMilestonesNoMS();
+    this.precomputeExps();
     this.resetParticle();
   }
   copyFrom(other: this) {
@@ -312,6 +328,7 @@ class mfSim extends theoryClass<theory> {
     this.stopReset = other.stopReset;
     this.goalBundle = [...other.goalBundle];
     this.goalBundleCost = other.goalBundleCost;
+    this.precomputeExps();
   }
   copy(): mfSim {
     let newsim = new mfSim(super.getDataForCopy(), this.resetBundle);
@@ -357,7 +374,7 @@ class mfSim extends theoryClass<theory> {
   }
 
   tick() {
-    const va1 = 10 ** (this.variables[2].value * this.a1exp());
+    const va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
     const va2 = 10 ** this.variables[3].value;
 
     this.x += this.dt * this.vx
@@ -367,9 +384,9 @@ class mfSim extends theoryClass<theory> {
     this.i = this.i + scale*(icap - this.i)
     this.i = Math.min(this.i, icap);
 
-    const xterm = l10(this.x) * this.xexp()
-    const omegaterm = (l10((q0/m0) * mu0 * this.i) + this.variables[4].value) * this.omegaexp()
-    const vterm = this.milestones[0] ? l10(this.vtot) * this.vexp() : 0;
+    const xterm = l10(this.x) * this.precomp_xexp
+    const omegaterm = (l10((q0/m0) * mu0 * this.i) + this.variables[4].value) * this.precomp_omegaexp
+    const vterm = this.milestones[0] ? l10(this.vtot) * this.precomp_vexp : 0;
 
     // this.variables[0].value == vc1
     // this.variables[1].value == vc2
