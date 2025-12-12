@@ -15,6 +15,11 @@ export default async function csr2(data: theoryData): Promise<simResult> {
 type theory = "CSR2";
 
 type pubTable = {[key: string]: number};
+const lowboundsActive = [0.65, 0.15, 0.85, 0, 0];
+const highboundsActive = [1.45, 0.5, 1.8, 1.2, 1.2];
+
+const lowboundsPassive = [0.65, 0.15, 0.85, 0, 0];
+const highboundsPassive = [2.85, 0.5, 3.3, 1.2, 1.2];
 
 class csr2Sim extends theoryClass<theory> {
   recursionValue: number[];
@@ -27,6 +32,8 @@ class csr2Sim extends theoryClass<theory> {
   coasting: boolean[];
   bestRes: simResult | null;
   doContinuityFork: boolean;
+  lowbounds: number[];
+  highbounds: number[];
 
   getBuyingConditions(): conditionFunction[] {
     const idlestrat = [true, true, true, true, true];
@@ -52,7 +59,7 @@ class csr2Sim extends theoryClass<theory> {
         () => this.variables[3].cost + l10(1.3) < this.variables[4].cost,
         true,
       ];
-    
+
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       CSR2: idlestrat,
       CSR2PT: idlestrat,
@@ -64,10 +71,10 @@ class csr2Sim extends theoryClass<theory> {
   }
   getVariableAvailability(): conditionFunction[] {
     const conditions: conditionFunction[] = [
-      () => true, 
-      () => true, 
-      () => true, 
-      () => true, 
+      () => true,
+      () => true,
+      () => true,
+      () => true,
       () => this.milestones[1] > 0
     ];
     return conditions;
@@ -88,12 +95,12 @@ class csr2Sim extends theoryClass<theory> {
       if (
         (
           (
-            this.rho.value + l10(msCond * 0.5) > this.variables[3].cost 
+            this.rho.value + l10(msCond * 0.5) > this.variables[3].cost
             || (this.rho.value + l10(msCond) > this.variables[4].cost && this.milestones[1] > 0)
             || (this.curMult > 1 && this.rho.value + l10(2) > this.variables[1].cost)
-          ) 
+          )
           && this.rho.value < Math.min(this.variables[3].cost, this.variables[4].cost)
-        ) 
+        )
         || this.t > this.recursionValue[0]
       ) {
         return q1priority;
@@ -158,7 +165,7 @@ class csr2Sim extends theoryClass<theory> {
       new Variable({ name: "n",  cost: new ExponentialCost(50, 2 ** (Math.log2(256) * 3.346)), valueScaling: new LinearValue(1, 1)}),
       new Variable({ name: "c2", cost: new ExponentialCost(1e3, 10 ** 5.65), valueScaling: new ExponentialValue(2) }),
     ];
-    
+
     this.recursionValue = <number[]>data.recursionValue ?? [Infinity, 0];
     this.bestCoast = [0, 0];
 
@@ -166,6 +173,14 @@ class csr2Sim extends theoryClass<theory> {
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
     this.doContinuityFork = true;
+    if(this.strat.includes("XL")) {
+        this.lowbounds = lowboundsActive;
+        this.highbounds = highboundsActive;
+    }
+    else {
+        this.lowbounds = lowboundsPassive;
+        this.highbounds = highboundsPassive;
+    }
     if (this.strat.includes("PT") && this.lastPub >= 500 && this.lastPub < 1499.5) {
       let newpubtable: pubTable = pubtable.csr2data;
       let pubseek = Math.round(this.lastPub * 16);
@@ -263,14 +278,12 @@ class csr2Sim extends theoryClass<theory> {
     return !this.coasting[id];
   }
   async confirmPurchase(id: number): Promise<boolean> {
-    const lowbounds = [0.65, 0.15, 0.85, 0, 0];
-    const highbounds = [2.85, 0.5, 3.3, 1.2, 1.2];
     if (this.forcedPubRho !== Infinity) {
-      if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id]) {
+      if (this.forcedPubRho - this.variables[id].cost <= this.lowbounds[id]) {
         this.coasting[id] = true;
         return false;
       }
-      if (this.forcedPubRho - this.variables[id].cost < highbounds[id]) {
+      if (this.forcedPubRho - this.variables[id].cost < this.highbounds[id]) {
         let fork = this.copy();
         fork.coasting[id] = true;
         const forkres = await fork.simulate(super.getDataForCopy());
