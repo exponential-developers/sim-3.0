@@ -18,7 +18,7 @@ type pubTable = {[key: string]: number};
 const lowboundsActive = [0.65, 0.15, 0.85, 0, 0];
 const highboundsActive = [1.45, 0.5, 1.8, 1.2, 1.2];
 
-const lowboundsPassive = [0.65, 0.15, 0.85, 0, 0];
+const lowboundsPassive = [1, 0.15, 1.35, 0, 0];
 const highboundsPassive = [2.85, 0.5, 3.3, 1.2, 1.2];
 
 class csr2Sim extends theoryClass<theory> {
