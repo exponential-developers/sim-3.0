@@ -47,6 +47,8 @@ const mu0 = 4e-7 * Math.PI
 const q0 = 1.602e-19
 const i0 = 1e-15
 const m0 = 1e-3
+const q0_m0_mu0 = (q0/m0) * mu0
+const l10_q0_m0_mu0 = l10(q0_m0_mu0);
 
 class mfSim extends theoryClass<theory> {
   lastC1: number;
@@ -385,7 +387,7 @@ class mfSim extends theoryClass<theory> {
     this.i = Math.min(this.i, icap);
 
     const xterm = l10(this.x) * this.precomp_xexp
-    const omegaterm = (l10((q0/m0) * mu0 * this.i) + this.variables[4].value) * this.precomp_omegaexp
+    const omegaterm = (l10_q0_m0_mu0 + l10(this.i) + this.variables[4].value) * this.precomp_omegaexp
     const vterm = this.milestones[0] ? l10(this.vtot) * this.precomp_vexp : 0;
 
     // this.variables[0].value == vc1
