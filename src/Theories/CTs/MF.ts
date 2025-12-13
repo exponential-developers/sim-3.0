@@ -376,22 +376,24 @@ class mfSim extends theoryClass<theory> {
   }
 
   tick() {
-    const va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
-    const va2 = 10 ** this.variables[3].value;
+    // Deal with i
+    const va2 = 10 ** this.variables[3].value; // a2, non-log10 value
+    let icap = va2*i0; //max reachable i value
 
-    this.x += this.dt * this.vx
-    let icap = va2*i0;
-    let scale = 1 - Math.E ** (-this.dt*va1/(400*va2));
-    if (scale < 1e-13) scale = this.dt*va1/(400*va2);
-    this.i = this.i + scale*(icap - this.i)
-    this.i = Math.min(this.i, icap);
+    if(this.i <= icap) {
+        // if max i is not reached, we add a value to it:
+        const va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
+        let scale = 1 - Math.E ** (-this.dt*va1/(400*va2));
+        if (scale < 1e-13) scale = this.dt*va1/(400*va2);
+        this.i = this.i + scale*(icap - this.i)
+        this.i = Math.min(this.i, icap);
+    }
 
+    this.x += this.dt * this.vx;
     const xterm = l10(this.x) * this.precomp_xexp
     const omegaterm = (l10_q0_m0_mu0 + l10(this.i) + this.variables[4].value) * this.precomp_omegaexp
     const vterm = this.milestones[0] ? l10(this.vtot) * this.precomp_vexp : 0;
 
-    // this.variables[0].value == vc1
-    // this.variables[1].value == vc2
     const rhodot = this.totMult + this.c + this.variables[0].value + this.variables[1].value + xterm + omegaterm + vterm;
     this.rho.add(rhodot + l10(this.dt));
   }
