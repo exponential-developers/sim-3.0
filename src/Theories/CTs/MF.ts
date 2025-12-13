@@ -380,7 +380,7 @@ class mfSim extends theoryClass<theory> {
     const va2 = 10 ** this.variables[3].value; // a2, non-log10 value
     let icap = va2*i0; //max reachable i value
 
-    if(this.i <= icap) {
+    if(this.i < icap) {
         // if max i is not reached, we add a value to it:
         const va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
         let scale = 1 - Math.E ** (-this.dt*va1/(400*va2));
