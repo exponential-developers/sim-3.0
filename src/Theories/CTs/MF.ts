@@ -72,6 +72,7 @@ class mfSim extends theoryClass<theory> {
   precomp_vexp: number;
   precomp_a1exp: number;
   precomp_vterm: number;
+  precomp_va2: number;
 
   bestRes: simResult | null;
 
@@ -309,6 +310,7 @@ class mfSim extends theoryClass<theory> {
     this.precomp_omegaexp = -1;
     this.precomp_a1exp = -1;
     this.precomp_vterm = -1;
+    this.precomp_va2 = 10 ** this.variables[3].value;
     this.updateMilestonesNoMS();
     // This will update precomp_vterm:
     this.precomputeExps();
@@ -340,6 +342,7 @@ class mfSim extends theoryClass<theory> {
     this.stopReset = other.stopReset;
     this.goalBundle = [...other.goalBundle];
     this.goalBundleCost = other.goalBundleCost;
+    this.precomp_va2 = other.precomp_va2;
     this.precomputeExps();
   }
   copy(): mfSim {
@@ -380,6 +383,9 @@ class mfSim extends theoryClass<theory> {
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
+    if(id === 3) {
+      this.precomp_va2 = 10 ** this.variables[3].value;
+    }
     if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === Infinity && (this.maxRho > this.lastPub + 6)) {
       this.forkOnC1 = true;
     }
@@ -387,14 +393,13 @@ class mfSim extends theoryClass<theory> {
 
   tick() {
     // Deal with i
-    const va2 = 10 ** this.variables[3].value; // a2, non-log10 value
-    let icap = va2*i0; //max reachable i value
+    let icap = this.precomp_va2 * i0; //max reachable i value
 
     if(this.i < icap) {
         // if max i is not reached, we add a value to it:
         const va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
-        let scale = 1 - Math.E ** (-this.dt*va1/(400*va2));
-        if (scale < 1e-13) scale = this.dt*va1/(400*va2);
+        let scale = 1 - Math.E ** (-this.dt*va1/(400*this.precomp_va2));
+        if (scale < 1e-13) scale = this.dt*va1/(400*this.precomp_va2);
         this.i = this.i + scale*(icap - this.i)
         this.i = Math.min(this.i, icap);
     }
