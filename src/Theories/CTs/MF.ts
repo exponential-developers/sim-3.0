@@ -71,6 +71,7 @@ class mfSim extends theoryClass<theory> {
   precomp_xexp: number;
   precomp_vexp: number;
   precomp_a1exp: number;
+  precomp_vterm: number;
 
   bestRes: simResult | null;
 
@@ -208,6 +209,7 @@ class mfSim extends theoryClass<theory> {
     this.precomp_vexp = this.vexp();
     this.precomp_xexp = this.xexp();
     this.precomp_omegaexp = this.omegaexp();
+    this.compute_vterm();
   }
   updateMilestonesNoMS(): boolean {
     const res = super.updateMilestonesNoMS();
@@ -231,11 +233,16 @@ class mfSim extends theoryClass<theory> {
     return 1 + 0.01 * this.milestones[5]
   }
 
+  compute_vterm() {
+      this.precomp_vterm = this.milestones[0] ? l10(this.vtot) * this.precomp_vexp : 0;
+  }
+
   resetParticle(): void {
     this.x = 0;
     this.vx = 10 ** (this.variables[5].value + this.variables[6].value - 20);
     this.vz = 10 ** (this.variables[7].value + this.variables[8].value - 18);
     this.vtot = Math.sqrt(this.vx * this.vx + this.vz * this.vz);
+    this.compute_vterm();
     this.resets++;
     if (this.resets>1) {
       this.boughtVars.push({
@@ -247,6 +254,7 @@ class mfSim extends theoryClass<theory> {
     }
     this.goalBundle = this.getGoalBundle();
     this.goalBundleCost = this.calcBundleCost(this.goalBundle);
+
   }
 
   updateC(): void {
@@ -300,7 +308,9 @@ class mfSim extends theoryClass<theory> {
     this.precomp_xexp = -1;
     this.precomp_omegaexp = -1;
     this.precomp_a1exp = -1;
+    this.precomp_vterm = -1;
     this.updateMilestonesNoMS();
+    // This will update precomp_vterm:
     this.precomputeExps();
     this.resetParticle();
   }
@@ -391,10 +401,10 @@ class mfSim extends theoryClass<theory> {
 
     this.x += this.dt * this.vx;
     const xterm = l10(this.x) * this.precomp_xexp
-    const omegaterm = (l10_q0_m0_mu0 + l10(this.i) + this.variables[4].value) * this.precomp_omegaexp
-    const vterm = this.milestones[0] ? l10(this.vtot) * this.precomp_vexp : 0;
+    const omegaterm = (l10_q0_m0_mu0 + l10(this.i) + this.variables[4].value) * this.precomp_omegaexp;
 
-    const rhodot = this.totMult + this.c + this.variables[0].value + this.variables[1].value + xterm + omegaterm + vterm;
+    const rhodot =
+        this.totMult + this.c + this.variables[0].value + this.variables[1].value + xterm + omegaterm + this.precomp_vterm;
     this.rho.add(rhodot + l10(this.dt));
   }
   calcBundleCost(bundle: resetBundle): number {
