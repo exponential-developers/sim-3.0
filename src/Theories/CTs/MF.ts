@@ -67,11 +67,14 @@ class mfSim extends theoryClass<theory> {
   mfResetDepth: number;
   isCoast: boolean;
   normalVariables: Variable[];
+  // These are all precomputed values which only depend on things like variable levels and milestones.
+  // We track them here to unload things from tick function, which for MF specifically lead to _very_ tangible speed up.
   precomp_omegaexp: number;
   precomp_xexp: number;
   precomp_vexp: number;
   precomp_a1exp: number;
   precomp_vterm: number;
+  precomp_va1: number;
   precomp_va2: number;
 
   bestRes: simResult | null;
@@ -211,6 +214,7 @@ class mfSim extends theoryClass<theory> {
     this.precomp_xexp = this.xexp();
     this.precomp_omegaexp = this.omegaexp();
     this.compute_vterm();
+    this.compute_va1(); // We may have just updated a1exp, we need to update va1;
   }
   updateMilestonesNoMS(): boolean {
     const res = super.updateMilestonesNoMS();
@@ -236,6 +240,9 @@ class mfSim extends theoryClass<theory> {
 
   compute_vterm() {
       this.precomp_vterm = this.milestones[0] ? l10(this.vtot) * this.precomp_vexp : 0;
+  }
+  compute_va1() {
+      this.precomp_va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
   }
 
   resetParticle(): void {
@@ -305,11 +312,13 @@ class mfSim extends theoryClass<theory> {
     this.goalBundle = [0, 0, 0, 0];
     this.goalBundleCost = 0;
     this.bestRes = null;
+    //These will all precompute in precomputeExps or milestone update:
     this.precomp_vexp = -1;
     this.precomp_xexp = -1;
     this.precomp_omegaexp = -1;
     this.precomp_a1exp = -1;
     this.precomp_vterm = -1;
+    this.precomp_va1 = -1;
     this.precomp_va2 = 10 ** this.variables[3].value;
     this.updateMilestonesNoMS();
     // This will update precomp_vterm:
@@ -383,6 +392,9 @@ class mfSim extends theoryClass<theory> {
     return getBestResult(result, this.bestRes);
   }
   onVariablePurchased(id: number) {
+    if(id === 2) {
+      this.compute_va1(); // Update va1 after a1 level purchase.
+    }
     if(id === 3) {
       this.precomp_va2 = 10 ** this.variables[3].value;
     }
@@ -397,9 +409,8 @@ class mfSim extends theoryClass<theory> {
 
     if(this.i < icap) {
         // if max i is not reached, we add a value to it:
-        const va1 = 10 ** (this.variables[2].value * this.precomp_a1exp);
-        let scale = 1 - Math.E ** (-this.dt*va1/(400*this.precomp_va2));
-        if (scale < 1e-13) scale = this.dt*va1/(400*this.precomp_va2);
+        let scale = 1 - Math.E ** (-this.dt*this.precomp_va1/(400*this.precomp_va2));
+        if (scale < 1e-13) scale = this.dt*this.precomp_va1/(400*this.precomp_va2);
         this.i = this.i + scale*(icap - this.i)
         this.i = Math.min(this.i, icap);
     }
