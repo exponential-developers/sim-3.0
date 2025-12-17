@@ -254,7 +254,7 @@
           "stratFilterCondition": "false"
         },
         "T6SnaxIdleRecoveryCoast": {
-          "stratFilterCondition": "Semi-Idle && rho >= 400"
+          "stratFilterCondition": "false"
         },
         "T6C3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 25"
