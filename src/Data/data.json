@@ -250,6 +250,12 @@
         "T6SnaxCoast": {
           "stratFilterCondition": "Semi-Idle && rho >= 400"
         },
+        "T6SnaxIdleRecovery": {
+          "stratFilterCondition": "false"
+        },
+        "T6SnaxIdleRecoveryCoast": {
+          "stratFilterCondition": "Semi-Idle && rho >= 400"
+        },
         "T6C3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 25"
         },
