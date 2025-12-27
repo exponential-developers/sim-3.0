@@ -64,7 +64,7 @@
           "stratFilterCondition": "Semi-Idle && rho < 250"
         },
         "T2Haxolotl":  {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 250"
         }
       }
     },
