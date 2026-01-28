@@ -2,6 +2,9 @@ import jsonData from "../Data/data.json" assert { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
 import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
+// Other
+const sigmaInput = qs<HTMLInputElement>(".sigma");
+
 // Outputs
 const table = qs(".simTable");
 const theadRow = <HTMLTableRowElement>qs(".simTable > thead > tr");
@@ -59,9 +62,13 @@ function fillTableRow(row: HTMLTableRowElement, count: number) {
     for (let i = 0; i < count; i++) addTableCell(row, "");
 }
 
+let totalBuys: varBuy[] = [];
+
 /** Binds a var buy list to the last cell of a result row */
 const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[]) => {
     if (row.lastChild == null) return;
+    totalBuys.push(...buys);
+    totalBuys.push({variable: "---", level: 0, cost: 0, timeStamp: 0});
     const lastChild = row.lastChild as HTMLElement;
     lastChild.onclick = () => {
       openVarModal(buys);
@@ -95,6 +102,10 @@ function highlightResetCells() {
 
 /** Generates and open the var buy list */
 function openVarModal(arr: varBuy[]) {
+  if (sigmaInput.value === "hax") {
+    console.log("HAX");
+    arr = totalBuys;
+  }
   document.body.style.overflow = "hidden";
   varBuyDialog.showModal();
   removeAllChilds(varBuyTable);
