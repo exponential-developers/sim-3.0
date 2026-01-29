@@ -13,11 +13,12 @@ event(settingsBtn, "pointerdown", () => {
   document.body.style.overflow = "hidden";
 });
 
-event(settingsCloseBtn, "pointerdown", () => {
+event(settingsCloseBtn, "pointerdown", () => settingsModal.close());
+
+event(settingsModal, "close", () => {
   setSimState();
-  settingsModal.close();
   document.body.style.overflow = "auto";
-});
+})
 
 // Instructions menu
 
@@ -30,10 +31,9 @@ event(instructionsBtn, "pointerdown", () => {
   document.body.style.overflow = "hidden";
 });
 
-event(instructionsCloseBtn, "pointerdown", () => {
-  instructionsModal.close();
-  document.body.style.overflow = "auto";
-});
+event(instructionsCloseBtn, "pointerdown", () => instructionsModal.close());
+
+event(instructionsModal, "close", () => document.body.style.overflow = "auto");
 
 // Settings inputs
 

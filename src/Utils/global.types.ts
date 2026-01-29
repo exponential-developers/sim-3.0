@@ -123,6 +123,7 @@ declare global {
     completedCTs: SettingsCompletedCTsMode;
     showA23: boolean;
     showUnofficials: boolean;
+    totalPurchaseList: boolean;
   }
 
   interface simResult {

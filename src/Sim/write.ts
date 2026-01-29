@@ -2,8 +2,8 @@ import jsonData from "../Data/data.json" assert { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
 import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
-// Other
-const sigmaInput = qs<HTMLInputElement>(".sigma");
+// Settings
+const generateTotalPurchaseList = qs<HTMLInputElement>(".totalPurchaseList");
 
 // Outputs
 const table = qs(".simTable");
@@ -17,6 +17,8 @@ const varBuyListCloseBtn = qs<HTMLButtonElement>(".boughtVarsCloseBtn");
 // Consts
 const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
 const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
+
+let totalBuys: varBuy[] = [];
 
 // Utils
 function clearTable() {
@@ -62,13 +64,13 @@ function fillTableRow(row: HTMLTableRowElement, count: number) {
     for (let i = 0; i < count; i++) addTableCell(row, "");
 }
 
-let totalBuys: varBuy[] = [];
-
 /** Binds a var buy list to the last cell of a result row */
-const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[]) => {
+const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[], addToTotal = true) => {
     if (row.lastChild == null) return;
-    totalBuys.push(...buys);
-    totalBuys.push({variable: "---", level: 0, cost: 0, timeStamp: 0});
+    if (addToTotal && generateTotalPurchaseList.checked) {
+        totalBuys.push(...buys);
+        totalBuys.push({variable: "---", level: 0, cost: 0, timeStamp: 0});
+    }
     const lastChild = row.lastChild as HTMLElement;
     lastChild.onclick = () => {
       openVarModal(buys);
@@ -102,10 +104,6 @@ function highlightResetCells() {
 
 /** Generates and open the var buy list */
 function openVarModal(arr: varBuy[]) {
-  if (sigmaInput.value === "hax") {
-    console.log("HAX");
-    arr = totalBuys;
-  }
   document.body.style.overflow = "hidden";
   varBuyDialog.showModal();
   removeAllChilds(varBuyTable);
@@ -120,10 +118,9 @@ function openVarModal(arr: varBuy[]) {
   highlightResetCells();
 }
 
-event(varBuyListCloseBtn, "pointerdown", () => {
-  varBuyDialog.close();
-  document.body.style.overflow = "auto";
-});
+event(varBuyListCloseBtn, "pointerdown", () => varBuyDialog.close());
+
+event(varBuyDialog, "close", () => document.body.style.overflow = "auto");
 
 // Response writers
 
@@ -164,6 +161,9 @@ function writeChainSimResponse(response: ChainSimResponse) {
 
     tbody.append(labelRow);
     tbody.append(resRow);
+    if (generateTotalPurchaseList.checked) {
+        bindVarBuy(resRow, totalBuys, false);
+    }
 }
 
 function writeStepSimResponse(response: StepSimResponse) {
@@ -171,6 +171,13 @@ function writeStepSimResponse(response: StepSimResponse) {
         responseType: "single",
         result: res
     }));
+    if (generateTotalPurchaseList.checked) {
+        const resRow = ce<HTMLTableRowElement>("tr");
+        fillTableRow(resRow, 8);
+        addTableCell(resRow, "Total");
+        bindVarBuy(resRow, totalBuys, false);
+        tbody.append(resRow);
+    }
 }
 
 function writeSimAllResponse(response: SimAllResponse) {
