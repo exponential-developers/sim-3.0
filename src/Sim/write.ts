@@ -275,6 +275,8 @@ export function writeSimResponse(response: SimResponse) {
         'Pub Time'
     );
 
+    totalBuys = [];
+
     switch (mode) {
         case "single": writeSingleSimResponse(response); break;
         case "chain": writeChainSimResponse(response); break;
