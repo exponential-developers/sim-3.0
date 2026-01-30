@@ -10,6 +10,20 @@
   white-space: nowrap;
   text-align: left;
 }
+.simTable td.varBuyCell {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.simTable td.varBuyCell div,
+.simTable td.varBuyCell a {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.simTable td.varBuyCell svg {
+  height: 0.9rem;
+}
 .simTable tr {
   background-color: transparent;
 }

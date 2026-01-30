@@ -18,6 +18,20 @@ const varBuyListCloseBtn = qs<HTMLButtonElement>(".boughtVarsCloseBtn");
 const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
 const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
 
+const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
+        'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' +
+        'class="feather feather-download">\n' +
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>' +
+    '<polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>\n' +
+    '</svg>'
+
+const eyeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" ' + 
+        'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' + 
+        'stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">\n' + 
+    ' <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>\n' + 
+    ' <circle cx="12" cy="12" r="3"></circle>\n' + 
+    '</svg>';
+
 let totalBuys: varBuy[] = [];
 
 // Utils
@@ -56,16 +70,6 @@ function addTableCell(row: HTMLTableRowElement, content: string, rowspan = 1) {
     row.appendChild(cell);
 }
 
-const downloadIcon = "    <svg xmlns=\"http://www.w3.org\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"feather feather-download\">\n" +
-    "        <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"></path><polyline points=\"7 10 12 15 17 10\"></polyline><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"></line>\n" +
-    "    </svg>"
-
-function addTableCellWithDownloadCSV(row: HTMLTableRowElement, content: string, rowspan = 1) {
-    const cell = ce("td");
-    cell.innerHTML = content + " <a class='downloadCSV'>"+downloadIcon+"</a>"
-    if (rowspan > 1) cell.setAttribute("rowspan", String(rowspan));
-    row.appendChild(cell);
-}
 /**
  * Fills an HTML row with empty cells
  * @param row The HTML row to fill
@@ -74,23 +78,15 @@ function addTableCellWithDownloadCSV(row: HTMLTableRowElement, content: string, 
 function fillTableRow(row: HTMLTableRowElement, count: number) {
     for (let i = 0; i < count; i++) addTableCell(row, "");
 }
-function makeCsv(arr: varBuy[]): string {
-    let csvTotal = "variable,level,cost,timeStamp\n";
-    for(let item of arr) {
-        csvTotal += `"${item.variable}",${item.level},${logToExp(item.cost, 2)}${getCurrencySymbol(item.symbol)},${convertTime(item.timeStamp)}\n`;
-    }
-    return csvTotal;
-}
-function downloadCSV(csv: string, filename: string) {
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+
+function downloadString(str: string, filename: string) {
+    const blob = new Blob([str], { type: 'text/csv;charset=utf-8;' });
 
     // Create a URL for the blob
-    // @ts-ignore
-    if (navigator.msSaveBlob) { // IE 10+
-        // @ts-ignore
-        navigator.msSaveBlob(blob, filename);
+    if ((navigator as any).msSaveBlob) { // IE 10+
+        (navigator as any).msSaveBlob(blob, filename);
     } else {
+        const link = ce('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
         link.setAttribute('download', filename);
@@ -101,30 +97,40 @@ function downloadCSV(csv: string, filename: string) {
     }
 }
 
-/** Binds a var buy list to the last cell of a result row */
-const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[], addToTotal = true) => {
-    if (row.lastChild == null) return;
+function makeVarBuyCsv(arr: varBuy[]): string {
+    let csvTotal = "variable,level,cost,timeStamp\n";
+    for(let item of arr) {
+        csvTotal += `"${item.variable}",${item.level},${logToExp(item.cost, 2)}${getCurrencySymbol(item.symbol)},${convertTime(item.timeStamp)}\n`;
+    }
+    return csvTotal;
+}
+
+function addVarBuyCell(row: HTMLTableRowElement, buys: varBuy[], addToTotal = true, rowspan = 1) {
     if (addToTotal && generateTotalPurchaseList.checked) {
         totalBuys.push(...buys);
         totalBuys.push({variable: "---", level: 0, cost: 0, timeStamp: 0});
     }
-    const lastChild = row.lastChild as HTMLElement;
-    lastChild.onclick = () => {
-      openVarModal(buys);
-    };
-    lastChild.style.cursor = "pointer";
-    let downloadBtns = lastChild.querySelectorAll(".downloadCSV");
-    if(downloadBtns.length === 0) {
-        return;
+
+    const cell = ce("td");
+    cell.classList.add("varBuyCell");
+
+    const viewBtn = ce("div");
+    viewBtn.innerHTML = eyeIcon;
+    viewBtn.onclick = () => openVarModal(buys);
+
+    const downloadBtn = ce("a");
+    downloadBtn.innerHTML = downloadIcon;
+    downloadBtn.onclick = () => {
+        const csvOut = makeVarBuyCsv(buys);
+        downloadString(csvOut, "buys.csv");
     }
-    else {
-        let btn = downloadBtns[0] as HTMLElement;
-        btn.onclick = () => {
-            const csvOut = makeCsv(buys);
-            downloadCSV(csvOut, "buys.csv");
-        }
-    }
-  }
+
+    cell.appendChild(viewBtn);
+    cell.appendChild(downloadBtn);
+    
+    if (rowspan > 1) cell.setAttribute("rowspan", String(rowspan));
+    row.appendChild(cell);
+}
 
 // Var buy utils
 
@@ -183,8 +189,8 @@ function writeSingleSimResponse(response: SingleSimResponse) {
     addTableCell(row, formatNumber(res.pubMulti));
     addTableCell(row, res.strat);
     addTableCell(row, res.tauH == 0 ? "0" : formatNumber(res.tauH));
-    addTableCellWithDownloadCSV(row, convertTime(res.time));
-    bindVarBuy(row, res.boughtVars);
+    addTableCell(row, convertTime(res.time));
+    addVarBuyCell(row, res.boughtVars);
     tbody.append(row);
 }
 
@@ -198,25 +204,29 @@ function writeChainSimResponse(response: ChainSimResponse) {
 
     fillTableRow(labelRow, 4);
     fillTableRow(resRow, 4);
+
     addTableCell(labelRow, "ΔTau Total");
     addTableCell(resRow, logToExp(response.deltaTau, 2));
+
     fillTableRow(labelRow, 2);
     fillTableRow(resRow, 2);
+
     addTableCell(labelRow, `Average ${tau}/h`);
     addTableCell(resRow, formatNumber(response.averageRate, 5));
+
     addTableCell(labelRow, `Total Time`);
+    addTableCell(resRow, convertTime(response.totalTime));
+
+    fillTableRow(labelRow, 1);
     if(generateTotalPurchaseList.checked) {
-        addTableCellWithDownloadCSV(resRow, convertTime(response.totalTime));
+        addVarBuyCell(resRow, totalBuys, false);
     }
     else {
-        addTableCell(resRow, convertTime(response.totalTime));
+        fillTableRow(resRow, 1);
     }
 
     tbody.append(labelRow);
     tbody.append(resRow);
-    if (generateTotalPurchaseList.checked) {
-        bindVarBuy(resRow, totalBuys, false);
-    }
 }
 
 function writeStepSimResponse(response: StepSimResponse) {
@@ -227,8 +237,8 @@ function writeStepSimResponse(response: StepSimResponse) {
     if (generateTotalPurchaseList.checked) {
         const resRow = ce<HTMLTableRowElement>("tr");
         fillTableRow(resRow, 8);
-        addTableCellWithDownloadCSV(resRow, "Total");
-        bindVarBuy(resRow, totalBuys, false);
+        addTableCell(resRow, "Total");
+        addVarBuyCell(resRow, totalBuys, false);
         tbody.append(resRow);
     }
 }
@@ -240,8 +250,8 @@ function writeSimAllResponse(response: SimAllResponse) {
         addTableCell(row, res.strat);
         addTableCell(row, convertTime(res.time));
         addTableCell(row, logToExp(res.deltaTau, 2));
-        addTableCellWithDownloadCSV(row, logToExp(res.pubRho, 2));
-        bindVarBuy(row, res.boughtVars);
+        addTableCell(row, logToExp(res.pubRho, 2));
+        addVarBuyCell(row, res.boughtVars);
     }
 
     let sets: simAllResult[][] = [[], [], []];
@@ -319,7 +329,8 @@ export function writeSimResponse(response: SimResponse) {
             'Strat',
             'Time',
             `&Delta;${tau}`,
-            `Pub ${rho}`
+            `Pub ${rho}`,
+            'Var Buys'
         )
         setTableHeaders(...headers);
     }
@@ -332,7 +343,8 @@ export function writeSimResponse(response: SimResponse) {
         'Multi',
         'Strat',
         `${tau}/h`,
-        'Pub Time'
+        'Pub Time',
+        'Var Buys'
     );
 
     totalBuys = [];

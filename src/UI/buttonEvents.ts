@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import { qs, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");
@@ -43,6 +43,13 @@ function createImage(mode: string) {
     return;
   }
 
+  const lastHeader = qs(".simTable thead tr th:last-child");
+  const varBuyCells = qsa(".varBuyCell");
+
+  const initialLastHeaderDisplay = lastHeader.style.display;
+  lastHeader.style.display = "none";
+  varBuyCells.forEach((elem) => elem.style.display = "none");
+
   html2canvas(table).then((canvas) =>
     canvas.toBlob((blob) => {
       if (mode === "download") {
@@ -70,6 +77,9 @@ function createImage(mode: string) {
     })
   )
   .catch(() => console.log("Failed creating image."));
+
+  lastHeader.style.display = initialLastHeaderDisplay;
+  varBuyCells.forEach((elem) => elem.style.display = "flex");
 }
 
 event(saveDist, "pointerdown", () => {
