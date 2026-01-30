@@ -55,6 +55,17 @@ function addTableCell(row: HTMLTableRowElement, content: string, rowspan = 1) {
     if (rowspan > 1) cell.setAttribute("rowspan", String(rowspan));
     row.appendChild(cell);
 }
+
+const downloadIcon = "    <svg xmlns=\"http://www.w3.org\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"feather feather-download\">\n" +
+    "        <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"></path><polyline points=\"7 10 12 15 17 10\"></polyline><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"></line>\n" +
+    "    </svg>"
+
+function addTableCellWithDownloadCSV(row: HTMLTableRowElement, content: string, rowspan = 1) {
+    const cell = ce("td");
+    cell.innerHTML = content + " <a class='downloadCSV'>"+downloadIcon+"</a>"
+    if (rowspan > 1) cell.setAttribute("rowspan", String(rowspan));
+    row.appendChild(cell);
+}
 /**
  * Fills an HTML row with empty cells
  * @param row The HTML row to fill
@@ -62,6 +73,32 @@ function addTableCell(row: HTMLTableRowElement, content: string, rowspan = 1) {
  */
 function fillTableRow(row: HTMLTableRowElement, count: number) {
     for (let i = 0; i < count; i++) addTableCell(row, "");
+}
+function makeCsv(arr: varBuy[]): string {
+    let csvTotal = "variable,level,cost,timeStamp\n";
+    for(let item of arr) {
+        csvTotal += `"${item.variable}",${item.level},${logToExp(item.cost, 2)}${getCurrencySymbol(item.symbol)},${convertTime(item.timeStamp)}\n`;
+    }
+    return csvTotal;
+}
+function downloadCSV(csv: string, filename: string) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    // Create a URL for the blob
+    // @ts-ignore
+    if (navigator.msSaveBlob) { // IE 10+
+        // @ts-ignore
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // Clean up the DOM element
+    }
 }
 
 /** Binds a var buy list to the last cell of a result row */
@@ -76,6 +113,17 @@ const bindVarBuy = (row: HTMLTableRowElement, buys: varBuy[], addToTotal = true)
       openVarModal(buys);
     };
     lastChild.style.cursor = "pointer";
+    let downloadBtns = lastChild.querySelectorAll(".downloadCSV");
+    if(downloadBtns.length === 0) {
+        return;
+    }
+    else {
+        let btn = downloadBtns[0] as HTMLElement;
+        btn.onclick = () => {
+            const csvOut = makeCsv(buys);
+            downloadCSV(csvOut, "buys.csv");
+        }
+    }
   }
 
 // Var buy utils
@@ -135,7 +183,7 @@ function writeSingleSimResponse(response: SingleSimResponse) {
     addTableCell(row, formatNumber(res.pubMulti));
     addTableCell(row, res.strat);
     addTableCell(row, res.tauH == 0 ? "0" : formatNumber(res.tauH));
-    addTableCell(row, convertTime(res.time));
+    addTableCellWithDownloadCSV(row, convertTime(res.time));
     bindVarBuy(row, res.boughtVars);
     tbody.append(row);
 }
@@ -157,7 +205,12 @@ function writeChainSimResponse(response: ChainSimResponse) {
     addTableCell(labelRow, `Average ${tau}/h`);
     addTableCell(resRow, formatNumber(response.averageRate, 5));
     addTableCell(labelRow, `Total Time`);
-    addTableCell(resRow, convertTime(response.totalTime));
+    if(generateTotalPurchaseList.checked) {
+        addTableCellWithDownloadCSV(resRow, convertTime(response.totalTime));
+    }
+    else {
+        addTableCell(resRow, convertTime(response.totalTime));
+    }
 
     tbody.append(labelRow);
     tbody.append(resRow);
@@ -174,7 +227,7 @@ function writeStepSimResponse(response: StepSimResponse) {
     if (generateTotalPurchaseList.checked) {
         const resRow = ce<HTMLTableRowElement>("tr");
         fillTableRow(resRow, 8);
-        addTableCell(resRow, "Total");
+        addTableCellWithDownloadCSV(resRow, "Total");
         bindVarBuy(resRow, totalBuys, false);
         tbody.append(resRow);
     }
@@ -187,7 +240,7 @@ function writeSimAllResponse(response: SimAllResponse) {
         addTableCell(row, res.strat);
         addTableCell(row, convertTime(res.time));
         addTableCell(row, logToExp(res.deltaTau, 2));
-        addTableCell(row, logToExp(res.pubRho, 2));
+        addTableCellWithDownloadCSV(row, logToExp(res.pubRho, 2));
         bindVarBuy(row, res.boughtVars);
     }
 
@@ -210,25 +263,25 @@ function writeSimAllResponse(response: SimAllResponse) {
             if (response.stratType == "all") {
                 const rowActive = ce<HTMLTableRowElement>("tr");
                 const rowPassive = ce<HTMLTableRowElement>("tr");
-    
+
                 addTableCell(rowActive, res.theory, 2);
                 addTableCell(rowActive, logToExp(res.lastPub, 2), 2);
                 addTableCell(rowActive, formatNumber(res.ratio, 4), 2);
-    
+
                 completeSimAllLine(rowActive, res.active);
                 completeSimAllLine(rowPassive, res.idle);
-    
+
                 tbody.appendChild(rowActive);
                 tbody.appendChild(rowPassive);
             }
             else {
                 const uniqueRes = response.stratType == "active" ? res.active : res.idle;
                 const row = ce<HTMLTableRowElement>("tr");
-    
+
                 addTableCell(row, res.theory);
                 addTableCell(row, logToExp(res.lastPub, 2));
                 completeSimAllLine(row, uniqueRes);
-    
+
                 tbody.appendChild(row);
             }
         })
@@ -236,7 +289,7 @@ function writeSimAllResponse(response: SimAllResponse) {
         if (i < sets.length - 1) {
             const bufferRow1 = ce<HTMLTableRowElement>("tr");
             const bufferRow2 = ce<HTMLTableRowElement>("tr");
-            
+
             bufferRow1.style.display = "none";
             addTableCell(bufferRow2, "---");
 
