@@ -254,12 +254,14 @@ class efSim extends theoryClass<theory> {
         this.coasting.fill(false);
       }
       await this.buyVariablesFork();
-      if (this.forcedPubRho == 375 && this.maxRho >= 370 && this.doContinuityFork) {
+      if (this.forcedPubRho == 375 && this.maxRho >= 371 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
         fork.forcedPubRho = Infinity;
         const res = await fork.simulate();
-        this.bestRes = getBestResult(this.bestRes, res);
+        if (res.pubRho > 375) {
+          this.bestRes = getBestResult(this.bestRes, res);
+        }
       }
     }
     this.trimBoughtVars();
