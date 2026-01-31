@@ -127,7 +127,7 @@ class mfSim extends theoryClass<theory> {
           ...new Array(4).fill(() => true)
       ];
       const activeStrat2RC: conditionFunction[] = [
-          () => (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
+          () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
           () => true,
           () => (this.variables[2].cost < (this.goalBundleCost - l10(10)) || this.stopReset) && (l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15)),
           () => true,
