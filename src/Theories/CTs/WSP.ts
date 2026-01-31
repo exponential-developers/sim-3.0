@@ -8,8 +8,10 @@ import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/
 export default async function wsp(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "").replace("PostRecovery", "");
+    let data2: theoryData = {
+      ...data,
+      strat: data.strat.replace("Coast", "").replace("PostRecovery", "")
+    };
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -84,7 +86,7 @@ class wspSim extends theoryClass<theory> {
       ],
       WSPdStopC1: [
         () =>
-          this.variables[0].cost + l10(8 + (this.variables[0].level % 10)) <
+          this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
           Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity),
         true,
         true,
