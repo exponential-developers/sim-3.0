@@ -136,29 +136,13 @@ class mfSim extends theoryClass<theory> {
       ];
       const activeStrat3RC: conditionFunction[] = [
           // New active strat. Credits to Maimai.
-          activeStratRC[0],
+          () => (this.variables[0].cost < (this.goalBundleCost - l10(5)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
           () => true,
           activeStrat2RC[2],
           () => true,
           () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
           ...new Array(4).fill(() => true)
       ];
-    const tailActiveGen = (i: number, offset: number): conditionFunction => {
-      return () => {
-        if (this.maxRho <= this.lastPub + offset) {
-          return idleStrat[i]();
-        } else {
-          return activeStrat[i]();
-        }
-      }
-    }
-    function makeMFdPostRecovery(offset: number): conditionFunction[] {
-      let tailActive: conditionFunction[] = [];
-      for(let i = 0; i < 9; i++) {
-        tailActive.push(tailActiveGen(i, offset))
-      }
-      return tailActive;
-    }
 
     const conditions: Record<stratType[theory], conditionFunction[]> = {
       MF: idleStrat,
@@ -174,16 +158,6 @@ class mfSim extends theoryClass<theory> {
       MFdRCCoast: activeStratRC,
       MFd2RCCoast: activeStrat2RC,
       MFd3RCCoast: activeStrat3RC,
-      MFdPostRecovery0: makeMFdPostRecovery(0),
-      MFdPostRecovery1: makeMFdPostRecovery(1),
-      MFdPostRecovery2: makeMFdPostRecovery(2),
-      MFdPostRecovery3: makeMFdPostRecovery(3),
-      MFdPostRecovery4: makeMFdPostRecovery(4),
-      MFdPostRecovery5: makeMFdPostRecovery(5),
-      MFdPostRecovery6: makeMFdPostRecovery(6),
-      MFdPostRecovery7: makeMFdPostRecovery(7),
-      MFdPostRecovery8: makeMFdPostRecovery(8),
-      MFdPostRecovery9: makeMFdPostRecovery(9)
     };
     return conditions[this.strat];
   }

@@ -636,10 +636,10 @@
           "stratFilterCondition": "false"
         },
         "MFdCoast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "Active"
         },
         "MFd2Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "Active"
         },
         "MFd3Coast": {
           "stratFilterCondition": "Active || Very-Active"
@@ -648,40 +648,10 @@
           "stratFilterCondition": "false"
         },
         "MFd2RCCoast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Very-Active"
         },
         "MFd3RCCoast": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery0": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery1": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery2": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery3": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery4": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery5": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery6": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery7": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery8": {
-          "stratFilterCondition": "false"
-        },
-        "MFdPostRecovery9": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Very-Active"
         }
       }
     },
