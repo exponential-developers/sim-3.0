@@ -74,7 +74,7 @@ class fpSim extends theoryClass<theory> {
           const levelMinusMod = this.variables[1].level - mod100;
           const totalCost = this.variables[1].getCostForLevels(
               levelMinusMod + mod100 + 1,
-              levelMinusMod + 101
+              levelMinusMod + 102 //?
           )
           if(totalCost < this.variables[2].cost + 0.1 && (this.milestones[4] == 0 || totalCost < this.variables[7].cost)) {
             return true;

@@ -401,7 +401,7 @@ class mfSim extends theoryClass<theory> {
     let cost = 0.;
     for (let i = 0; i < 4; i++) {
       if (bundle[i] == 0) continue;
-      cost = add(cost, this.variables[5+i].getCostForLevels(this.variables[5+i].level, this.variables[5+i].level + bundle[i] - 1))
+      cost = add(cost, this.variables[5+i].getCostForLevels(this.variables[5+i].level, this.variables[5+i].level + bundle[i]))
     }
     return cost
   }
