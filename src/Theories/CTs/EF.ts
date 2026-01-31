@@ -8,7 +8,21 @@ import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallabl
 import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
 
 export default async function ef(data: theoryData): Promise<simResult> {
+  if (data.strat !== "EFPlay") {
+    const sim = new efSim(data);
+    const res = await sim.simulate();
+    return res;
+  }
+  const initialSim = new efSim({
+    ...data,
+    strat: "EFAI"
+  });
+  const initialRes = await initialSim.simulate();
   const sim = new efSim(data);
+  sim.lastStronga2 = 10 * Math.floor((getLastLevel("a2", initialRes.boughtVars) - 1) / 10) + 1;
+  sim.lastStronga2Cost = l10(500) + 2.2 * (sim.lastStronga2 - 1) * l10(2);
+  sim.lasta23 = [getLastLevel("a2", initialRes.boughtVars), getLastLevel("a3", initialRes.boughtVars)];
+  sim.lasta23costs = [l10(500) + 2.2 * (sim.lasta23[0] - 1) * l10(2), l10(500) + 2.2 * (sim.lasta23[1] - 1) * l10(2)];
   const res = await sim.simulate();
   return res;
 }
@@ -23,6 +37,11 @@ class efSim extends theoryClass<theory> {
   q: number;
   t_var: number;
   nextMilestoneCost: number;
+
+  lastStronga2?: number;
+  lastStronga2Cost?: number;
+  lasta23?: [number, number];
+  lasta23costs?: [number, number];
 
   forcedPubRho: number;
   coasting: boolean[];
@@ -71,6 +90,30 @@ class efSim extends theoryClass<theory> {
         /*a2*/ true,
         /*a3*/ true,
       ],
+      EFPlay: [
+        true,
+        () => this.variables[1].cost + l10(10 + (this.variables[1].level % 10)) < this.variables[2].cost,
+        true,
+        () => this.lastStronga2 === undefined || this.lasta23 === undefined  || this.lastStronga2Cost === undefined || this.lasta23costs === undefined ? true
+          : this.variables[8].level < this.lastStronga2 ? this.variables[3].cost + l10(5) < this.lastStronga2Cost
+          : this.variables[3].cost + l10(5) < this.lasta23costs[0] ? this.variables[3].cost + l10(2) < this.variables[8].cost
+          : false,
+        () => this.lastStronga2 === undefined || this.lasta23 === undefined  || this.lastStronga2Cost === undefined || this.lasta23costs === undefined ? true
+          : this.variables[8].level < this.lastStronga2 ? this.variables[4].cost + l10(5) < this.lastStronga2Cost
+          : this.variables[4].cost + l10(5) < this.lasta23costs[0] ? this.variables[4].cost + l10(2) < this.variables[8].cost
+          : false,
+        () => this.lastStronga2 === undefined || this.lasta23 === undefined  || this.lastStronga2Cost === undefined || this.lasta23costs === undefined ? true
+          : this.variables[5].cost + l10(5) < this.lasta23costs[1] ? this.variables[5].cost + l10(1.25) < this.variables[9].cost
+          : false,
+        () => this.lastStronga2 === undefined || this.lasta23 === undefined  || this.lastStronga2Cost === undefined || this.lasta23costs === undefined ? true
+          : this.variables[6].cost + l10(5) < this.lasta23costs[1] ? this.variables[6].cost + l10(1.25) < this.variables[9].cost
+          : false,
+        () => this.variables[7].cost + l10(4 + (this.variables[7].level % 10) / 2) < this.variables[2].cost || this.coasting[2],
+        () => this.lastStronga2 === undefined || this.lasta23 === undefined  || this.lastStronga2Cost === undefined || this.lasta23costs === undefined ? true
+          : Math.min(this.variables[3].cost, this.variables[4].cost) + l10(5) < this.lastStronga2Cost ? false
+          : true,
+        () => true,
+      ]
     };
     return toCallables(conditions[this.strat]);
   }
@@ -180,6 +223,11 @@ class efSim extends theoryClass<theory> {
     this.q = other.q;
     this.t_var = other.t_var;
     this.nextMilestoneCost = other.nextMilestoneCost;
+
+    this.lastStronga2 = other.lastStronga2;
+    this.lastStronga2Cost = other.lastStronga2Cost;
+    this.lasta23 = other.lasta23;
+    this.lasta23costs = other.lasta23costs;
 
     this.forcedPubRho = other.forcedPubRho;
     this.coasting = [...other.coasting];

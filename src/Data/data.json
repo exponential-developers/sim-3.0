@@ -477,6 +477,9 @@
         },
         "EFAI": {
           "stratFilterCondition": "Active || Very-Active"
+        },
+        "EFPlay": {
+          "stratFilterCondition": "false && Very-Active && rho > 50"
         }
       }
     },
