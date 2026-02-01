@@ -90,7 +90,7 @@ class fpSim extends theoryClass<theory> {
       }, //c2 - 2
       //q1 - 3
       () => {
-        let cond1 = this.variables[3].cost + l10((this.variables[3].level % 10) + 1)*1.5 < this.variables[4].cost
+        let cond1 = this.variables[3].cost + l10(((this.variables[3].level % 10) + 1) * 2) < this.variables[4].cost
         //let cond2 = this.variables[3].cost + l10((this.variables[3].level % 10) + 1) < this.variables[2].cost
         return cond1;
       }, //q1
