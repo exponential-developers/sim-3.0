@@ -17,6 +17,9 @@ export default async function t5(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
+    if(data2.strat == "T5Idle2Coast") {
+      data2.strat = "T5IdleCoast";
+    }
     data2.strat = data2.strat.replace("Coast", "");
     const sim1 = new t5Sim(data2);
     const res1 = await sim1.simulate();
@@ -24,6 +27,11 @@ export default async function t5(data: theoryData): Promise<simResult> {
     const sim2 = new t5Sim(data);
     sim2.variables[0].setOriginalCap(lastQ1);
     sim2.variables[0].configureCap(13);
+    if(data.strat == "T5Idle2Coast") {
+      let last_c2 = getLastLevel("c1", res1.boughtVars) || sim1.variables[2].level;
+      sim2.variables[2].setOriginalCap(last_c2);
+      sim2.variables[2].configureCap(200);
+    }
     res = await sim2.simulate();
   }
   else {
@@ -51,7 +59,7 @@ class t5Sim extends theoryClass<theory> {
       T5Idle: [
         trueFunc,
         trueFunc,
-        () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub, 
+        () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
         () => this.c2worth,
         trueFunc
       ],
@@ -62,8 +70,15 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth,
         trueFunc
       ],
+      T5Idle2Coast: [
+        () => this.variables[0].shouldBuy,
+        trueFunc,
+        () => this.variables[2].shouldBuy,
+        () => this.c2worth,
+        trueFunc
+      ],
       T5AI2: [
-        () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) 
+        () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
         trueFunc,
         () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
@@ -141,11 +156,21 @@ class t5Sim extends theoryClass<theory> {
       this.c2Counter = 0;
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      if(this.variables[2].shouldFork) await this.doForkVariable(2);
     }
     this.trimBoughtVars();
-    let stratExtra = this.strat.includes("T5Idle") ? " " + logToExp(this.variables[2].cost, 1) : "";
+    let stratExtra = (
+        this.strat.includes("T5Idle") && !this.strat.includes("Idle2")
+    ) ? " " + logToExp(this.variables[2].cost, 1) : "";
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars))
+    }
+    if(this.strat.includes("Idle2")) {
+      let c1_last = getLastLevel("c1", this.boughtVars);
+      if(c1_last === 0) {
+        c1_last = this.variables[2].level;
+      }
+      stratExtra += this.variables[2].prepareExtraForCap(c1_last)
     }
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
@@ -168,7 +193,7 @@ class t5Sim extends theoryClass<theory> {
       this.c2worth = iq >= this.variables[3].value + L10_2 * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + L10_2_3;
     }
     if(
-        id === 0 &&
+        (id === 0 || id === 2) &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()

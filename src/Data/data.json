@@ -212,6 +212,9 @@
         "T5IdleCoast": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "T5Idle2Coast": {
+          "stratFilterCondition": "false"
+        },
         "T5AI2": {
           "stratFilterCondition": "Active || Very-Active"
         },
