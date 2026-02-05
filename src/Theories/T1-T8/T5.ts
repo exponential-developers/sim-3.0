@@ -27,9 +27,12 @@ export default async function t5(data: theoryData): Promise<simResult> {
     const sim2 = new t5Sim(data);
     sim2.variables[0].setOriginalCap(lastQ1);
     sim2.variables[0].configureCap(13);
+    let last_c2 = getLastLevel("c2", res1.boughtVars);
+    sim2.variables[3].setOriginalCap(last_c2);
+    sim2.variables[3].configureCap(1);
     if(data.strat == "T5Idle2Coast") {
-      let last_c2 = getLastLevel("c1", res1.boughtVars) || sim1.variables[2].level;
-      sim2.variables[2].setOriginalCap(last_c2);
+      let last_c1 = getLastLevel("c1", res1.boughtVars) || sim1.variables[2].level;
+      sim2.variables[2].setOriginalCap(last_c1);
       sim2.variables[2].configureCap(200);
     }
     res = await sim2.simulate();
@@ -67,14 +70,14 @@ class t5Sim extends theoryClass<theory> {
         () => this.variables[0].shouldBuy,
         trueFunc,
         () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
-        () => this.c2worth,
+        () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc
       ],
       T5Idle2Coast: [
         () => this.variables[0].shouldBuy,
         trueFunc,
         () => this.variables[2].shouldBuy,
-        () => this.c2worth,
+        () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc
       ],
       T5AI2: [
@@ -157,6 +160,7 @@ class t5Sim extends theoryClass<theory> {
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
       if(this.variables[2].shouldFork) await this.doForkVariable(2);
+      if(this.variables[3].shouldFork) await this.doForkVariable(3);
     }
     this.trimBoughtVars();
     let stratExtra = (
@@ -164,6 +168,7 @@ class t5Sim extends theoryClass<theory> {
     ) ? " " + logToExp(this.variables[2].cost, 1) : "";
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars))
+      stratExtra += this.variables[3].prepareExtraForCap(getLastLevel("c2", this.boughtVars))
     }
     if(this.strat.includes("Idle2")) {
       let c1_last = getLastLevel("c1", this.boughtVars);
@@ -193,7 +198,7 @@ class t5Sim extends theoryClass<theory> {
       this.c2worth = iq >= this.variables[3].value + L10_2 * this.c2Counter + this.variables[4].value * (1 + 0.05 * this.milestones[2]) + L10_2_3;
     }
     if(
-        (id === 0 || id === 2) &&
+        (id === 0 || id === 2 || id === 3) &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()
