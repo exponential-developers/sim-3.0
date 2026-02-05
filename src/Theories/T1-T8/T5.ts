@@ -93,7 +93,7 @@ class t5Sim extends theoryClass<theory> {
             <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
         trueFunc,
         () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
-        () => this.c2worth,
+        () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc,
       ],
     };
