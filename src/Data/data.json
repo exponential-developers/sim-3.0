@@ -34,8 +34,11 @@
         "T1SolarXLII": {
           "stratFilterCondition": "Very-Active"
         },
-        "T1SolarXLIICoast": {
-          "stratFilterCondition": "Very-Active"
+        "T1SolarXLIIOld": {
+          "stratFilterCondition": "false"
+        },
+        "T1SolarXLIIOldCoast": {
+          "stratFilterCondition": "false"
         }
       }
     },
