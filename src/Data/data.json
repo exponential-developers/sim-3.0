@@ -7,14 +7,14 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25 || rho < 25"
         },
         "T1Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25 || rho < 25"
+          "stratFilterCondition": "Semi-Idle && rho < 25 || rho < 25"
         },
         "T1C34": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 850",
           "forcedCondition": "rho >= 25"
         },
         "T1C34Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle)",
+          "stratFilterCondition": "Semi-Idle",
           "forcedCondition": "rho >= 25"
         },
         "T1C4": {
@@ -22,7 +22,7 @@
           "forcedCondition": "rho >= 50"
         },
         "T1C4Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 625",
+          "stratFilterCondition": "Semi-Idle && rho > 625",
           "forcedCondition": "rho >= 950"
         },
         "T1Ratio": {
@@ -109,7 +109,7 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 400"
         },
         "T3P2C23C33Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 400"
+          "stratFilterCondition": "Semi-Idle && rho > 400"
         },
         "T3noC11C13C21C33d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 150 && rho < 350",
@@ -315,14 +315,14 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && (rho < 25 || (rho >= 75 && rho < 100))"
         },
         "T7C12Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && (rho < 25 || (rho >= 75 && rho < 100))"
+          "stratFilterCondition": "Semi-Idle && (rho < 25 || (rho >= 75 && rho < 100))"
         },
         "T7C3": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 25 && rho < 75",
           "forcedCondition": "rho >= 25"
         },
         "T7C3Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 25 && rho < 75",
+          "stratFilterCondition": "Semi-Idle && rho >= 25 && rho < 75",
           "forcedCondition": "rho >= 25"
         },
         "T7noC12": {
@@ -330,7 +330,7 @@
           "forcedCondition": "rho >= 25"
         },
         "T7noC12Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 100 && rho < 550",
+          "stratFilterCondition": "Semi-Idle && rho >= 100 && rho < 550",
           "forcedCondition": "rho >= 25"
         },
         "T7noC123": {
@@ -338,7 +338,7 @@
           "forcedCondition": "rho >= 75"
         },
         "T7noC123Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 500 && rho < 625",
+          "stratFilterCondition": "Semi-Idle && rho > 500 && rho < 625",
           "forcedCondition": "rho >= 75"
         },
         "T7noC1234": {
@@ -346,7 +346,7 @@
           "forcedCondition": "rho >= 75"
         },
         "T7noC1234Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho > 525",
+          "stratFilterCondition": "Semi-Idle && rho > 525",
           "forcedCondition": "rho >= 75"
         },
         "T7C12d": {
@@ -430,7 +430,7 @@
           "stratFilterCondition": "(Idle || Semi-Idle)"
         },
         "WSPStopC1Coast": {
-          "stratFilterCondition": "(Idle || Semi-Idle)"
+          "stratFilterCondition": "Semi-Idle"
         },
         "WSPdStopC1": {
           "stratFilterCondition": "Active || Very-Active"
@@ -516,7 +516,7 @@
           "stratFilterCondition":"Idle || Semi-Idle || rho <= 30"
         },
         "FICoast":{
-          "stratFilterCondition":"Idle || Semi-Idle || rho <= 30"
+          "stratFilterCondition":"Semi-Idle || (!Idle && rho <= 30)"
         },
         "FId": {
           "stratFilterCondition":"Active || Very-Active"
@@ -528,7 +528,7 @@
           "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
         },
         "FIPermaSwapCoast":{
-          "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
+          "stratFilterCondition":"Semi-Idle && rho >= 1000 && rho <= 1300"
         },
         "FIdPermaSwap":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
