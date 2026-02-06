@@ -185,26 +185,46 @@ class t1Sim extends theoryClass<theory> {
       this.pubConditions.push(() => this.maxRho >= pub);
     }
     // New pub cycle
-    if (this.strat === "T1SolarXLII" || this.strat === "T1C34Coast" || this.strat === "T1C4Coast")
+    if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(this.strat))
     {
       const c4dist = nextc4 - this.lastPub;
       let prevPoint = 0;
       let nextPoint = 0;
-      if (c4dist > 7.5) {
-        prevPoint = nextc4 - 10 + l10(5.5);
-        nextPoint = nextc4 - 6 + l10(1.5);
-      }
-      else if (c4dist > 4.5) {
-        prevPoint = nextc4 - 6 + l10(1.5);
-        nextPoint = nextc4 - 4 + l10(5.5);
-      }
-      else if (c4dist > 2.25) {
-        prevPoint = nextc4 - 4 + l10(5.5);
-        nextPoint = nextc4 - 2 + l10(5.5);
+      if (this.strat === "T1SolarXLII") {
+        if (c4dist > 7.5) {
+          prevPoint = nextc4 - 10 + l10(5.5);
+          nextPoint = nextc4 - 6 + l10(1.5);
+        }
+        else if (c4dist > 4.5) {
+          prevPoint = nextc4 - 6 + l10(1.5);
+          nextPoint = nextc4 - 4 + l10(5.5);
+        }
+        else if (c4dist > 2.25) {
+          prevPoint = nextc4 - 4 + l10(5.5);
+          nextPoint = nextc4 - 2 + l10(5.5);
+        }
+        else {
+          prevPoint = nextc4 - 2 + l10(5.5);
+          nextPoint = nextc4 + 2 + l10(1.5);
+        }
       }
       else {
-        prevPoint = nextc4 - 2 + l10(5.5);
-        nextPoint = nextc4 + 2 + l10(1.5);
+        if (c4dist > 7.5) {
+          prevPoint = nextc4 - 10 + l10(6.5);
+          nextPoint = nextc4 - 6;
+        }
+        else if (c4dist > 4.5) {
+          prevPoint = nextc4 - 6;
+          nextPoint = nextc4 - 4 + l10(6.5);
+        }
+        else if (c4dist > 2.25) {
+          prevPoint = nextc4 - 4 + l10(6.5);
+          nextPoint = nextc4 - 2 + l10(6.5);
+        }
+        else {
+          prevPoint = nextc4 - 2 + l10(6.5);
+          nextPoint = nextc4 + 2;
+        }
       }
       let misalignment = this.lastPub - prevPoint;
       if (Math.abs(misalignment) < l10(2)) misalignment = 0;
