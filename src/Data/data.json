@@ -23,7 +23,7 @@
         },
         "T1C4Coast": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 625",
-          "forcedCondition": "rho >= 50"
+          "forcedCondition": "rho >= 950"
         },
         "T1Ratio": {
           "stratFilterCondition": "(Very-Active && rho < 250) || Active"
