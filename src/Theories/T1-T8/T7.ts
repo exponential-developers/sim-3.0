@@ -13,10 +13,15 @@ export default async function t7(data: theoryData): Promise<simResult> {
     data2.strat = data2.strat.replace("Coast", "");
     const sim1 = new t7Sim(data2);
     const res1 = await sim1.simulate();
-    const lastQ1 = getLastLevel("q1", res1.boughtVars);
     const sim2 = new t7Sim(data);
+
+    const lastQ1 = getLastLevel("q1", res1.boughtVars);
     sim2.variables[0].setOriginalCap(lastQ1);
-    sim2.variables[0].configureCap(13)
+    sim2.variables[0].configureCap(13);
+    const lastC6 = getLastLevel("c6", res1.boughtVars);
+    sim2.variables[6].setOriginalCap(lastC6);
+    sim2.variables[6].configureCap(1);
+
     res = await sim2.simulate();
   }
   else {
@@ -39,6 +44,7 @@ class t7Sim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const q1CoastCond = () => this.variables[0].shouldBuy;
+    const c6CoastCond = () => this.variables[6].shouldBuy;
     if (this.lastPub >= 100) this.c2ratio = 100;
     if (this.lastPub >= 175) this.c2ratio = 10;
     if (this.lastPub >= 250) this.c2ratio = 20;
@@ -46,17 +52,17 @@ class t7Sim extends theoryClass<theory> {
     if (this.lastPub >= 300) this.c2ratio = Infinity;
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T7: [true, true, true, true, true, true, true],
-      T7Coast: [q1CoastCond, true, true, true, true, true, true],
+      T7Coast: [q1CoastCond, true, true, true, true, true, c6CoastCond],
       T7C12: [true, true, true, false, false, false, false],
       T7C12Coast: [q1CoastCond, true, true, false, false, false, false],
       T7C3: [true, false, false, true, false, false, false],
       T7C3Coast: [q1CoastCond, false, false, true, false, false, false],
       T7noC12: [true, false, false, true, true, true, true],
-      T7noC12Coast: [q1CoastCond, false, false, true, true, true, true],
+      T7noC12Coast: [q1CoastCond, false, false, true, true, true, c6CoastCond],
       T7noC123: [true, false, false, false, true, true, true],
-      T7noC123Coast: [q1CoastCond, false, false, false, true, true, true],
+      T7noC123Coast: [q1CoastCond, false, false, false, true, true, c6CoastCond],
       T7noC1234: [true, false, false, false, false, true, true],
-      T7noC1234Coast: [q1CoastCond, false, false, false, false, true, true],
+      T7noC1234Coast: [q1CoastCond, false, false, false, false, true, c6CoastCond],
       T7C12d: [() => this.variables[0].cost + 1 < this.variables[2].cost, () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
       T7C12dCoast: [() => q1CoastCond() && (this.variables[0].cost + 1 < this.variables[2].cost), () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
       T7C3d: [() => this.variables[0].cost + 1 < this.variables[3].cost, false, false, true, false, false, false],
@@ -77,7 +83,7 @@ class t7Sim extends theoryClass<theory> {
         () => this.variables[3].cost + 1 < this.variables[6].cost,
         () => this.variables[4].cost + 1 < this.variables[6].cost,
         () => this.variables[5].cost + l10(4) < this.variables[6].cost,
-        true,
+        c6CoastCond,
       ],
     };
     return toCallables(conditions[this.strat]);
@@ -138,11 +144,15 @@ class t7Sim extends theoryClass<theory> {
       if (this.lastPub < 175) this.updateMilestones();
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      if(this.variables[6].shouldFork) await this.doForkVariable(6);
     }
     this.trimBoughtVars()
     let stratExtra = this.strat.includes("T7PlaySpqcey") && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
+      if(this.variables[6].level !== 0) {
+        stratExtra += this.variables[6].prepareExtraForCap(getLastLevel("c6", this.boughtVars));
+      }
     }
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
@@ -164,7 +174,7 @@ class t7Sim extends theoryClass<theory> {
   }
   onVariablePurchased(id: number) {
     if(
-        id === 0 &&
+        (id === 0 || id === 6) &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()
