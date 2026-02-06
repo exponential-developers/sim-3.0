@@ -105,9 +105,9 @@ class t1Sim extends theoryClass<theory> {
       T1: new Array(6).fill(true),
       T1Coast: [q1CoastCond, true, true, true, c3CoastCond, true],
       T1C34: [true, true, false, false, true, true],
-      T1C34Coast: [q1CoastCond, true, false, false, c3CoastCond, true],
+      T1C34Coast: [q1CoastCond, q2CoastCond, false, false, c3CoastCond, true],
       T1C4: [true, true, false, false, false, true],
-      T1C4Coast: [q1CoastCond, true, false, false, false, true],
+      T1C4Coast: [q1CoastCond, q2CoastCond, false, false, false, true],
       T1Ratio: [
         () => this.variables[0].cost + 1 < this.rho.value, // q1
         () => this.variables[1].cost + l10(1.11) < this.rho.value,
@@ -132,11 +132,11 @@ class t1Sim extends theoryClass<theory> {
   }
   getVariableAvailability(): conditionFunction[] {
     return [
-      () => true, 
-      () => true, 
-      () => true, 
-      () => true, 
-      () => this.milestones[2] > 0, 
+      () => true,
+      () => true,
+      () => true,
+      () => true,
+      () => this.milestones[2] > 0,
       () => this.milestones[3] > 0
     ];
   }
@@ -175,9 +175,9 @@ class t1Sim extends theoryClass<theory> {
     const nextc4 = Math.ceil((this.lastPub - 10) / 8) * 8 + 10;
     // Old pub cycle
     if (this.strat.includes("Old")) {
-      const pub = 
-          nextc4 - this.lastPub < 3 ? nextc4 + 2 
-        : nextc4 - this.lastPub < 5 ? nextc4 - 2 + l10(1.5) 
+      const pub =
+          nextc4 - this.lastPub < 3 ? nextc4 + 2
+        : nextc4 - this.lastPub < 5 ? nextc4 - 2 + l10(1.5)
         : nextc4 - 4 + l10(1.4);
       this.coast = (nextc4 - this.lastPub < 3 ? nextc4 : Math.floor(this.lastPub)) + l10(30);
       this.coast = Math.max(8 + l10(30), this.coast + Math.floor(pub - this.coast));
@@ -257,8 +257,8 @@ class t1Sim extends theoryClass<theory> {
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   tick() {
-    this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1]) 
-      + this.variables[3].value 
+    this.term1 = this.variables[2].value * (1 + 0.05 * this.milestones[1])
+      + this.variables[3].value
       + (this.milestones[0] > 0 ? l10(1 + Math.max(this.rho.value, 0) / Math.LOG10E / 100) : 0);
     this.term2 = add(this.variables[4].value + this.rho.value * 0.2, this.variables[5].value + this.rho.value * 0.3);
     this.term3 = this.variables[0].value + this.variables[1].value;
