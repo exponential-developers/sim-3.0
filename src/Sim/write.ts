@@ -1,13 +1,13 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds, downloadString } from "../Utils/DOMhelpers";
 
 // Settings
 const generateTotalPurchaseList = qs<HTMLInputElement>(".totalPurchaseList");
 
 // Outputs
 const table = qs(".simTable");
-const theadRow = <HTMLTableRowElement>qs(".simTable > thead > tr");
+const theadRow = qs<HTMLTableRowElement>(".simTable > thead > tr");
 const tbody = qs(".simTable > tbody");
 
 const varBuyDialog = qs<HTMLDialogElement>(".boughtVars");
@@ -77,24 +77,6 @@ function addTableCell(row: HTMLTableRowElement, content: string, rowspan = 1) {
  */
 function fillTableRow(row: HTMLTableRowElement, count: number) {
     for (let i = 0; i < count; i++) addTableCell(row, "");
-}
-
-function downloadString(str: string, filename: string) {
-    const blob = new Blob([str], { type: 'text/csv;charset=utf-8;' });
-
-    // Create a URL for the blob
-    if ((navigator as any).msSaveBlob) { // IE 10+
-        (navigator as any).msSaveBlob(blob, filename);
-    } else {
-        const link = ce('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link); // Clean up the DOM element
-    }
 }
 
 function makeVarBuyCsv(arr: varBuy[]): string {

@@ -1,10 +1,11 @@
 import html2canvas from "html2canvas";
-import { qs, qsa, ce, event, removeAllChilds } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds, downloadString } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");
 const copyImage = qs<HTMLButtonElement>(".imageC");
 const downloadImage = qs(".imageD");
+const downloadCsv = qs(".csvD");
 const clearInput = qs(".clearInput");
 
 const saveDist = qs<HTMLButtonElement>(".saveDist");
@@ -18,8 +19,8 @@ const modeInput = qs<HTMLTextAreaElement>(".modeInput");
 
 
 const output = qs(".output");
-const table = qs(".simTable")
-const tbody = qs("tbody");
+const table = qs(".simTable");
+const tbody = qs(".simTable tbody");
 
 event(clear, "pointerdown", () => {
   removeAllChilds(tbody);
@@ -37,6 +38,12 @@ event(clearInput, "pointerdown", () => {
 
 event(copyImage, "pointerdown", () => createImage(""));
 event(downloadImage, "pointerdown", () => createImage("download"));
+event(downloadCsv, "pointerdown", () => {
+  if (table.children[0].children[0].childElementCount == 0) {
+    return;
+  }
+  downloadString(makeTableCsv(), "sim_results.csv");
+})
 
 function createImage(mode: string) {
   if (table.children[0].children[0].childElementCount == 0) {
@@ -80,6 +87,66 @@ function createImage(mode: string) {
 
   lastHeader.style.display = initialLastHeaderDisplay;
   varBuyCells.forEach((elem) => elem.style.display = "flex");
+}
+
+function makeTableCsv(): string {
+    const theadRow = qs(".simTable thead tr");
+
+    let csvTotal = "";
+
+    if (table.classList.contains("big")) {
+      for (let i = 0; i < theadRow.children.length - 1; i++) {
+        csvTotal += theadRow.children[i].innerHTML + ",";
+      }
+      csvTotal += "\n";
+      let rowIndex = 0;
+      while (rowIndex < tbody.children.length) {
+        let row = tbody.children[rowIndex];
+        if (row.children.length >= 2) {
+          if ((row.children[0] as HTMLTableCellElement).rowSpan == 2) {
+            rowIndex++;
+            let nextRow = tbody.children[rowIndex];
+            let row1Content = [];
+            let row2Content = [];
+            let j = 0;
+            for (let i = 0; i < theadRow.children.length - 1; i++) {
+              if ((row.children[i] as HTMLTableCellElement).rowSpan == 2) {
+                row1Content.push(row.children[i].innerHTML);
+                row2Content.push(row.children[i].innerHTML);
+              }
+              else {
+                row1Content.push(row.children[i].innerHTML);
+                row2Content.push(nextRow.children[j].innerHTML);
+                j += 1;
+              }
+            }
+            csvTotal += row1Content.join(",") + ",\n";
+            csvTotal += row2Content.join(",") + ",\n";
+          }
+          else {
+            for (let i = 0; i < 9; i++) {
+              csvTotal += row.children[i].innerHTML + ",";
+            }
+            csvTotal += "\n";
+          }
+        }
+        rowIndex++;
+      }
+    }
+    else {
+      for (let i = 0; i < 9; i++) {
+        csvTotal += theadRow.children[i].innerHTML + ",";
+      }
+      csvTotal += "\n";
+      for (let row of tbody.children) {
+          for (let i = 0; i < 9; i++) {
+              csvTotal += row.children[i].innerHTML + ",";
+          }
+          csvTotal += "\n";
+      }
+    }
+
+    return csvTotal;
 }
 
 event(saveDist, "pointerdown", () => {

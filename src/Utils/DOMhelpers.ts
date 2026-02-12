@@ -15,3 +15,26 @@ export const event = <T>(element: HTMLElement, eventType: string, callback: (e: 
 export const removeAllChilds = (element: HTMLElement) => {
   while (element.firstChild) element.firstChild.remove();
 }
+
+/**
+ * Downloads a text file (usually csv) from a given string
+ * @param str string to download
+ * @param filename name of the file
+ */
+export function downloadString(str: string, filename: string) {
+    const blob = new Blob([str], { type: 'text/csv;charset=utf-8;' });
+
+    // Create a URL for the blob
+    if ((navigator as any).msSaveBlob) { // IE 10+
+        (navigator as any).msSaveBlob(blob, filename);
+    } else {
+        const link = ce('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // Clean up the DOM element
+    }
+}
