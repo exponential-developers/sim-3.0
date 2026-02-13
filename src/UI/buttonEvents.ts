@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import { qs, qsa, ce, event, removeAllChilds, downloadString } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds, downloadString, tau, rho, sigma_t, getTableHeaders } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");
@@ -95,10 +95,12 @@ function makeTableCsv(): string {
     let csvTotal = "";
 
     if (table.classList.contains("big")) {
-      for (let i = 0; i < theadRow.children.length - 1; i++) {
-        csvTotal += theadRow.children[i].innerHTML + ",";
-      }
-      csvTotal += "\n";
+      let headers = getTableHeaders(
+        theadRow.children.length == 10 ? "all" : "all_one",
+        "text",
+        Number(theadRow.children[0].innerHTML.match(/^\d+/))
+      )
+      csvTotal += headers.join(",") + ",\n";
       let rowIndex = 0;
       while (rowIndex < tbody.children.length) {
         let row = tbody.children[rowIndex];
@@ -124,7 +126,7 @@ function makeTableCsv(): string {
             csvTotal += row2Content.join(",") + ",\n";
           }
           else {
-            for (let i = 0; i < 9; i++) {
+            for (let i = 0; i < theadRow.children.length - 1; i++) {
               csvTotal += row.children[i].innerHTML + ",";
             }
             csvTotal += "\n";
@@ -134,11 +136,12 @@ function makeTableCsv(): string {
       }
     }
     else {
-      for (let i = 0; i < 9; i++) {
-        csvTotal += theadRow.children[i].innerHTML + ",";
-      }
-      csvTotal += "\n";
+      let headers = getTableHeaders("single", "text")
+      csvTotal += headers.join(",") + ",\n";
       for (let row of tbody.children) {
+          if (row.children[0].innerHTML.trim().length == 0) {
+            continue;
+          }
           for (let i = 0; i < 9; i++) {
               csvTotal += row.children[i].innerHTML + ",";
           }

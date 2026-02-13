@@ -1,6 +1,6 @@
 import jsonData from "../Data/data.json" assert { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qs, qsa, ce, event, removeAllChilds, downloadString } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, tau } from "../Utils/DOMhelpers";
 
 // Settings
 const generateTotalPurchaseList = qs<HTMLInputElement>(".totalPurchaseList");
@@ -13,10 +13,6 @@ const tbody = qs(".simTable > tbody");
 const varBuyDialog = qs<HTMLDialogElement>(".boughtVars");
 const varBuyTable = qs<HTMLTableSectionElement>(".boughtVarsOtp");
 const varBuyListCloseBtn = qs<HTMLButtonElement>(".boughtVarsCloseBtn");
-
-// Consts
-const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
-const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
 
 const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
         'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' +
@@ -299,35 +295,8 @@ export function writeSimResponse(response: SimResponse) {
         setTableMode(mode);
         clearTable();
     }
-    if (mode === "all") {
-        let headers = [
-            `${response.sigma}<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>`,
-            'Input'
-        ];
-        if (response.stratType == "all") headers.push('Ratio');
-        headers.push(
-            `${tau}/h`,
-            'Multi',
-            'Strat',
-            'Time',
-            `&Delta;${tau}`,
-            `Pub ${rho}`,
-            'Var Buys'
-        )
-        setTableHeaders(...headers);
-    }
-    else setTableHeaders(
-        '<span style="padding-inline: 0.5rem">Theory</span>',
-        '<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>',
-        'Last Pub',
-        'Max Rho',
-        `&Delta;${tau}`,
-        'Multi',
-        'Strat',
-        `${tau}/h`,
-        'Pub Time',
-        'Var Buys'
-    );
+    if (mode === "all") setTableHeaders(...getTableHeaders(response.stratType === "all" ? "all" : "all_one", "html", response.sigma), 'Var Buys')
+    else setTableHeaders(...getTableHeaders("single", "html"), 'Var Buys');
 
     totalBuys = [];
 

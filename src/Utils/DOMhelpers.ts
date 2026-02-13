@@ -2,6 +2,12 @@
 const raise = (err: string) => {
   throw new Error(err);
 };
+
+// Consts
+export const tau = `<span style="font-size:0.9rem; font-style:italics">&tau;</span>`;
+export const rho = `<span style="font-size:0.9rem; font-style:italics">&rho;</span>`;
+export const sigma_t = `<span style="font-size:0.9rem;">&sigma;</span><sub>t</sub>`;
+
 /** Alias of document.querySelector */
 export const qs = <T extends HTMLElement>(name: string) => document.querySelector<T>(name) ?? raise(`HtmlElement ${name} not found.`);
 /** Alias of document.querySelectorAll */
@@ -37,4 +43,37 @@ export function downloadString(str: string, filename: string) {
         link.click();
         document.body.removeChild(link); // Clean up the DOM element
     }
+}
+
+export function getTableHeaders(tableType: "single" | "all" | "all_one", headerType: "html" | "text", sigma?: number): string[] {
+  if (tableType !== "single") {
+      let headers = [
+          headerType === "html" ? `${sigma}${sigma_t}` : `${sigma}σ`,
+          'Input'
+      ];
+      if (tableType == "all") headers.push('Ratio');
+      headers.push(
+          headerType === "html" ? `${tau}/h` : "τ/h",
+          'Multi',
+          'Strat',
+          'Time',
+          headerType === "html" ? `&Delta;${tau}` : "Δτ",
+          headerType === "html" ? `Pub ${rho}` : "Pub ρ"
+      )
+      return headers;
+  }
+  else {
+    let headers = [
+      '<span style="padding-inline: 0.5rem">Theory</span>',
+      headerType === "html" ? sigma_t : "σ",
+      'Last Pub',
+      'Max Rho',
+      headerType === "html" ? `&Delta;${tau}` : "Δτ",
+      'Multi',
+      'Strat',
+      headerType === "html" ? `${tau}/h` : "τ/h",
+      'Pub Time'
+    ];
+    return headers;
+  };
 }
