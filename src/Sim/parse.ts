@@ -155,7 +155,7 @@ function parseSimAll(): SimAllQuery {
 
     values = values.map((val, i) => {
         const theory = getTheoryFromIndex(i);
-        if (settings.completedCTs === "no" && i > 8 && val * jsonData.theories[theory].tauFactor >= 600) return 0;
+        if (settings.completedCTs === "no" && i >= 8 && val * jsonData.theories[theory].tauFactor >= 600) return 0;
         if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[theory].UI_visible === false) return 0;
         return val;
     })
