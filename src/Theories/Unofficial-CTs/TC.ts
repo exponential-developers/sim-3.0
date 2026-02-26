@@ -113,7 +113,7 @@ class tcSim extends theoryClass<theory> {
     this.kp = pidSettings[0];
     this.ki = pidSettings[1];
     this.kd = pidSettings[2];
-    this.T = 100;
+    this.T = 30;
     this.setPoint = pidSettings[3];
 
     this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
@@ -136,7 +136,7 @@ class tcSim extends theoryClass<theory> {
     this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
     this.simEndConditions.push(() => this.curMult > 15);
     for (let i=7; i<11; i++) {
-      while (this.lastPub <= this.variables[i].cost && this.variableAvailability[i]()) {
+      while (this.variables[i].cost <= this.lastPub && this.variableAvailability[i]()) {
         this.variables[i].buy();
       }
     }
@@ -149,7 +149,7 @@ class tcSim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 500) this.updateMilestones();
+      this.updateMilestones();
       this.buyVariables();
     }
     this.trimBoughtVars();
@@ -164,11 +164,11 @@ class tcSim extends theoryClass<theory> {
     const area = 0.024; // area of element (m^2)
     const mass = 10; // grams
     const Tc = 30;
-    if (this.milestones[1] >= 1)
-        this.ki = 0;
-    if (this.milestones[2] >= 3)
-        this.kd = 0;
+
+    const vki = this.milestones[1] > 0 ? this.ki : 0;
+    const vkd = this.milestones[2] > 0 ? this.kd : 0;
     this.timer += this.systemDt;
+    
     if (this.timer > this.frequency) {
       this.T = this.amplitude;
       this.timer = 0;
@@ -182,31 +182,36 @@ class tcSim extends theoryClass<theory> {
     // Anti-windup scheme
     if (this.integral > 100) this.integral = 100;
     if (this.integral < -100) this.integral = -100;
-    let output = Math.round(Math.max(0, Math.min(this.kp * this.error[0] + this.ki * this.integral + this.kd * derivative, 512))) / 512; // range 0-512
+    const output = Math.round(Math.max(0, Math.min(this.kp * this.error[0] + vki * this.integral + vkd * derivative, 512))); // range 0-512
 
     // Heating simulation
-    const dT = Math.abs(1 / mass / Cp * (Q * output - (this.T - Tc) * h * area));
-    const exponentialTerm = (Q * output - h * area * (this.T - Tc)) * Math.pow(Math.E, -1 * this.systemDt / mass / Cp);
-    this.T = Tc + (Q * output - exponentialTerm) / (h * area);
+    const suppliedHeat = Q * output / 512;
+    const dT = Math.abs(1 / mass / Cp * (suppliedHeat - (this.T - Tc) * h * area));
+    const exponentialTerm = (suppliedHeat - h * area * (this.T - Tc)) * Math.pow(Math.E, -1 * this.systemDt / mass / Cp);
+    this.T = Tc + (suppliedHeat - exponentialTerm) / (h * area);
 
     // Variable calculation
-    const c1exp = this.variables[7].value;
-    const r1exp = this.variables[8].value;
-    const r2exp = this.variables[9].value;;
-    const dr =
-      this.variables[1].value * r1exp +
-      this.variables[2].value * r2exp -
-      l10(1 + l10(1 + Math.abs(this.error[0])));
-
+    // P Update
     if (this.achievementMulti == 30) {
       let dP = 
         this.variables[5].value + 
         this.variables[6].value + 
-        Math.E * (-0.01 * Math.pow(0.8, this.milestones[4]) * Math.abs(this.T - 100));
+        Math.LOG10E * (-0.01 * Math.pow(0.8, this.milestones[4])) +
+        l10(Math.abs(this.T - 100));
       this.P = add(this.P, dP + l10(this.dt));
     }
 
+    // R Update
+    const r1exp = this.variables[8].value;
+    const r2exp = this.variables[9].value;
+    const dr =
+      this.variables[1].value * r1exp +
+      this.variables[2].value * r2exp -
+      l10(1 + l10(1 + Math.abs(this.error[0])));
     this.r = add(this.r, dr + l10(this.dt));
+
+    // rho update
+    const c1exp = this.variables[7].value;
     const vc1 = this.variables[0].value * c1exp;
     const vc2 = this.milestones[4] > 0 ? this.variables[3].value : 0;
     const mrexp = this.milestones[3];
