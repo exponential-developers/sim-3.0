@@ -139,7 +139,7 @@ class mfSim extends theoryClass<theory> {
       ...new Array(4).fill(() => true)
     ];
     // Original MFd3Coast END
-      
+
     // Original MFdRCCoast
     const activeStratRC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
@@ -150,7 +150,7 @@ class mfSim extends theoryClass<theory> {
       ...new Array(4).fill(() => true)
     ];
     // Original MFdRCCoast END
-      
+
     // Original MFd2RCCoast
     const activeStrat2RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
@@ -174,7 +174,7 @@ class mfSim extends theoryClass<theory> {
     ];
     // Original MFd3RCCoast END
 
-    // MFVarientd1d1d2Coast 
+    // MFVariantd1d1d2Coast
     const activeStrat112: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -183,9 +183,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d1d2Coast  END
+    // MFVariantd1d1d2Coast  END
 
-    // MFVarientd1d1d3Coast  
+    // MFVariantd1d1d3Coast
     const activeStrat113: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -194,9 +194,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d1d3Coast  END
+    // MFVariantd1d1d3Coast  END
 
-    // MFVarientd1d2d1Coast 
+    // MFVariantd1d2d1Coast
     const activeStrat121: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -205,9 +205,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d2d1Coast  END
+    // MFVariantd1d2d1Coast  END
 
-    // MFVarientd1d2d2Coast 
+    // MFVariantd1d2d2Coast
     const activeStrat122: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -216,9 +216,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d2d2Coast  END
+    // MFVariantd1d2d2Coast  END
 
-    // MFVarientd2d1d1Coast 
+    // MFVariantd2d1d1Coast
     const activeStrat211: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -227,9 +227,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d1d1Coast END
+    // MFVariantd2d1d1Coast END
 
-    // MFVarientd2d1d2Coast 
+    // MFVariantd2d1d2Coast
     const activeStrat212: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -238,9 +238,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d1d2Coast END
+    // MFVariantd2d1d2Coast END
 
-    // MFVarientd2d1d3Coast 
+    // MFVariantd2d1d3Coast
     const activeStrat213: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -249,9 +249,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d1d3Coast END
+    // MFVariantd2d1d3Coast END
 
-    // MFVarientd2d2d1Coast 
+    // MFVariantd2d2d1Coast
     const activeStrat221: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -260,9 +260,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d2d1Coast END
+    // MFVariantd2d2d1Coast END
 
-    // MFVarientd2d2d3RCCoast 
+    // MFVariantd2d2d3RCCoast
     const activeStrat223: conditionFunction[] = [
       () => ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -271,9 +271,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d2d3Coast END
+    // MFVariantd2d2d3Coast END
 
-    // MFVarientd1d1d2RCCoast 
+    // MFVariantd1d1d2RCCoast
     const activeStrat112RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(5)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -282,9 +282,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d1d2RCCoast  END
+    // MFVariantd1d1d2RCCoast  END
 
-    // MFVarientd1d1d3RCCoast  
+    // MFVariantd1d1d3RCCoast
     const activeStrat113RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(5)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -293,9 +293,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d1d3RCCoast  END
+    // MFVariantd1d1d3RCCoast  END
 
-    // MFVarientd1d2d1RCCoast 
+    // MFVariantd1d2d1RCCoast
     const activeStrat121RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -304,9 +304,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d2d1RCCoast  END
+    // MFVariantd1d2d1RCCoast  END
 
-    // MFVarientd1d2d2RCCoast 
+    // MFVariantd1d2d2RCCoast
     const activeStrat122RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(2)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost +l10(9.9) <= Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost))),
       () => true,
@@ -315,9 +315,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd1d2d2RCCoast  END
+    // MFVariantd1d2d2RCCoast  END
 
-    // MFVarientd2d1d1RCCoast 
+    // MFVariantd2d1d1RCCoast
     const activeStrat211RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -326,9 +326,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d1d1RCCoast END
+    // MFVariantd2d1d1RCCoast END
 
-    // MFVarientd2d1d2RCCoast 
+    // MFVariantd2d1d2RCCoast
     const activeStrat212RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -337,9 +337,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost + l10(dPower[this.milestones[2]]) < Math.min(this.variables[1].cost + l10(2), this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d1d2RCCoast END
+    // MFVariantd2d1d2RCCoast END
 
-    // MFVarientd2d1d3RCCoast 
+    // MFVariantd2d1d3RCCoast
     const activeStrat213RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -348,9 +348,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d1d3RCCoast END
+    // MFVariantd2d1d3RCCoast END
 
-    // MFVarientd2d2d1RCCoast 
+    // MFVariantd2d2d1RCCoast
     const activeStrat221RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -359,9 +359,9 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[1].cost, this.variables[3].cost),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d2d1RCCoast END
+    // MFVariantd2d2d1RCCoast END
 
-    // MFVarientd2d2d3RCCoast 
+    // MFVariantd2d2d3RCCoast
     const activeStrat223RC: conditionFunction[] = [
       () => (this.variables[0].cost < (this.goalBundleCost - l10(4/3)) || this.stopReset) && ((this.variables[0].level < this.lastC1) && (this.variables[0].cost + l10(8 + (this.variables[0].level % 7)) <= Math.min(this.variables[1].cost + l10(2), this.variables[3].cost, this.milestones[1] > 0 ? (this.variables[4].cost + l10(dPower[this.milestones[2]])) : Infinity))),
       () => true,
@@ -370,7 +370,7 @@ class mfSim extends theoryClass<theory> {
       () => this.variables[4].cost < Math.min(this.variables[3].cost + l10(0.6), this.variables[1].cost + l10(0.75)),
       ...new Array(4).fill(() => true)
     ];
-    // MFVarientd2d2d3RCCoast END
+    // MFVariantd2d2d3RCCoast END
 
     const conditions: Record<stratType[theory], conditionFunction[]> = {
       MF: idleStrat,
@@ -386,24 +386,24 @@ class mfSim extends theoryClass<theory> {
       MFdRCCoast: activeStratRC,
       MFd2RCCoast: activeStrat2RC,
       MFd3RCCoast: activeStrat3RC,
-      MFVarientd1d1d2Coast: activeStrat112,
-      MFVarientd1d1d3Coast: activeStrat113,
-      MFVarientd1d2d1Coast: activeStrat121,
-      MFVarientd1d2d2Coast: activeStrat122,
-      MFVarientd2d1d1Coast: activeStrat211,
-      MFVarientd2d1d2Coast: activeStrat212,
-      MFVarientd2d1d3Coast: activeStrat213,
-      MFVarientd2d2d1Coast: activeStrat221,
-      MFVarientd2d2d3Coast: activeStrat223,
-      MFVarientd1d1d2RCCoast: activeStrat112RC,
-      MFVarientd1d1d3RCCoast: activeStrat113RC,
-      MFVarientd1d2d1RCCoast: activeStrat121RC,
-      MFVarientd1d2d2RCCoast: activeStrat122RC,
-      MFVarientd2d1d1RCCoast: activeStrat211RC,
-      MFVarientd2d1d2RCCoast: activeStrat212RC,
-      MFVarientd2d1d3RCCoast: activeStrat213RC,
-      MFVarientd2d2d1RCCoast: activeStrat221RC,
-      MFVarientd2d2d3RCCoast: activeStrat223RC,
+      MFVariantd1d1d2Coast: activeStrat112,
+      MFVariantd1d1d3Coast: activeStrat113,
+      MFVariantd1d2d1Coast: activeStrat121,
+      MFVariantd1d2d2Coast: activeStrat122,
+      MFVariantd2d1d1Coast: activeStrat211,
+      MFVariantd2d1d2Coast: activeStrat212,
+      MFVariantd2d1d3Coast: activeStrat213,
+      MFVariantd2d2d1Coast: activeStrat221,
+      MFVariantd2d2d3Coast: activeStrat223,
+      MFVariantd1d1d2RCCoast: activeStrat112RC,
+      MFVariantd1d1d3RCCoast: activeStrat113RC,
+      MFVariantd1d2d1RCCoast: activeStrat121RC,
+      MFVariantd1d2d2RCCoast: activeStrat122RC,
+      MFVariantd2d1d1RCCoast: activeStrat211RC,
+      MFVariantd2d1d2RCCoast: activeStrat212RC,
+      MFVariantd2d1d3RCCoast: activeStrat213RC,
+      MFVariantd2d2d1RCCoast: activeStrat221RC,
+      MFVariantd2d2d3RCCoast: activeStrat223RC,
     };
     return conditions[this.strat];
   }
