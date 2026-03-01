@@ -51,6 +51,50 @@ class t6Sim extends theoryClass<theory> {
     stopC12: [number, number, boolean];
 
     getBuyingConditions(): conditionFunction[] {
+        const t6SnaxIdleRecoveryMaker = (start_point: number = 0): (boolean | conditionFunction)[] => {
+            return [
+                () => {
+                    if (this.lastPub - start_point >= this.maxRho) return true;
+                    return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
+                },
+                true,
+                () => {
+                    if (this.lastPub - start_point >= this.maxRho) return true;
+                    return this.variables[2].cost + l10(5)
+                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
+                },
+                true,
+                () => this.stopC12[2],
+                () => this.stopC12[2],
+                false,
+                false,
+                true,
+            ]
+        }
+        const t6SnaxIdleRecoveryCoastMaker = (start_point: number = 0): (boolean | conditionFunction)[] => {
+            return [
+                () => {
+                    if (!this.variables[0].shouldBuy) return false;
+                    if (this.lastPub - start_point >= this.maxRho) return true;
+                    return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
+                },
+                true,
+                () => {
+                    if (!this.variables[2].shouldBuy) return false;
+                    if (this.lastPub - start_point >= this.maxRho) return true;
+                    return this.variables[2].cost + l10(5)
+                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
+                },
+                true,
+                () => this.stopC12[2],
+                () => this.stopC12[2],
+                false,
+                false,
+                true,
+            ]
+        }
         const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
             T6: [true, true, true, true, true, true, true, true, true],
             T6C3: [true, true, true, true, () => this.variables[6].level == 0, () => this.variables[6].level == 0, true, false, false],
@@ -81,46 +125,18 @@ class t6Sim extends theoryClass<theory> {
                 false,
                 true
             ],
-            T6SnaxIdleRecovery: [
-                () => {
-                    if (this.lastPub >= this.maxRho) return true;
-                    return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
-                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
-                },
-                true,
-                () => {
-                    if (this.lastPub >= this.maxRho) return true;
-                    return this.variables[2].cost + l10(5)
-                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
-                },
-                true,
-                () => this.stopC12[2],
-                () => this.stopC12[2],
-                false,
-                false,
-                true,
-            ],
-            T6SnaxIdleRecoveryCoast: [
-                () => {
-                    if (!this.variables[0].shouldBuy) return false;
-                    if (this.lastPub >= this.maxRho) return true;
-                    return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
-                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
-                },
-                true,
-                () => {
-                    if (!this.variables[2].shouldBuy) return false;
-                    if (this.lastPub >= this.maxRho) return true;
-                    return this.variables[2].cost + l10(5)
-                        < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
-                },
-                true,
-                () => this.stopC12[2],
-                () => this.stopC12[2],
-                false,
-                false,
-                true,
-            ],
+            T6SnaxIdleRecovery: t6SnaxIdleRecoveryMaker(0),
+            T6SnaxIdleRecoveryCoast: t6SnaxIdleRecoveryCoastMaker(0),
+            T6SnaxIdleRecoveryM1: t6SnaxIdleRecoveryMaker(1),
+            T6SnaxIdleRecoveryM1Coast: t6SnaxIdleRecoveryCoastMaker(1),
+            T6SnaxIdleRecoveryM2: t6SnaxIdleRecoveryMaker(2),
+            T6SnaxIdleRecoveryM2Coast: t6SnaxIdleRecoveryCoastMaker(2),
+            T6SnaxIdleRecoveryM3: t6SnaxIdleRecoveryMaker(3),
+            T6SnaxIdleRecoveryM3Coast: t6SnaxIdleRecoveryCoastMaker(3),
+            T6SnaxIdleRecoveryM4: t6SnaxIdleRecoveryMaker(4),
+            T6SnaxIdleRecoveryM4Coast: t6SnaxIdleRecoveryCoastMaker(4),
+            T6SnaxIdleRecoveryM5: t6SnaxIdleRecoveryMaker(5),
+            T6SnaxIdleRecoveryM5Coast: t6SnaxIdleRecoveryCoastMaker(5),
             T6C3d: [
                 () => this.variables[0].cost + l10(3) < Math.min(this.variables[1].cost, this.milestones[0] > 0 ? this.variables[3].cost : Infinity, this.variables[6].cost),
                 true,
@@ -279,6 +295,26 @@ class t6Sim extends theoryClass<theory> {
             case "T6SnaxIdleRecovery":
                 return [0, 3, 2];
             case "T6SnaxIdleRecoveryCoast":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM1":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM1Coast":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM2":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM2Coast":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM3":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM3Coast":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM4":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM4Coast":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM5":
+                return [0, 3, 2];
+            case "T6SnaxIdleRecoveryM5Coast":
                 return [0, 3, 2];
             case "T6C3d":
                 return [0];
