@@ -136,7 +136,9 @@ function makeTableCsv(): string {
       }
     }
     else {
-      let headers = getTableHeaders("single", "text")
+      let headers = getTableHeaders("single", "text");
+      let h0match = headers[0].match(/<span[^>]*>(.*)<\/span>/);
+      headers[0] = h0match == undefined ? headers[0] : (h0match.groups == undefined ? headers[0] : h0match.groups[0]);
       csvTotal += headers.join(",") + ",\n";
       for (let row of tbody.children) {
           if (row.children[0].innerHTML.trim().length == 0) {
