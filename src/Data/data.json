@@ -645,10 +645,10 @@
           "stratFilterCondition": "false"
         },
         "MFdCoast": {
-          "stratFilterCondition": "Active"
+          "stratFilterCondition": "Active || Very-Active"
         },
         "MFd2Coast": {
-          "stratFilterCondition": "Active"
+          "stratFilterCondition": "Active || Very-Active"
         },
         "MFd3Coast": {
           "stratFilterCondition": "Active || Very-Active"
@@ -657,11 +657,65 @@
           "stratFilterCondition": "false"
         },
         "MFd2RCCoast": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFd3RCCoast": {
-          "stratFilterCondition": "Very-Active"
-        }
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd1d1d2Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd1d1d3Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },    
+        "MFVarientd1d2d1Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd1d2d2Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd2d1d1Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd2d1d2Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd2d1d3Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd2d2d1Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "MFVarientd2d2d3Coast": {
+          "stratFilterCondition": "Active || Very-Active"
+        },      
+        "MFVarientd1d1d2RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd1d1d3RCCoast": {
+          "stratFilterCondition": "false"
+        },    
+        "MFVarientd1d2d1RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd1d2d2RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd2d1d1RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd2d1d2RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd2d1d3RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd2d2d1RCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFVarientd2d2d3RCCoast": {
+          "stratFilterCondition": "false"
+        }      
       }
     },
     "BaP": {
