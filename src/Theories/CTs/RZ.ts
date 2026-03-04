@@ -288,6 +288,8 @@ class rzSim extends theoryClass<theory> {
     bhRewindNorm: number;
     bhRewindDeriv: number;
 
+    bhProcessCounter: number = 0;
+
     getBuyingConditions(): conditionFunction[] {
         const activeStrat = [
             () => {
@@ -437,6 +439,10 @@ class rzSim extends theoryClass<theory> {
 
     bhProcess(zResult: ComplexValue | null = null, tmpZ: ComplexValue | null = null) {
         this.offGrid = true;
+        if (this.strat != "RZdBHRewind") this.bhProcessCounter++;
+
+        // This is a method to prevent the non-convergence of the algorithm
+        const bhLockPreventionCoeff = this.bhProcessCounter < 1000 ? 1 : Math.E ** (-0.002*(this.bhProcessCounter - 1000)); 
 
         if (zResult === null){
             zResult = zeta(this.t_var, this.ticks, this.offGrid, lookups.zetaLookup);
@@ -451,11 +457,11 @@ class rzSim extends theoryClass<theory> {
         if(this.bhSearchingRewind && this.t_var > 14.5 && bhdt > 0)
         {
             let srdt = -Math.min(0.125 / bhdt, 0.125);
-            this.t_var += srdt;
+            this.t_var += srdt * bhLockPreventionCoeff;
         }
         else
         {
-            this.t_var += bhdt;
+            this.t_var += bhdt * bhLockPreventionCoeff;
             this.bhSearchingRewind = false;
             if(Math.abs(bhdt) < 1e-9)
             {
