@@ -646,7 +646,7 @@
           "stratFilterCondition": "(Active || Very-Active) && rho >= 50 && rho < 400"
         },
         "RZdBHRewind" : {
-          "stratFilterCondition": "Very-Active && rho >= 860"
+          "stratFilterCondition": "Very-Active && rho >= 860 && rho <= 2000"
         }
       }
     },

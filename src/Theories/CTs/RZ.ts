@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
-import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp } from "../../Utils/helpers";
+import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp, defaultResult } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
 
@@ -18,6 +18,8 @@ class VariableBcost extends BaseCost {
         return new VariableBcost()
     }
 }
+
+class BlackHoleError extends Error{}
 
 function mergeSortedLists(list1: number[], list2: number[]): number[] {
     let mergedList: number[] = [];
@@ -440,9 +442,12 @@ class rzSim extends theoryClass<theory> {
     bhProcess(zResult: ComplexValue | null = null, tmpZ: ComplexValue | null = null) {
         this.offGrid = true;
         if (this.strat != "RZdBHRewind") this.bhProcessCounter++;
+        if (this.bhProcessCounter > 500) {
+            throw new BlackHoleError("Black Hole algorithm did not converge.\nThis is likely due to precision issues at large t.");
+        }
 
         // This is a method to prevent the non-convergence of the algorithm
-        const bhLockPreventionCoeff = this.bhProcessCounter < 1000 ? 1 : Math.E ** (-0.002*(this.bhProcessCounter - 1000)); 
+        const bhLockPreventionCoeff = this.bhProcessCounter < 100 ? 1 : Math.E ** (-0.001*(this.bhProcessCounter - 100)); 
 
         if (zResult === null){
             zResult = zeta(this.t_var, this.ticks, this.offGrid, lookups.zetaLookup);
@@ -573,20 +578,31 @@ class rzSim extends theoryClass<theory> {
     }
     async simulate(): Promise<simResult> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
-        while (!this.endSimulation()) {
-            if (!global.simulating) break;
-            // Prevent lookup table from retrieving values from wrong sim settings
-            if (!this.ticks && (this.dt !== lookups.prevDt || this.ddt !== lookups.prevDdt)) {
-                lookups.prevDt = this.dt;
-                lookups.prevDdt = this.ddt;
-                lookups.zetaLookup = [];
-                lookups.zetaDerivLookup = [];
+        try {
+            while (!this.endSimulation()) {
+                if (!global.simulating) break;
+                // Prevent lookup table from retrieving values from wrong sim settings
+                if (!this.ticks && (this.dt !== lookups.prevDt || this.ddt !== lookups.prevDdt)) {
+                    lookups.prevDt = this.dt;
+                    lookups.prevDdt = this.ddt;
+                    lookups.zetaLookup = [];
+                    lookups.zetaDerivLookup = [];
+                }
+                this.tick();
+                this.updateSimStatus();
+                if (this.lastPub < 600) this.updateMilestones();
+                if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
+                this.buyVariables();
             }
-            this.tick();
-            this.updateSimStatus();
-            if (this.lastPub < 600) this.updateMilestones();
-            if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
-            this.buyVariables();
+        }
+        catch (error) {
+            if (error instanceof BlackHoleError) {
+                const res = defaultResult();
+                res.strat = error.message;
+                console.error(error.message);
+                return res;
+            }
+            else throw error;
         }
         let stratExtra = "";
         if (this.strat.includes("BH"))
