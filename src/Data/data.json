@@ -705,13 +705,13 @@
           "stratFilterCondition": "Active || Very-Active"
         },
         "MFVariantd2d1d1Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFVariantd2d1d2Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFVariantd2d1d3Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFVariantd2d2d1Coast": {
           "stratFilterCondition": "Active || Very-Active"
