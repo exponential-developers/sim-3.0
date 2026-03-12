@@ -62,7 +62,17 @@ declare global {
     stratType: SettingsSimAllStratsMode;
   }
 
-  type SimQuery = SingleSimQuery | ChainSimQuery | StepSimQuery | SimAllQuery;
+  type StepChainQuery = BaseSimQuery & {
+    queryType: "step_chain"
+    theory: theoryType
+    strat: string
+    rho: number
+    cap: number
+    step: number
+    hardCap: boolean
+  }
+
+  type SimQuery = SingleSimQuery | ChainSimQuery | StepSimQuery | SimAllQuery | StepChainQuery;
 
   type SingleSimResponse = {
     responseType: "single";

@@ -74,7 +74,7 @@ async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
     }
 }
 
-async function chainSim(query: ChainSimQuery): Promise<ChainSimResponse> {
+async function chainSim(query: ChainSimQuery, doLog = true): Promise<ChainSimResponse> {
     let rho = query.rho;
     let time = 0;
     let lastStrat = "";
@@ -84,7 +84,7 @@ async function chainSim(query: ChainSimQuery): Promise<ChainSimResponse> {
 
     while (rho < query.cap) {
         const ts = performance.now();
-        if (ts - lastLog > 250) {
+        if (ts - lastLog > 250 && doLog) {
             lastLog = ts;
             output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
             await sleep();
@@ -207,11 +207,71 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     }
 }
 
+async function stepChainSim(query: StepChainQuery): Promise<StepSimResponse> {
+    let rho = query.rho;
+    const results: simResult[] = [];
+    const stopStr = logToExp(query.cap);
+    let lastLog = 0;
+
+    while (rho < query.cap - query.step + 0.000001) {
+        const ts = performance.now();
+        if (ts - lastLog > 250) {
+            lastLog = ts;
+            output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            await sleep();
+        }
+
+        const chain_res = await chainSim({
+            queryType: "chain",
+            settings: query.settings,
+            sigma: query.sigma,
+            rho,
+            theory: query.theory,
+            strat: query.strat,
+            cap: query.cap,
+            hardCap: query.hardCap
+        }, false);
+        if (!global.simulating) break;
+
+        let tau_acc = 0;
+        let time_acc = 0;
+        let pub_count = 0;
+        let bestRes = defaultResult();
+        for (let result of chain_res.results) {
+            tau_acc += result.deltaTau;
+            time_acc += result.time;
+            pub_count++;
+            const tauH = tau_acc / (time_acc / 3600);
+            let cur_res: simResult = {
+                theory: query.theory,
+                sigma: query.sigma,
+                lastPub: rho,
+                pubRho: result.pubRho,
+                deltaTau: tau_acc,
+                pubMulti: 1,
+                strat: pub_count + " pub" + (pub_count > 1 ? "s": ""),
+                tauH: tauH,
+                time: time_acc,
+                boughtVars: []
+            }
+            bestRes = getBestResult(bestRes, cur_res);
+        }
+        results.push(bestRes);
+        rho += query.step;
+    }
+
+    return {
+        responseType: "step",
+        results: results
+    }
+}
+
 export async function simulate(query: SimQuery): Promise<SimResponse> {
     switch (query.queryType) {
         case "single": return await singleSim(query);
         case "chain": return await chainSim(query);
         case "step": return await stepSim(query);
         case "all": return await simAll(query);
+        case "step_chain": return await stepChainSim(query);
     }
 }
