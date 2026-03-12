@@ -136,6 +136,23 @@ function parseStepSim(): StepSimQuery {
     }
 }
 
+function parseStepChainSim(): StepChainQuery {
+    const theory = theorySelector.value as theoryType;
+    const sigma = parseSigma(isMainTheory(theory));
+
+    return {
+        queryType: "step_chain",
+        theory: theory,
+        strat: stratSelector.value,
+        sigma: sigma,
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        cap: parseCurrency(capInput.value, theory, sigma),
+        step: parseExponentialValue(modeInput.value),
+        hardCap: hardCap.checked,
+        settings: parseSettings()
+    }
+}
+
 function parseSimAll(): SimAllQuery {
     const settings = parseSettings();
     const str = simAllInputArea.value;
@@ -179,6 +196,7 @@ export function parseQuery(): SimQuery {
         case "Single sim": return parseSingleSim();
         case "Chain": return parseChainSim();
         case "Steps": return parseStepSim();
+        case "StepChain": return parseStepChainSim();
         default: throw "This mode is not supported.";
     }
 }

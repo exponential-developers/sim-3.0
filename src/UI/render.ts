@@ -104,9 +104,9 @@ function modeUpdate(): void {
   // Displays the single-theory inputs
   if (newMode !== "All" && newMode !== "Time diff.") singleInput.style.display = "grid";
   // Displays the cap input for chain/steps mode
-  if (newMode === "Chain" || newMode === "Steps") capInputWrapper.style.display = "inline";
+  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") capInputWrapper.style.display = "inline";
   // Displays the hard cap input
-  if (newMode === "Chain") hardCapWrapper.style.display = "block";
+  if (newMode === "Chain" || newMode == "StepChain") hardCapWrapper.style.display = "block";
 
   // Extra Inputs
   if (newMode !== "Single sim" && newMode !== "Time diff." && newMode !== "Chain") extraInputs.style.display = "flex";
