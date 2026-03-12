@@ -2,8 +2,8 @@ name: Build and Deploy to Github Pages
 
 on:
   workflow_dispatch: 
-  push: 
-    branches: 
+  push:
+    branches:
       - "*"
 
 permissions:
@@ -16,39 +16,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.x'
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
 
-    - name: Install dependencies
-      run: npm install --omit=dev
+      - name: Install dependencies
+        run: npm install --omit=dev
 
-    - name: Build with webpack
-      run: npm run prod
+      - name: Build with webpack
+        run: npm run prod
 
-    - name: Setup GitHub Pages
-      id: pages
-      uses: actions/configure-pages@v5
+      - name: Setup GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
 
-    - name: Build site with Jekyll
-      uses: actions/jekyll-build-pages@v1
-      with:
-        source: ./
-        destination: ${{ github.ref_name == 'master' && './_site' || format('./_site/deployments/{0}', github.ref_name) }}
+      - name: Build site with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
 
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-    
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
   deploy:
-    environment:
-      name: ${{ github.ref_name == 'master' && 'github-pages' || github.ref_name }}
-      url: ${{steps.deployment.outputs.page_url}}
     runs-on: ubuntu-latest
     needs: build
+
+    environment:
+      name: ${{ github.ref_name == 'master' && 'github-pages' || format('branch-{0}', github.ref_name) }}
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
