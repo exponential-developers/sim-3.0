@@ -38,7 +38,7 @@ jobs:
       uses: actions/jekyll-build-pages@v1
       with:
         source: ./
-        destination: ./_site
+        destination: ${{ github.ref_name == 'master' && './_site' || format('./_site/deployments/{0}', github.ref_name) }}
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
