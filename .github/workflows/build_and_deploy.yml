@@ -17,10 +17,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Setup node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: '22.x'
 
@@ -38,10 +38,10 @@ jobs:
       uses: actions/jekyll-build-pages@v1
       with:
         source: ./
-        destination: ./_site
+        destination: ${{ github.ref_name == 'master' && './_site' || format('./_site/deployments/{0}', github.ref_name) }}
 
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4
     
   deploy:
     environment:
