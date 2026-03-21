@@ -122,10 +122,10 @@ class tcSim extends theoryClass<theory> {
       new Variable({ name: "c1", cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
       new Variable({ name: "r1", cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1
       new Variable({ name: "r2", cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
-      new Variable({ name: "c2", cost: new ExponentialCost("1e400", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
+      new Variable({ name: "c2", cost: new ExponentialCost("1e420", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
       new Variable({ name: "dTexp", cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
-      new Variable({ name: "p1", cost: new ExponentialCost("1e750", 16.61), valueScaling: new StepwisePowerSumValue() }), // p1
-      new Variable({ name: "p2", cost: new ExponentialCost("1e900", 1e15), valueScaling: new ExponentialValue(2) }), // p2
+      new Variable({ name: "p1", cost: new ExponentialCost("1e800", 1e8), valueScaling: new StepwisePowerSumValue(2, 10, 1) }), // p1
+      new Variable({ name: "p2", cost: new ExponentialCost("1e950", 1e10), valueScaling: new ExponentialValue(3.1) }), // p2
       new Variable({ name: "c1exp", cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
       new Variable({ name: "r1exp", cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
       new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
@@ -196,7 +196,7 @@ class tcSim extends theoryClass<theory> {
       let dP = 
         this.variables[5].value + 
         this.variables[6].value + 
-        Math.LOG10E * (-0.01 * Math.pow(0.8, this.milestones[4])) +
+        Math.LOG10E * (-3 * Math.pow(0.03, this.milestones[4])) +
         l10(Math.abs(this.T - 100));
       this.P = add(this.P, dP + l10(this.dt));
     }
