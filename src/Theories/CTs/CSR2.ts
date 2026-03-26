@@ -51,7 +51,8 @@ class csr2Sim extends theoryClass<theory> {
     const activeXLstrat = [
         () =>
           this.variables[0].cost + l10(7 + (this.variables[0].level % 10)) <
-          Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost),
+          Math.min(this.variables[3].cost, this.variables[4].cost) &&
+          this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < this.variables[1].cost,
         () => this.variables[1].cost + l10(1.8) < this.variables[4].cost,
         () =>
           this.variables[2].cost + l10(15 + (this.variables[2].level % 10)) <
@@ -257,12 +258,14 @@ class csr2Sim extends theoryClass<theory> {
         || this.recursionValue[1] === 0
       ) await this.buyVariablesFork();
       if (this.lastPub < 500) this.updateMilestones();
-      if (this.forcedPubRho == 1500 && this.maxRho >= 1495 && this.doContinuityFork) {
+      if (this.forcedPubRho == 1500 && this.maxRho >= 1497 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
         fork.forcedPubRho = Infinity;
         const res = await fork.simulate(this.getDataForCopy());
-        this.bestRes = getBestResult(this.bestRes, res);
+        if (res.pubRho > 1500) {
+          this.bestRes = getBestResult(this.bestRes, res);
+        }
       }
     }
     if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
