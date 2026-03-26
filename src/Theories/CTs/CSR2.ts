@@ -59,10 +59,37 @@ class csr2Sim extends theoryClass<theory> {
         () => this.variables[3].cost + l10(1.3) < this.variables[4].cost,
         true,
       ];
+    const partialStrat = (delta: number, sIndex: number) => {
+      return () => {
+        let item;
+        if(this.lastPub - delta >= this.maxRho) {
+          item = idlestrat[sIndex];
+        }
+        else {
+          item = activeXLstrat[sIndex];
+        }
+        if(item === true || item === false) {
+          return item;
+        }
+        else return item();
+      }
+    }
+    const makePartialStrat = (delta: number) => {
+      return [
+        partialStrat(delta, 0),
+        partialStrat(delta, 1),
+        partialStrat(delta, 2),
+        partialStrat(delta, 3),
+        partialStrat(delta, 4),
+      ]
+    }
 
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       CSR2: idlestrat,
       CSR2PT: idlestrat,
+      CSR2M0PT: makePartialStrat(0),
+      CSR2M1PT: makePartialStrat(1),
+      CSR2M2PT: makePartialStrat(2),
       CSR2d: activeStrat,
       CSR2XL: activeXLstrat,
       CSR2XLPT: activeXLstrat
@@ -173,7 +200,7 @@ class csr2Sim extends theoryClass<theory> {
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
     this.doContinuityFork = true;
-    if(this.strat.includes("XL")) {
+    if(this.strat.includes("XL") || this.strat.includes("M")) {
         this.lowbounds = lowboundsActive;
         this.highbounds = highboundsActive;
     }

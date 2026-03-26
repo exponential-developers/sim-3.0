@@ -528,6 +528,15 @@
         "CSR2PT": {
           "stratFilterCondition": "Semi-Idle && rho >= 500 && rho < 1499"
         },
+        "CSR2M0PT": {
+          "stratFilterCondition": "Semi-Idle && rho >= 500 && rho < 1499"
+        },
+        "CSR2M1PT": {
+          "stratFilterCondition": "Semi-Idle && rho >= 500 && rho < 1499"
+        },
+        "CSR2M2PT": {
+          "stratFilterCondition": "Semi-Idle && rho >= 500 && rho < 1499"
+        },
         "CSR2d": {
           "stratFilterCondition": "Active && rho < 500"
         },
