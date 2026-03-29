@@ -5,6 +5,7 @@ import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
+import extended_pubtable from "./helpers/FPextendedPT.json" assert { type: "json" };
 
 export default async function fp(data: theoryData): Promise<simResult> {
   const sim = new fpSim(data);
@@ -199,8 +200,8 @@ class fpSim extends theoryClass<theory> {
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
     this.doContinuityFork = true;
-    if (this.lastPub >= 1200 && this.lastPub < 1990 && this.strat !== "FP") {
-      let newpubtable: pubTable = pubtable.fpdata;
+    if (this.lastPub >= 1200 && this.lastPub < 3490 && this.strat !== "FP") {
+      let newpubtable: pubTable = this.lastPub < 1990 ? pubtable.fpdata : extended_pubtable;
       let pubseek = Math.round(this.lastPub * 8);
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
@@ -246,9 +247,14 @@ class fpSim extends theoryClass<theory> {
       if (this.forcedPubRho == 2000 && this.maxRho >= 1996 && this.doContinuityFork) {
         this.doContinuityFork = false;
         const fork = this.copy();
-        fork.forcedPubRho = Infinity;
-        const res = await fork.simulate();
-        this.bestRes = getBestResult(this.bestRes, res);
+        const newpubtable: pubTable = extended_pubtable;
+        const pubseek = Math.round(this.lastPub * 8);
+        fork.forcedPubRho = newpubtable[pubseek.toString()] / 8;
+        if (fork.forcedPubRho === undefined) this.forcedPubRho = Infinity;
+        if (fork.forcedPubRho > 2000) {
+          const res = await fork.simulate();
+          this.bestRes = getBestResult(this.bestRes, res);
+        }
       }
     }
     this.trimBoughtVars();

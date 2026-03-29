@@ -599,7 +599,7 @@
           "stratFilterCondition": "Idle || (Semi-Idle && (rho < 1200 || rho >= 1990)) || rho <= 20"
         },
         "FPcoast": {
-          "stratFilterCondition": "Semi-Idle && rho >= 1200 && rho < 1990"
+          "stratFilterCondition": "Semi-Idle && rho >= 1200 && rho < 3490"
         },
         "FPd": {
           "stratFilterCondition": "Active || Very-Active"
