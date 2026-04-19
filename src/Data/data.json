@@ -654,7 +654,7 @@
       "tauFactor": 1,
       "strats": {
         "MF": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Idle"
         },
         "MFRC": {
           "stratFilterCondition": "false"
@@ -669,7 +669,7 @@
           "stratFilterCondition": "false"
         },
         "MFRCCoast": {
-          "stratFilterCondition": "Idle || Semi-Idle"
+          "stratFilterCondition": "Semi-Idle"
         },
         "MFCoast": {
           "stratFilterCondition": "false"

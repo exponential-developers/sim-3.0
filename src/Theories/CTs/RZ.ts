@@ -6,7 +6,7 @@ import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Util
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
 import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp, defaultResult } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
-import goodzeros from "./helpers/RZgoodzeros.json" assert { type: "json" };
+import goodzeros from "./helpers/RZgoodzeros.json" with { type: "json" };
 
 type theory = "RZ";
 

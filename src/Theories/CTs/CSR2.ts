@@ -4,7 +4,7 @@ import Variable from "../../Utils/variable";
 import { LinearValue, ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, getLastLevel, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/CSR2pubtable.json" assert { type: "json" };
+import pubtable from "./helpers/CSR2pubtable.json" with { type: "json" };
 
 export default async function csr2(data: theoryData): Promise<simResult> {
   const sim = new csr2Sim(data);

@@ -4,8 +4,8 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/FPpubtable.json" assert { type: "json" };
-import extended_pubtable from "./helpers/FPextendedPT.json" assert { type: "json" };
+import pubtable from "./helpers/FPpubtable.json" with { type: "json" };
+import extended_pubtable from "./helpers/FPextendedPT.json" with { type: "json" };
 
 export default async function fp(data: theoryData): Promise<simResult> {
   const sim = new fpSim(data);

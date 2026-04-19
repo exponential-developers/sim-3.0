@@ -4,8 +4,6 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, logToExp, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
-import { start } from "repl";
-import { simulate } from "../../Sim/simulate";
 
 
 export default async function t1(data: theoryData): Promise<simResult> {

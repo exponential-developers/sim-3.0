@@ -1,4 +1,4 @@
-import jsonData from "../Data/data.json" assert { type: "json" };
+import jsonData from "../Data/data.json" with { type: "json" };
 
 /** Returns the index of the first occurrence of `val` in `arr`, or -1 if not found */
 export function findIndex<T>(arr: T[], val: T): number {

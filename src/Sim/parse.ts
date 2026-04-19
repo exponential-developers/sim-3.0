@@ -1,4 +1,4 @@
-import jsonData from "../Data/data.json" assert { type: "json" };
+import jsonData from "../Data/data.json" with { type: "json" };
 import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
 import { qs } from "../Utils/DOMhelpers";
 
