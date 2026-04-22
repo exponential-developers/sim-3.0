@@ -266,7 +266,7 @@ class fpSim extends theoryClass<theory> {
       const term1 = stepwiseSum(this.variables[6].level, 1, 40);
       const term2 = this.milestones[1] > 0 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 30), 1, 35) * 2) : 0;
       const term3 = this.milestones[1] > 1 ? Math.floor(stepwiseSum(Math.max(0, this.variables[6].level - 69), 1, 30) * 2.4) : 0;
-      this.n = Math.min(20000, 1 + term1 + term2 + term3);
+      this.n = 1 + term1 + term2 + term3;
       this.updateN();
       this.updateN_flag = false;
     }
