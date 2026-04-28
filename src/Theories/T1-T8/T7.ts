@@ -35,15 +35,10 @@ class t7Sim extends theoryClass<theory> {
   rho2: Currency;
   drho13: number;
   drho23: number;
-  c2ratio: number;
+  c2ratio: number = Infinity;
 
   getBuyingConditions(): conditionFunction[] {
     const q1CoastCond = () => this.variables[0].shouldBuy;
-    if (this.lastPub >= 100) this.c2ratio = 100;
-    if (this.lastPub >= 175) this.c2ratio = 10;
-    if (this.lastPub >= 250) this.c2ratio = 20;
-    if (this.lastPub >= 275) this.c2ratio = 50;
-    if (this.lastPub >= 300) this.c2ratio = Infinity;
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T7: [true, true, true, true, true, true, true],
       T7Coast: [q1CoastCond, true, true, true, true, true, true],
@@ -127,7 +122,11 @@ class t7Sim extends theoryClass<theory> {
     ];
     this.drho13 = 0;
     this.drho23 = 0;
-    this.c2ratio = Infinity;
+    if (this.lastPub >= 100) this.c2ratio = 100;
+    if (this.lastPub >= 175) this.c2ratio = 10;
+    if (this.lastPub >= 250) this.c2ratio = 20;
+    if (this.lastPub >= 275) this.c2ratio = 50;
+    if (this.lastPub >= 300) this.c2ratio = Infinity;
     this.updateMilestones();
   }
   async simulate(): Promise<simResult> {
@@ -139,7 +138,7 @@ class t7Sim extends theoryClass<theory> {
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
     }
-    this.trimBoughtVars()
+    this.trimBoughtVars();
     let stratExtra = this.strat.includes("T7PlaySpqcey") && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
