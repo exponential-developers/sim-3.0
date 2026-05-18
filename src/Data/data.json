@@ -796,6 +796,12 @@
         },
         "TCd": {
           "stratFilterCondition": "Active || Very-Active"
+        },
+        "TCCoast": {
+          "stratFilterCondition": "true"
+        },
+        "TCdCoast": {
+          "stratFilterCondition": "Active || Very-Active"
         }
       }
     }
