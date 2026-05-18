@@ -244,8 +244,7 @@ class tcSim extends theoryClass<theory> {
       let dP =
         this.variables[5].value +
         this.variables[6].value +
-        Math.LOG10E * (-3 * Math.pow(0.03, this.milestones[4])) +
-        l10(Math.abs(this.T - 100));
+        Math.LOG10E * (-3 * Math.pow(0.03, this.milestones[4]) * Math.abs(this.T - 100))
       this.P = add(this.P, dP + l10(this.dt));
     }
 
