@@ -5,7 +5,7 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/EFpubtable.json" assert { type: "json" };
+import pubtable from "./helpers/EFpubtable.json" with { type: "json" };
 
 export default async function ef(data: theoryData): Promise<simResult> {
   if (data.strat !== "EFPlay") {

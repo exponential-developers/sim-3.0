@@ -1,4 +1,4 @@
-import jsonData from "../Data/data.json" assert { type: "json" };
+import jsonData from "../Data/data.json" with { type: "json" };
 import { global } from "./main";
 import { defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
 import { qs } from "../Utils/DOMhelpers";

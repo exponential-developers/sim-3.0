@@ -1,4 +1,4 @@
-import jsonData from "../Data/data.json" assert { type: "json" };
+import jsonData from "../Data/data.json" with { type: "json" };
 import { global } from "./main";
 
 const stratConditionArgs = ["very_active", "active", "semi_idle", "idle", "rho", "laststrat"];

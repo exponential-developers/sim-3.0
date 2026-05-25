@@ -599,7 +599,7 @@
           "stratFilterCondition": "Idle || (Semi-Idle && (rho < 1200 || rho >= 1990)) || rho <= 20"
         },
         "FPcoast": {
-          "stratFilterCondition": "Semi-Idle && rho >= 1200 && rho < 1990"
+          "stratFilterCondition": "Semi-Idle && rho >= 1200 && rho < 3490"
         },
         "FPd": {
           "stratFilterCondition": "Active || Very-Active"
@@ -654,7 +654,7 @@
       "tauFactor": 1,
       "strats": {
         "MF": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Idle"
         },
         "MFRC": {
           "stratFilterCondition": "false"
@@ -669,7 +669,7 @@
           "stratFilterCondition": "false"
         },
         "MFRCCoast": {
-          "stratFilterCondition": "Idle || Semi-Idle"
+          "stratFilterCondition": "Semi-Idle"
         },
         "MFCoast": {
           "stratFilterCondition": "false"
@@ -788,13 +788,19 @@
       }
     },
     "TC": {
-      "tauFactor": 0.45,
+      "tauFactor": 0.4,
       "UI_visible":false,
       "strats": {
         "TC": {
           "stratFilterCondition": "true"
         },
         "TCd": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
+        "TCCoast": {
+          "stratFilterCondition": "true"
+        },
+        "TCdCoast": {
           "stratFilterCondition": "Active || Very-Active"
         }
       }

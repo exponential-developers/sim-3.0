@@ -1,4 +1,4 @@
-import data from "../Data/data.json" assert { type: "json" };
+import data from "../Data/data.json" with { type: "json" };
 import { findIndex, getIndexFromTheory } from "../Utils/helpers";
 import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";

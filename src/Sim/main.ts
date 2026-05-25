@@ -3,6 +3,7 @@ import { simulate } from "./simulate";
 import { writeSimResponse } from "./write";
 import { setSimState } from "../UI/simState";
 import { qs, event } from "../Utils/DOMhelpers";
+import { cacheFilterQuery, cacheFilterResponse, setCache } from "./cache";
 
 const output = qs(".output");
 
@@ -27,8 +28,11 @@ async function simCall() {
 
   try {
     const query = parseQuery();
-    const response = await simulate(query);
-    writeSimResponse(response);
+    const filteredQuery = cacheFilterQuery(structuredClone(query));
+    const response = await simulate(filteredQuery);
+    const filteredResponse = cacheFilterResponse(filteredQuery, response);
+    setCache(query, filteredResponse);
+    writeSimResponse(filteredResponse);
     output.textContent = "";
   }
   catch (err) {

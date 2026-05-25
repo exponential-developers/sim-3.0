@@ -3,11 +3,29 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost } from "../../Utils/cost";
-import { add, l10, toCallables } from "../../Utils/helpers";
+import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 export default async function tc(data: theoryData): Promise<simResult> {
-  const sim = new tcSim(data);
-  const res = await sim.simulate();
+  let res;
+  if (data.strat.includes("Coast")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "");
+    const sim1 = new tcSim(data2);
+    const res1 = await sim1.simulate();
+    // const lastQ1 = getLastLevel("q1", res1.boughtVars);
+    const lastR1 = getLastLevel("r1", res1.boughtVars);
+    const lastP1 = getLastLevel("p1", res1.boughtVars);
+    const sim2 = new tcSim(data);
+    sim2.variables[1].setOriginalCap(lastR1);
+    sim2.variables[1].configureCap(20);
+    sim2.variables[5].setOriginalCap(lastP1);
+    sim2.variables[5].configureCap(1);
+    res = await sim2.simulate();
+  }
+  else {
+    const sim = new tcSim(data);
+    res = await sim.simulate();
+  }
   return res;
 }
 
@@ -38,10 +56,28 @@ class tcSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       TC: new Array(11).fill(true),
       TCd: [
-        true, 
-        () => this.variables[1].cost + l10(10) < this.variables[2].cost, 
+        true,
+        () => this.variables[1].cost + l10(10) < this.variables[2].cost,
         ...new Array(9).fill(true)
-      ]
+      ],
+      TCCoast: [
+        true,
+        () => this.variables[1].shouldBuy,
+        true,
+        true,
+        true,
+        () => this.variables[5].shouldBuy,
+        ...new Array(5).fill(true)
+      ],
+      TCdCoast: [
+        true,
+        () => (this.variables[1].cost + l10(10) < this.variables[2].cost) && this.variables[1].shouldBuy,
+        true,
+        true,
+        true,
+        () => this.variables[5].shouldBuy,
+        ...new Array(5).fill(true)
+      ],
     };
     return toCallables(conditions[this.strat]);
   }
@@ -77,6 +113,8 @@ class tcSim extends theoryClass<theory> {
     switch (strat) {
       case "TC":
       case "TCd":
+      case "TCCoast":
+      case "TCdCoast":
         return [5, 30, 11, 189];
       default:
         return [5, 0, 0, 100];
@@ -87,6 +125,8 @@ class tcSim extends theoryClass<theory> {
     switch (strat) {
       case "TC":
       case "TCd":
+      case "TCCoast":
+      case "TCdCoast":
         return [200, 1];
       default:
         return [30, 1.5];
@@ -153,9 +193,17 @@ class tcSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
+      if (this.variables[1].shouldFork) await this.doForkVariable(1);
+      if (this.variables[5].shouldFork) await this.doForkVariable(5);
+
     }
     this.trimBoughtVars();
-    return this.createResult();
+    let stratExtra= '';
+    if(this.strat.includes("Coast")) {
+      stratExtra = this.variables[1].prepareExtraForCap(getLastLevel("r1", this.boughtVars)) +
+          this.variables[5].prepareExtraForCap(getLastLevel("p1", this.boughtVars));
+    }
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
 
   tick() {
@@ -170,7 +218,7 @@ class tcSim extends theoryClass<theory> {
     const vki = this.milestones[1] > 0 ? this.ki : 0;
     const vkd = this.milestones[2] > 0 ? this.kd : 0;
     this.timer += this.systemDt;
-    
+
     if (this.timer > this.frequency) {
       this.T = this.amplitude;
       this.timer = 0;
@@ -225,7 +273,31 @@ class tcSim extends theoryClass<theory> {
       l10(this.achievementMulti)
     );
   }
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.timer = other.timer;
+    this.error[0] = other.error[0];
+    this.error[1] = other.error[1];
+    this.r = other.r;
+    this.P = other.P;
+    this.integral = other.integral;
+    this.recomputeC1Base();
+  }
+  copy() {
+    let copySim = new tcSim(this.getDataForCopy());
+    copySim.copyFrom(this);
+    return copySim;
+  }
+
   onVariablePurchased(id: number): void {
     if (id == 10) this.recomputeC1Base();
+    if (
+        [1, 5].includes(id) &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
   }
 }

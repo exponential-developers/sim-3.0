@@ -4,7 +4,7 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/BaPpubtable.json" assert { type: "json" };
+import pubtable from "./helpers/BaPpubtable.json" with { type: "json" };
 
 export default async function bap(data: theoryData): Promise<simResult> {
   const sim = new bapSim(data);
