@@ -4,6 +4,7 @@ import { writeSimResponse } from "./write";
 import { setSimState } from "../UI/simState";
 import { qs, event } from "../Utils/DOMhelpers";
 import { cacheFilterQuery, cacheFilterResponse, setCache } from "./cache";
+import { refreshDOMEventLoop, sleep } from "../Utils/helpers";
 
 const output = qs(".output");
 
@@ -31,7 +32,8 @@ async function simCall() {
     const filteredQuery = cacheFilterQuery(structuredClone(query));
     const response = await simulate(filteredQuery);
     const filteredResponse = cacheFilterResponse(filteredQuery, response);
-    setCache(query, filteredResponse);
+    await refreshDOMEventLoop();
+    if (global.simulating) setCache(query, filteredResponse);
     writeSimResponse(filteredResponse);
     output.textContent = "";
   }

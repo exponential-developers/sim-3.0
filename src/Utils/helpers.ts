@@ -10,6 +10,10 @@ export function sleep(time = 0) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+export async function refreshDOMEventLoop() {
+  await sleep();
+}
+
 /** Alias of Math.log10 */
 export let l10 = Math.log10;
 /** Alias of Math.log2 */
