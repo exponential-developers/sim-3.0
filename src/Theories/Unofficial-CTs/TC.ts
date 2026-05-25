@@ -31,6 +31,29 @@ export default async function tc(data: theoryData): Promise<simResult> {
 
 type theory = "TC";
 
+/**
+ * Simulates a 16-bit LFSR with 16 internal clock cycles per output.
+ * @param {number} seed - The input value 
+ * @returns {number} A random float between 0 and 1
+ */
+function lfsr16BitScrambled(seed: number): number {
+    // Map input to 16-bit space (0 to 65535) and ensure non-zero
+    let state = (seed % 65536) || 1;
+
+    // Clock 16 times to completely roll over the 16-bit register
+    for (let i = 0; i < 16; i++) {
+        if (state & 1) {
+            // Shift right and XOR with 16-bit polynomial 0xB400
+            state = (state >> 1) ^ 0xB400;
+        } else {
+            state = state >> 1;
+        }
+    }
+
+    // Scale to a float between 0 and 1 (divide by max 16-bit value)
+    return state / 65535;
+}
+
 class tcSim extends theoryClass<theory> {
   // growing variables
   r: number;
@@ -155,7 +178,11 @@ class tcSim extends theoryClass<theory> {
     this.ki = pidSettings[1];
     this.kd = pidSettings[2];
     this.T = 30;
-    this.targetT = Math.random() * (120 - 60) + 60;
+
+    const seed = Math.round(this.lastPub * this.tauFactor);
+    const rng = lfsr16BitScrambled(seed);
+
+    this.targetT = Math.round(rng * (120 - 60) + 60);
     this.setPoint = pidSettings[3];
 
     this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
