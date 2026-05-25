@@ -32,6 +32,7 @@ class tcSim extends theoryClass<theory> {
   kd: number;
   T: number;
   setPoint: number;
+  targetT: number;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -114,6 +115,7 @@ class tcSim extends theoryClass<theory> {
     this.ki = pidSettings[1];
     this.kd = pidSettings[2];
     this.T = 30;
+    this.targetT = Math.random() * (120 - 60) + 60;
     this.setPoint = pidSettings[3];
 
     this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
@@ -124,8 +126,8 @@ class tcSim extends theoryClass<theory> {
       new Variable({ name: "r2", cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
       new Variable({ name: "c2", cost: new ExponentialCost("1e420", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
       new Variable({ name: "dTexp", cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
-      new Variable({ name: "p1", cost: new ExponentialCost("1e800", 1e8), valueScaling: new StepwisePowerSumValue(2, 10, 1) }), // p1
-      new Variable({ name: "p2", cost: new ExponentialCost("1e950", 1e10), valueScaling: new ExponentialValue(3.1) }), // p2
+      new Variable({ name: "p1", cost: new ExponentialCost("1e800", 1e4), valueScaling: new StepwisePowerSumValue(2, 10, 1) }), // p1
+      new Variable({ name: "p2", cost: new ExponentialCost("1e830", 1e10), valueScaling: new ExponentialValue(2.2) }), // p2
       new Variable({ name: "c1exp", cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
       new Variable({ name: "r1exp", cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
       new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
@@ -193,11 +195,10 @@ class tcSim extends theoryClass<theory> {
     // Variable calculation
     // P Update
     if (this.achievementMulti == 30) {
-      let dP = 
-        this.variables[5].value + 
-        this.variables[6].value + 
-        Math.LOG10E * (-3 * Math.pow(0.03, this.milestones[4])) +
-        l10(Math.abs(this.T - 100));
+      let dP =
+        this.variables[5].value +
+        this.variables[6].value +
+        Math.LOG10E * (-0.2 * Math.pow(0.08, this.milestones[4]) * Math.abs(this.T - this.targetT))
       this.P = add(this.P, dP + l10(this.dt));
     }
 
