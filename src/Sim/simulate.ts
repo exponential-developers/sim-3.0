@@ -273,5 +273,9 @@ export async function simulate(query: SimQuery): Promise<SimResponse> {
         case "step": return await stepSim(query);
         case "all": return await simAll(query);
         case "step_chain": return await stepChainSim(query);
+        default: {
+            console.log(query);
+            throw "Unimplemented";
+        }
     }
 }
