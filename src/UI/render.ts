@@ -106,7 +106,7 @@ function modeUpdate(): void {
   // Displays the cap input for chain/steps mode
   if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") capInputWrapper.style.display = "inline";
   // Displays the hard cap input
-  if (newMode === "Chain" || newMode == "StepChain" || newMode == "Time") hardCapWrapper.style.display = "block";
+  if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) hardCapWrapper.style.display = "block";
 
   // Extra Inputs
   if (newMode !== "Single sim" && newMode !== "Time diff." && newMode !== "Chain") extraInputs.style.display = "flex";
