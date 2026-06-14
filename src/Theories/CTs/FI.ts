@@ -79,20 +79,20 @@ class fiSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FI: idleStrat,
       FICoast: idleCoastStrat,
-      FId: activeStrat2,
-      FIdCoast: activeCoastStrat2,
-      FIPermaSwap: idleStrat,
-      FIPermaSwapCoast: idleCoastStrat,
-      FIdPermaSwap: activeStrat2,
-      FIdPermaSwapCoast: activeCoastStrat2,
+      FIMod: activeStrat2,
+      FIModCoast: activeCoastStrat2,
+      FISingleMS: idleStrat,
+      FISingleMSCoast: idleCoastStrat,
+      FIModSingleMS: activeStrat2,
+      FIModSingleMSCoast: activeCoastStrat2,
       FIMS: idleStrat,
       FIMSCoast: idleCoastStrat,
-      FIMSd: activeStrat2,
-      FIMSdCoast: activeCoastStrat2,
-      FIMSPermaSwap: idleStrat,
-      FIMSPermaSwapCoast: idleCoastStrat,
-      FIMSdPermaSwap: activeStrat2,
-      FIMSdPermaSwapCoast: activeCoastStrat2
+      FIMSMod: activeStrat2,
+      FIMSModCoast: activeCoastStrat2,
+      FIMSSingleMS: idleStrat,
+      FIMSSingleMSCoast: idleCoastStrat,
+      FIMSModSingleMS: activeStrat2,
+      FIMSModSingleMSCoast: activeCoastStrat2
     };
     return toCallables(conditions[this.strat]);
   }

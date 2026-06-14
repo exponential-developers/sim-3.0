@@ -80,7 +80,7 @@ class t5Sim extends theoryClass<theory> {
         () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc
       ],
-      T5AI2: [
+      T5ManageQMod: [
         () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
         trueFunc,
@@ -88,7 +88,7 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth,
         trueFunc,
       ],
-      T5AI2Coast: [
+      T5ManageQModCoast: [
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
             <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
         trueFunc,

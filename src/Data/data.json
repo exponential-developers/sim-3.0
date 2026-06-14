@@ -202,10 +202,10 @@
         "T5Idle2Coast": {
           "stratFilterCondition": "false"
         },
-        "T5AI2": {
+        "T5ManageQMod": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "T5AI2Coast": {
+        "T5ManageQModCoast": {
           "stratFilterCondition": "Active || Very-Active"
         }
       }
@@ -532,22 +532,22 @@
         "FICoast":{
           "stratFilterCondition":"Semi-Idle || (!Idle && rho <= 30)"
         },
-        "FId": {
+        "FIMod": {
           "stratFilterCondition":"Active || Very-Active"
         },
-        "FIdCoast": {
+        "FIModCoast": {
           "stratFilterCondition":"Active || Very-Active"
         },
-        "FIPermaSwap":{
+        "FISingleMS":{
           "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
         },
-        "FIPermaSwapCoast":{
+        "FISingleMSCoast":{
           "stratFilterCondition":"Semi-Idle && rho >= 1000 && rho <= 1300"
         },
-        "FIdPermaSwap":{
+        "FIModSingleMS":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
-        "FIdPermaSwapCoast":{
+        "FIModSingleMSCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
         "FIMS":{
@@ -556,22 +556,22 @@
         "FIMSCoast":{
           "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950"
         },
-        "FIMSd": {
+        "FIMSMod": {
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
-        "FIMSdCoast": {
+        "FIMSModCoast": {
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
-        "FIMSPermaSwap":{
+        "FIMSSingleMS":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
-        "FIMSPermaSwapCoast":{
+        "FIMSSingleMSCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
-        "FIMSdPermaSwap":{
+        "FIMSModSingleMS":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         },
-        "FIMSdPermaSwapCoast":{
+        "FIMSModSingleMSCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         }
       }}
