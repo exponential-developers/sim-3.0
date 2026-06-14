@@ -1,6 +1,6 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { global } from "./main";
-import { defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
+import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
 import { qs } from "../Utils/DOMhelpers";
 import { getStrats } from "./strats";
 import t1 from "../Theories/T1-T8/T1";
@@ -131,6 +131,50 @@ async function amountSim(query: AmountSimQuery, doLog = true): Promise<ChainSimR
         if (ts - lastLog > 250 && doLog) {
             lastLog = ts;
             output.textContent = `Simulating ${i+1}/${query.amount} pubs`;
+            await sleep();
+        }
+
+        const res = (await singleSim({
+            queryType: "single",
+            theory: query.theory,
+            strat: query.strat,
+            rho: rho,
+            sigma: query.sigma,
+            settings: query.settings,
+            lastStrat: lastStrat
+        })).result;
+        if (!global.simulating) break;
+
+        results.push(res);
+        rho = res.pubRho;
+        lastStrat = res.strat.split(" ")[0];
+        time += res.time;
+    }
+
+    const deltaTau = (rho - query.rho) * jsonData.theories[query.theory].tauFactor;
+
+    return {
+        responseType: "chain",
+        results: results,
+        deltaTau: deltaTau,
+        averageRate: deltaTau / (time / 3600),
+        totalTime: time
+    }
+}
+
+async function timeSim(query: TimeSimQuery): Promise<ChainSimResponse> {
+    let rho = query.rho;
+    let time = 0;
+    let lastStrat = "";
+    const results: simResult[] = [];
+    const stopStr = convertTime(query.time);
+    let lastLog = 0;
+
+    while (time < query.time) {
+        const ts = performance.now();
+        if (ts - lastLog > 250) {
+            lastLog = ts;
+            output.textContent = `Simulating ${convertTime(time)}/${stopStr}`;
             await sleep();
         }
 
@@ -317,6 +361,7 @@ export async function simulate(query: SimQuery): Promise<SimResponse> {
         case "all": return await simAll(query);
         case "step_chain": return await stepChainSim(query);
         case "amount": return await amountSim(query);
+        case "time": return await timeSim(query);
         default: {
             console.log(query);
             throw "Unimplemented";
