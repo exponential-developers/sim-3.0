@@ -120,6 +120,58 @@ function parseChainSim(): ChainSimQuery {
     }
 }
 
+function parseAmountSim(): AmountSimQuery {
+    const theory = theorySelector.value as theoryType;
+    const sigma = parseSigma(isMainTheory(theory));
+
+    return {
+        queryType: "amount",
+        theory: theory,
+        strat: stratSelector.value,
+        sigma: sigma,
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        amount: parseInt(modeInput.value),
+        settings: parseSettings()
+    }
+}
+
+function parseTimeSim(): TimeSimQuery {
+    const theory = theorySelector.value as theoryType;
+    const sigma = parseSigma(isMainTheory(theory));
+
+    const timeStr = modeInput.value;
+    const timeComponents = timeStr.matchAll(/(\d+)([ydhm])/g);
+    let time = 0;
+
+    for (let component of timeComponents) {
+        switch (component[2]) {
+            case 'y':
+                time += parseInt(component[1]) * 3600 * 24 * 365;
+                break;
+            case 'd':
+                time += parseInt(component[1]) * 3600 * 24;
+                break;
+            case 'h':
+                time += parseInt(component[1]) * 3600;
+                break;
+            case 'm':
+                time += parseInt(component[1]) * 60;
+                break;
+        }
+    }
+
+    return {
+        queryType: "time",
+        theory: theory,
+        strat: stratSelector.value,
+        sigma: sigma,
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        time,
+        hardCap: hardCap.checked,
+        settings: parseSettings()
+    }
+}
+
 function parseStepSim(): StepSimQuery {
     const theory = theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
@@ -196,6 +248,8 @@ export function parseQuery(): SimQuery {
         case "Single sim": return parseSingleSim();
         case "Chain": return parseChainSim();
         case "Steps": return parseStepSim();
+        case "Amount": return parseAmountSim();
+        case "Time": return parseTimeSim();
         case "StepChain": return parseStepChainSim();
         default: throw "This mode is not supported.";
     }
