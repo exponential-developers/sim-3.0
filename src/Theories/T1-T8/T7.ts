@@ -48,10 +48,10 @@ class t7Sim extends theoryClass<theory> {
       T7C3Coast: [q1CoastCond, false, false, true, false, false, false],
       T7noC12: [true, false, false, true, true, true, true],
       T7noC12Coast: [q1CoastCond, false, false, true, true, true, true],
-      T7noC123: [true, false, false, false, true, true, true],
-      T7noC123Coast: [q1CoastCond, false, false, false, true, true, true],
-      T7noC1234: [true, false, false, false, false, true, true],
-      T7noC1234Coast: [q1CoastCond, false, false, false, false, true, true],
+      T7C456: [true, false, false, false, true, true, true],
+      T7C456Coast: [q1CoastCond, false, false, false, true, true, true],
+      T7C56: [true, false, false, false, false, true, true],
+      T7C56Coast: [q1CoastCond, false, false, false, false, true, true],
       T7C12d: [() => this.variables[0].cost + 1 < this.variables[2].cost, () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
       T7C12dCoast: [() => q1CoastCond() && (this.variables[0].cost + 1 < this.variables[2].cost), () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
       T7C3d: [() => this.variables[0].cost + 1 < this.variables[3].cost, false, false, true, false, false, false],
@@ -94,8 +94,8 @@ class t7Sim extends theoryClass<theory> {
       case "T7C12": case "T7C12Coast": return [4];
       case "T7C3": case "T7C3Coast": return [1];
       case "T7noC12": case "T7noC12Coast": return [1, 0, 2, 3];
-      case "T7noC123": case "T7noC123Coast": return [0, 2, 3];
-      case "T7noC1234": case "T7noC1234Coast": return [0, 2, 3];
+      case "T7C456": case "T7C456Coast": return [0, 2, 3];
+      case "T7C56": case "T7C56Coast": return [0, 2, 3];
       case "T7C12d": case "T7C12dCoast": return [4];
       case "T7C3d": case "T7C3dCoast": return [1];
       case "T7PlaySpqcey": case "T7PlaySpqceyCoast": return [1, 0, 2, 3, 4];

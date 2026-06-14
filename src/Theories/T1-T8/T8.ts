@@ -51,7 +51,7 @@ class t8Sim extends theoryClass<theory> {
       T8noC3: [true, true, false, true, true],
       T8noC5: [true, true, true, true, false],
       T8noC35: [true, true, false, true, false],
-      T8Snax: [() => this.curMult < 1.6, true, () => this.curMult < 2.3, true, () => this.curMult < 2.3],
+      T8MC: [() => this.curMult < 1.6, true, () => this.curMult < 2.3, true, () => this.curMult < 2.3],
       T8Coast: [
         () => this.variables[0].shouldBuy,
         true,
@@ -77,14 +77,14 @@ class t8Sim extends theoryClass<theory> {
         true,
         () => this.variables[4].shouldBuy && (this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       ],
-      T8PlaySolarswap: [
+      T8PlaySolarReset: [
         () => this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost),
         true,
         () => this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
         true,
         () => this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
       ],
-      T8PlaySolarswapCoast: [
+      T8PlaySolarResetCoast: [
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost)),
         true,
         () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
