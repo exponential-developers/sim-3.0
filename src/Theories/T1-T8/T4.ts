@@ -15,13 +15,13 @@ import {
 
 export default async function t4(data: theoryData): Promise<simResult> {
   let res;
-  if(!data.strat.includes("coast2")) {
+  if(!data.strat.includes("coast")) {
     const sim = new t4Sim(data);
     res = await sim.simulate();
   }
   else {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("coast2", "");
+    data2.strat = data2.strat.replace("coast", "");
     const sim1 = new t4Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -63,7 +63,7 @@ class t4Sim extends theoryClass<theory> {
             this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost),
         () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost,
       ],
-      T4C3dcoast2: [
+      T4C3dcoast: [
         false,
         false,
         () => this.variables[2].shouldBuy,
@@ -72,7 +72,7 @@ class t4Sim extends theoryClass<theory> {
             (this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
         () => this.variables[7].shouldBuy && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
       ],
-      T4C3coast2: [
+      T4C3coast: [
         false,
         false,
         () => this.variables[2].shouldBuy,
@@ -81,7 +81,7 @@ class t4Sim extends theoryClass<theory> {
         () => this.variables[7].shouldBuy,
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
-      T4C3dC12rcv: [
+      T4C3dStopC12: [
         () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
         () => this.maxRho < this.lastPub, 
         true, 
@@ -89,7 +89,7 @@ class t4Sim extends theoryClass<theory> {
         () => this.variables[6].cost + 1 < this.variables[7].cost, 
         true
       ],
-      T4C356dC12rcv: [
+      T4NoC4dStopC12: [
         () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
         () => this.maxRho < this.lastPub, 
         true, 
@@ -99,7 +99,7 @@ class t4Sim extends theoryClass<theory> {
         () => this.variables[6].cost + 1 < this.variables[7].cost, 
         true
       ],
-      T4C456dC12rcvMS: [
+      T4MSNoC3dStopC12: [
         () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
         () => this.maxRho < this.lastPub, 
         false, 
@@ -139,12 +139,12 @@ class t4Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     switch (this.strat) {
       case "T4C3d": return [2];
-      case "T4C3coast2": return [2];
-      case "T4C3dcoast2": return [2];
+      case "T4C3coast": return [2];
+      case "T4C3dcoast": return [2];
       case "T4C3": return [2];
-      case "T4C3dC12rcv": return [1, 2];
-      case "T4C356dC12rcv": return [1, 2, 0];
-      case "T4C456dC12rcvMS": {
+      case "T4C3dStopC12": return [1, 2];
+      case "T4NoC4dStopC12": return [1, 2, 0];
+      case "T4MSNoC3dStopC12": {
         if (this.maxRho < this.lastPub) return [1, 2, 0]
         else if (this.t % 100 < 50) return [2, 0, 1] 
         else return [0, 2, 1];
@@ -197,7 +197,7 @@ class t4Sim extends theoryClass<theory> {
     }
     this.trimBoughtVars();
     let stratExtra = '';
-    if(this.strat.includes("coast2")) {
+    if(this.strat.includes("coast")) {
       stratExtra = this.variables[6].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
           this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
           this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars));
@@ -226,7 +226,7 @@ class t4Sim extends theoryClass<theory> {
   onVariablePurchased(id: number) {
     if(
         [2, 6, 7].includes(id) &&
-        this.strat.includes("coast2") &&
+        this.strat.includes("coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached() &&
         // For this strat, there is almost never use to get levels above cap. We can skip simming that for faster sim:

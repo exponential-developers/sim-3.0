@@ -140,27 +140,27 @@
     "T4": {
       "tauFactor": 1,
       "strats": {
-        "T4C3dcoast2": {
+        "T4C3dcoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 240"
         },
         "T4C3d": {
           "stratFilterCondition": "false"
         },
-        "T4C3coast2": {
+        "T4C3coast": {
           "stratFilterCondition": "Semi-Idle && rho >= 240"
         },
         "T4C3": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 200"
         },
-        "T4C3dC12rcv": {
+        "T4C3dStopC12": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 175 && (lastStrat !== \"T4C3d66\" || rho < 225)",
           "forcedCondition": "rho >= 75"
         },
-        "T4C356dC12rcv": {
+        "T4NoC4dStopC12": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 175 && rho < 300",
           "forcedCondition": "rho >= 75"
         },
-        "T4C456dC12rcvMS": {
+        "T4MSNoC3dStopC12": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 75 && rho < 200",
           "forcedCondition": "rho >= 25"
         },
