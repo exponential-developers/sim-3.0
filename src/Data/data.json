@@ -200,7 +200,7 @@
           "stratFilterCondition": "Idle || rho < 25"
         },
         "T5Idle": {
-          "stratFilterCondition": "Semi-Idle"
+          "stratFilterCondition": "false"
         },
         "T5IdleCoast": {
           "stratFilterCondition": "Semi-Idle"
