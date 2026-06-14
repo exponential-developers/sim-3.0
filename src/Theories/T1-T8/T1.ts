@@ -70,24 +70,11 @@ class t1Sim extends theoryClass<theory> {
   termRatio: number;
   c3Ratio: number;
   doCoasting: boolean;
-  /** This is exclusivery used by T1SolarXLII and T1SolarXLIICoast for legacy purposes */
-  coast: number;
 
   getBuyingConditions(): conditionFunction[] {
     const q1CoastCond = () => this.variables[0].shouldBuy;
     const q2CoastCond = () => this.variables[1].shouldBuy;
     const c3CoastCond = () => this.variables[4].shouldBuy;
-    const T1SolarXLII = [
-      () => // q1
-        this.variables[0].cost + l10(5) <= this.rho.value &&
-        this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <= this.variables[1].cost &&
-        this.variables[0].cost + l10(15 + (this.variables[0].level % 10)) < (this.milestones[3] > 0 ? this.variables[5].cost : 1000),
-      () => this.variables[1].cost + l10(1.11) < this.rho.value,
-      () => this.variables[2].cost + this.termRatio + 1 <= this.rho.value,
-      () => this.variables[3].cost + this.termRatio <= this.rho.value,
-      () => this.variables[4].cost + l10(this.c3Ratio) < this.rho.value,
-      true,
-    ];
     const T1SolarXLIICoast = [
       () => // q1
           q1CoastCond() && (this.variables[0].cost + l10(5) <= this.rho.value &&
@@ -122,9 +109,7 @@ class t1Sim extends theoryClass<theory> {
         () => c3CoastCond() && (this.variables[4].cost + l10(this.c3Ratio) < this.rho.value),
         true,
       ],
-      T1SolarXLII: T1SolarXLIICoast,
-      T1SolarXLIIOld: T1SolarXLII,
-      T1SolarXLIIOldCoast: T1SolarXLIICoast
+      T1SolarXLII: T1SolarXLIICoast
     };
     return toCallables(conditions[this.strat]);
   }
@@ -158,7 +143,6 @@ class t1Sim extends theoryClass<theory> {
       new Variable({ name: "c3", cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
       new Variable({ name: "c4", cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
     ];
-    this.coast = Infinity;
     this.doCoasting = this.strat.includes("Coast");
     //values of the different terms, so they are accesible for variable buying conditions
     this.term1 = 0;
@@ -171,17 +155,6 @@ class t1Sim extends theoryClass<theory> {
   }
   async simulate(): Promise<simResult> {
     const nextc4 = Math.ceil((this.lastPub - 10) / 8) * 8 + 10;
-    // Old pub cycle
-    if (this.strat.includes("Old")) {
-      const pub =
-          nextc4 - this.lastPub < 3 ? nextc4 + 2
-        : nextc4 - this.lastPub < 5 ? nextc4 - 2 + l10(1.5)
-        : nextc4 - 4 + l10(1.4);
-      this.coast = (nextc4 - this.lastPub < 3 ? nextc4 : Math.floor(this.lastPub)) + l10(30);
-      this.coast = Math.max(8 + l10(30), this.coast + Math.floor(pub - this.coast));
-      this.doSimEndConditions = () => false;
-      this.pubConditions.push(() => this.maxRho >= pub);
-    }
     // New pub cycle
     if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(this.strat))
     {
@@ -235,16 +208,13 @@ class t1Sim extends theoryClass<theory> {
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();
-      if (!(this.strat.includes("Old")) || this.rho.value < this.coast) this.buyVariables();
+      this.buyVariables();
       if (this.variables[0].shouldFork) await this.doForkVariable(0);
       if (this.variables[1].shouldFork) await this.doForkVariable(1);
       if (this.variables[4].shouldFork) await this.doForkVariable(4);
     }
     this.trimBoughtVars();
     let stratExtra = "";
-    if (this.strat.includes("Old")) {
-      stratExtra += ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, this.coast), 2)}`;
-    }
     if(this.doCoasting) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
       stratExtra += this.variables[1].prepareExtraForCap(getLastLevel("q2", this.boughtVars));
@@ -276,7 +246,6 @@ class t1Sim extends theoryClass<theory> {
     this.termRatio = other.termRatio;
     this.c3Ratio = other.c3Ratio;
     this.doCoasting = other.doCoasting;
-    this.coast = other.coast;
   }
   copy() {
     let sim = new t1Sim(this.getDataForCopy());
