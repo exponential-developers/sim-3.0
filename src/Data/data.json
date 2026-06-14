@@ -620,13 +620,13 @@
         "RZdBH": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 600"
         },
-        "RZSpiralswap": {
+        "RZdSpiralMS": {
           "stratFilterCondition": "Very-Active && rho >= 50 && rho < 400"
         },
-        "RZMS": {
+        "RZSingleMS": {
           "stratFilterCondition": "Semi-Idle && rho >= 50 && rho < 400"
         },
-        "RZdMS": {
+        "RZdSingleMS": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 50 && rho < 400"
         },
         "RZdBHRewind" : {

@@ -215,7 +215,7 @@ export default async function rz(data: theoryData) {
         }
         return bestSimRes2;
     }
-    else if(data.strat.includes("MS") && data.rho <= 400 && data.rho >= 10) {
+    else if(data.strat.includes("SingleMS") && data.rho <= 400 && data.rho >= 10) {
         const swapPointDeltas = [0, -1, -2, -3, -4, -5, -6];
         let normalRets = [];
         for(let i = 0; i < swapPointDeltas.length; i++) {
@@ -354,9 +354,9 @@ class rzSim extends theoryClass<theory> {
             RZdBH: activeStrat,
             RZdBHLong: activeStrat,
             RZdBHRewind: activeStrat,
-            RZSpiralswap: activeStrat,
-            RZdMS: activeStrat,
-            RZMS: semiPassiveStrat,
+            RZdSpiralMS: activeStrat,
+            RZdSingleMS: activeStrat,
+            RZSingleMS: semiPassiveStrat,
             // RZnoB: [true, true, false, true, true, false, false],
         };
         return toCallables(conditions[this.strat]);
@@ -380,11 +380,11 @@ class rzSim extends theoryClass<theory> {
         const originPriority = [1, 0, 2, 3];
         const peripheryPriority = [1, 2, 0, 3];
 
-        if (this.strat === "RZSpiralswap" && stage >= 2 && stage <= 4)
+        if (this.strat === "RZdSpiralMS" && stage >= 2 && stage <= 4)
         {
             return this.zTerm > 1 ? peripheryPriority : originPriority;
         }
-        else if ((this.strat === "RZMS" || this.strat === "RZdMS") && stage >= 2 && stage <= 4)
+        else if ((this.strat === "RZSingleMS" || this.strat === "RZdSingleMS") && stage >= 2 && stage <= 4)
         {
             return this.maxRho > this.lastPub + this.swapPointDelta ? originPriority : peripheryPriority;
         }
@@ -609,7 +609,7 @@ class rzSim extends theoryClass<theory> {
         {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
-        if (this.strat.includes("MS") && this.swapPointDelta != 0) {
+        if (this.strat.includes("SingleMS") && this.swapPointDelta != 0) {
             stratExtra += ` swap:${logToExp(this.lastPub + this.swapPointDelta, 2)}`
         }
         if (this.normalPubRho != -1) {
