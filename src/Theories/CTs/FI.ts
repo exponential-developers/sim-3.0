@@ -116,7 +116,7 @@ class fiSim extends theoryClass<theory> {
 
     let available_fx = binaryInsertionSearch([100, 450, 1050], rho);
     const avaliable_lambda = binaryInsertionSearch([350, 750], rho);
-    const use_fx_level3 = this.strat.includes("PermaSwap") ? this.maxRho >= 1076 : rho >= 1150;
+    const use_fx_level3 = this.strat.includes("SingleMS") ? this.maxRho >= 1076 : rho >= 1150;
     if (!use_fx_level3) available_fx = Math.min(available_fx, 2);
     this.milestonesMax = [1, 1, 3, 1, 1, available_fx, avaliable_lambda];
 
@@ -125,7 +125,7 @@ class fiSim extends theoryClass<theory> {
     const qf = q1m23 < 5 ? 4 : q1m23 < 10 ? 3 : q1m23 < 20 ? 2.5 : 2;
     const qpriority = [0, 1, 5, 6, 2, 3, 4];
     const rhopriority = [0, 1, 5, 6, 3, 4, 2];
-    if (this.strat.includes("MS") && q1mn_points > 0 && q1mn_points < 5 && this.msstate > 0) {
+    if (this.strat.includes("FIMS") && q1mn_points > 0 && q1mn_points < 5 && this.msstate > 0) {
       if (this.msstate == 1) // start q build
       {
         this.msstate = 2;

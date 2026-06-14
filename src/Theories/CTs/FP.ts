@@ -111,10 +111,10 @@ class fpSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FP: idleStrat,
       FPcoast: idleStrat,
-      FPd: activeStrat,
-      FPdMS: activeStrat,
-      FPmodBurstC1: activeBurstStrat,
-      FPmodBurstC1MS: activeBurstStrat
+      FPMod: activeStrat,
+      FPMSMod: activeStrat,
+      FPModBurstC1: activeBurstStrat,
+      FPMSModBurstC1: activeBurstStrat
     };
     return toCallables(conditions[this.strat]);
   }
