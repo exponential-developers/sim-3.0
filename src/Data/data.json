@@ -452,13 +452,13 @@
         "WSPStopC1Coast": {
           "stratFilterCondition": "Semi-Idle"
         },
-        "WSPdStopC1": {
+        "WSPMod": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "WSPdStopC1Coast": {
+        "WSPModCoast": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "WSPPostRecoveryStopC1Coast": {
+        "WSPModRcvICoast": {
           "stratFilterCondition": "false"
         }
       }

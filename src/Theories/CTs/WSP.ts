@@ -61,7 +61,7 @@ class wspSim extends theoryClass<theory> {
       () => this.lastPub < 450 || this.t < 15,
       true
     ]);
-    const WSPdStopC1CoastQ1 = toCallables([
+    const WSPModCoastQ1 = toCallables([
       () =>
           this.variables[0].shouldBuy && (this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
         Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity)),
@@ -77,14 +77,14 @@ class wspSim extends theoryClass<theory> {
       WSP: [true, true, true, true, true],
       WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
       WSPStopC1Coast: WSPStopC1CoastQ1,
-      WSPPostRecoveryStopC1Coast: [
-        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
+      WSPModRcvICoast: [
+        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPModCoastQ1[0](),
         true,
         true,
-        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[3]() : WSPdStopC1CoastQ1[3](),
+        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[3]() : WSPModCoastQ1[3](),
         true,
       ],
-      WSPdStopC1: [
+      WSPMod: [
         () =>
           this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <
           Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity),
@@ -95,7 +95,7 @@ class wspSim extends theoryClass<theory> {
             Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
         true,
       ],
-      WSPdStopC1Coast: WSPdStopC1CoastQ1
+      WSPModCoast: WSPModCoastQ1
     };
     return toCallables(conditions[this.strat]);
   }
