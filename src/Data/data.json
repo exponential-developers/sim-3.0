@@ -425,16 +425,16 @@
         "T8d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 40 && rho < 100"
         },
-        "T8Play": {
+        "T8Mod": {
           "stratFilterCondition": "Active && rho >= 220"
         },
-        "T8PlayCoast": {
+        "T8ModCoast": {
           "stratFilterCondition": "Active && rho >= 220"
         },
-        "T8PlaySolarReset": {
+        "T8ModReset": {
           "stratFilterCondition": "Very-Active"
         },
-        "T8PlaySolarResetCoast": {
+        "T8ModResetCoast": {
           "stratFilterCondition": "Very-Active"
         }
       }
