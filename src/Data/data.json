@@ -741,21 +741,11 @@
         "BaPcoast": {
           "stratFilterCondition": "Semi-Idle && rho < 1500"
         },
-        "BaPAI": {
+        "BaPModBurstC1": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "BaPAIMS": {
+        "BaPMSModBurstC1": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 250"
-        },
-        "BaPAIMS2": {
-          "UI_visible":false,
-          "stratFilterCondition": "(Active || Very-Active) && rho < 250 && false"
-        },
-        "BaPd": {
-          "stratFilterCondition": "false"
-        },
-        "BaPdMS": {
-          "stratFilterCondition": "false"
         }
       }
     },
