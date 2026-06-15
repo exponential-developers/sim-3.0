@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";

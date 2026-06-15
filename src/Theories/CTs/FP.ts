@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
