@@ -25,7 +25,7 @@ export default async function t6(data: theoryData): Promise<simResult> {
         const lastR1 = getLastLevel("r1", res1.boughtVars);
         const sim2 = new t6Sim(data);
         sim2.variables[0].setOriginalCap(lastQ1);
-        if (data.strat.includes("T6C5d") || data2.strat.includes("IdleRecovery") || data2.strat.includes("T6AI")) {
+        if (data.strat.includes("T6C5d") || data2.strat.includes("RcvI") || data2.strat.includes("T6NoC34Mod")) {
             sim2.variables[0].configureCap(4);
         } else {
             // This is the observed max for best idle strat.
@@ -51,7 +51,7 @@ class t6Sim extends theoryClass<theory> {
     stopC12: [number, number, boolean];
 
     getBuyingConditions(): conditionFunction[] {
-        const t6SnaxIdleRecoveryMaker = (start_point: number = 0): (boolean | conditionFunction)[] => {
+        const T6C125dStopC12RcvImaker = (start_point: number = 0): (boolean | conditionFunction)[] => {
             return [
                 () => {
                     if (this.lastPub - start_point >= this.maxRho) return true;
@@ -72,7 +72,7 @@ class t6Sim extends theoryClass<theory> {
                 true,
             ]
         }
-        const t6SnaxIdleRecoveryCoastMaker = (start_point: number = 0): (boolean | conditionFunction)[] => {
+        const T6C125dStopC12RcvICoastMaker = (start_point: number = 0): (boolean | conditionFunction)[] => {
             return [
                 () => {
                     if (!this.variables[0].shouldBuy) return false;
@@ -113,8 +113,8 @@ class t6Sim extends theoryClass<theory> {
                 false,
                 true
             ],
-            T6Snax: [true, true, true, true, () => this.stopC12[2], () => this.stopC12[2], false, false, true],
-            T6SnaxCoast: [
+            T6C125StopC12: [true, true, true, true, () => this.stopC12[2], () => this.stopC12[2], false, false, true],
+            T6C125StopC12Coast: [
                 () => this.variables[0].shouldBuy,
                 true,
                 () => this.variables[2].shouldBuy,
@@ -125,18 +125,18 @@ class t6Sim extends theoryClass<theory> {
                 false,
                 true
             ],
-            T6SnaxIdleRecovery: t6SnaxIdleRecoveryMaker(0),
-            T6SnaxIdleRecoveryCoast: t6SnaxIdleRecoveryCoastMaker(0),
-            T6SnaxIdleRecoveryM1: t6SnaxIdleRecoveryMaker(1),
-            T6SnaxIdleRecoveryM1Coast: t6SnaxIdleRecoveryCoastMaker(1),
-            T6SnaxIdleRecoveryM2: t6SnaxIdleRecoveryMaker(2),
-            T6SnaxIdleRecoveryM2Coast: t6SnaxIdleRecoveryCoastMaker(2),
-            T6SnaxIdleRecoveryM3: t6SnaxIdleRecoveryMaker(3),
-            T6SnaxIdleRecoveryM3Coast: t6SnaxIdleRecoveryCoastMaker(3),
-            T6SnaxIdleRecoveryM4: t6SnaxIdleRecoveryMaker(4),
-            T6SnaxIdleRecoveryM4Coast: t6SnaxIdleRecoveryCoastMaker(4),
-            T6SnaxIdleRecoveryM5: t6SnaxIdleRecoveryMaker(5),
-            T6SnaxIdleRecoveryM5Coast: t6SnaxIdleRecoveryCoastMaker(5),
+            T6C125dStopC12RcvI: T6C125dStopC12RcvImaker(0),
+            T6C125dStopC12RcvICoast: T6C125dStopC12RcvICoastMaker(0),
+            T6C125dStopC12RcvI1: T6C125dStopC12RcvImaker(1),
+            T6C125dStopC12RcvI1Coast: T6C125dStopC12RcvICoastMaker(1),
+            T6C125dStopC12RcvI2: T6C125dStopC12RcvImaker(2),
+            T6C125dStopC12RcvI2Coast: T6C125dStopC12RcvICoastMaker(2),
+            T6C125dStopC12RcvI3: T6C125dStopC12RcvImaker(3),
+            T6C125dStopC12RcvI3Coast: T6C125dStopC12RcvICoastMaker(3),
+            T6C125dStopC12RcvI4: T6C125dStopC12RcvImaker(4),
+            T6C125dStopC12RcvI4Coast: T6C125dStopC12RcvICoastMaker(4),
+            T6C125dStopC12RcvI5: T6C125dStopC12RcvImaker(5),
+            T6C125dStopC12RcvI5Coast: T6C125dStopC12RcvICoastMaker(5),
             T6C3d: [
                 () => this.variables[0].cost + l10(3) < Math.min(this.variables[1].cost, this.milestones[0] > 0 ? this.variables[3].cost : Infinity, this.variables[6].cost),
                 true,
@@ -210,7 +210,7 @@ class t6Sim extends theoryClass<theory> {
                 false,
                 true,
             ],
-            T6C5dIdleRecovery: [
+            T6C5dRcvI: [
                 () => {
                     if (this.lastPub >= this.maxRho) return true;
                     return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
@@ -229,7 +229,7 @@ class t6Sim extends theoryClass<theory> {
                 false,
                 true,
             ],
-            T6C5dIdleRecoveryCoast: [
+            T6C5dRcvICoast: [
                 () => {
                     if (!this.variables[0].shouldBuy) return false;
                     if (this.lastPub >= this.maxRho) return true;
@@ -250,8 +250,8 @@ class t6Sim extends theoryClass<theory> {
                 false,
                 true,
             ],
-            T6AI: [],
-            T6AICoast: [],
+            T6NoC34Mod: [],
+            T6NoC34ModCoast: [],
         };
         return toCallables(conditions[this.strat]);
     }
@@ -288,33 +288,33 @@ class t6Sim extends theoryClass<theory> {
                 return [0, 2];
             case "T6C5Coast":
                 return [0, 2];
-            case "T6Snax":
+            case "T6C125StopC12":
                 return [0, 3, 2];
-            case "T6SnaxCoast":
+            case "T6C125StopC12Coast":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecovery":
+            case "T6C125dStopC12RcvI":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryCoast":
+            case "T6C125dStopC12RcvICoast":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM1":
+            case "T6C125dStopC12RcvI1":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM1Coast":
+            case "T6C125dStopC12RcvI1Coast":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM2":
+            case "T6C125dStopC12RcvI2":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM2Coast":
+            case "T6C125dStopC12RcvI2Coast":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM3":
+            case "T6C125dStopC12RcvI3":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM3Coast":
+            case "T6C125dStopC12RcvI3Coast":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM4":
+            case "T6C125dStopC12RcvI4":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM4Coast":
+            case "T6C125dStopC12RcvI4Coast":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM5":
+            case "T6C125dStopC12RcvI5":
                 return [0, 3, 2];
-            case "T6SnaxIdleRecoveryM5Coast":
+            case "T6C125dStopC12RcvI5Coast":
                 return [0, 3, 2];
             case "T6C3d":
                 return [0];
@@ -328,13 +328,13 @@ class t6Sim extends theoryClass<theory> {
                 return [0, 2];
             case "T6C5dCoast":
                 return [0, 2];
-            case "T6AI":
+            case "T6NoC34Mod":
                 return [0, 3, 2];
-            case "T6AICoast":
+            case "T6NoC34ModCoast":
                 return [0, 3, 2];
-            case "T6C5dIdleRecovery":
+            case "T6C5dRcvI":
                 return [0, 2];
-            case "T6C5dIdleRecoveryCoast":
+            case "T6C5dRcvICoast":
                 return [0, 2];
         }
     }
@@ -399,7 +399,7 @@ class t6Sim extends theoryClass<theory> {
             if (this.variables[2].shouldFork) await this.doForkVariable(2);
         }
         this.trimBoughtVars();
-        let stratExtra = this.strat.includes("T6Snax") ? " " + logToExp(this.stopC12[0], 1) : "";
+        let stratExtra = this.strat.includes("T6C125StopC12") ? " " + logToExp(this.stopC12[0], 1) : "";
         if (this.strat.includes("Coast")) {
             stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
                 this.variables[2].prepareExtraForCap(getLastLevel("r1", this.boughtVars));
@@ -450,7 +450,7 @@ class t6Sim extends theoryClass<theory> {
     }
 
     buyVariables() {
-        if (this.strat !== "T6AI" && this.strat != "T6AICoast") super.buyVariables();
+        if (this.strat !== "T6NoC34Mod" && this.strat != "T6NoC34ModCoast") super.buyVariables();
         else super.buyVariablesWeight();
     }
 

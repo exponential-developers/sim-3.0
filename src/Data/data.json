@@ -237,46 +237,46 @@
           "stratFilterCondition": "false",
           "forcedCondition": "rho >= 125"
         },
-        "T6Snax": {
+        "T6C125StopC12": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxCoast": {
+        "T6C125StopC12Coast": {
           "stratFilterCondition": "Semi-Idle && rho >= 400"
         },
-        "T6SnaxIdleRecovery": {
+        "T6C125dStopC12RcvI": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryCoast": {
+        "T6C125dStopC12RcvICoast": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM1": {
+        "T6C125dStopC12RcvI1": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM1Coast": {
+        "T6C125dStopC12RcvI1Coast": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM2": {
+        "T6C125dStopC12RcvI2": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM2Coast": {
+        "T6C125dStopC12RcvI2Coast": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM3": {
+        "T6C125dStopC12RcvI3": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM3Coast": {
+        "T6C125dStopC12RcvI3Coast": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM4": {
+        "T6C125dStopC12RcvI4": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM4Coast": {
+        "T6C125dStopC12RcvI4Coast": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM5": {
+        "T6C125dStopC12RcvI5": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxIdleRecoveryM5Coast": {
+        "T6C125dStopC12RcvI5Coast": {
           "stratFilterCondition": "false"
         },
         "T6C3d": {
@@ -300,18 +300,18 @@
           "stratFilterCondition": "Active && rho >= 800",
           "forcedCondition": "rho >= 125"
         },
-        "T6C5dIdleRecovery": {
+        "T6C5dRcvI": {
           "stratFilterCondition": "false",
           "forcedCondition": "rho >= 125"
         },
-        "T6C5dIdleRecoveryCoast": {
+        "T6C5dRcvICoast": {
           "stratFilterCondition": "false",
           "forcedCondition": "rho >= 125"
         },
-        "T6AI": {
+        "T6NoC34Mod": {
           "stratFilterCondition": "Very-Active && rho >= 100"
         },
-        "T6AICoast": {
+        "T6NoC34ModCoast": {
           "stratFilterCondition": "Very-Active && rho >= 100"
         }
       }
