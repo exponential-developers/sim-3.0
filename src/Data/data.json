@@ -193,13 +193,10 @@
         "T5": {
           "stratFilterCondition": "Idle || rho < 25"
         },
-        "T5Idle": {
-          "stratFilterCondition": "false"
-        },
-        "T5IdleCoast": {
+        "T5RcvA": {
           "stratFilterCondition": "Semi-Idle"
         },
-        "T5Idle2Coast": {
+        "T5RcvA2": {
           "stratFilterCondition": "false"
         },
         "T5ManageQMod": {
