@@ -37,7 +37,7 @@ class t3Sim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      T3Play2: [
+      T3dStage: [
         () => (this.lastPub - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
         () => (this.curMult < 1.2 ? this.variables[1].cost + l10(5) < this.variables[10].cost : this.variables[1].cost + l10(8) < this.variables[4].cost) || this.curMult > 2.4,
         () => (this.curMult < 2.4 ? this.variables[2].cost + l10(8) < this.variables[8].cost : true),
@@ -129,7 +129,7 @@ class t3Sim extends theoryClass<theory> {
         () => this.variables[2].shouldBuy,
         false, true, false, false, true, true, false, true, true
       ],
-      T3noC11C13C21C33d: [
+      T3P2C23C31d: [
         () => this.variables[0].cost + l10(8) < this.variables[9].cost,
         () => this.variables[1].cost + l10(5) < Math.min(this.variables[4].cost, this.variables[7].cost, this.variables[10].cost),
         () => this.variables[2].cost + l10(8) < this.variables[8].cost,
@@ -143,7 +143,7 @@ class t3Sim extends theoryClass<theory> {
         true,
         false,
       ],
-      T3noC11C13C21C33: [true, true, true, false, true, false, false, true, true, true, true, false],
+      T3P2C23C31: [true, true, true, false, true, false, false, true, true, true, true, false],
       T3noC13C33d: [
         () => this.variables[0].cost + l10(10) < Math.min(this.variables[3].cost, this.variables[6].cost, this.variables[9].cost),
         () => this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[7].cost, this.variables[10].cost),

@@ -57,7 +57,7 @@
         "T2SingleMS": {
           "stratFilterCondition": "Semi-Idle && rho < 250"
         },
-        "T2Haxolotl":  {
+        "T2dMC":  {
           "stratFilterCondition": "false"
         }
       }
@@ -65,7 +65,7 @@
     "T3": {
       "tauFactor": 1,
       "strats": {
-        "T3Play2": {
+        "T3dStage": {
           "stratFilterCondition": "Very-Active && rho > 250 ",
           "forcedCondition": "rho >= 125"
         },
@@ -95,11 +95,11 @@
         "T3P2C23C33Coast": {
           "stratFilterCondition": "Semi-Idle && rho > 400"
         },
-        "T3noC11C13C21C33d": {
+        "T3P2C23C31d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 150 && rho < 350",
           "forcedCondition": "rho >= 125"
         },
-        "T3noC11C13C21C33": {
+        "T3P2C23C31": {
           "stratFilterCondition": "Idle && rho >= 175 && rho < 300"
         },
         "T3noC13C33d": {

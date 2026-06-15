@@ -8,7 +8,7 @@ import { add, l10, getR9multiplier, toCallables, getBestResult, defaultResult } 
 export default async function t2(data: theoryData): Promise<simResult> {
   let bestSim: t2Sim;
   let bestSimRes: simResult;
-  if(data.strat == "T2Haxolotl") {
+  if(data.strat == "T2dMC") {
     const savedStrat = data.strat;
     data.strat = "T2MC";
     let t2mcRes = await new t2Sim(data).simulate();
@@ -134,7 +134,7 @@ class t2Sim extends theoryClass<theory> {
         () => this.curMult < this.stop3,
         () => this.curMult < this.stop4,
       ],
-      T2Haxolotl: [
+      T2dMC: [
         () => this.curMult < this.stop1,
         () => (this.variables[1].cost + l10(this.haxolotlC1) < getMax(0)) && this.curMult < this.stop2,
         () => (this.variables[2].cost + l10(this.haxolotlC2) < getMax(1)) && this.curMult < this.stop3,
@@ -235,8 +235,8 @@ class t2Sim extends theoryClass<theory> {
       this.buyVariables();
     }
     this.trimBoughtVars();
-    let stratExtra = ["T2MC3", "T2Haxolotl"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
-    if(this.strat == "T2Haxolotl") {
+    let stratExtra = ["T2MC3", "T2dMC"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
+    if(this.strat == "T2dMC") {
       stratExtra += ` c1:${this.haxolotlC1} c2:${this.haxolotlC2} c3: ${this.haxolotlC3}`;
     }
     return this.createResult(stratExtra);
