@@ -272,7 +272,6 @@ class t3Sim extends theoryClass<theory> {
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();

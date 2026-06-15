@@ -204,7 +204,6 @@ class t1Sim extends theoryClass<theory> {
       this.pubConditions.push(() => this.maxRho >= pub);
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 176) this.updateMilestones();

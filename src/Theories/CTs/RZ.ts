@@ -580,7 +580,6 @@ class rzSim extends theoryClass<theory> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
         try {
             while (!this.endSimulation()) {
-                if (!global.simulating) break;
                 // Prevent lookup table from retrieving values from wrong sim settings
                 if (!this.ticks && (this.dt !== lookups.prevDt || this.ddt !== lookups.prevDdt)) {
                     lookups.prevDt = this.dt;

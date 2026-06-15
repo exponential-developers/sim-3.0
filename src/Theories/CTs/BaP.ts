@@ -205,7 +205,6 @@ class bapSim extends theoryClass<theory> {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();

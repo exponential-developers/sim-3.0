@@ -151,7 +151,6 @@ class wspSim extends theoryClass<theory> {
   }
   async simulate() {
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 200) this.updateMilestones();

@@ -221,7 +221,6 @@ class csr2Sim extends theoryClass<theory> {
       this.recursionValue = [sim.bestCoast[1], 1];
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (

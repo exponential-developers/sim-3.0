@@ -152,7 +152,6 @@ class t5Sim extends theoryClass<theory> {
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 150) this.updateMilestones();

@@ -239,7 +239,6 @@ class fpSim extends theoryClass<theory> {
       this.simEndConditions.push(() => this.curMult > 10000)
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();

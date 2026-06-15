@@ -228,7 +228,6 @@ class t2Sim extends theoryClass<theory> {
       this.pubConditions.push(() => this.maxRho >= this.targetRho);
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
