@@ -3,12 +3,12 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, logToExp, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
 
 
 export default async function t1(data: theoryData): Promise<simResult> {
   let res;
-  if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(data.strat)) {
+  if (["T1ModRatio", "T1C34Coast", "T1C4Coast"].includes(data.strat)) {
     const initialData: theoryData = {...data};
     const initialSim = new t1Sim(initialData);
     initialSim.doCoasting = false;
@@ -22,7 +22,7 @@ export default async function t1(data: theoryData): Promise<simResult> {
     sim.variables[0].setOriginalCap(lastQ1);
     sim.variables[1].setOriginalCap(lastQ2);
     sim.variables[4].setOriginalCap(lastC3);
-    if (data.strat === "T1SolarXLII") {
+    if (data.strat === "T1ModRatio") {
       sim.variables[0].configureCap(5);
     }
     else {
@@ -75,7 +75,7 @@ class t1Sim extends theoryClass<theory> {
     const q1CoastCond = () => this.variables[0].shouldBuy;
     const q2CoastCond = () => this.variables[1].shouldBuy;
     const c3CoastCond = () => this.variables[4].shouldBuy;
-    const T1SolarXLIICoast = [
+    const T1ModRatio = [
       () => // q1
           q1CoastCond() && (this.variables[0].cost + l10(5) <= this.rho.value &&
           this.variables[0].cost + l10(6 + (this.variables[0].level % 10)) <= this.variables[1].cost &&
@@ -109,7 +109,7 @@ class t1Sim extends theoryClass<theory> {
         () => c3CoastCond() && (this.variables[4].cost + l10(this.c3Ratio) < this.rho.value),
         true,
       ],
-      T1SolarXLII: T1SolarXLIICoast
+      T1ModRatio: T1ModRatio
     };
     return toCallables(conditions[this.strat]);
   }
@@ -156,12 +156,12 @@ class t1Sim extends theoryClass<theory> {
   async simulate(): Promise<simResult> {
     const nextc4 = Math.ceil((this.lastPub - 10) / 8) * 8 + 10;
     // New pub cycle
-    if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(this.strat))
+    if (["T1ModRatio", "T1C34Coast", "T1C4Coast"].includes(this.strat))
     {
       const c4dist = nextc4 - this.lastPub;
       let prevPoint = 0;
       let nextPoint = 0;
-      if (this.strat === "T1SolarXLII") {
+      if (this.strat === "T1ModRatio") {
         if (c4dist > 7.5) {
           prevPoint = nextc4 - 10 + l10(5.5);
           nextPoint = nextc4 - 6 + l10(1.5);

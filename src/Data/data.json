@@ -31,7 +31,7 @@
         "T1RatioCoast": {
           "stratFilterCondition": "(Very-Active && rho < 250) || Active"
         },
-        "T1SolarXLII": {
+        "T1ModRatio": {
           "stratFilterCondition": "Very-Active"
         }
       }
