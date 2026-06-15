@@ -377,12 +377,20 @@
           "stratFilterCondition": "(Active || Very-Active) && rho >= 25 && rho < 75",
           "forcedCondition": "rho >= 25"
         },
-        "T7PlaySpqcey": {
+        "T7NoC12d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 100",
           "forcedCondition": "rho >= 100"
         },
-        "T7PlaySpqceyCoast": {
+        "T7NoC12dCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 100",
+          "forcedCondition": "rho >= 100"
+        },
+        "T7Ratio": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 100 && rho < 300",
+          "forcedCondition": "rho >= 100"
+        },
+        "T7RatioCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 100 && rho < 300",
           "forcedCondition": "rho >= 100"
         }
       }

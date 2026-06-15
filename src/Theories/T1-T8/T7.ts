@@ -4,20 +4,20 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add_old, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
 
 export default async function t7(data: theoryData): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
-    const sim1 = new t7Sim(data2);
-    const res1 = await sim1.simulate();
-    const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    const sim2 = new t7Sim(data);
-    sim2.variables[0].setOriginalCap(lastQ1);
-    sim2.variables[0].configureCap(13)
-    res = await sim2.simulate();
+    let initialData: theoryData = JSON.parse(JSON.stringify(data));
+    initialData.strat = initialData.strat.replace("Coast", "");
+    const initialSim = new t7Sim(initialData);
+    const initialRes = await initialSim.simulate();
+    const lastQ1 = getLastLevel("q1", initialRes.boughtVars);
+    const sim = new t7Sim(data);
+    sim.variables[0].setOriginalCap(lastQ1);
+    sim.variables[0].configureCap(13);
+    res = await sim.simulate();
   }
   else {
     const sim = new t7Sim(data);
@@ -28,8 +28,6 @@ export default async function t7(data: theoryData): Promise<simResult> {
 }
 
 type theory = "T7";
-
-const add = add_old;
 
 class t7Sim extends theoryClass<theory> {
   rho2: Currency;
@@ -56,7 +54,25 @@ class t7Sim extends theoryClass<theory> {
       T7C12dCoast: [() => q1CoastCond() && (this.variables[0].cost + 1 < this.variables[2].cost), () => this.variables[1].cost + l10(8) < this.variables[2].cost, true, false, false, false, false],
       T7C3d: [() => this.variables[0].cost + 1 < this.variables[3].cost, false, false, true, false, false, false],
       T7C3dCoast: [() => q1CoastCond() && (this.variables[0].cost + 1 < this.variables[3].cost), false, false, true, false, false, false],
-      T7PlaySpqcey: [
+      T7NoC12d: [
+        () => this.variables[0].cost + l10(4) < this.variables[6].cost,
+        () => false,
+        () => false,
+        () => this.variables[3].cost + 1 < this.variables[6].cost,
+        () => this.variables[4].cost + 1 < this.variables[6].cost,
+        () => this.variables[5].cost + l10(4) < this.variables[6].cost,
+        true,
+      ],
+      T7NoC12dCoast: [
+        () => q1CoastCond() && (this.variables[0].cost + l10(4) < this.variables[6].cost),
+        () => false,
+        () => false,
+        () => this.variables[3].cost + 1 < this.variables[6].cost,
+        () => this.variables[4].cost + 1 < this.variables[6].cost,
+        () => this.variables[5].cost + l10(4) < this.variables[6].cost,
+        true,
+      ],
+      T7Ratio: [
         () => this.variables[0].cost + l10(4) < this.variables[6].cost,
         () => this.variables[1].cost + l10(10 + this.variables[2].level) < this.variables[2].cost,
         () => this.variables[2].cost + l10(this.c2ratio) < this.variables[6].cost,
@@ -65,7 +81,7 @@ class t7Sim extends theoryClass<theory> {
         () => this.variables[5].cost + l10(4) < this.variables[6].cost,
         true,
       ],
-      T7PlaySpqceyCoast: [
+      T7RatioCoast: [
         () => q1CoastCond() && (this.variables[0].cost + l10(4) < this.variables[6].cost),
         () => this.variables[1].cost + l10(10 + this.variables[2].level) < this.variables[2].cost,
         () => this.variables[2].cost + l10(this.c2ratio) < this.variables[6].cost,
@@ -90,7 +106,6 @@ class t7Sim extends theoryClass<theory> {
   }
   getMilestonePriority(): number[] {
     switch (this.strat) {
-      case "T7": case "T7Coast": return [1, 0, 2, 3, 4];
       case "T7C12": case "T7C12Coast": return [4];
       case "T7C3": case "T7C3Coast": return [1];
       case "T7noC12": case "T7noC12Coast": return [1, 0, 2, 3];
@@ -98,7 +113,7 @@ class t7Sim extends theoryClass<theory> {
       case "T7C56": case "T7C56Coast": return [0, 2, 3];
       case "T7C12d": case "T7C12dCoast": return [4];
       case "T7C3d": case "T7C3dCoast": return [1];
-      case "T7PlaySpqcey": case "T7PlaySpqceyCoast": return [1, 0, 2, 3, 4];
+      default: return [1, 0, 2, 3, 4];
     }
   }
   getTotMult(val: number): number {
@@ -122,11 +137,12 @@ class t7Sim extends theoryClass<theory> {
     ];
     this.drho13 = 0;
     this.drho23 = 0;
+    this.c2ratio = 100;
     if (this.lastPub >= 100) this.c2ratio = 100;
     if (this.lastPub >= 175) this.c2ratio = 10;
     if (this.lastPub >= 250) this.c2ratio = 20;
     if (this.lastPub >= 275) this.c2ratio = 50;
-    if (this.lastPub >= 300) this.c2ratio = Infinity;
+    if (this.lastPub >= 300) this.c2ratio = 100;
     this.updateMilestones();
   }
   async simulate(): Promise<simResult> {
@@ -139,7 +155,7 @@ class t7Sim extends theoryClass<theory> {
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
     }
     this.trimBoughtVars();
-    let stratExtra = this.strat.includes("T7PlaySpqcey") && this.c2ratio !== Infinity ? this.c2ratio.toString() : "";
+    let stratExtra = this.strat.includes("T7Ratio") ? this.c2ratio.toString() : "";
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
     }

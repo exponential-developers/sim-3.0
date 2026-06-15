@@ -2,13 +2,11 @@ import Currency from "../Utils/currency";
 import Variable from "../Utils/variable";
 import {
   binaryInsertionSearch,
-  convertTime,
   defaultResult,
-  formatNumber,
   getBestResult,
-  logToExp
 } from "../Utils/helpers";
 import jsonData from "../Data/data.json";
+import { global } from "../Sim/main";
 
 /** Base class for a theory */
 export default abstract class theoryClass<theory extends theoryType> {
@@ -289,6 +287,7 @@ export default abstract class theoryClass<theory extends theoryType> {
    * @returns true if it will break out of the simulation loop
    */
   endSimulation(): boolean {
+    if (!global.simulating) return true;
     return this.evaluateForcedPubConditions() && (this.evaluatePubConditions() || (this.doSimEndConditions() && this.evaluateSimEndConditions()));
   }
 
