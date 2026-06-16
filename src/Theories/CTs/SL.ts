@@ -50,19 +50,19 @@ class slSim extends theoryClass<theory> {
         () => this.variables[2].shouldBuy,
         () => this.variables[3].shouldBuy
       ],
-      SLdCoast: [
+      SLModCoast: [
         () => this.variables[0].shouldBuy && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
         () => this.variables[1].shouldBuy,
         () => this.variables[2].shouldBuy && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,
         () => this.variables[3].shouldBuy,
       ],
-      SLMS: [
+      SLMSMC: [
         () => this.curMult < 4,
         () => this.curMult < 4,
         () => this.curMult < 7.5,
         () => this.curMult < 7.5
       ],
-      SLMSd: [
+      SLMSModMC: [
         () => this.curMult < 4 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
         () => this.curMult < 4,
         () => this.curMult < 7.5 && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,

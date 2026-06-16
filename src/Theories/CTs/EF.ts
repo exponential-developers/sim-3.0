@@ -14,7 +14,7 @@ export default async function ef(data: theoryData): Promise<simResult> {
   }
   const initialSim = new efSim({
     ...data,
-    strat: "EFAI"
+    strat: "EFMod"
   });
   const initialRes = await initialSim.simulate();
   const sim = new efSim(data);
@@ -52,7 +52,7 @@ class efSim extends theoryClass<theory> {
   getBuyingConditions() {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       EF: new Array(10).fill(true),
-      EFSnax: [
+      EFStopQ1BXCX: [
         true,
         () => this.curMult < 1,
         true,
@@ -76,7 +76,7 @@ class efSim extends theoryClass<theory> {
         true,
         true,
       ],
-      EFAI: [
+      EFMod: [
         /*tdot*/ true,
         /*q1*/ () => this.variables[1].cost + l10(10 + (this.variables[1].level % 10)) < this.variables[2].cost,
         /*q2*/ true,

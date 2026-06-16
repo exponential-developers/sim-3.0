@@ -471,13 +471,13 @@
         "SLCoast": {
           "stratFilterCondition": "Semi-Idle"
         },
-        "SLdCoast": {
+        "SLModCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 300"
         },
-        "SLMS": {
+        "SLMSMC": {
           "stratFilterCondition": "Active && rho < 300"
         },
-        "SLMSd": {
+        "SLMSModMC": {
           "stratFilterCondition": "Very-Active && rho < 300"
         }
       }
@@ -488,13 +488,13 @@
         "EF": {
           "stratFilterCondition": "Idle || rho < 10"
         },
-        "EFSnax": {
+        "EFStopQ1BXCX": {
           "stratFilterCondition": "Semi-Idle"
         },
         "EFd": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 10"
         },
-        "EFAI": {
+        "EFMod": {
           "stratFilterCondition": "Active || Very-Active"
         },
         "EFModStage": {
