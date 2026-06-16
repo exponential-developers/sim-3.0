@@ -503,7 +503,7 @@
         "EFAI": {
           "stratFilterCondition": "Active || Very-Active"
         },
-        "EFPlay": {
+        "EFModStage": {
           "stratFilterCondition": "false && Very-Active && rho > 50"
         }
       }

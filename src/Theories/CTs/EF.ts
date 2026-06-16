@@ -7,7 +7,7 @@ import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallabl
 import pubtable from "./helpers/EFpubtable.json" with { type: "json" };
 
 export default async function ef(data: theoryData): Promise<simResult> {
-  if (data.strat !== "EFPlay") {
+  if (data.strat !== "EFModStage") {
     const sim = new efSim(data);
     const res = await sim.simulate();
     return res;
@@ -89,7 +89,7 @@ class efSim extends theoryClass<theory> {
         /*a2*/ true,
         /*a3*/ true,
       ],
-      EFPlay: [
+      EFModStage: [
         true,
         () => this.variables[1].cost + l10(10 + (this.variables[1].level % 10)) < this.variables[2].cost,
         true,
