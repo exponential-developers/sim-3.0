@@ -230,9 +230,9 @@ export default abstract class theoryClass<theory extends theoryType> {
   /**
    * Updates milestones
    */
-  updateMilestones(): void {
+  updateMilestones(priority?: number[]): void {
     const rho = Math.max(this.maxRho, this.lastPub);
-    const priority = this.getMilestonePriority();
+    priority = priority ?? this.getMilestonePriority();
     let milestoneCount = this.milestoneUnlockSteps > 0 
       ? Math.floor(rho / this.milestoneUnlockSteps)
       : binaryInsertionSearch(this.milestoneUnlocks, rho);

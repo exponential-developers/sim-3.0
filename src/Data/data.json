@@ -514,11 +514,11 @@
         "CSR2d": {
           "stratFilterCondition": "Active && rho < 500"
         },
-        "CSR2XL": {
-          "stratFilterCondition": "((Active && rho >= 500) || Very-Active) && rho >= 10 && (rho < 500 || rho >= 1499)"
+        "CSR2Mod": {
+          "stratFilterCondition": "Active || Very-Active"
         },
-        "CSR2XLPT": {
-          "stratFilterCondition": "(Active || Very-Active) && rho >= 500 && rho < 1499"
+        "CSR2MSMod": {
+          "stratFilterCondition": "Very-Active && rho >= 10 && rho < 500"
         }
       }
     },

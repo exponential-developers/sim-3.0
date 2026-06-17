@@ -265,3 +265,20 @@ export function reverseMulti(theory: string, value: number, sigma: number) {
 export function isMainTheory(theory: string): boolean {
   return /T[1-8]/.test(theory);
 }
+
+export function newtonMax(
+  x: number,
+  f: (x: number) => number,
+  h = 1e-5
+): number {
+  const df = (t: number) => (f(t + h) - f(t - h)) / (2 * h);
+  const ddf = (t: number) => (f(t + h) - 2 * f(t) + f(t - h)) / (h * h);
+
+  while (Math.abs(df(x)) > h) {
+    const second = ddf(x);
+    if (second === 0) break;
+    x = x - df(x) / second;
+  }
+
+  return x;
+}
