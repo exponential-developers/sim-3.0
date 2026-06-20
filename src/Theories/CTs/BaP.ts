@@ -224,7 +224,7 @@ class bapSim extends theoryClass<theory> {
         const fork = this.copy();
         fork.forcedPubRho = Infinity;
         const res = await fork.simulate();
-        this.bestRes = getBestResult(this.bestRes, res);
+        if(res.pubRho >=1500)this.bestRes = getBestResult(this.bestRes, res);
       }
     }
     this.trimBoughtVars();
