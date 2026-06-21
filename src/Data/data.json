@@ -4,10 +4,10 @@
       "tauFactor": 1,
       "strats": {
         "T1": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25 || rho < 25"
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho < 210 || rho < 25"
         },
         "T1Coast": {
-          "stratFilterCondition": "Semi-Idle && rho < 25 || rho < 25"
+          "stratFilterCondition": "Semi-Idle && rho < 180 || !Idle && rho < 25"
         },
         "T1C34": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 850",
