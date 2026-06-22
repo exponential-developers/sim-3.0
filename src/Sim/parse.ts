@@ -120,6 +120,35 @@ function parseChainSim(): ChainSimQuery {
     }
 }
 
+function parseStepSim(): StepSimQuery {
+    const theory = theorySelector.value as theoryType;
+    const sigma = parseSigma(isMainTheory(theory));
+
+    return {
+        queryType: "step",
+        theory: theory,
+        strat: stratSelector.value,
+        sigma: sigma,
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        cap: parseCurrency(capInput.value, theory, sigma),
+        step: parseExponentialValue(modeInput.value),
+        settings: parseSettings()
+    }
+}
+
+function parseComparisonSim(): ComparisonSimQuery {
+    const theory = theorySelector.value as theoryType;
+    const sigma = parseSigma(isMainTheory(theory));
+
+    return {
+        queryType: "comparison",
+        theory: theory,
+        sigma: sigma,
+        rho: parseCurrency(currencyInput.value, theory, sigma),
+        settings: parseSettings()
+    }
+}
+
 function parseAmountSim(): AmountSimQuery {
     const theory = theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
@@ -168,22 +197,6 @@ function parseTimeSim(): TimeSimQuery {
         rho: parseCurrency(currencyInput.value, theory, sigma),
         time,
         hardCap: hardCap.checked,
-        settings: parseSettings()
-    }
-}
-
-function parseStepSim(): StepSimQuery {
-    const theory = theorySelector.value as theoryType;
-    const sigma = parseSigma(isMainTheory(theory));
-
-    return {
-        queryType: "step",
-        theory: theory,
-        strat: stratSelector.value,
-        sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
-        cap: parseCurrency(capInput.value, theory, sigma),
-        step: parseExponentialValue(modeInput.value),
         settings: parseSettings()
     }
 }
@@ -248,6 +261,7 @@ export function parseQuery(): SimQuery {
         case "Single sim": return parseSingleSim();
         case "Chain": return parseChainSim();
         case "Steps": return parseStepSim();
+        case "Comparison": return parseComparisonSim();
         case "Amount": return parseAmountSim();
         case "Time": return parseTimeSim();
         case "StepChain": return parseStepChainSim();

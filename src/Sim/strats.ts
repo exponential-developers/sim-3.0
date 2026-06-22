@@ -1,5 +1,4 @@
 import jsonData from "../Data/data.json" with { type: "json" };
-import { global } from "./main";
 
 const stratConditionArgs = ["very_active", "active", "semi_idle", "idle", "rho", "laststrat"];
 
@@ -51,12 +50,12 @@ function parseExpression(expression: string) {
   return `return ${expression}`;
 }
 
-export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string): string[] {
+export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string, stratFilter = true): string[] {
   const strats = [];
   const args = [...jsonData.stratCategories.map((v) => v === type), rho, lastStrat] as [boolean, boolean, boolean, boolean, number, string];
   for (const strat of Object.keys(stratData[theory].strats)) {
     if (
-      (stratData[theory].strats[strat].stratFilterCondition(...args) || !global.stratFilter) 
+      (stratData[theory].strats[strat].stratFilterCondition(...args) || !stratFilter) 
       && stratData[theory].strats[strat].forcedCondition(...args)
     ) strats.push(strat);
   }

@@ -807,7 +807,7 @@
     }
   },
   "stratCategories": ["Best Overall", "Best Active", "Best Semi-Idle", "Best Idle"],
-  "modes": ["All", "Single sim", "Chain", "Steps", "StepChain", "Amount", "Time", "Time diff."],
+  "modes": ["All", "Single sim", "Chain", "Steps", "Comparison", "StepChain", "Amount", "Time", "Time diff."],
   "modeInputDescriptions": ["", "", "", "Step length: ", "Step length: ", "Amount of pubs (Chain): ", "Total Time: "],
   "modeInputPlaceholder": [
     "<sigma> <t1>* [t2]* ... [wsp]* ... [bap]* \n\n*[r/t/m] = rho/tau/total multiplier | default tau\n\nOr: input your save here and click \"Load save\"",

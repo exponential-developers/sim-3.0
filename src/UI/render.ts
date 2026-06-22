@@ -17,6 +17,7 @@ const themeSelector = qs<HTMLSelectElement>(".themeSelector");
 const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 //Other containers/elements
+const stratSelectionWrapper = qs("#stratSelectionWrapper");
 const extraInputs = qs(".extraInputs");
 const timeDiffWrapper = qs(".timeDiffWrapper");
 const singleInput = qsa(".controls")[0];
@@ -90,10 +91,12 @@ function populateSingleSimFields(rewriteCurrency: boolean = false): void {
 function modeUpdate(): void {
   const newMode = modeSelector.value;
 
+
   singleInput.style.display = "none";
   capInputWrapper.style.display = "none";
   hardCapWrapper.style.display = "none";
 
+  stratSelectionWrapper.style.display = "none";
   extraInputs.style.display = "none";
   simAllInputs.style.display = "none";
   simAllInputArea.style.display = "none";
@@ -101,6 +104,8 @@ function modeUpdate(): void {
   modeInput.style.display = "none";
   timeDiffWrapper.style.display = "none";
 
+  // Displays the strat selector
+  if (newMode !== "Comparison") stratSelectionWrapper.style.display = "block";
   // Displays the single-theory inputs
   if (newMode !== "All" && newMode !== "Time diff.") singleInput.style.display = "grid";
   // Displays the cap input for chain/steps mode
@@ -109,7 +114,7 @@ function modeUpdate(): void {
   if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) hardCapWrapper.style.display = "block";
 
   // Extra Inputs
-  if (newMode !== "Single sim" && newMode !== "Time diff." && newMode !== "Chain") extraInputs.style.display = "flex";
+  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain") extraInputs.style.display = "flex";
   if (newMode === "All") {
     simAllInputs.style.display = "grid";
     modeInputDescription.style.display = "none";
