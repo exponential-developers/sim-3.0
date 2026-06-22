@@ -45,6 +45,21 @@ declare global {
     hardCap: boolean;
   }
 
+  type StepSimQuery = BaseSimQuery & {
+    queryType: "step";
+    theory: theoryType;
+    strat: string;
+    rho: number;
+    cap: number;
+    step: number;
+  }
+
+  type ComparisonSimQuery = BaseSimQuery & {
+    queryType: "comparison";
+    theory: theoryType;
+    rho: number;
+  }
+
   type AmountSimQuery = BaseSimQuery & {
     queryType: "amount";
     theory: theoryType;
@@ -60,15 +75,6 @@ declare global {
     rho: number;
     time: number;
     hardCap: boolean;
-  }
-
-  type StepSimQuery = BaseSimQuery & {
-    queryType: "step";
-    theory: theoryType;
-    strat: string;
-    rho: number;
-    cap: number;
-    step: number;
   }
 
   type SimAllQuery = BaseSimQuery & {
@@ -89,7 +95,14 @@ declare global {
     hardCap: boolean
   }
 
-  type SimQuery = SingleSimQuery | ChainSimQuery | AmountSimQuery | TimeSimQuery | StepSimQuery | SimAllQuery | StepChainQuery;
+  type SimQuery = SingleSimQuery 
+    | ChainSimQuery 
+    | StepSimQuery 
+    | ComparisonSimQuery 
+    | AmountSimQuery 
+    | TimeSimQuery 
+    | SimAllQuery 
+    | StepChainQuery;
 
   type SingleSimResponse = {
     responseType: "single";

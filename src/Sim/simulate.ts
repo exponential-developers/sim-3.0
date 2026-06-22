@@ -243,6 +243,24 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
     }
 }
 
+async function comparisonSim(query: ComparisonSimQuery): Promise<StepSimResponse> {
+    const strats = getStrats(query.theory, query.rho, "", "", false);
+    const results: simResult[] = [];
+
+    for (let strat of strats) {
+        results.push((await singleSim({
+            ...query,
+            queryType: "single",
+            strat
+        })).result)
+    }
+
+    return {
+        responseType: "step",
+        results: results.sort((r1, r2) => r2.tauH - r1.tauH)
+    }
+}
+
 async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     const results: simAllResult[] = [];
     const lastTheory = getTheoryFromIndex(query.values.length - 1 - query.values.slice().reverse().findIndex(v => v > 0));
@@ -358,6 +376,7 @@ export async function simulate(query: SimQuery): Promise<SimResponse> {
         case "single": return await singleSim(query);
         case "chain": return await chainSim(query);
         case "step": return await stepSim(query);
+        case "comparison": return await comparisonSim(query);
         case "all": return await simAll(query);
         case "step_chain": return await stepChainSim(query);
         case "amount": return await amountSim(query);
