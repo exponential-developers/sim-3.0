@@ -4,7 +4,7 @@ import { setSimState } from "./simState";
 
 // Settings menu
 
-const settingsBtn = qs<HTMLButtonElement>(".settingsBtn");
+const settingsBtn = qs<HTMLButtonElement>("#settingsBtn");
 const settingsCloseBtn = qs<HTMLButtonElement>(".settingsCloseBtn");
 const settingsModal = qs<HTMLDialogElement>(".settings");
 
@@ -22,7 +22,7 @@ event(settingsModal, "close", () => {
 
 // Instructions menu
 
-const instructionsBtn = qs<HTMLButtonElement>(".instructionsBtn");
+const instructionsBtn = qs<HTMLButtonElement>("#instructionsBtn");
 const instructionsCloseBtn = qs<HTMLButtonElement>(".instructionsCloseBtn");
 const instructionsModal = qs<HTMLDialogElement>(".instructions");
 

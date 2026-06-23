@@ -36,6 +36,10 @@ button {
   transition: background-color 100ms ease-in-out, color 100ms ease-in-out, transform 0.1s;
 }
 
+button:hover {
+  transform: scale(1.1);
+}
+
 button.buttongreen {
   background-color: var(--button-green-bg);
 }

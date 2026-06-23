@@ -16,7 +16,7 @@
     width: 95%;
     --inline-padding: 1.2rem;
   }
-  .settingsButtons {
+  .navBtns {
     font-size: 0.8rem;
   }
   .settings input[type="range"] {

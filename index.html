@@ -23,15 +23,15 @@
     <script defer type="module" src="./build/bundle.js"></script>
   </head>
   <body>
-    <div class="nav">
-      <div style="margin-top: auto; margin-bottom: 0.2rem">
-        <span style="font-size: 0.9rem">v3.0.0 (Alpha)</span>
-        <button style="margin-left: 1rem; cursor: pointer" class="settingsButtons">Changelog</button>
-        <button style="margin-left: 1rem; cursor: pointer" class="settingsButtons instructionsBtn">Instructions</button>
-        <button style="margin-left: 0.8rem" class="settingsBtn"></button>
+    <nav>
+      <div>
+        <span id="versionLabel">v3.0.0 (Alpha)</span>
+        <button class="navBtns">Changelog</button>
+        <button id="instructionsBtn" class="navBtns">Instructions</button>
+        <button id="settingsBtn"></button>
       </div>
-      <h1 class="nav-title" style="font-family: Computer Modern Concrete; font-weight: 600">e<sup>x</sup> Theory simulator</h1>
-    </div>
+      <h1 id="nav-title">e<sup>x</sup> Theory simulator</h1>
+    </nav>
     <div class="content-wrapper">
       <div class="controls">
         <div>
@@ -124,7 +124,7 @@
         <input type="range" class="boughtVarsDelta" step="1" min="5" max="30" value="5" id="boughtVarsDeltaSlider" />
         <span class="sliderOtp boughtVarsDeltaOtp">e5ρ</span><br />
 
-        <button class="resetSettings settingsButtons">Reset</button>
+        <button class="resetSettings navBtns">Reset</button>
       </div>
       <span>Theme: </span> <select class="themeSelector"></select><br /><br />
       <span>Strats simmed in "all" mode: </span> 

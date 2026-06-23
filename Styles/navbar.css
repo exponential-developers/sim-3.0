@@ -1,4 +1,4 @@
-.nav {
+nav {
   background-color: var(--bg-accent-0);
   padding: 0.4em 1rem;
   display: grid;
@@ -8,7 +8,21 @@
   color: inherit;
 }
 
-.settingsBtn {
+nav div {
+  margin-top: auto; 
+  margin-bottom: 0.2rem;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
+#versionLabel {
+  font-size: 0.9rem;
+}
+
+#settingsBtn {
   background: url(../settings.png);
   width: 2.25rem;
   aspect-ratio: 1;
@@ -17,12 +31,10 @@
   background-repeat: no-repeat;
   background-color: transparent;
   outline: 0;
-  cursor: pointer;
   border-radius: 50%;
   transition: scale 100ms, box-shadow 100ms;
-  translate: 0 20%;
 }
-.settingsBtn:hover {
+#settingsBtn:hover {
   box-shadow: 0 0 0.6rem 0.05rem var(--settings-btn-shadow-clr), inset 0 0 0.4rem 0.03rem var(--settings-btn-shadow-clr);
   scale: 1.1;
 }
@@ -93,8 +105,9 @@
   border-color: var(--btn-border-clr);
 }
 
-
-.nav-title {
+#nav-title {
+  font-family: Computer Modern Concrete; 
+  font-weight: 600;
   transition: color 100ms ease-in-out;
   color: var(--title-clr);
 }
