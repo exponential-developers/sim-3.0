@@ -5,8 +5,8 @@ import { qs } from "../Utils/DOMhelpers";
 //Inputs
 const modeSelector = qs<HTMLSelectElement>(".mode");
 const theorySelector = qs<HTMLSelectElement>(".theory");
-const stratSelector = qs<HTMLSelectElement>(".strat");
-const sigmaInput = qs<HTMLInputElement>(".sigma");
+const stratSelector = qs<HTMLSelectElement>("#stratSelector");
+const sigmaInput = qs<HTMLInputElement>("#sigmaInput");
 const currencyInput = qs<HTMLInputElement>(".input");
 const capInput = qs<HTMLInputElement>(".cap");
 const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")

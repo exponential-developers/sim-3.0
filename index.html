@@ -22,6 +22,7 @@
     </script>
     <script defer type="module" src="./build/bundle.js"></script>
   </head>
+
   <body>
     <nav>
       <div>
@@ -30,17 +31,19 @@
         <button id="instructionsBtn" class="navBtns">Instructions</button>
         <button id="settingsBtn"></button>
       </div>
+
       <h1 id="nav-title">e<sup>x</sup> Theory simulator</h1>
     </nav>
+
     <div class="content-wrapper">
-      <div class="controls">
+      <div id="baseControlsWrapper" class="controlsWrapper">
         <div>
           <span class="description">Theory: </span>
           <select class="theory"></select>
         </div>
         <div id="stratSelectionWrapper">
           <span class="description">Strat: </span>
-          <select class="strat">
+          <select id="stratSelector">
             <option value="Best Overall">Best Overall</option>
             <option value="Best Active">Best Active</option>
             <option value="Best Semi-Idle">Best Semi-Idle</option>
@@ -49,7 +52,7 @@
         </div>
         <div>
           <span class="description">Sigma: </span>
-          <input type="text" class="sigma" style="width: 3.5rem" placeholder="<number>" spellcheck="false" />
+          <input type="text" id="sigmaInput" style="width: 3.5rem" placeholder="<number>" spellcheck="false" />
         </div>
         <div>
           <span class="description">Input: </span>
@@ -60,7 +63,7 @@
           <input type="text" class="cap" style="width: 5rem" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
       </div>
-      <div class="controls">
+      <div id="extraControlsWrapper" class="controlsWrapper">
         <div>
           <span class="description">Mode: </span>
           <select class="mode"></select>

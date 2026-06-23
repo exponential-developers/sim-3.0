@@ -1,21 +1,21 @@
-.controls {
+.controlsWrapper {
   display: grid;
   grid-template-columns: repeat(5, auto);
   width: fit-content;
   gap: min(2vw, 2rem);
 }
-.controls ~ .controls {
+#extraControlsWrapper {
   margin-top: 1.5rem;
 }
-.controls input,
-.controls select {
+.controlsWrapper input,
+.controlsWrapper select {
   font-size: 0.75rem;
   background-color: var(--input-bg);
   color: var(--input-f-clr);
   border-color: var(--btn-border-clr);
 }
 
-.controls input[type="text"] {
+.controlsWrapper input[type="text"] {
   border: none;
   outline: 1px solid var(--btn-border-clr);
 }

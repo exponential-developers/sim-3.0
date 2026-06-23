@@ -5,10 +5,10 @@ import { getSimState } from "./simState";
 
 //Inputs
 const theorySelector = qs<HTMLSelectElement>(".theory");
-const stratSelector = qs<HTMLSelectElement>(".strat");
+const stratSelector = qs<HTMLSelectElement>("#stratSelector");
 const capInputWrapper = qs(".capWrapper");
 const modeSelector = qs<HTMLSelectElement>(".mode");
-const sigmaInput = qs<HTMLInputElement>(".sigma");
+const sigmaInput = qs<HTMLInputElement>("#sigmaInput");
 const currencyInput = qs<HTMLInputElement>(".input");
 const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
 const modeInput = qs<HTMLTextAreaElement>(".modeInput");
@@ -20,7 +20,7 @@ const showUnofficials = qs<HTMLInputElement>(".unofficials");
 const stratSelectionWrapper = qs("#stratSelectionWrapper");
 const extraInputs = qs(".extraInputs");
 const timeDiffWrapper = qs(".timeDiffWrapper");
-const singleInput = qsa(".controls")[0];
+const baseControlsWrapper = qs("#baseControlsWrapper");
 const simAllInputs = qs(".simAllInputs");
 const modeInputDescription = qs(".extraInputDescription");
 
@@ -92,7 +92,7 @@ function modeUpdate(): void {
   const newMode = modeSelector.value;
 
 
-  singleInput.style.display = "none";
+  baseControlsWrapper.style.display = "none";
   capInputWrapper.style.display = "none";
   hardCapWrapper.style.display = "none";
 
@@ -107,7 +107,7 @@ function modeUpdate(): void {
   // Displays the strat selector
   if (newMode !== "Comparison") stratSelectionWrapper.style.display = "block";
   // Displays the single-theory inputs
-  if (newMode !== "All" && newMode !== "Time diff.") singleInput.style.display = "grid";
+  if (newMode !== "All" && newMode !== "Time diff.") baseControlsWrapper.style.display = "grid";
   // Displays the cap input for chain/steps mode
   if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") capInputWrapper.style.display = "inline";
   // Displays the hard cap input
