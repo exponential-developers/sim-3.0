@@ -44,7 +44,9 @@
     grid-template-columns: repeat(2, auto);
     gap: 0.5rem 1rem;
   }
-  .output {
+
+  /* Outputs */
+  #log {
     min-width: 80vw;
   }
   .boughtVars table,

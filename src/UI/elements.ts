@@ -46,10 +46,11 @@ const UI = {
         simulateBtn: qs("#simulateBtn")
     },
     outputs: {
-        log: qs(".output"),
-        table: qs(".simTable"),
-        tableHeadRow: qs<HTMLTableRowElement>(".simTable > thead > tr"),
-        tableBody: qs(".simTable > tbody")
+        log: qs("#log"),
+        table: qs("#simTable"),
+        tableHeadRow: qs<HTMLTableRowElement>("#simTable > thead > tr"),
+        tableBody: qs("#simTable > tbody"),
+        getLastTableHeader: () => qs("#simTable thead tr th:last-child")
     },
     settings: {
         dialog: qs<HTMLDialogElement>(".settings"),

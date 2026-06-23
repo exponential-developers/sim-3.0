@@ -1,6 +1,9 @@
-.simTable,
-.simTable th,
-.simTable td {
+#simTable {
+  margin-block-start: 2.5rem;
+}
+#simTable,
+#simTable th,
+#simTable td {
   background-color: var(--table-bg);
   color: var(--table-f-clr);
   border: var(--sim-table-border) solid var(--table-f-clr);
@@ -10,21 +13,21 @@
   white-space: nowrap;
   text-align: left;
 }
-.simTable td.varBuyCell {
+#simTable td.varBuyCell {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
 }
-.simTable td.varBuyCell div,
-.simTable td.varBuyCell a {
+#simTable td.varBuyCell div,
+#simTable td.varBuyCell a {
   cursor: pointer;
   display: flex;
   align-items: center;
 }
-.simTable td.varBuyCell svg {
+#simTable td.varBuyCell svg {
   height: 0.9rem;
 }
-.simTable tr {
+#simTable tr {
   background-color: transparent;
 }
 
@@ -37,7 +40,7 @@
   padding-inline: 0.9rem;
   font-size: 0.85rem;
 }
-.small tbody tr:nth-child(2n+1) td {
+#simTable.small tbody tr:nth-child(2n+1) td {
   background-color: var(--table-bg-alt);
 }
 .big th {
@@ -50,10 +53,6 @@
 }
 .big tbody tr:nth-child(2n+1) td:not([rowspan]) {
   background-color: var(--table-bg-alt);
-}
-
-.simTable {
-  margin-block-start: 2.5rem;
 }
 
 .boughtVars {
@@ -77,24 +76,24 @@
 .boughtVars table,
 .boughtVars tr,
 .boughtVars td,
-.timeDiffTable,
-.timeDiffTable tr,
-.timeDiffTable td {
+#timeDiffTable,
+#timeDiffTable tr,
+#timeDiffTable td {
   border-collapse: collapse;
   padding: 0.3rem;
   text-align: center;
   font-size: 0.9rem;
 }
 .boughtVars thead tr,
-.timeDiffTable thead tr {
+#timeDiffTable thead tr {
   border-bottom: 2px solid var(--dialog-f-clr);
 }
 .boughtVars tbody tr,
-.timeDiffTable tbody tr {
+#timeDiffTable tbody tr {
   border-top: 2px solid var(--dialog-f-clr);
 }
 .boughtVars td ~ td,
-.timeDiffTable td ~ td {
+#timeDiffTable td ~ td {
   border-left: 1px solid var(--dialog-f-clr);
 }
 .boughtVarsCloseBtn {

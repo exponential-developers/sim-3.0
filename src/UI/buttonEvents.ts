@@ -30,7 +30,7 @@ function createImage(mode: "download" | "copy") {
     return;
   }
 
-  const lastHeader = qs(".simTable thead tr th:last-child");
+  const lastHeader = UI.outputs.getLastTableHeader();
   const varBuyCells = qsa(".varBuyCell");
 
   const initialLastHeaderDisplay = lastHeader.style.display;
