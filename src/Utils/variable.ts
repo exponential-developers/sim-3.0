@@ -107,7 +107,7 @@ export default class Variable {
     return ` ${this.name}: ${actualLast}` // ${this.name}delta: ${this.originalCap - actualLast}`
   }
   /**
-   * If the coasting cap is reaches
+   * If the coasting cap is reached
    * @returns true if the coasting cap is reached
    */
   coastingCapReached() {

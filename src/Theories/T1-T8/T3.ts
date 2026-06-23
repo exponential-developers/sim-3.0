@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
@@ -37,7 +36,7 @@ class t3Sim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      T3Play2: [
+      T3dStage: [
         () => (this.lastPub - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
         () => (this.curMult < 1.2 ? this.variables[1].cost + l10(5) < this.variables[10].cost : this.variables[1].cost + l10(8) < this.variables[4].cost) || this.curMult > 2.4,
         () => (this.curMult < 2.4 ? this.variables[2].cost + l10(8) < this.variables[8].cost : true),
@@ -51,24 +50,7 @@ class t3Sim extends theoryClass<theory> {
         () => (this.curMult < 1.2 ? true : this.curMult < 2.4 ? this.variables[10].cost + l10(8) < this.variables[4].cost : false),
         () => (this.curMult < 1.2 ? this.variables[11].cost + l10(10) < this.variables[8].cost : false),
       ],
-      T3Play: [
-        () => (this.curMult < 2 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
-        () => this.curMult < 2 
-          ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost) 
-            && this.variables[1].cost + l10(2) < this.variables[7].cost 
-          : true,
-        () => this.variables[2].cost + l10(8) < this.variables[8].cost && this.variables[2].cost + l10(2) < this.variables[11].cost,
-        false,
-        true,
-        false,
-        false,
-        () => (this.curMult < 2 ? this.variables[7].cost + l10(2) < Math.min(this.variables[4].cost, this.variables[10].cost) : true),
-        true,
-        () => this.curMult < 2,
-        true,
-        () => this.variables[11].cost + l10(4) < this.variables[8].cost,
-      ],
-      T3SnaxCoast: [
+      T3NoC11C13C21StopB1C3XCoast: [
         () => this.curMult < 1,
         () => this.variables[1].shouldBuy,
         () => this.variables[2].shouldBuy,
@@ -82,7 +64,7 @@ class t3Sim extends theoryClass<theory> {
         () => this.curMult < 1,
         () => this.curMult < 1,
       ],
-      T3Snax: [
+      T3NoC11C13C21StopB1C3X: [
         () => this.curMult < 1,
         true,
         true,
@@ -96,7 +78,7 @@ class t3Sim extends theoryClass<theory> {
         () => this.curMult < 1,
         () => this.curMult < 1,
       ],
-      T3SnaxdC12: [
+      T3NoC11C13C21StopB1C3XRcvA: [
         () => this.curMult < 1,
         true,
         true,
@@ -109,20 +91,6 @@ class t3Sim extends theoryClass<theory> {
         () => this.curMult < 1,
         () => this.curMult < 1,
         () => this.curMult < 1,
-      ],
-      T3Snax2: [
-        () => (this.curMult < 1 ? this.variables[0].cost + 1 < this.rho.value : false),
-        () => this.variables[1].cost + l10(3) < this.rho2.value,
-        () => this.variables[2].cost + l10(5) < this.rho3.value,
-        false,
-        () => (this.curMult < 1 ? this.variables[4].cost + 2 < this.rho.value : true),
-        false,
-        false,
-        () => (this.curMult < 1 ? true : this.variables[7].cost + l10(8) < this.rho2.value),
-        true,
-        () => this.curMult < 1,
-        () => this.curMult < 1,
-        () => (this.curMult < 1 ? this.variables[11].cost + 1 < this.rho3.value : false),
       ],
       T3P2C23d: [
         false,
@@ -160,7 +128,7 @@ class t3Sim extends theoryClass<theory> {
         () => this.variables[2].shouldBuy,
         false, true, false, false, true, true, false, true, true
       ],
-      T3noC11C13C21C33d: [
+      T3P2C23C31d: [
         () => this.variables[0].cost + l10(8) < this.variables[9].cost,
         () => this.variables[1].cost + l10(5) < Math.min(this.variables[4].cost, this.variables[7].cost, this.variables[10].cost),
         () => this.variables[2].cost + l10(8) < this.variables[8].cost,
@@ -174,7 +142,7 @@ class t3Sim extends theoryClass<theory> {
         true,
         false,
       ],
-      T3noC11C13C21C33: [true, true, true, false, true, false, false, true, true, true, true, false],
+      T3P2C23C31: [true, true, true, false, true, false, false, true, true, true, true, false],
       T3noC13C33d: [
         () => this.variables[0].cost + l10(10) < Math.min(this.variables[3].cost, this.variables[6].cost, this.variables[9].cost),
         () => this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[7].cost, this.variables[10].cost),
@@ -303,7 +271,6 @@ class t3Sim extends theoryClass<theory> {
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 175) this.updateMilestones();

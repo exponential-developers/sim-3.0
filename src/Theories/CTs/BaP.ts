@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
@@ -33,21 +32,12 @@ class bapSim extends theoryClass<theory> {
   getBuyingConditions(): conditionFunction[] {
     const idlestrat = new Array(12).fill(true)
     const semiidlestrat = new Array(12).fill(() => this.maxRho < this.getNextCoast() - l10(25));
-    const activestrat = [
-      true,
-      () => this.variables[1].cost + l10(0.5 * this.variables[0].level % 64) < this.variables[2].cost 
-        && (this.milestones[0] > 0 || this.variables[1].level < 65),
-      ...new Array(10).fill(true)
-    ]
 
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BaP: idlestrat,
       BaPcoast: semiidlestrat,
-      BaPAI: [],
-      BaPAIMS: [],
-      BaPAIMS2: [],
-      BaPd: activestrat,
-      BaPdMS: activestrat,
+      BaPModBurstC1: [],
+      BaPMSModBurstC1: []
     };
 
     return toCallables(conditions[this.strat]);
@@ -86,7 +76,7 @@ class bapSim extends theoryClass<theory> {
     const apriority = [0, 1, 2, 3, 4];
     const qpriority = [0, 1, 3, 2, 4];
 
-    if (this.strat == "BaPdMS" || this.strat == "BaPAIMS")
+    if (this.strat == "BaPMSModBurstC1")
     {
       const tm300 = this.t % 300;
       if (tm300 < 100) return qpriority;
@@ -214,7 +204,6 @@ class bapSim extends theoryClass<theory> {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();
@@ -279,7 +268,7 @@ class bapSim extends theoryClass<theory> {
     return weights;
   }
   buyVariables() {
-    if (!this.strat.includes("AI")) super.buyVariables();
+    if (!this.strat.includes("BurstC1")) super.buyVariables();
     else super.buyVariablesWeight();
   }
 }

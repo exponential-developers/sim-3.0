@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import { trueFunc } from "../../Utils/functions";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
@@ -14,28 +13,28 @@ import {
 } from "../../Utils/helpers";
 
 export default async function t5(data: theoryData): Promise<simResult> {
-  let res;
-  if(data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    if(data2.strat == "T5Idle2Coast") {
-      data2.strat = "T5IdleCoast";
+  let res: simResult;
+  if(data.strat.includes("Coast") || data.strat === "T5RcvA" || data.strat === "T5RcvA2") {
+    let initialData: theoryData = JSON.parse(JSON.stringify(data));
+    if(initialData.strat == "T5RcvA2") {
+      initialData.strat = "T5RcvA";
     }
-    data2.strat = data2.strat.replace("Coast", "");
-    const sim1 = new t5Sim(data2);
-    const res1 = await sim1.simulate();
-    const lastQ1 = getLastLevel("q1", res1.boughtVars);
-    const sim2 = new t5Sim(data);
-    sim2.variables[0].setOriginalCap(lastQ1);
-    sim2.variables[0].configureCap(13);
-    let last_c2 = getLastLevel("c2", res1.boughtVars);
-    sim2.variables[3].setOriginalCap(last_c2);
-    sim2.variables[3].configureCap(1);
-    if(data.strat == "T5Idle2Coast") {
-      let last_c1 = getLastLevel("c1", res1.boughtVars) || sim1.variables[2].level;
-      sim2.variables[2].setOriginalCap(last_c1);
-      sim2.variables[2].configureCap(200);
+    initialData.strat = initialData.strat.replace("Coast", "");
+    const initialSim = new t5Sim(initialData);
+    const initialRes = await initialSim.simulate();
+    const lastQ1 = getLastLevel("q1", initialRes.boughtVars);
+    const lastC1 = getLastLevel("c1", initialRes.boughtVars) || initialSim.variables[2].level;
+    const lastC2 = getLastLevel("c2", initialRes.boughtVars);
+    const sim = new t5Sim(data);
+    sim.variables[0].setOriginalCap(lastQ1);
+    sim.variables[0].configureCap(13);
+    sim.variables[3].setOriginalCap(lastC2);
+    sim.variables[3].configureCap(1);
+    if(data.strat == "T5RcvA2") {
+      sim.variables[2].setOriginalCap(lastC1);
+      sim.variables[2].configureCap(200);
     }
-    res = await sim2.simulate();
+    res = await sim.simulate();
   }
   else {
     const sim = new t5Sim(data);
@@ -59,28 +58,21 @@ class t5Sim extends theoryClass<theory> {
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], conditionFunction[]> = {
       T5: [trueFunc, trueFunc, trueFunc, trueFunc, trueFunc],
-      T5Idle: [
-        trueFunc,
-        trueFunc,
-        () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
-        () => this.c2worth,
-        trueFunc
-      ],
-      T5IdleCoast: [
+      T5RcvA: [
         () => this.variables[0].shouldBuy,
         trueFunc,
         () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
         () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc
       ],
-      T5Idle2Coast: [
+      T5RcvA2: [
         () => this.variables[0].shouldBuy,
         trueFunc,
         () => this.variables[2].shouldBuy,
         () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc
       ],
-      T5AI2: [
+      T5ManageQMod: [
         () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
           <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
         trueFunc,
@@ -88,7 +80,7 @@ class t5Sim extends theoryClass<theory> {
         () => this.c2worth,
         trueFunc,
       ],
-      T5AI2Coast: [
+      T5ManageQModCoast: [
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
             <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
         trueFunc,
@@ -152,7 +144,6 @@ class t5Sim extends theoryClass<theory> {
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 150) this.updateMilestones();
@@ -163,19 +154,17 @@ class t5Sim extends theoryClass<theory> {
       if(this.variables[3].shouldFork) await this.doForkVariable(3);
     }
     this.trimBoughtVars();
-    let stratExtra = (
-        this.strat.includes("T5Idle") && !this.strat.includes("Idle2")
-    ) ? " " + logToExp(this.variables[2].cost, 1) : "";
-    if(this.strat.includes("Coast")) {
+    let stratExtra = this.strat === "T5RcvA" ? " " + logToExp(this.variables[2].cost, 1) : "";
+    if(this.strat.includes("Coast") || this.strat === "T5RcvA" || this.strat === "T5RcvA2") {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars))
       stratExtra += this.variables[3].prepareExtraForCap(getLastLevel("c2", this.boughtVars))
     }
-    if(this.strat.includes("Idle2")) {
-      let c1_last = getLastLevel("c1", this.boughtVars);
-      if(c1_last === 0) {
-        c1_last = this.variables[2].level;
+    if(this.strat === "T5RcvA2") {
+      let last_c1 = getLastLevel("c1", this.boughtVars);
+      if(last_c1 === 0) {
+        last_c1 = this.variables[2].level;
       }
-      stratExtra += this.variables[2].prepareExtraForCap(c1_last)
+      stratExtra += this.variables[2].prepareExtraForCap(last_c1)
     }
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
@@ -199,7 +188,6 @@ class t5Sim extends theoryClass<theory> {
     }
     if(
         (id === 0 || id === 2 || id === 3) &&
-        this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()
         // (this.variables[id].underOriginalCap() || this.maxRho >= 1000)

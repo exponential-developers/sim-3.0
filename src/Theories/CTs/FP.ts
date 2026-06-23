@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
@@ -111,10 +110,10 @@ class fpSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FP: idleStrat,
       FPcoast: idleStrat,
-      FPd: activeStrat,
-      FPdMS: activeStrat,
-      FPmodBurstC1: activeBurstStrat,
-      FPmodBurstC1MS: activeBurstStrat
+      FPMod: activeStrat,
+      FPMSMod: activeStrat,
+      FPModBurstC1: activeBurstStrat,
+      FPMSModBurstC1: activeBurstStrat
     };
     return toCallables(conditions[this.strat]);
   }
@@ -239,7 +238,6 @@ class fpSim extends theoryClass<theory> {
       this.simEndConditions.push(() => this.curMult > 10000)
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();

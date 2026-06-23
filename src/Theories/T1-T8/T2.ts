@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { StepwisePowerSumValue } from "../../Utils/value";
@@ -8,7 +7,7 @@ import { add, l10, getR9multiplier, toCallables, getBestResult, defaultResult } 
 export default async function t2(data: theoryData): Promise<simResult> {
   let bestSim: t2Sim;
   let bestSimRes: simResult;
-  if(data.strat == "T2Haxolotl") {
+  if(data.strat == "T2dMC") {
     const savedStrat = data.strat;
     data.strat = "T2MC";
     let t2mcRes = await new t2Sim(data).simulate();
@@ -45,13 +44,13 @@ export default async function t2(data: theoryData): Promise<simResult> {
     }
     bestSimRes = bestRes;
   }
-  else if(data.strat == "T2MCAlt2" || data.strat == "T2MCAlt3") {
+  else if(data.strat == "T2MC2" || data.strat == "T2MC3") {
     const savedStrat = data.strat;
     data.strat = "T2MC";
     let res = await new t2Sim(data).simulate();
 
     data.strat = savedStrat;
-    if(savedStrat == "T2MCAlt2") {
+    if(savedStrat == "T2MC2") {
       bestSim = new t2Sim(data);
       bestSim.targetRho = res.pubRho;
       bestSimRes = await bestSim.simulate();
@@ -114,7 +113,7 @@ class t2Sim extends theoryClass<theory> {
         () => this.curMult < 2250,
         () => this.curMult < 1150,
       ],
-      T2MCAlt: [
+      T2MC2: [
         () => this.curMult < 3500,
         () => this.curMult < 2700,
         () => this.curMult < 2050,
@@ -124,17 +123,7 @@ class t2Sim extends theoryClass<theory> {
         () => this.curMult < 2050,
         () => this.curMult < 550,
       ],
-      T2MCAlt2: [
-        () => this.curMult < 3500,
-        () => this.curMult < 2700,
-        () => this.curMult < 2050,
-        () => this.curMult < 550,
-        () => this.curMult < 3500,
-        () => this.curMult < 2700,
-        () => this.curMult < 2050,
-        () => this.curMult < 550,
-      ],
-      T2MCAlt3: [
+      T2MC3: [
         () => this.curMult < this.stop1,
         () => this.curMult < this.stop2,
         () => this.curMult < this.stop3,
@@ -144,7 +133,7 @@ class t2Sim extends theoryClass<theory> {
         () => this.curMult < this.stop3,
         () => this.curMult < this.stop4,
       ],
-      T2Haxolotl: [
+      T2dMC: [
         () => this.curMult < this.stop1,
         () => (this.variables[1].cost + l10(this.haxolotlC1) < getMax(0)) && this.curMult < this.stop2,
         () => (this.variables[2].cost + l10(this.haxolotlC2) < getMax(1)) && this.curMult < this.stop3,
@@ -155,7 +144,7 @@ class t2Sim extends theoryClass<theory> {
         () => (this.variables[7].cost + l10(this.haxolotlC3) < getMax(2)) && this.curMult < this.stop4,
       ],
       T2MS: new Array(8).fill(true),
-      T2QS: new Array(8).fill(true),
+      T2SingleMS: new Array(8).fill(true),
     };
     return toCallables(conditions[this.strat]);
   }
@@ -183,7 +172,7 @@ class t2Sim extends theoryClass<theory> {
       else if (tm100 < 60) return [2, 3, 0, 1];
       else if (tm100 < 100) return [1, 0, 2, 3];
     }
-    if (this.strat === "T2QS") {
+    if (this.strat === "T2SingleMS") {
       let coastMulti = Infinity;
       if (this.lastPub > 0) coastMulti = 10;
       if (this.lastPub > 75) coastMulti = 200;
@@ -238,15 +227,14 @@ class t2Sim extends theoryClass<theory> {
       this.pubConditions.push(() => this.maxRho >= this.targetRho);
     }
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
       this.buyVariables();
     }
     this.trimBoughtVars();
-    let stratExtra = ["T2MCAlt3", "T2Haxolotl"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
-    if(this.strat == "T2Haxolotl") {
+    let stratExtra = ["T2MC3", "T2dMC"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
+    if(this.strat == "T2dMC") {
       stratExtra += ` c1:${this.haxolotlC1} c2:${this.haxolotlC2} c3: ${this.haxolotlC3}`;
     }
     return this.createResult(stratExtra);

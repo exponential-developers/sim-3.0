@@ -1,4 +1,3 @@
-import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
@@ -79,20 +78,20 @@ class fiSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FI: idleStrat,
       FICoast: idleCoastStrat,
-      FId: activeStrat2,
-      FIdCoast: activeCoastStrat2,
-      FIPermaSwap: idleStrat,
-      FIPermaSwapCoast: idleCoastStrat,
-      FIdPermaSwap: activeStrat2,
-      FIdPermaSwapCoast: activeCoastStrat2,
+      FIMod: activeStrat2,
+      FIModCoast: activeCoastStrat2,
+      FISingleMS: idleStrat,
+      FISingleMSCoast: idleCoastStrat,
+      FIModSingleMS: activeStrat2,
+      FIModSingleMSCoast: activeCoastStrat2,
       FIMS: idleStrat,
       FIMSCoast: idleCoastStrat,
-      FIMSd: activeStrat2,
-      FIMSdCoast: activeCoastStrat2,
-      FIMSPermaSwap: idleStrat,
-      FIMSPermaSwapCoast: idleCoastStrat,
-      FIMSdPermaSwap: activeStrat2,
-      FIMSdPermaSwapCoast: activeCoastStrat2
+      FIMSMod: activeStrat2,
+      FIMSModCoast: activeCoastStrat2,
+      FIMSSingleMS: idleStrat,
+      FIMSSingleMSCoast: idleCoastStrat,
+      FIMSModSingleMS: activeStrat2,
+      FIMSModSingleMSCoast: activeCoastStrat2
     };
     return toCallables(conditions[this.strat]);
   }
@@ -116,7 +115,7 @@ class fiSim extends theoryClass<theory> {
 
     let available_fx = binaryInsertionSearch([100, 450, 1050], rho);
     const avaliable_lambda = binaryInsertionSearch([350, 750], rho);
-    const use_fx_level3 = this.strat.includes("PermaSwap") ? this.maxRho >= 1076 : rho >= 1150;
+    const use_fx_level3 = this.strat.includes("SingleMS") ? this.maxRho >= 1076 : rho >= 1150;
     if (!use_fx_level3) available_fx = Math.min(available_fx, 2);
     this.milestonesMax = [1, 1, 3, 1, 1, available_fx, avaliable_lambda];
 
@@ -125,7 +124,7 @@ class fiSim extends theoryClass<theory> {
     const qf = q1m23 < 5 ? 4 : q1m23 < 10 ? 3 : q1m23 < 20 ? 2.5 : 2;
     const qpriority = [0, 1, 5, 6, 2, 3, 4];
     const rhopriority = [0, 1, 5, 6, 3, 4, 2];
-    if (this.strat.includes("MS") && q1mn_points > 0 && q1mn_points < 5 && this.msstate > 0) {
+    if (this.strat.includes("FIMS") && q1mn_points > 0 && q1mn_points < 5 && this.msstate > 0) {
       if (this.msstate == 1) // start q build
       {
         this.msstate = 2;
@@ -246,7 +245,6 @@ class fiSim extends theoryClass<theory> {
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
-      if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
       this.updateMilestones();
