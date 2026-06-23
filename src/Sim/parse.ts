@@ -1,44 +1,19 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
-import { qs } from "../Utils/DOMhelpers";
+import UI from "../UI/elements";
 
-//Inputs
-const modeSelector = qs<HTMLSelectElement>(".mode");
-const theorySelector = qs<HTMLSelectElement>(".theory");
-const stratSelector = qs<HTMLSelectElement>("#stratSelector");
-const sigmaInput = qs<HTMLInputElement>("#sigmaInput");
-const currencyInput = qs<HTMLInputElement>(".input");
-const capInput = qs<HTMLInputElement>(".cap");
-const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
-const modeInput = qs<HTMLTextAreaElement>(".modeInput");
-const hardCap = qs<HTMLInputElement>(".hardCap");
-const semi_idle = qs<HTMLInputElement>(".semi-idle");
-const hard_active = qs<HTMLInputElement>(".hard-active");
-
-//Setting Inputs
-const dtOtp = qs(".dtOtp");
-const ddtOtp = qs(".ddtOtp");
-const mfDepthOtp = qs(".mfDepthOtp");
-const boughtVarsDeltaSlider = qs<HTMLInputElement>(".boughtVarsDelta");
-const themeSelector = qs<HTMLSelectElement>(".themeSelector");
-const simAllStrats = qs<HTMLSelectElement>(".simallstrats");
-const completedCTs = qs<HTMLSelectElement>(".completedcts");
-const showA23 = qs<HTMLInputElement>(".a23");
-const showUnofficials = qs<HTMLInputElement>(".unofficials");
-const generateTotalPurchaseList = qs<HTMLInputElement>(".totalPurchaseList");
-
-function parseSettings(): Settings {
+export function parseSettings(): Settings {
     return {
-        dt: parseFloat(dtOtp.textContent ?? "1.5"),
-        ddt: parseFloat(ddtOtp.textContent ?? "1.0001"),
-        mfResetDepth: parseInt(mfDepthOtp.textContent ?? "0"),
-        boughtVarsDelta: parseInt(boughtVarsDeltaSlider.value),
-        theme: themeSelector.value,
-        simAllStrats: simAllStrats.value as SettingsSimAllStratsMode,
-        completedCTs: completedCTs.value as SettingsCompletedCTsMode,
-        showA23: showA23.checked,
-        showUnofficials: showUnofficials.checked,
-        totalPurchaseList: generateTotalPurchaseList.checked
+        dt: parseFloat(UI.settings.dtOtp.textContent ?? "1.5"),
+        ddt: parseFloat(UI.settings.ddtOtp.textContent ?? "1.0001"),
+        mfResetDepth: parseInt(UI.settings.mfDepthOtp.textContent ?? "0"),
+        boughtVarsDelta: parseInt(UI.settings.boughtVarsDeltaSlider.value),
+        theme: UI.settings.themeSelector.value,
+        simAllStrats: UI.settings.simAllStrats.value as SettingsSimAllStratsMode,
+        completedCTs: UI.settings.completedCTs.value as SettingsCompletedCTsMode,
+        showA23: UI.settings.showA23.checked,
+        showUnofficials: UI.settings.showUnofficials.checked,
+        totalPurchaseList: UI.settings.totalPurchaseList.checked
     }
 }
 
@@ -77,7 +52,7 @@ function parseCurrency(str: string, theory: theoryType, sigma: number, defaultTy
 }
 
 function parseSigma(required: boolean): number {
-    const str = sigmaInput.value.replace(" ", "");
+    const str = UI.controls.sigmaInput.value.replace(" ", "");
     const match = str.match(/^\d+$/g);
     if (match) {
         return parseInt(match[0]);
@@ -91,84 +66,84 @@ function parseSigma(required: boolean): number {
 }
 
 function parseSingleSim(): SingleSimQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "single",
         theory: theory,
-        strat: stratSelector.value,
+        strat: UI.controls.stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         settings: parseSettings()
     }
 }
 
 function parseChainSim(): ChainSimQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "chain",
         theory: theory,
-        strat: stratSelector.value,
+        strat: UI.controls.stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
-        cap: parseCurrency(capInput.value, theory, sigma),
-        hardCap: hardCap.checked,
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        hardCap: UI.controls.hardCap.checked,
         settings: parseSettings()
     }
 }
 
 function parseStepSim(): StepSimQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "step",
         theory: theory,
-        strat: stratSelector.value,
+        strat: UI.controls.stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
-        cap: parseCurrency(capInput.value, theory, sigma),
-        step: parseExponentialValue(modeInput.value),
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        step: parseExponentialValue(UI.controls.extraInput.value),
         settings: parseSettings()
     }
 }
 
 function parseComparisonSim(): ComparisonSimQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "comparison",
         theory: theory,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         settings: parseSettings()
     }
 }
 
 function parseAmountSim(): AmountSimQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "amount",
         theory: theory,
-        strat: stratSelector.value,
+        strat: UI.controls.stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
-        amount: parseInt(modeInput.value),
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        amount: parseInt(UI.controls.extraInput.value),
         settings: parseSettings()
     }
 }
 
 function parseTimeSim(): TimeSimQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
-    const timeStr = modeInput.value;
+    const timeStr = UI.controls.extraInput.value;
     const timeComponents = timeStr.matchAll(/(\d+)([ydhm])/g);
     let time = 0;
 
@@ -192,35 +167,35 @@ function parseTimeSim(): TimeSimQuery {
     return {
         queryType: "time",
         theory: theory,
-        strat: stratSelector.value,
+        strat: UI.controls.stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         time,
-        hardCap: hardCap.checked,
+        hardCap: UI.controls.hardCap.checked,
         settings: parseSettings()
     }
 }
 
 function parseStepChainSim(): StepChainQuery {
-    const theory = theorySelector.value as theoryType;
+    const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "step_chain",
         theory: theory,
-        strat: stratSelector.value,
+        strat: UI.controls.stratSelector.value,
         sigma: sigma,
-        rho: parseCurrency(currencyInput.value, theory, sigma),
-        cap: parseCurrency(capInput.value, theory, sigma),
-        step: parseExponentialValue(modeInput.value),
-        hardCap: hardCap.checked,
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        step: parseExponentialValue(UI.controls.extraInput.value),
+        hardCap: UI.controls.hardCap.checked,
         settings: parseSettings()
     }
 }
 
 function parseSimAll(): SimAllQuery {
     const settings = parseSettings();
-    const str = simAllInputArea.value;
+    const str = UI.controls.simAllInputArea.value;
     let split = str.split(" ").map(s => s.replace("\n", "")).filter(s => s != "");
     
     const sigmaStr = split.shift() ?? "";
@@ -248,15 +223,15 @@ function parseSimAll(): SimAllQuery {
         queryType: "all",
         sigma: sigma,
         values: values,
-        veryActive: hard_active.checked,
-        semiIdle: semi_idle.checked,
+        veryActive: UI.controls.veryActiveToggle.checked,
+        semiIdle: UI.controls.semiIdleToggle.checked,
         stratType: settings.simAllStrats,
         settings: settings
     }
 }
 
 export function parseQuery(): SimQuery {
-    switch (modeSelector.value) {
+    switch (UI.controls.modeSelector.value) {
         case "All": return parseSimAll();
         case "Single sim": return parseSingleSim();
         case "Chain": return parseChainSim();

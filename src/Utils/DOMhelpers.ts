@@ -77,3 +77,15 @@ export function getTableHeaders(tableType: "single" | "all" | "all_one", headerT
     return headers;
   };
 }
+
+export function animateButton(button: HTMLButtonElement, text: string, delay = 1000, animateClass = "buttongreen") {
+  const previousText = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = text;
+  button.classList.add(animateClass);
+  setTimeout(() => {
+    button.disabled = false;
+    button.innerHTML = previousText;
+    button.classList.remove(animateClass);
+  }, delay);
+}

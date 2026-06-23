@@ -1,73 +1,52 @@
 import { formatNumber, getddtFromSlider, getdtFromSlider } from "../Utils/helpers";
-import { qs, event } from "../Utils/DOMhelpers";
+import { event } from "../Utils/DOMhelpers";
 import { setSimState } from "./simState";
+import UI from "./elements";
 
-// Settings menu
-
-const settingsBtn = qs<HTMLButtonElement>("#settingsBtn");
-const settingsCloseBtn = qs<HTMLButtonElement>(".settingsCloseBtn");
-const settingsModal = qs<HTMLDialogElement>(".settings");
-
-event(settingsBtn, "pointerdown", () => {
-  settingsModal.showModal();
+event(UI.nav.settingsBtn, "pointerdown", () => {
+  UI.settings.dialog.showModal();
   document.body.style.overflow = "hidden";
 });
 
-event(settingsCloseBtn, "pointerdown", () => settingsModal.close());
+event(UI.settings.closeBtn, "pointerdown", () => UI.settings.dialog.close());
 
-event(settingsModal, "close", () => {
+event(UI.settings.dialog, "close", () => {
   setSimState();
   document.body.style.overflow = "auto";
 })
 
-// Instructions menu
-
-const instructionsBtn = qs<HTMLButtonElement>("#instructionsBtn");
-const instructionsCloseBtn = qs<HTMLButtonElement>(".instructionsCloseBtn");
-const instructionsModal = qs<HTMLDialogElement>(".instructions");
-
-event(instructionsBtn, "pointerdown", () => {
-  instructionsModal.showModal();
+event(UI.nav.instructionsBtn, "pointerdown", () => {
+  UI.instructions.dialog.showModal();
   document.body.style.overflow = "hidden";
 });
 
-event(instructionsCloseBtn, "pointerdown", () => instructionsModal.close());
+event(UI.instructions.closeBtn, "pointerdown", () => UI.instructions.dialog.close());
 
-event(instructionsModal, "close", () => document.body.style.overflow = "auto");
+event(UI.instructions.dialog, "close", () => document.body.style.overflow = "auto");
 
-// Settings inputs
-
-const dtSlider = qs<HTMLInputElement>(".dt");
-const dtOtp = qs(".dtOtp");
-
-const ddtSlider = qs<HTMLInputElement>(".ddt");
-const ddtOtp = qs(".ddtOtp");
-
-const mfDepthSlider = qs<HTMLInputElement>(".mfDepth");
-const mfDepthOtp = qs(".mfDepthOtp");
-
-const boughtVarsDeltaSlider = qs<HTMLInputElement>(".boughtVarsDelta");
-const boughtVarsDeltaOtp = qs(".boughtVarsDeltaOtp");
-
-event(dtSlider, "input", () => {
-  dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(dtSlider.value)), 4);
+event(UI.settings.dtSlider, "input", () => {
+  UI.settings.dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(UI.settings.dtSlider.value)), 4);
 });
 
-event(ddtSlider, "input", () => {
-  ddtOtp.textContent = formatNumber(getddtFromSlider(parseFloat(ddtSlider.value)), 7)
+event(UI.settings.ddtSlider, "input", () => {
+  UI.settings.ddtOtp.textContent = formatNumber(getddtFromSlider(parseFloat(UI.settings.ddtSlider.value)), 7)
 });
 
-event(mfDepthSlider, "input", () => mfDepthOtp.textContent = mfDepthSlider.value);
+event(UI.settings.mfDepthSlider, "input", () => 
+  UI.settings.mfDepthOtp.textContent = UI.settings.mfDepthSlider.value
+);
 
-event(boughtVarsDeltaSlider, "input", () => boughtVarsDeltaOtp.textContent = `e${boughtVarsDeltaSlider.value}ρ`);
+event(UI.settings.boughtVarsDeltaSlider, "input", () => 
+  UI.settings.boughtVarsDeltaOtp.textContent = `e${UI.settings.boughtVarsDeltaSlider.value}ρ`
+);
 
-event(qs(".resetSettings"), "pointerdown", () => {
-  dtSlider.value = "8.1943";
-  dtOtp.textContent = "1.5";
-  ddtSlider.value = "2.71233";
-  ddtOtp.textContent = "1.0001";
-  boughtVarsDeltaSlider.value = "5";
-  boughtVarsDeltaOtp.textContent = "e5ρ";
-  mfDepthSlider.value = "0";
-  mfDepthOtp.textContent = "0";
+event(UI.settings.resetBtn, "pointerdown", () => {
+  UI.settings.dtSlider.value = "8.1943";
+  UI.settings.dtOtp.textContent = "1.5";
+  UI.settings.ddtSlider.value = "2.71233";
+  UI.settings.ddtOtp.textContent = "1.0001";
+  UI.settings.boughtVarsDeltaSlider.value = "5";
+  UI.settings.boughtVarsDeltaOtp.textContent = "e5ρ";
+  UI.settings.mfDepthSlider.value = "0";
+  UI.settings.mfDepthOtp.textContent = "0";
 });
