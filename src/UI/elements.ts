@@ -8,42 +8,42 @@ const UI = {
     controls: {
         baseWrapper: qs("#baseControlsWrapper"),
 
-        theorySelector: qs<HTMLSelectElement>(".theory"),
+        theorySelector: qs<HTMLSelectElement>("#theorySelector"),
 
         stratSelectorWrapper: qs("#stratSelectionWrapper"),
         stratSelector: qs<HTMLSelectElement>("#stratSelector"),
 
         sigmaInput: qs<HTMLInputElement>("#sigmaInput"),
-        currencyInput: qs<HTMLInputElement>(".input"),
-        capInputWrapper: qs(".capWrapper"),
-        capInput: qs<HTMLInputElement>(".cap"),
+        currencyInput: qs<HTMLInputElement>("#currencyInput"),
+        capInputWrapper: qs("#capInputWrapper"),
+        capInput: qs<HTMLInputElement>("#capInput"),
 
-        modeSelector: qs<HTMLSelectElement>(".mode"),
+        modeSelector: qs<HTMLSelectElement>("#modeSelector"),
 
-        hardCapWrapper: qs(".hardCapWrapper"),
-        hardCap: qs<HTMLInputElement>(".hardCap"),
+        hardCapWrapper: qs("#hardCapWrapper"),
+        hardCap: qs<HTMLInputElement>("#hardCapToggle"),
 
-        extraInputWrapper: qs(".extraInputs"),
-        extraInputDesc: qs(".extraInputDescription"),
+        extraInputWrapper: qs("#extraInputWrapper"),
+        extraInputDesc: qs("#extraInputDescription"),
 
-        simAllInputWrapper: qs(".simAllInputs"),
-        saveDistBtn: qs<HTMLButtonElement>(".saveDist"),
-        semiIdleToggle: qs<HTMLInputElement>(".semi-idle"),
-        veryActiveToggle: qs<HTMLInputElement>(".hard-active"),
-        getDistBtn: qs(".getDist"),
-        loadSaveBtn: qs<HTMLButtonElement>(".loadSave"),
+        simAllInputWrapper: qs("#simAllInputWrapper"),
+        saveDistBtn: qs<HTMLButtonElement>("#saveDistBtn"),
+        semiIdleToggle: qs<HTMLInputElement>("#semiIdleToggle"),
+        veryActiveToggle: qs<HTMLInputElement>("#hardActiveToggle"),
+        getDistBtn: qs("#getDistBtn"),
+        loadSaveBtn: qs<HTMLButtonElement>("#loadSaveBtn"),
 
-        simAllInputArea: qs<HTMLTextAreaElement>(".simAllInputArea"),
-        extraInput: qs<HTMLTextAreaElement>(".modeInput"),
+        simAllInputArea: qs<HTMLTextAreaElement>("#simAllInputArea"),
+        extraInput: qs<HTMLTextAreaElement>("#extraInput"),
 
-        timeDiffWrapper: qs(".timeDiffWrapper"),
+        timeDiffWrapper: qs("#timeDiffWrapper"),
 
-        copyImageBtn: qs<HTMLButtonElement>(".imageC"),
-        downloadImageBtn: qs(".imageD"),
-        downloadCsvBtn: qs(".csvD"),
-        clearResultsBtn: qs(".clear"),
-        clearInputsBtn: qs(".clearInput"),
-        simulateBtn: qs(".simulate")
+        copyImageBtn: qs<HTMLButtonElement>("#copyImageBtn"),
+        downloadImageBtn: qs("#downloadImageBtn"),
+        downloadCsvBtn: qs("#downloadCsvBtn"),
+        clearResultsBtn: qs("#clearResultsBtn"),
+        clearInputsBtn: qs("#clearInputsBtn"),
+        simulateBtn: qs("#simulateBtn")
     },
     outputs: {
         log: qs(".output"),

@@ -38,11 +38,11 @@
     <div class="content-wrapper">
       <div id="baseControlsWrapper" class="controlsWrapper">
         <div>
-          <span class="description">Theory: </span>
-          <select class="theory"></select>
+          <span class="inputLabel">Theory: </span>
+          <select id="theorySelector"></select>
         </div>
         <div id="stratSelectionWrapper">
-          <span class="description">Strat: </span>
+          <span class="inputLabel">Strat: </span>
           <select id="stratSelector">
             <option value="Best Overall">Best Overall</option>
             <option value="Best Active">Best Active</option>
@@ -51,55 +51,55 @@
           </select>
         </div>
         <div>
-          <span class="description">Sigma: </span>
-          <input type="text" id="sigmaInput" style="width: 3.5rem" placeholder="<number>" spellcheck="false" />
+          <span class="inputLabel">Sigma: </span>
+          <input type="text" id="sigmaInput" placeholder="<number>" spellcheck="false" />
         </div>
         <div>
-          <span class="description">Input: </span>
-          <input type="text" class="input" style="width: 5rem" placeholder="<rho>[r/t/m]>" spellcheck="false" />
+          <span class="inputLabel">Input: </span>
+          <input type="text" id="currencyInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
-        <div class="capWrapper">
-          <span class="description">Cap: </span>
-          <input type="text" class="cap" style="width: 5rem" placeholder="<rho>[r/t/m]>" spellcheck="false" />
+        <div id="capInputWrapper">
+          <span class="inputLabel">Cap: </span>
+          <input type="text" id="capInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
       </div>
       <div id="extraControlsWrapper" class="controlsWrapper">
         <div>
-          <span class="description">Mode: </span>
-          <select class="mode"></select>
+          <span class="inputLabel">Mode: </span>
+          <select id="modeSelector"></select>
         </div>
-        <div class="hardCapWrapper" style="display: none">
-          <span class="description">Hard cap? </span>
-          <input style="position: relative; width: min(1rem, 5vw); outline: none" type="checkbox" class="hardCap" />
+        <div id="hardCapWrapper">
+          <span class="inputLabel">Hard cap? </span>
+          <input id="hardCapToggle" type="checkbox" />
         </div>
-        <div class="extraInputs">
-          <span class="extraInputDescription" style="margin-right: 0.8rem">mode inputs</span>
-          <div class="simAllInputs">
-            <button class="saveDist">Save distribution</button>
-            <span style="font-size: 0.75rem">Semi-Idle: </span>
-            <input type="checkbox" class="semi-idle" style="position: relative" checked="true" />
-            <button class="getDist">Get distribution</button>
-            <span style="font-size: 0.75rem">Hard Active: </span>
-            <input type="checkbox" class="hard-active" style="position: relative" />
-            <button class="loadSave">Load save</button>
+        <div id="extraInputWrapper">
+          <span id="extraInputDescription"></span>
+          <div id="simAllInputWrapper">
+            <button id="saveDistBtn">Save distribution</button>
+            <span class="simAllCheckboxLabel">Semi-Idle: </span>
+            <input id="semiIdleToggle" type="checkbox" checked="true" />
+            <button id="getDistBtn">Get distribution</button>
+            <span class="simAllCheckboxLabel">Very Active: </span>
+            <input id="hardActiveToggle" type="checkbox" />
+            <button id="loadSaveBtn">Load save</button>
           </div>
-          <textarea class="simAllInputArea" cols="30" spellcheck="false"></textarea>
-          <textarea class="modeInput" cols="30" spellcheck="false"></textarea>
+          <textarea id="simAllInputArea" cols="30" spellcheck="false"></textarea>
+          <textarea id="extraInput" cols="30" spellcheck="false"></textarea>
         </div>
-        <div class="timeDiffWrapper" style="display: none">
+        <div id="timeDiffWrapper">
           <input type="text" class="timeDiffInput" />
           <input type="text" class="timeDiffInput" />
           <input type="text" class="timeDiffInput" />
-          <table class="timeDiffTable"></table>
+          <table id="timeDiffTable"></table>
         </div>
       </div>
-      <div class="button-wrapper">
-        <button class="imageC">Copy Image</button>
-        <button class="imageD">Download Image</button>
-        <button class="csvD">Download CSV</button>
-        <button class="clear">Clear all results</button>
-        <button class="clearInput">Clear all inputs</button>
-        <button class="simulate">Simulate</button>
+      <div id="actionBar">
+        <button id="copyImageBtn">Copy Image</button>
+        <button id="downloadImageBtn">Download Image</button>
+        <button id="downloadCsvBtn">Download CSV</button>
+        <button id="clearResultsBtn">Clear all results</button>
+        <button id="clearInputsBtn">Clear all inputs</button>
+        <button id="simulateBtn">Simulate</button>
       </div>
       <span class="output" style="display: block"></span>
       <table class="simTable">
