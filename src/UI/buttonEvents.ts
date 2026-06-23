@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import { qs, qsa, ce, event, removeAllChilds, downloadString, tau, rho, sigma_t, getTableHeaders } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds, downloadString, getTableHeaders } from "../Utils/DOMhelpers";
 
 //Buttons
 const clear = qs(".clear");
@@ -10,7 +10,7 @@ const clearInput = qs(".clearInput");
 
 const saveDist = qs<HTMLButtonElement>(".saveDist");
 const getDist = qs(".getDist");
-const loadSave = qs(".loadSave");
+const loadSaveButton = qs(".loadSave");
 const sigmaInput = qs<HTMLInputElement>(".sigma");
 const currencyInput = qs<HTMLInputElement>(".input");
 const capInput = qs<HTMLInputElement>(".cap");
@@ -171,10 +171,10 @@ event(getDist, "pointerdown", () => {
   simAllInputArea.value = localStorage.getItem("savedDistribution") ?? simAllInputArea.value;
 });
 
-event(loadSave, "pointerdown", () => {
-  let presumedSaveFile = simAllInputArea.value;
+export async function loadSave(): Promise<void> {
+  let presumedSaveFile = simAllInputArea.value.trim();
 
-  fetch("https://ex-save-loader.hotab.pw/load",{
+  return fetch("https://ex-save-loader.hotab.pw/load",{
     method: "POST",
     headers: {
       'Accept': 'application/json',
@@ -189,5 +189,7 @@ event(loadSave, "pointerdown", () => {
     }
   }).catch(e => {
     output.textContent = "Error loading save file.";
-  })
-})
+  });
+}
+
+event(loadSaveButton, "pointerdown", loadSave);

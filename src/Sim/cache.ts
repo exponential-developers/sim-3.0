@@ -1,5 +1,4 @@
 import { getTheoryFromIndex, isMainTheory } from "../Utils/helpers";
-import jsonData from "../Data/data.json" with { type: "json" };
 
 // Updates the cache
 export function setCache(query: SimQuery, response: SimResponse) {

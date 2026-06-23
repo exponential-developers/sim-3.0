@@ -4,15 +4,18 @@ import { writeSimResponse } from "./write";
 import { setSimState } from "../UI/simState";
 import { qs, event } from "../Utils/DOMhelpers";
 import { cacheFilterQuery, cacheFilterResponse, setCache } from "./cache";
-import { refreshDOMEventLoop, sleep } from "../Utils/helpers";
+import { refreshDOMEventLoop } from "../Utils/helpers";
+import { loadSave } from "../UI/buttonEvents";
 
 const output = qs(".output");
+
+// Inputs
+const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea");
 
 //Buttons
 const simulateButton = qs(".simulate");
 
 export const global = {
-  stratFilter: true,
   simulating: false,
 };
 
@@ -26,6 +29,12 @@ async function simCall() {
   global.simulating = true;
   output.textContent = "";
   simulateButton.textContent = "Stop simulating";
+
+  // Auto-load save
+  if (/^[A-Za-z0-9+\/=]{20,}$/.test(simAllInputArea.value.trim())) {
+    await loadSave();
+    await refreshDOMEventLoop();
+  }
 
   try {
     const query = parseQuery();
