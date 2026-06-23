@@ -96,32 +96,3 @@
 .timeDiffTable td ~ td {
   border-left: 1px solid var(--dialog-f-clr);
 }
-.boughtVarsCloseBtn {
-  border-radius: 50%;
-  width: 1.5rem;
-  aspect-ratio: 1;
-  background-color: var(--close-btn-bg);
-  color: var(--close-btn-fg);
-  font-weight: bold;
-  font-size: 0.8rem;
-  font-style: italic;
-  font-family: "Luicida Handwriting";
-  cursor: pointer;
-  transition: scale 100ms;
-  position: fixed;
-  right: 10%;
-  top: 5%;
-  outline: 0.1em solid var(--close-btn-fg);
-}
-.boughtVars > div::-webkit-scrollbar {
-  width: 1rem;
-}
-.boughtVars > div::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-bg);
-  border: 1px solid var(--scrollbar-thumb-border);
-  border-radius: 0.5rem;
-}
-.boughtVars > div::-webkit-scrollbar-track {
-  background-color: var(--scrollbar-track-bg);
-  border-radius: 0.5rem;
-}

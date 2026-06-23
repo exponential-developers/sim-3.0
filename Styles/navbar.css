@@ -39,58 +39,24 @@ nav div {
   scale: 1.1;
 }
 
-.settings {
-  --inline-padding: min(10vw, 5rem);
-  padding: 2rem var(--inline-padding);
-  background-color: var(--dialog-bg);
-  color: var(--dialog-f-clr);
-  border: 0.1rem solid var(--dialog-f-clr);
-  border-radius: 0.5rem;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  overflow: hidden;
-}
 .instructions {
-  --inline-padding: min(10vw, 5rem);
-  padding: 2rem var(--inline-padding);
-  background-color: var(--dialog-bg);
-  color: var(--dialog-f-clr);
-  border: 0.1rem solid var(--dialog-f-clr);
-  border-radius: 0.5rem;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
+  width: 75vw;
+  max-height: 90vh;
+}
+
+.instructions[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.instructionsContent {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: none;
+  padding-right: 1rem;
 }
-.settings::backdrop,
-.instructions::backdrop,
-.boughtVars::backdrop {
-  background-color: var(--dialog-backdrop-clr);
-  opacity: 0.6;
-}
-.settingsCloseBtn,
-.instructionsCloseBtn {
-  border-radius: 50%;
-  width: 1.5rem;
-  aspect-ratio: 1;
-  background-color: var(--close-btn-bg);
-  color: var(--close-btn-fg);
-  font-weight: bold;
-  font-size: 0.8rem;
-  font-style: italic;
-  font-family: "Luicida Handwriting";
-  cursor: pointer;
-  transition: scale 100ms;
-  position: absolute;
-  right: 7%;
-  top: 10%;
-  outline: 0.1em solid var(--close-btn-fg);
-}
-.settingsCloseBtn:hover,
-.instructionsCloseBtn:hover {
-  scale: 1.2;
-}
+
 .settings input {
   outline: 0;
 }
