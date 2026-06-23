@@ -11,12 +11,12 @@
   }
 
   /* Controls */
-  #baseControlsWrapper {
+  .baseControlsWrapper {
     display: grid;
     grid-template-columns: repeat(3, auto);
     gap: 0.5rem 1rem;
   }
-  #extraControlsWrapper {
+  .extraControlsWrapper {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -25,28 +25,28 @@
   .inputLabel {
     display: block;
   }
-  #simAllInputWrapper {
+  .simAllInputWrapper {
     width: max-content;
   }
-  #simAllInputWrapper button {
+  .simAllInputWrapper button {
     font-size: 0.6rem;
   }
-  #simAllInputWrapper input {
+  .simAllInputWrapper input {
     width: 0.7rem;
     height: 0.7rem;
   }
-  #extraInputWrapper {
+  .extraInputWrapper {
     flex-direction: column;
     gap: 1rem;
   }
-  #actionBar {
+  .actionBar {
     display: grid;
     grid-template-columns: repeat(2, auto);
     gap: 0.5rem 1rem;
   }
 
   /* Outputs */
-  #log {
+  .log {
     min-width: 80vw;
   }
   .boughtVars table,

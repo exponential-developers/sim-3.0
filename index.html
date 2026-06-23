@@ -26,24 +26,24 @@
   <body>
     <nav>
       <div>
-        <span id="versionLabel">v3.0.0 (Alpha)</span>
+        <span class="versionLabel">v3.0.0 (Alpha)</span>
         <button class="navBtns">Changelog</button>
-        <button id="instructionsBtn" class="navBtns">Instructions</button>
-        <button id="settingsBtn"></button>
+        <button class="instructionsBtn navBtns">Instructions</button>
+        <button class="settingsBtn"></button>
       </div>
 
-      <h1 id="nav-title">e<sup>x</sup> Theory simulator</h1>
+      <h1 class="nav-title">e<sup>x</sup> Theory simulator</h1>
     </nav>
 
     <div class="content-wrapper">
-      <div id="baseControlsWrapper" class="controlsWrapper">
+      <div class="baseControlsWrapper controlsWrapper">
         <div>
           <span class="inputLabel">Theory: </span>
-          <select id="theorySelector"></select>
+          <select class="theorySelector"></select>
         </div>
-        <div id="stratSelectionWrapper">
+        <div class="stratSelectionWrapper">
           <span class="inputLabel">Strat: </span>
-          <select id="stratSelector">
+          <select class="stratSelector">
             <option value="Best Overall">Best Overall</option>
             <option value="Best Active">Best Active</option>
             <option value="Best Semi-Idle">Best Semi-Idle</option>
@@ -52,57 +52,57 @@
         </div>
         <div>
           <span class="inputLabel">Sigma: </span>
-          <input type="text" id="sigmaInput" placeholder="<number>" spellcheck="false" />
+          <input type="text" class="sigmaInput" placeholder="<number>" spellcheck="false" />
         </div>
         <div>
           <span class="inputLabel">Input: </span>
-          <input type="text" id="currencyInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
+          <input type="text" class="currencyInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
-        <div id="capInputWrapper">
+        <div class="capInputWrapper">
           <span class="inputLabel">Cap: </span>
-          <input type="text" id="capInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
+          <input type="text" class="capInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
       </div>
-      <div id="extraControlsWrapper" class="controlsWrapper">
+      <div class="extraControlsWrapper controlsWrapper">
         <div>
           <span class="inputLabel">Mode: </span>
-          <select id="modeSelector"></select>
+          <select class="modeSelector"></select>
         </div>
-        <div id="hardCapWrapper">
+        <div class="hardCapWrapper">
           <span class="inputLabel">Hard cap? </span>
-          <input id="hardCapToggle" type="checkbox" />
+          <input class="hardCapToggle" type="checkbox" />
         </div>
-        <div id="extraInputWrapper">
-          <span id="extraInputDescription"></span>
-          <div id="simAllInputWrapper">
-            <button id="saveDistBtn">Save distribution</button>
+        <div class="extraInputWrapper">
+          <span class="extraInputDescription"></span>
+          <div class="simAllInputWrapper">
+            <button class="saveDistBtn">Save distribution</button>
             <span class="simAllCheckboxLabel">Semi-Idle: </span>
-            <input id="semiIdleToggle" type="checkbox" checked="true" />
-            <button id="getDistBtn">Get distribution</button>
+            <input class="semiIdleToggle" type="checkbox" checked="true" />
+            <button class="getDistBtn">Get distribution</button>
             <span class="simAllCheckboxLabel">Very Active: </span>
-            <input id="hardActiveToggle" type="checkbox" />
-            <button id="loadSaveBtn">Load save</button>
+            <input class="hardActiveToggle" type="checkbox" />
+            <button class="loadSaveBtn">Load save</button>
           </div>
-          <textarea id="simAllInputArea" cols="30" spellcheck="false"></textarea>
-          <textarea id="extraInput" cols="30" spellcheck="false"></textarea>
+          <textarea class="simAllInputArea" cols="30" spellcheck="false"></textarea>
+          <textarea class="extraInput" cols="30" spellcheck="false"></textarea>
         </div>
-        <div id="timeDiffWrapper">
+        <div class="timeDiffWrapper">
           <input type="text" class="timeDiffInput" />
           <input type="text" class="timeDiffInput" />
           <input type="text" class="timeDiffInput" />
-          <table id="timeDiffTable"></table>
+          <table class="timeDiffTable"></table>
         </div>
       </div>
-      <div id="actionBar">
-        <button id="copyImageBtn">Copy Image</button>
-        <button id="downloadImageBtn">Download Image</button>
-        <button id="downloadCsvBtn">Download CSV</button>
-        <button id="clearResultsBtn">Clear all results</button>
-        <button id="clearInputsBtn">Clear all inputs</button>
-        <button id="simulateBtn">Simulate</button>
+      <div class="actionBar">
+        <button class="copyImageBtn">Copy Image</button>
+        <button class="downloadImageBtn">Download Image</button>
+        <button class="downloadCsvBtn">Download CSV</button>
+        <button class="clearResultsBtn">Clear all results</button>
+        <button class="clearInputsBtn">Clear all inputs</button>
+        <button class="simulateBtn">Simulate</button>
       </div>
-      <span id="log"></span>
-      <table id="simTable">
+      <span class="log"></span>
+      <table class="simTable">
         <thead><tr></tr></thead>
         <tbody></tbody>
       </table>
@@ -112,19 +112,19 @@
       <button class="settingsCloseBtn">X</button>
       <div class="sliderContainer" style="margin-bottom: 2rem">
         <label for="dtSlider">dt:</label><br />
-        <input type="range" class="dt" step="0.1" max="10" min="0" value="8.1943" id="dtSlider" />
+        <input type="range" class="dt" step="0.1" max="10" min="0" value="8.1943" class="dtSlider" />
         <span class="sliderOtp dtOtp">1.5</span> <br />
         
         <label for="ddtSlider">&Delta;dt:</label><br />
-        <input type="range" class="ddt" step="0.1" max="10" min="0" value="2.71233" id="ddtSlider" />
+        <input type="range" class="ddt" step="0.1" max="10" min="0" value="2.71233" class="ddtSlider" />
         <span class="sliderOtp ddtOtp">1.0001</span><br />
 
         <label for="mfDepthSlider">MF reset depth:</label><br />
-        <input type="range" class="mfDepth" step="1" max="5" min="0" value="0" id="mfDepthSlider" />
+        <input type="range" class="mfDepth" step="1" max="5" min="0" value="0" class="mfDepthSlider" />
         <span class="sliderOtp mfDepthOtp">0</span><br />
 
         <label for="boughtVarsDeltaSlider">Show bought vars in recovery:</label><br />
-        <input type="range" class="boughtVarsDelta" step="1" min="5" max="30" value="5" id="boughtVarsDeltaSlider" />
+        <input type="range" class="boughtVarsDelta" step="1" min="5" max="30" value="5" class="boughtVarsDeltaSlider" />
         <span class="sliderOtp boughtVarsDeltaOtp">e5ρ</span><br />
 
         <button class="resetSettings navBtns">Reset</button>

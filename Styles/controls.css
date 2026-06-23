@@ -4,7 +4,7 @@
   width: fit-content;
   gap: min(2vw, 2rem);
 }
-#extraControlsWrapper {
+.extraControlsWrapper {
   margin-top: 1.5rem;
 }
 .controlsWrapper input,
@@ -20,21 +20,21 @@
   outline: 1px solid var(--btn-border-clr);
 }
 
-#sigmaInput {
+.sigmaInput {
   width: 3.5rem
 }
 
-#currencyInput, #capInput {
+.currencyInput, .capInput {
   width: 5rem
 }
 
-#hardCapToggle {
+.hardCapToggle {
   position: relative; 
   width: min(1rem, 5vw); 
   outline: none;
 }
 
-#extraInputDescription {
+.extraInputDescription {
   margin-right: 0.8rem;
 }
 
@@ -48,31 +48,31 @@
 
 /* Action bar */
 
-#actionBar {
+.actionBar {
   display: grid;
   grid-template-columns: repeat(6, auto);
   gap: 1rem;
   width: fit-content;
   margin-block: 2rem 1rem;
 }
-#actionBar button {
+.actionBar button {
   font-size: 0.8rem;
   padding: 0.1em 0.2em;
 }
 
 /* Sim all inputs */
 
-#simAllInputWrapper {
+.simAllInputWrapper {
   display: grid;
   grid-template-columns: 1fr auto auto;
   gap: 1rem 0.5rem;
   margin-right: 2rem;
   place-items: center;
 }
-#simAllInputWrapper .simAllCheckboxLabel {
+.simAllInputWrapper .simAllCheckboxLabel {
   font-size: 0.75rem;
 }
-#simAllInputWrapper input[type="checkbox"] {
+.simAllInputWrapper input[type="checkbox"] {
   width: 0.8rem;
   height: 0.8rem;
 }
@@ -87,11 +87,11 @@ textarea {
   background-color: var(--input-bg);
   color: var(--input-f-clr)
 }
-textarea#simAllInputArea {
+textarea.simAllInputArea {
   width: 20rem;
   height: 4rem;
 }
-textarea#extraInput {
+textarea.extraInput {
   width: 6rem;
   height: 1.8em;
 }

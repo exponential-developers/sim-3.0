@@ -2,55 +2,55 @@ import { qs } from "../Utils/DOMhelpers";
 
 const UI = {
     nav: {
-        instructionsBtn: qs<HTMLButtonElement>("#instructionsBtn"),
-        settingsBtn: qs<HTMLButtonElement>("#settingsBtn")
+        instructionsBtn: qs<HTMLButtonElement>(".instructionsBtn"),
+        settingsBtn: qs<HTMLButtonElement>(".settingsBtn")
     },
     controls: {
-        baseWrapper: qs("#baseControlsWrapper"),
+        baseWrapper: qs(".baseControlsWrapper"),
 
-        theorySelector: qs<HTMLSelectElement>("#theorySelector"),
+        theorySelector: qs<HTMLSelectElement>(".theorySelector"),
 
-        stratSelectorWrapper: qs("#stratSelectionWrapper"),
-        stratSelector: qs<HTMLSelectElement>("#stratSelector"),
+        stratSelectorWrapper: qs(".stratSelectionWrapper"),
+        stratSelector: qs<HTMLSelectElement>(".stratSelector"),
 
-        sigmaInput: qs<HTMLInputElement>("#sigmaInput"),
-        currencyInput: qs<HTMLInputElement>("#currencyInput"),
-        capInputWrapper: qs("#capInputWrapper"),
-        capInput: qs<HTMLInputElement>("#capInput"),
+        sigmaInput: qs<HTMLInputElement>(".sigmaInput"),
+        currencyInput: qs<HTMLInputElement>(".currencyInput"),
+        capInputWrapper: qs(".capInputWrapper"),
+        capInput: qs<HTMLInputElement>(".capInput"),
 
-        modeSelector: qs<HTMLSelectElement>("#modeSelector"),
+        modeSelector: qs<HTMLSelectElement>(".modeSelector"),
 
-        hardCapWrapper: qs("#hardCapWrapper"),
-        hardCap: qs<HTMLInputElement>("#hardCapToggle"),
+        hardCapWrapper: qs(".hardCapWrapper"),
+        hardCap: qs<HTMLInputElement>(".hardCapToggle"),
 
-        extraInputWrapper: qs("#extraInputWrapper"),
-        extraInputDesc: qs("#extraInputDescription"),
+        extraInputWrapper: qs(".extraInputWrapper"),
+        extraInputDesc: qs(".extraInputDescription"),
 
-        simAllInputWrapper: qs("#simAllInputWrapper"),
-        saveDistBtn: qs<HTMLButtonElement>("#saveDistBtn"),
-        semiIdleToggle: qs<HTMLInputElement>("#semiIdleToggle"),
-        veryActiveToggle: qs<HTMLInputElement>("#hardActiveToggle"),
-        getDistBtn: qs("#getDistBtn"),
-        loadSaveBtn: qs<HTMLButtonElement>("#loadSaveBtn"),
+        simAllInputWrapper: qs(".simAllInputWrapper"),
+        saveDistBtn: qs<HTMLButtonElement>(".saveDistBtn"),
+        semiIdleToggle: qs<HTMLInputElement>(".semiIdleToggle"),
+        veryActiveToggle: qs<HTMLInputElement>(".hardActiveToggle"),
+        getDistBtn: qs(".getDistBtn"),
+        loadSaveBtn: qs<HTMLButtonElement>(".loadSaveBtn"),
 
-        simAllInputArea: qs<HTMLTextAreaElement>("#simAllInputArea"),
-        extraInput: qs<HTMLTextAreaElement>("#extraInput"),
+        simAllInputArea: qs<HTMLTextAreaElement>(".simAllInputArea"),
+        extraInput: qs<HTMLTextAreaElement>(".extraInput"),
 
-        timeDiffWrapper: qs("#timeDiffWrapper"),
+        timeDiffWrapper: qs(".timeDiffWrapper"),
 
-        copyImageBtn: qs<HTMLButtonElement>("#copyImageBtn"),
-        downloadImageBtn: qs("#downloadImageBtn"),
-        downloadCsvBtn: qs("#downloadCsvBtn"),
-        clearResultsBtn: qs("#clearResultsBtn"),
-        clearInputsBtn: qs("#clearInputsBtn"),
-        simulateBtn: qs("#simulateBtn")
+        copyImageBtn: qs<HTMLButtonElement>(".copyImageBtn"),
+        downloadImageBtn: qs(".downloadImageBtn"),
+        downloadCsvBtn: qs(".downloadCsvBtn"),
+        clearResultsBtn: qs(".clearResultsBtn"),
+        clearInputsBtn: qs(".clearInputsBtn"),
+        simulateBtn: qs(".simulateBtn")
     },
     outputs: {
-        log: qs("#log"),
-        table: qs("#simTable"),
-        tableHeadRow: qs<HTMLTableRowElement>("#simTable > thead > tr"),
-        tableBody: qs("#simTable > tbody"),
-        getLastTableHeader: () => qs("#simTable thead tr th:last-child")
+        log: qs(".log"),
+        table: qs(".simTable"),
+        tableHeadRow: qs<HTMLTableRowElement>(".simTable > thead > tr"),
+        tableBody: qs(".simTable > tbody"),
+        getLastTableHeader: () => qs(".simTable thead tr th:last-child")
     },
     settings: {
         dialog: qs<HTMLDialogElement>(".settings"),
