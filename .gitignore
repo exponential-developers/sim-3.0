@@ -2,4 +2,5 @@
 /eslintrc.json
 node_modules
 build
+.vscode
 .idea
