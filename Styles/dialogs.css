@@ -44,7 +44,7 @@ dialog::backdrop {
 
 dialog > div::-webkit-scrollbar {
     width: 1rem;
-  }
+}
 dialog > div::-webkit-scrollbar-thumb {
     background-color: var(--scrollbar-thumb-bg);
     border: 1px solid var(--scrollbar-thumb-border);

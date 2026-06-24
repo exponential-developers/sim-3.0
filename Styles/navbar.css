@@ -65,6 +65,10 @@ nav div {
   height: 1rem;
 }
 
+.settings .sliderContainer {
+  margin-bottom: 2rem;
+}
+
 .settings select {
   background-color: var(--input-bg);
   color: var(--input-f-clr);

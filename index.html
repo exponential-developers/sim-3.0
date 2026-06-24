@@ -111,7 +111,7 @@
     <dialog class="settings">
       <h1 class="dialogTitle">Sim settings</h1>
       <button class="settingsCloseBtn dialogCloseBtn">X</button>
-      <div class="sliderContainer" style="margin-bottom: 2rem">
+      <div class="sliderContainer">
         <label for="dtSlider">dt:</label><br />
         <input type="range" class="dt" step="0.1" max="10" min="0" value="8.1943" class="dtSlider" />
         <span class="sliderOtp dtOtp">1.5</span> <br />
@@ -150,9 +150,9 @@
     </dialog>
     <dialog class="boughtVars">
       <button class="boughtVarsCloseBtn dialogCloseBtn">X</button>
-      <div style="overflow: auto; max-height: 55vh; position: relative; padding-right: 1rem">
-        <table style="margin: 0">
-          <thead style="position: sticky; top: 0%; background-color: var(--dialog-bg)">
+      <div class="boughtVarsTableWrapper">
+        <table>
+          <thead>
             <td>Variable</td>
             <td>Lvl</td>
             <td>Cost</td>

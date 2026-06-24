@@ -56,17 +56,28 @@
 }
 
 .boughtVars {
-  padding: 5rem 0 5rem 1rem;
-  background-color: var(--dialog-bg);
-  color: var(--dialog-f-clr);
-  border: 0.1rem solid var(--dialog-f-clr);
-  border-radius: 0.5rem;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  max-height: 70vh;
+  padding: 4rem 0.1rem 1rem 1rem;
+  max-height: 90vh;
   overflow: hidden;
-  position: relative;
+}
+
+.boughtVars[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.boughtVarsTableWrapper {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: none;
+  padding-right: 1rem;
+}
+
+.boughtVars table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--dialog-bg);
 }
 
 .boughtVars table tr td.highlighted {
@@ -80,7 +91,7 @@
 .timeDiffTable tr,
 .timeDiffTable td {
   border-collapse: collapse;
-  padding: 0.3rem;
+  padding: 0.25rem;
   text-align: center;
   font-size: 0.9rem;
 }
