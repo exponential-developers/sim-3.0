@@ -2,22 +2,66 @@
   :root {
     font-size: calc(0.5vw + 0.8rem + 0.5vh);
   }
-  .controls:nth-of-type(1) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+  /* Nav */
+  .navBtns {
+    font-size: 0.8rem;
+  }
+
+  /* Controls */
+  .baseControlsWrapper {
     display: grid;
     grid-template-columns: repeat(3, auto);
     gap: 0.5rem 1rem;
   }
-  .button-wrapper {
+  .extraControlsWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    white-space: nowrap;
+  }
+  .inputLabel {
+    display: block;
+  }
+  .simAllInputWrapper {
+    width: max-content;
+  }
+  .simAllInputWrapper button {
+    font-size: 0.6rem;
+  }
+  .simAllInputWrapper input {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+  .extraInputWrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .actionBar {
     display: grid;
     grid-template-columns: repeat(2, auto);
     gap: 0.5rem 1rem;
   }
+
+  /* Outputs */
+  .log {
+    min-width: 80vw;
+  }
+  .boughtVars table,
+  .boughtVars tr,
+  .boughtVars td {
+    border-collapse: collapse;
+    padding: 0.3rem;
+    text-align: center;
+    font-size: 0.63rem;
+  }
+
+  /* Settings dialog */
   .settings {
     width: 95%;
     --inline-padding: 1.2rem;
-  }
-  .settingsButtons {
-    font-size: 0.8rem;
   }
   .settings input[type="range"] {
     appearance: none;
@@ -33,52 +77,5 @@
     margin-top: -0.2rem;
     background-color: red;
     outline: 1px solid green;
-  }
-  .content-wrapper {
-    padding: 1rem;
-  }
-  .controls:nth-of-type(2) {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    white-space: nowrap;
-  }
-  .description {
-    display: block;
-  }
-  .simAllInputs button {
-    font-size: 0.6rem;
-  }
-  .simAllInputs input {
-    width: 0.7rem;
-    height: 0.7rem;
-  }
-  .output {
-    min-width: 80vw;
-  }
-  .saveDist::before {
-    content: "Saved!";
-    position: absolute;
-    inset: 0;
-    transition: opacity 500ms;
-    color: var(--font-clr);
-    font-size: 0.7rem;
-    opacity: 0;
-    top: -90%;
-  }
-  .extraInputs {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .simAllInputs {
-    width: max-content;
-  }
-  .boughtVars table,
-  .boughtVars tr,
-  .boughtVars td {
-    border-collapse: collapse;
-    padding: 0.3rem;
-    text-align: center;
-    font-size: 0.63rem;
   }
 }

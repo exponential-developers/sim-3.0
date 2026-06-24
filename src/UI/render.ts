@@ -1,29 +1,8 @@
 import data from "../Data/data.json" with { type: "json" };
 import { findIndex, getIndexFromTheory } from "../Utils/helpers";
-import { qs, qsa, event, ce, removeAllChilds } from "../Utils/DOMhelpers";
+import { event, ce, removeAllChilds, hide, show } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
-
-//Inputs
-const theorySelector = qs<HTMLSelectElement>(".theory");
-const stratSelector = qs<HTMLSelectElement>(".strat");
-const capInputWrapper = qs(".capWrapper");
-const modeSelector = qs<HTMLSelectElement>(".mode");
-const sigmaInput = qs<HTMLInputElement>(".sigma");
-const currencyInput = qs<HTMLInputElement>(".input");
-const simAllInputArea = qs<HTMLTextAreaElement>(".simAllInputArea")
-const modeInput = qs<HTMLTextAreaElement>(".modeInput");
-const hardCapWrapper = qs(".hardCapWrapper");
-const themeSelector = qs<HTMLSelectElement>(".themeSelector");
-const showUnofficials = qs<HTMLInputElement>(".unofficials");
-
-//Other containers/elements
-const stratSelectionWrapper = qs("#stratSelectionWrapper");
-const extraInputs = qs(".extraInputs");
-const timeDiffWrapper = qs(".timeDiffWrapper");
-const singleInput = qsa(".controls")[0];
-const simAllInputs = qs(".simAllInputs");
-const modeInputDescription = qs(".extraInputDescription");
-
+import UI from "./elements";
 
 const theories = Object.keys(data.theories) as theoryType[];
 
@@ -38,110 +17,110 @@ function populateSelectElement(select: HTMLSelectElement, items: string[], clear
   }
 }
 function populateTheoryList(showUnofficials: boolean) {
-  populateSelectElement(theorySelector, theories.filter(theory => 
+  populateSelectElement(UI.controls.theorySelector, theories.filter(theory => 
     (data.theories as TheoryDataStructure)[theory].UI_visible !== false || showUnofficials));
 }
 
 //Renders theories, strats and modes options on page load
 
-populateSelectElement(themeSelector, data.themes);
-event(themeSelector, "change", themeUpdate);
+populateSelectElement(UI.settings.themeSelector, data.themes);
+event(UI.settings.themeSelector, "change", themeUpdate);
 
 getSimState();
 
-populateSelectElement(modeSelector, data.modes);
+populateSelectElement(UI.controls.modeSelector, data.modes);
 modeUpdate();
-event(modeSelector, "input", modeUpdate);
+event(UI.controls.modeSelector, "input", modeUpdate);
 
-populateTheoryList(showUnofficials.checked);
+populateTheoryList(UI.settings.showUnofficials.checked);
 theoryUpdate();
-event(theorySelector, "change", theoryUpdate);
+event(UI.controls.theorySelector, "change", theoryUpdate);
 
-event(showUnofficials, "click", () => {
-    populateTheoryList(showUnofficials.checked);
+event(UI.settings.showUnofficials, "click", () => {
+    populateTheoryList(UI.settings.showUnofficials.checked);
     theoryUpdate();
 });
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {
   // Sigma field
-  const splits = simAllInputArea.value.replace("\n", "").split(" ").filter(s => s != "")
+  const splits = UI.controls.simAllInputArea.value.replace("\n", "").split(" ").filter(s => s != "")
 
-  if (sigmaInput.value == "" && splits.length > 0) {
+  if (UI.controls.sigmaInput.value == "" && splits.length > 0) {
     const match = splits[0].match(/^\d+$/g);
     if (match) {
-      sigmaInput.value = match[0];
+      UI.controls.sigmaInput.value = match[0];
     }
   }
 
-  if ((currencyInput.value == "" || rewriteCurrency) && theorySelector.value && splits.length > 1) {
-    const theoryIndex = getIndexFromTheory(theorySelector.value);
+  if ((UI.controls.currencyInput.value == "" || rewriteCurrency) && UI.controls.theorySelector.value && splits.length > 1) {
+    const theoryIndex = getIndexFromTheory(UI.controls.theorySelector.value);
     if (splits.length > theoryIndex + 1) {
       const str = splits[theoryIndex + 1];
       const match = str.match(/^e?\d+(\.\d+)?[rtm]?$/) || str.match(/^\d+(\.\d+)?e\d+[rtm]?$/);
       if (match) {
-        currencyInput.value = /[rtm]/.test(str) ? str : str.concat("t");
+        UI.controls.currencyInput.value = /[rtm]/.test(str) ? str : str.concat("t");
       }
     }
     else if (rewriteCurrency) {
-      currencyInput.value = "";
+      UI.controls.currencyInput.value = "";
     }
   }
 }
 
 function modeUpdate(): void {
-  const newMode = modeSelector.value;
+  const newMode = UI.controls.modeSelector.value;
 
+  hide(UI.controls.baseWrapper);
+  hide(UI.controls.capInputWrapper);
+  hide(UI.controls.hardCapWrapper);
 
-  singleInput.style.display = "none";
-  capInputWrapper.style.display = "none";
-  hardCapWrapper.style.display = "none";
-
-  stratSelectionWrapper.style.display = "none";
-  extraInputs.style.display = "none";
-  simAllInputs.style.display = "none";
-  simAllInputArea.style.display = "none";
-  modeInputDescription.style.display = "inline";
-  modeInput.style.display = "none";
-  timeDiffWrapper.style.display = "none";
+  hide(UI.controls.stratSelectorWrapper);
+  hide(UI.controls.extraInputWrapper)
+  hide(UI.controls.simAllInputWrapper);
+  hide(UI.controls.simAllInputArea);
+  show(UI.controls.extraInputDesc);
+  hide(UI.controls.extraInput);
+  hide(UI.controls.timeDiffWrapper);
 
   // Displays the strat selector
-  if (newMode !== "Comparison") stratSelectionWrapper.style.display = "block";
+  if (newMode !== "Comparison") show(UI.controls.stratSelectorWrapper);
   // Displays the single-theory inputs
-  if (newMode !== "All" && newMode !== "Time diff.") singleInput.style.display = "grid";
+  if (newMode !== "All" && newMode !== "Time diff.") show(UI.controls.baseWrapper);
   // Displays the cap input for chain/steps mode
-  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") capInputWrapper.style.display = "inline";
+  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") show(UI.controls.capInputWrapper);
   // Displays the hard cap input
-  if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) hardCapWrapper.style.display = "block";
+  if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) show(UI.controls.hardCapWrapper);
 
   // Extra Inputs
-  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain") extraInputs.style.display = "flex";
+  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain") 
+    show(UI.controls.extraInputWrapper)
   if (newMode === "All") {
-    simAllInputs.style.display = "grid";
-    modeInputDescription.style.display = "none";
-    simAllInputArea.style.display = "block";
-    simAllInputArea.placeholder = data.modeInputPlaceholder[0];
+    show(UI.controls.simAllInputWrapper);
+    hide(UI.controls.extraInputDesc);
+    show(UI.controls.simAllInputArea);
+    UI.controls.simAllInputArea.placeholder = data.modeInputPlaceholder[0];
   }
   else {
-    modeInput.style.display = "block";
+    show(UI.controls.extraInput);
   }
-  modeInputDescription.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
-  modeInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
+  UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
+  UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
   
-  if (newMode === "Time diff.") timeDiffWrapper.style.display = "grid";
+  if (newMode === "Time diff.") show(UI.controls.timeDiffWrapper);
 
   populateSingleSimFields();
 }
 
 function theoryUpdate() {
-  const currentTheory = theorySelector.value as theoryType;
+  const currentTheory = UI.controls.theorySelector.value as theoryType;
   const currentTheoryStrats = Object.keys(data.theories[currentTheory].strats).filter(
     (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
   );
-  populateSelectElement(stratSelector, data.stratCategories.concat(currentTheoryStrats));
+  populateSelectElement(UI.controls.stratSelector, data.stratCategories.concat(currentTheoryStrats));
   populateSingleSimFields(true);
 }
 
 function themeUpdate() {
   const root = document.documentElement;
-  root.setAttribute("theme", themeSelector.value);
+  root.setAttribute("theme", UI.settings.themeSelector.value);
 }

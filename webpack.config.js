@@ -8,7 +8,8 @@ module.exports = {
       "./src/UI/buttonEvents.ts",
       "./src/UI/render.ts",
       "./src/UI/settings.ts",
-      "./src/UI/simState.ts"
+      "./src/UI/simState.ts",
+      "./src/UI/elements.ts"
     ],
   },
   output: {

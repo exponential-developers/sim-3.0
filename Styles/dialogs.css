@@ -1,0 +1,56 @@
+dialog {
+    --inline-padding: min(10vw, 3.5rem);
+    padding: 2rem var(--inline-padding);
+    background-color: var(--dialog-bg);
+    color: var(--dialog-f-clr);
+    border: 0.1rem solid var(--dialog-f-clr);
+    border-radius: 0.5rem;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    overflow: hidden;
+}
+
+dialog::backdrop {
+    background-color: var(--dialog-backdrop-clr);
+    opacity: 0.6;
+}
+
+.dialogTitle {
+    margin-bottom: 1.5rem;
+}
+
+.dialogCloseBtn {
+  border-radius: 50%;
+  width: 1.5rem;
+  aspect-ratio: 1;
+  background-color: var(--close-btn-bg);
+  color: var(--close-btn-fg);
+  font-weight: bold;
+  font-size: 0.8rem;
+  font-style: italic;
+  font-family: "Luicida Handwriting";
+  cursor: pointer;
+  transition: scale 100ms;
+  position: absolute;
+  right: 1.5rem;
+  top: 1.5rem;
+  outline: 0.1em solid var(--close-btn-fg);
+}
+
+.dialogCloseBtn:hover {
+    scale: 1.2;
+}
+
+dialog > div::-webkit-scrollbar {
+    width: 1rem;
+}
+dialog > div::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb-bg);
+    border: 1px solid var(--scrollbar-thumb-border);
+    border-radius: 0.5rem;
+}
+dialog > div::-webkit-scrollbar-track {
+    background-color: var(--scrollbar-track-bg);
+    border-radius: 0.5rem;
+}
