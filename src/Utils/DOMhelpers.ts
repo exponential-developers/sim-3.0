@@ -103,3 +103,11 @@ export function bindDialogCloseEvents(dialog: HTMLDialogElement, closeBtn: HTMLB
     document.body.style.overflow = "auto";
   })
 }
+
+export function hide(element: HTMLElement) {
+  element.classList.add("hidden");
+}
+
+export function show(element: HTMLElement) {
+  element.classList.remove("hidden");
+}

@@ -1,6 +1,6 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qsa, ce, removeAllChilds, downloadString, getTableHeaders, tau, openDialog, bindDialogCloseEvents } from "../Utils/DOMhelpers";
+import { qsa, ce, removeAllChilds, downloadString, getTableHeaders, tau, openDialog, bindDialogCloseEvents, hide } from "../Utils/DOMhelpers";
 import UI from "../UI/elements";
 
 const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
@@ -264,7 +264,7 @@ function writeSimAllResponse(response: SimAllResponse) {
             const bufferRow1 = ce<HTMLTableRowElement>("tr");
             const bufferRow2 = ce<HTMLTableRowElement>("tr");
 
-            bufferRow1.style.display = "none";
+            hide(bufferRow1);
             addTableCell(bufferRow2, "---");
 
             UI.outputs.tableBody.appendChild(bufferRow1);

@@ -48,3 +48,7 @@ button.buttongreen {
 .content-wrapper {
   padding: min(3vw, 1.5rem * 0.85);
 }
+
+.hidden {
+  display: none !important;
+}

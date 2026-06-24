@@ -1,6 +1,6 @@
 import data from "../Data/data.json" with { type: "json" };
 import { findIndex, getIndexFromTheory } from "../Utils/helpers";
-import { event, ce, removeAllChilds } from "../Utils/DOMhelpers";
+import { event, ce, removeAllChilds, hide, show } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
 import UI from "./elements";
 
@@ -70,42 +70,43 @@ function populateSingleSimFields(rewriteCurrency: boolean = false): void {
 function modeUpdate(): void {
   const newMode = UI.controls.modeSelector.value;
 
-  UI.controls.baseWrapper.style.display = "none";
-  UI.controls.capInputWrapper.style.display = "none";
-  UI.controls.hardCapWrapper.style.display = "none";
+  hide(UI.controls.baseWrapper);
+  hide(UI.controls.capInputWrapper);
+  hide(UI.controls.hardCapWrapper);
 
-  UI.controls.stratSelectorWrapper.style.display = "none";
-  UI.controls.extraInputWrapper.style.display = "none";
-  UI.controls.simAllInputWrapper.style.display = "none";
-  UI.controls.simAllInputArea.style.display = "none";
-  UI.controls.extraInputDesc.style.display = "inline";
-  UI.controls.extraInput.style.display = "none";
-  UI.controls.timeDiffWrapper.style.display = "none";
+  hide(UI.controls.stratSelectorWrapper);
+  hide(UI.controls.extraInputWrapper)
+  hide(UI.controls.simAllInputWrapper);
+  hide(UI.controls.simAllInputArea);
+  show(UI.controls.extraInputDesc);
+  hide(UI.controls.extraInput);
+  hide(UI.controls.timeDiffWrapper);
 
   // Displays the strat selector
-  if (newMode !== "Comparison") UI.controls.stratSelectorWrapper.style.display = "block";
+  if (newMode !== "Comparison") show(UI.controls.stratSelectorWrapper);
   // Displays the single-theory inputs
-  if (newMode !== "All" && newMode !== "Time diff.") UI.controls.baseWrapper.style.display = "grid";
+  if (newMode !== "All" && newMode !== "Time diff.") show(UI.controls.baseWrapper);
   // Displays the cap input for chain/steps mode
-  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") UI.controls.capInputWrapper.style.display = "inline";
+  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") show(UI.controls.capInputWrapper);
   // Displays the hard cap input
-  if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) UI.controls.hardCapWrapper.style.display = "block";
+  if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) show(UI.controls.hardCapWrapper);
 
   // Extra Inputs
-  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain") UI.controls.extraInputWrapper.style.display = "flex";
+  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain") 
+    show(UI.controls.extraInputWrapper)
   if (newMode === "All") {
-    UI.controls.simAllInputWrapper.style.display = "grid";
-    UI.controls.extraInputDesc.style.display = "none";
-    UI.controls.simAllInputArea.style.display = "block";
+    show(UI.controls.simAllInputWrapper);
+    hide(UI.controls.extraInputDesc);
+    show(UI.controls.simAllInputArea);
     UI.controls.simAllInputArea.placeholder = data.modeInputPlaceholder[0];
   }
   else {
-    UI.controls.extraInput.style.display = "block";
+    show(UI.controls.extraInput);
   }
   UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
   UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
   
-  if (newMode === "Time diff.") UI.controls.timeDiffWrapper.style.display = "grid";
+  if (newMode === "Time diff.") show(UI.controls.timeDiffWrapper);
 
   populateSingleSimFields();
 }

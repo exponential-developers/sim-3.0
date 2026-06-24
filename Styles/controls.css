@@ -24,6 +24,10 @@
   width: 3.5rem
 }
 
+.capInputWrapper {
+  display: inline;
+}
+
 .currencyInput, .capInput {
   width: 5rem
 }
@@ -34,11 +38,17 @@
   outline: none;
 }
 
+.extraInputWrapper {
+  display: flex;
+}
+
 .extraInputDescription {
+  display: inline;
   margin-right: 0.8rem;
 }
 
 .timeDiffWrapper {
+  display: grid;
   flex-direction: column;
   gap: 0.3rem;
 }

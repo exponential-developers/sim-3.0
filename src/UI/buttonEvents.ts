@@ -1,6 +1,7 @@
 import html2canvas from "html2canvas";
-import { qs, qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, animateButton } from "../Utils/DOMhelpers";
+import { qs, qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, animateButton, hide, show } from "../Utils/DOMhelpers";
 import UI from "./elements";
+import { refreshDOMEventLoop } from "../Utils/helpers";
 
 event(UI.controls.clearResultsBtn, "pointerdown", () => {
   removeAllChilds(UI.outputs.tableBody);
@@ -16,8 +17,8 @@ event(UI.controls.clearInputsBtn, "pointerdown", () => {
   UI.controls.extraInput.value = "";
 })
 
-event(UI.controls.copyImageBtn, "pointerdown", () => createImage("copy"));
-event(UI.controls.downloadImageBtn, "pointerdown", () => createImage("download"));
+event(UI.controls.copyImageBtn, "pointerdown", async () => {await createImage("copy")});
+event(UI.controls.downloadImageBtn, "pointerdown", async () => {await createImage("download")});
 event(UI.controls.downloadCsvBtn, "pointerdown", () => {
   if (UI.outputs.tableHeadRow.childElementCount == 0) {
     return;
@@ -25,7 +26,7 @@ event(UI.controls.downloadCsvBtn, "pointerdown", () => {
   downloadString(makeTableCsv(), "sim_results.csv");
 })
 
-function createImage(mode: "download" | "copy") {
+async function createImage(mode: "download" | "copy") {
   if (UI.outputs.tableHeadRow.childElementCount == 0) {
     return;
   }
@@ -33,9 +34,9 @@ function createImage(mode: "download" | "copy") {
   const lastHeader = UI.outputs.getLastTableHeader();
   const varBuyCells = qsa(".varBuyCell");
 
-  const initialLastHeaderDisplay = lastHeader.style.display;
-  lastHeader.style.display = "none";
-  varBuyCells.forEach((elem) => elem.style.display = "none");
+  hide(lastHeader);
+  varBuyCells.forEach((elem) => hide(elem));
+  await refreshDOMEventLoop();
 
   html2canvas(UI.outputs.table).then((canvas) =>
     canvas.toBlob((blob) => {
@@ -57,8 +58,8 @@ function createImage(mode: "download" | "copy") {
   )
   .catch(() => console.log("Failed creating image."));
 
-  lastHeader.style.display = initialLastHeaderDisplay;
-  varBuyCells.forEach((elem) => elem.style.display = "flex");
+  show(lastHeader);
+  varBuyCells.forEach((elem) => show(elem));
 }
 
 function makeTableCsv(): string {
