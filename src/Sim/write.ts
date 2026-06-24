@@ -1,6 +1,6 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, tau } from "../Utils/DOMhelpers";
+import { qsa, ce, removeAllChilds, downloadString, getTableHeaders, tau, openDialog, bindDialogCloseEvents } from "../Utils/DOMhelpers";
 import UI from "../UI/elements";
 
 const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
@@ -125,8 +125,7 @@ function highlightResetCells() {
 
 /** Generates and open the var buy list */
 function openVarModal(arr: varBuy[]) {
-  document.body.style.overflow = "hidden";
-  UI.buyList.dialog.showModal();
+  openDialog(UI.buyList.dialog);
   removeAllChilds(UI.buyList.table);
   for (let varBuy of arr) {
     const row = ce<HTMLTableRowElement>("tr");
@@ -139,9 +138,7 @@ function openVarModal(arr: varBuy[]) {
   highlightResetCells();
 }
 
-event(UI.buyList.closeBtn, "pointerdown", () => UI.buyList.dialog.close());
-
-event(UI.buyList.dialog, "close", () => document.body.style.overflow = "auto");
+bindDialogCloseEvents(UI.buyList.dialog, UI.buyList.closeBtn);
 
 // Response writers
 

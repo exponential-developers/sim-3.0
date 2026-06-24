@@ -89,3 +89,17 @@ export function animateButton(button: HTMLButtonElement, text: string, delay = 1
     button.classList.remove(animateClass);
   }, delay);
 }
+
+export function openDialog(dialog: HTMLDialogElement) {
+  dialog.showModal();
+  document.body.style.overflow = "hidden";
+}
+
+export function bindDialogCloseEvents(dialog: HTMLDialogElement, closeBtn: HTMLButtonElement, onClosed?: () => void) {
+  event(closeBtn, "pointerdown", () => dialog.close());
+
+  event(dialog, "close", () => {
+    if (onClosed) onClosed();
+    document.body.style.overflow = "auto";
+  })
+}

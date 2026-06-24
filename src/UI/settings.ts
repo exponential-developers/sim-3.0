@@ -1,28 +1,13 @@
 import { formatNumber, getddtFromSlider, getdtFromSlider } from "../Utils/helpers";
-import { event } from "../Utils/DOMhelpers";
+import { bindDialogCloseEvents, event, openDialog } from "../Utils/DOMhelpers";
 import { setSimState } from "./simState";
 import UI from "./elements";
 
-event(UI.nav.settingsBtn, "pointerdown", () => {
-  UI.settings.dialog.showModal();
-  document.body.style.overflow = "hidden";
-});
+event(UI.nav.settingsBtn, "pointerdown", () => openDialog(UI.settings.dialog));
+bindDialogCloseEvents(UI.settings.dialog, UI.settings.closeBtn, setSimState);
 
-event(UI.settings.closeBtn, "pointerdown", () => UI.settings.dialog.close());
-
-event(UI.settings.dialog, "close", () => {
-  setSimState();
-  document.body.style.overflow = "auto";
-})
-
-event(UI.nav.instructionsBtn, "pointerdown", () => {
-  UI.instructions.dialog.showModal();
-  document.body.style.overflow = "hidden";
-});
-
-event(UI.instructions.closeBtn, "pointerdown", () => UI.instructions.dialog.close());
-
-event(UI.instructions.dialog, "close", () => document.body.style.overflow = "auto");
+event(UI.nav.instructionsBtn, "pointerdown", () => openDialog(UI.instructions.dialog));
+bindDialogCloseEvents(UI.instructions.dialog, UI.instructions.closeBtn);
 
 event(UI.settings.dtSlider, "input", () => {
   UI.settings.dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(UI.settings.dtSlider.value)), 4);
