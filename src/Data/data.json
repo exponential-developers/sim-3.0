@@ -696,7 +696,7 @@
           "stratFilterCondition": "Active || Very-Active"
         },
         "MFVariantd1d1d3Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFVariantd1d2d1Coast": {
           "stratFilterCondition": "Active || Very-Active"
@@ -714,7 +714,7 @@
           "stratFilterCondition": "false"
         },
         "MFVariantd2d2d1Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "MFVariantd2d2d3Coast": {
           "stratFilterCondition": "Active || Very-Active"
