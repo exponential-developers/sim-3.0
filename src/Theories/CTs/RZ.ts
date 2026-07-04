@@ -609,7 +609,7 @@ class rzSim extends theoryClass<theory> {
         {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
-        if (this.strat.includes("MS") && this.swapPointDelta != 0) {
+        if (this.strat.includes("MS")) {
             stratExtra += ` swap:${logToExp(this.lastPub + this.swapPointDelta, 2)}`
         }
         if (this.normalPubRho != -1) {
