@@ -409,6 +409,9 @@
         "T8": {
           "stratFilterCondition": "Idle || (Semi-Idle && rho < 100)"
         },
+        "T8SingleMS": {
+          "stratFilterCondition": "Semi-Idle && rho >= 37 && rho < 60"
+        },
         "T8noC3": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 25"
         },
@@ -421,11 +424,23 @@
         "T8Snax": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "T8SnaxSingleMS": {
+          "stratFilterCondition": "Semi-Idle && rho >= 37 && rho < 60"
+        },
         "T8Coast": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "T8SingleMSCoast": {
+          "stratFilterCondition": "Semi-Idle && rho >= 37 && rho < 60"
+        },
         "T8noC3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 60"
+        },
+        "T8noC3d2": {
+          "stratFilterCondition": "(Active || Very-Active) && rho < 60"
+        },
+        "T8noC3dSingleMS": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 40 && rho < 60"
         },
         "T8noC5d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 160 && rho < 220"
@@ -436,17 +451,20 @@
         "T8d": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 40 && rho < 100"
         },
+        "T8dSingleMS": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 37 && rho < 60"
+        },
         "T8Play": {
-          "stratFilterCondition": "Active && rho >= 220"
+          "stratFilterCondition": "Active && ((rho < 5) || (rho >= 20 && rho < 60) || (rho >= 80 && rho < 100) || rho >= 220)"
         },
         "T8PlayCoast": {
-          "stratFilterCondition": "Active && rho >= 220"
+          "stratFilterCondition": "Active && ((rho < 5) || (rho >= 20 && rho < 60) || (rho >= 80 && rho < 100) || rho >= 220)"
         },
         "T8PlaySolarswap": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "Very-Active && rho > 60"
         },
         "T8PlaySolarswapCoast": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "Very-Active && rho > 60"
         }
       }
     },

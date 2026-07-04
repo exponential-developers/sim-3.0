@@ -238,7 +238,7 @@ export default async function rz(data: theoryData) {
             retArr.push(ret);
         }
         let bestRet = retArr[0];
-        for(let i = 0; i < retArr.length; i++) {
+        for(let i = 1; i < retArr.length; i++) {
             bestRet = getBestResult(bestRet, retArr[i]);
         }
         return bestRet;
@@ -605,12 +605,11 @@ class rzSim extends theoryClass<theory> {
             else throw error;
         }
         let stratExtra = "";
-        if (this.strat.includes("BH"))
-        {
+        if (this.strat.includes("BH")) {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
         if (this.strat.includes("MS") && this.swapPointDelta != 0) {
-            stratExtra += ` swap:${logToExp(this.lastPub + this.swapPointDelta, 2)}`
+            stratExtra += ` ${logToExp(this.lastPub + this.swapPointDelta, 2)}`
         }
         if (this.normalPubRho != -1) {
             // if(this.maxC1LevelActual == -1)
@@ -618,7 +617,7 @@ class rzSim extends theoryClass<theory> {
             // else
             //     stratExtra += ` c1=${this.variables[0].level}/${this.maxC1LevelActual} c2=${this.variables[1].level}`
         }
-        if (this.maxW1 !== Infinity){
+        if (this.maxW1 !== Infinity) {
             stratExtra += ` w1: ${this.maxW1}`;
         }
         this.trimBoughtVars();
