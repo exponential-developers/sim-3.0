@@ -107,6 +107,8 @@ class t8Sim extends theoryClass<theory> {
       case "T8noC5d": return [0, 2, 1];
       case "T8noC35": return [0, 2];
       case "T8noC35d": return [0, 2];
+      case "T8PlaySolarswap":
+      case "T8PlaySolarswapCoast": return milestoneCount < 4 ? [0, 3] : [0, 2, 3, 1];
     }
     if (milestoneCount < 3) return [0];
     else if (milestoneCount == 3) return [3];
