@@ -30,7 +30,7 @@ export default async function t8(data: theoryData): Promise<simResult> {
       res = await sim.simulate();
     }
     else {
-      return defaultResult();
+      //return defaultResult();
       let data2: theoryData = JSON.parse(JSON.stringify(data));
       data2.strat = data2.strat.replace("Coast", "");
       const sim1 = new t8Sim(data2, MXVariant, ss);
