@@ -2,41 +2,43 @@ import { global } from "../../Sim/main";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult, logToExp } from "../../Utils/helpers";
+import { ExponentialCost, FirstFreeCost, parseValue } from '../../Utils/cost';
+import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult, logToExp, defaultResult } from "../../Utils/helpers";
 
-const MXStrats = ["T8", "T8Coast", "T8Snax", "T8d", "T8noC3d"];
-const isMX = (strat: string, rho: number) => (
-  rho >= 37
-  && rho < 60
-  && (
-    strat.includes("SingleMS")
-    || MXStrats.includes(strat)
-  )
-);
+//106-70, 73-48, 60-40
+const ssPoints = [
+  [ // For T8noC3d
+    ...Array.from({length: 400}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(5))))) * (lvl + 1)),
+    ...Array.from({length: 400}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(7))))) * (lvl + 1))
+  ].toSorted((a,b) => a - b),
+  Array.from({length: 400}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(3))))) * (lvl + 1)),
+  Array.from({length: 400}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(5))))) * (lvl + 1)),
+  Array.from({length: 400}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(7))))) * (lvl + 1))
+];
+console.log(ssPoints);
 
 export default async function t8(data: theoryData): Promise<simResult> {
-  async function getResult (data: theoryData, MX: number = 0, ss: number = 0): Promise<simResult> {
+  console.log(data);
+  async function getResult (
+    data: theoryData,
+    MXVariant: number = 0,
+    ss: number = 0
+  ): Promise<simResult> {
     let res;
     if (!data.strat.includes("Coast")) {
-      const sim = new t8Sim(data);
-      sim.milestoneVariant = MX;
-      sim.ssPoint = ss;
+      const sim = new t8Sim(data, MXVariant, ss);
       res = await sim.simulate();
     }
     else {
+      return defaultResult();
       let data2: theoryData = JSON.parse(JSON.stringify(data));
       data2.strat = data2.strat.replace("Coast", "");
-      const sim1 = new t8Sim(data2);
-      sim1.milestoneVariant = MX;
-      sim1.ssPoint = ss;
+      const sim1 = new t8Sim(data2, MXVariant, ss);
       const res1 = await sim1.simulate();
       const lastC1 = getLastLevel("c1", res1.boughtVars);
       const lastC3 = getLastLevel("c3", res1.boughtVars);
       const lastC5 = getLastLevel("c5", res1.boughtVars);
-      const sim2 = new t8Sim(data);
-      sim2.milestoneVariant = MX;
-      sim2.ssPoint = ss;
+      const sim2 = new t8Sim(data, MXVariant, ss);
       sim2.variables[0].setOriginalCap(lastC1)
       sim2.variables[0].configureCap(13);
       sim2.variables[2].setOriginalCap(lastC3)
@@ -48,38 +50,28 @@ export default async function t8(data: theoryData): Promise<simResult> {
     return res;
   }
 
-  let result: simResult;
-  // T8MX and T8MX...SingleMS
-  if ((data.strat.includes("SingleMS") || isMX(data.strat, data.rho))) {
-    const altOptions = data.strat.includes("T8noC3d") ? [0, 2, 3] : [0, 1, 2, 3];
-    let retArr = [];
-
-    if (data.strat.includes("SingleMS")) {
-      let tempResult: simResult;
-      const ssInit = 40;
-      const ssCap = 60;
-      const ssStep = 0.1;
-
-      result = await getResult(data, altOptions[0], ssInit);
-      for (let i = 1; i < altOptions.length; i++) {
-        result = getBestResult(result, await getResult(data, altOptions[i], ssInit));
-      }
-      for (let ssDelta=ssInit+ssStep; ssDelta <= ssCap; ssDelta+=ssStep) {
-        if (result.pubRho < ssDelta) break;
-        tempResult = await getResult(data, altOptions[0], ssDelta)
-        for (let i = 1; i < altOptions.length; i++) {
-          tempResult = getBestResult(result, await getResult(data, altOptions[i], ssDelta));
-        }
-        result = getBestResult(result, tempResult);
-        //if (result !== tempResult) break;
+  let result: simResult = defaultResult();
+  // MX and SingleMS
+  if (data.strat.includes("SingleMS")) {
+    const altOptions = (data.strat.includes("T8noC3d")
+      ? (data.rho < 50 ? [2, 3] : [0, 2]) // See getMilestonePriority()
+      : (data.strat.includes("T8noC35d")
+        ? [2]
+        : [1, 2, 3]
+      )
+    );
+    console.log(data.strat);
+    // Remove default MX option for SingleMS (equivalent to base strat)
+    for (const option of altOptions) {
+      // Only Swap points within e5 of recovery
+      for (const ssPoint of ssPoints[option].filter((num) => num > data.rho - 5)) {
+        const r = await getResult(data, option, ssPoint)
+        result = getBestResult(result, r);
+        if (result.pubRho < ssPoint) break;
+        if (result != r) break;
       }
     }
-    else {
-      result = await getResult(data, altOptions[0])
-      for (let i = 0; i < altOptions.length; i++) {
-        result = getBestResult(result, await getResult(data, altOptions[i]));
-      }
-    }
+    console.log(result);
   }
   else {
     result = await getResult(data);
@@ -102,6 +94,7 @@ class t8Sim extends theoryClass<theory> {
   msTimer: number;
   ssPoint: number;
   milestoneVariant: number;
+  //isMX: boolean;
 
   getBuyingConditions(): conditionFunction[] {
     const idleStrat = new Array(5).fill(true);
@@ -119,8 +112,23 @@ class t8Sim extends theoryClass<theory> {
       true,
       () => this.curMult < 2.3
     ];
-    const dBaseStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, true, true, true];
     const noC3dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, true];
+    const noC3dCoastStrat = [
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      true,
+      false,
+      true,
+      () => this.variables[4].shouldBuy
+    ];
+    const noC5dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, true, true, false];
+    const noC5dCoastStrat = [
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      true,
+      () => this.variables[4].shouldBuy,
+      true,
+      false
+    ];
+    const noC35dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, false];
     const playStrat = [
       () => this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost),
       true,
@@ -147,14 +155,16 @@ class t8Sim extends theoryClass<theory> {
       T8Coast: idleCoastStrat,
       T8SingleMSCoast: idleCoastStrat,
       T8noC3d: noC3dStrat,
-      T8noC3d2: noC3dStrat,
+      T8noC3dCoast: noC3dCoastStrat,
       T8noC3dSingleMS: noC3dStrat,
-      T8noC5d: [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, true, true, false],
-      T8noC35d: [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, false],
-      T8d: dBaseStrat,
-      T8dSingleMS: dBaseStrat,
+      T8noC3dSingleMSCoast: noC3dCoastStrat,
+      T8noC5d: noC5dStrat,
+      T8noC5dCoast: noC5dCoastStrat,
+      T8noC35d: noC35dStrat,
       T8Play: playStrat,
+      T8PlaySingleMS: playStrat,
       T8PlayCoast: playCoastStrat,
+      T8PlaySingleMSCoast: playCoastStrat,
       T8PlaySolarswap: playStrat,
       T8PlaySolarswapCoast: playCoastStrat
     };
@@ -165,29 +175,54 @@ class t8Sim extends theoryClass<theory> {
     return conditions;
   }
   getMilestonePriority(): number[] {
+    const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
+    const maxRho = Math.max(this.maxRho, this.lastPub);
     switch (this.strat) {
-      case "T8noC3": return [0, 2, 3];
-      case "T8noC3d": return this.milestoneVariant > 0 ? [this.milestoneVariant] : [0, 2, 3];
-      case "T8noC5": return [0, 2, 1];
+      case "T8Coast":
+      case "T8":
+        if (maxRho < 52) return [0];
+        else if (maxRho < 80) return [3, 0];
+        else if (maxRho < 160 && maxRho >= 220) return [2, 0, 3, 1];
+        return [1, 0, 2, 3];
+      // TODO: Split this strat into 2 seperate named strats for clarity
+      case "T8noC3":
+      case "T8noC3dCoast":
+      case "T8noC3d":  return maxRho < 50 ? [0] : [3, 0, 2];
+      case "T8noC3dSingleMSCoast":
+      case "T8noC3dSingleMS":
+        if (maxRho < 50) {
+          return this.maxRho < this.ssPoint ? [this.milestoneVariant] : [0];
+        }
+        return this.maxRho < this.ssPoint ? [this.milestoneVariant, 0, 3, 2] : [3, 0, 2];
+      case "T8noC5":
+      case "T8noC5dCoast":
       case "T8noC5d": return [0, 2, 1];
-      case "T8noC35": return [0, 2];
-      case "T8noC35d": return [0, 2];
+      case "T8noC35":
+      case "T8noC35d": return [2, 0];
+      case "T8Snax":
+        if (maxRho < 60) return [0];
+        else if (maxRho < 80) return [3];
+        else if (maxRho < 160) return [2, 0, 3];
+        return [1, 0, 2, 3];
+      case "T8Play":
+      case "T8PlayCoast": return milestoneCount < 4 ? [0, 3] : [2, 0, 3, 1];
+      case "T8PlaySolarswap":
+      case "T8PlaySolarswapCoast": return milestoneCount < 4 ? [0, 3] : [0, 2, 3, 1];
     }
 
-    const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
     switch (milestoneCount) {
-      case 2:
-        if (
-          
-          (this.strat.includes("SingleMS") &&
-          this.maxRho >= this.ssPoint)
-        ) {
-          return  [this.milestoneVariant];
-        }
       case 0:
-      case 1: return [0];
-      case 3: return [3];
-      default: return [2, 0, 3, 1];
+      case 1:
+      case 2: return (this.strat.includes("SingleMS") && this.maxRho < this.ssPoint) ? [0] : [this.milestoneVariant];
+      case 3:
+        if (this.strat.includes("SingleMS")) {
+          return (this.maxRho < this.ssPoint
+            ? [0, this.milestoneVariant]
+            : [this.milestoneVariant]
+          );
+        }
+        return [3];
+      default: return (this.strat.includes("SingleMS") && this.maxRho < this.ssPoint) ? [this.milestoneVariant] : [2, 0, 3, 1];
     }
   }
   updateMilestones(): void {
@@ -219,7 +254,11 @@ class t8Sim extends theoryClass<theory> {
       this.dz = 500 * (0.1 + iz * (ix - 14));
     }
   }
-  constructor(data: theoryData) {
+  constructor(
+    data: theoryData,
+    milestoneVariant: number = 0,
+    ssPoint: number = 0
+  ) {
     super(data);
     //attractor stuff
     this.bounds = [
@@ -263,8 +302,9 @@ class t8Sim extends theoryClass<theory> {
       new Variable({ name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
     ];
     this.msTimer = 0;
-    this.ssPoint = 0;
-    this.milestoneVariant = this.strat.includes("MX") ? 3 : 0;
+    //this.isMX = isMX(this.strat, this.lastPub);
+    this.milestoneVariant = milestoneVariant;
+    this.ssPoint = ssPoint;
     this.updateMilestones();
   }
   async simulate(): Promise<simResult> {
@@ -279,19 +319,21 @@ class t8Sim extends theoryClass<theory> {
       if(this.variables[4].shouldFork) await this.doForkVariable(4)
     }
     let stratExtra = "";
-    if (
-      this.strat.includes("SingleMS")
-      //&& this.maxRho >= this.ssPoint
-    ) {
-      stratExtra += ` ${logToExp(this.ssPoint)}`;
+    if (this.strat.includes("SingleMS")) {
+      stratExtra += ` ${logToExp(this.ssPoint,2)}`;
     }
-    if (this.strat.includes("SingleMS") || (isMX(this.strat, this.maxRho) && this.milestoneVariant > 0)) {
+    //this.isMX = isMX(this.strat, this.pubRho);
+    /*if (this.isMX) {
       stratExtra += ` M${this.milestoneVariant}`;
-    }
+    }*/
     if (this.strat.includes("Coast")) {
-      stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("c1", this.boughtVars)) +
-        this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars)) +
-        this.variables[4].prepareExtraForCap(getLastLevel("c5", this.boughtVars))
+      stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("c1", this.boughtVars));
+      if (!this.strat.includes("noC3") && !this.strat.includes("noC35")) {
+        stratExtra += this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars));
+      }
+      if (!this.strat.includes("noC5") && !this.strat.includes("noC35")) {
+        stratExtra += this.variables[4].prepareExtraForCap(getLastLevel("c5", this.boughtVars));
+      }
     }
     this.trimBoughtVars();
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
@@ -344,9 +386,13 @@ class t8Sim extends theoryClass<theory> {
 
     const rhodot = l10(this.dt) + this.totMult + this.variables[0].value + this.variables[1].value + add(dx2Term, dy2Term, dz2Term) / 2 - 2;
     this.rho.add(rhodot);
+    //if (!this.isMX) this.isMX = isMX(this.strat, Math.max(this.rho.value, this.lastPub));
   }
   copyFrom(other: this) {
     super.copyFrom(other);
+    this.bounds = other.bounds;
+    this.defaultStates = other.defaultStates;
+    this.dts = other.dts;
     this.x = other.x;
     this.y = other.y;
     this.z = other.z;
@@ -354,6 +400,9 @@ class t8Sim extends theoryClass<theory> {
     this.dy = other.dy;
     this.dz = other.dz;
     this.msTimer = other.msTimer;
+    //this.isMX = other.isMX;
+    this.milestoneVariant = other.milestoneVariant;
+    this.ssPoint = other.ssPoint;
   }
   copy() {
     let copySim = new t8Sim(this.getDataForCopy());
