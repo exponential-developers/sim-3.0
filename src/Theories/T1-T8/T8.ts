@@ -10,22 +10,22 @@ export default async function t8(data: theoryData): Promise<simResult> {
   async function getResult (
     data: theoryData,
     MXVariant: number = 0,
-    ssPoint: number = 0
+    singleSwapPoint: number = 0
   ): Promise<simResult> {
     let res;
     if (!data.strat.includes("Coast")) {
-      const sim = new t8Sim(data, MXVariant, ssPoint);
+      const sim = new t8Sim(data, MXVariant, singleSwapPoint);
       res = await sim.simulate();
     }
     else {
       let data2: theoryData = JSON.parse(JSON.stringify(data));
       data2.strat = data2.strat.replace("Coast", "");
-      const sim1 = new t8Sim(data2, MXVariant, ssPoint);
+      const sim1 = new t8Sim(data2, MXVariant, singleSwapPoint);
       const res1 = await sim1.simulate();
       const lastC1 = getLastLevel("c1", res1.boughtVars);
       const lastC3 = getLastLevel("c3", res1.boughtVars);
       const lastC5 = getLastLevel("c5", res1.boughtVars);
-      const sim2 = new t8Sim(data, MXVariant, ssPoint);
+      const sim2 = new t8Sim(data, MXVariant, singleSwapPoint);
       sim2.variables[0].setOriginalCap(lastC1)
       sim2.variables[0].configureCap(13);
       sim2.variables[2].setOriginalCap(lastC3)
@@ -40,46 +40,30 @@ export default async function t8(data: theoryData): Promise<simResult> {
   let result: simResult = defaultResult();
   // T8noC3dSingleMS
   if (data.strat.includes("T8noC3dSingleMS")) {
-    if (data.rho < 50) {
-      const singleSwapPoints = [
-        Array.from({length: 66}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(5))))) * (lvl + 1)),
-        Array.from({length: 55}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(7))))) * (lvl + 1))
-      ];
-      const MXVariantOptions = data.rho > 40 ? [3] : [2, 3];
-      for (const MXVariant of MXVariantOptions) {
-        // Only Swap points within e5 of recovery
-        for (const singleSwapPoint of singleSwapPoints[MXVariant-2].filter(
-          (num) => (num > data.rho - 5) && (num <= data.rho)
-        )) {
-          result = getBestResult(result, await getResult(data, MXVariant, singleSwapPoint));
+    const singleSwapPoints = [
+      [ 
+        ...Array.from({length: 104-53+1}, (_, lvl) => l10(1e2) + (l10(2) * (1.15 * Math.log2(5)) * (lvl + 53))),
+        ...Array.from({length: 86-44+1}, (_, lvl) => l10(1e2) + (l10(2) * (1.15 * Math.log2(7)) * (lvl + 44)))
+      ].toSorted((a,b) => a - b),
+      Array.from({length: 104-53+1}, (_, lvl) => l10(1e2) + (l10(2) * (1.15 * Math.log2(5))) * (lvl + 53))
+    ];
+    const MXVariantOptions = data.rho > 59 ? [2] : (data.rho < 55 ? [0] : [0, 2]);
+    for (const MXVariant of MXVariantOptions) {
+      // Only Swap points within e5 of recovery (except M2 before e57)
+      for (const singleSwapPoint of singleSwapPoints[MXVariant/2].filter(
+        (num) => {
+          return (num > data.rho - 5)
+            && (
+              (num <= data.rho)
+              || ((data.rho <= 57) && (MXVariant === 2))
+            );
         }
+      )) {
+        result = getBestResult(result, await getResult(data, MXVariant, singleSwapPoint));
+        if (result.pubRho < singleSwapPoint) break;
       }
     }
-    else {
-      const singleSwapPoints = [
-        [ 
-          ...Array.from({length: 104-53+1}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(5))))) * (lvl + 53)),
-          ...Array.from({length: 86-44+1}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(7))))) * (lvl + 44))
-        ].toSorted((a,b) => a - b),
-        Array.from({length: 104-53+1}, (_, lvl) => parseValue(String(1e2)) + (l10(2) * 10**parseValue(String((1.15 * Math.log2(5))))) * (lvl + 53))
-      ];
-      const MXVariantOptions = data.rho > 59 ? [2] : (data.rho < 55 ? [0] : [0, 2]);
-      for (const MXVariant of MXVariantOptions) {
-        // Only Swap points within e5 of recovery (except M2 before e57)
-        for (const singleSwapPoint of singleSwapPoints[MXVariant/2].filter(
-          (num) => {
-            return (num > data.rho - 5)
-              && (
-                (num <= data.rho)
-                || ((data.rho <= 57) && (MXVariant === 2))
-              );
-          }
-        )) {
-          result = getBestResult(result, await getResult(data, MXVariant, singleSwapPoint));
-          if (result.pubRho < singleSwapPoint) break;
-        }
-      }
-    }
+    
   }
   else {
     result = await getResult(data);
@@ -228,9 +212,6 @@ class t8Sim extends theoryClass<theory> {
       case "T8noC3d": return Math.max(this.maxRho, this.lastPub) < 50 ? [0] : [3, 0, 2];
       case "T8noC3dSingleMSCoast":
       case "T8noC3dSingleMS":
-        if (Math.max(this.maxRho, this.lastPub) < 50) {
-          return this.maxRho < this.singleSwapPoint ? [this.milestoneVariant] : [0];
-        }
         return this.maxRho < this.singleSwapPoint ? [this.milestoneVariant, 0, 3, 2] : [3, 0, 2];
       case "T8noC5":
       case "T8noC5Coast":
