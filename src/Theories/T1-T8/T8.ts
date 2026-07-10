@@ -142,21 +142,21 @@ class t8Sim extends theoryClass<theory> {
     ];
     const noC35dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, false];
     const playCoastStrat = [
-      () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
       () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
       () => this.variables[4].shouldBuy && (this.variables[4].cost + l10(4) < Math.min(this.variables[1].cost, this.variables[3].cost)),
     ];
     const playSolarswapStrat = [
-      () => this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost),
+      () => this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost),
       true,
       () => this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
       true,
       () => this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
     ];
     const playSolarswapCoastStrat = [
-      () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
       () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
