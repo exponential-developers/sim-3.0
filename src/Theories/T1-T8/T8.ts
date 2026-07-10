@@ -26,7 +26,7 @@ export default async function t8(data: theoryData): Promise<simResult> {
     }
     else {
       let data2: theoryData = JSON.parse(JSON.stringify(data));
-      data2.strat = data2.strat.replace("Coast", "");
+      if (data2.strat !== "T8PlayCoast") data2.strat = data2.strat.replace("Coast", "");
       const sim1 = new t8Sim(data2, singleMSPoint);
       const res1 = await sim1.simulate();
       const lastC1 = getLastLevel("c1", res1.boughtVars);
