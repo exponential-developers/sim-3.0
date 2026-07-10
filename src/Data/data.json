@@ -409,20 +409,8 @@
         "T8": {
           "stratFilterCondition": "Idle && (rho < 52 || rho >= 160)"
         },
-        "T8M1": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho >= 80 && rho < 160"
-        },
-        "T8M3": {
-          "stratFilterCondition": "Idle && rho >= 52 && rho < 80"
-        },
         "T8Coast": {
           "stratFilterCondition": "Semi-Idle && ((rho >= 20 && rho < 52) || rho >= 220)"
-        },
-        "T8M1Coast": {
-          "stratFilterCondition": "Semi-Idle && rho >= 80 && rho < 160"
-        },
-        "T8M3Coast": {
-          "stratFilterCondition": "Semi-Idle && rho >= 52 && rho < 80"
         },
         "T8noC3": {
           "stratFilterCondition": "Idle && ((rho < 40) || (rho >=50 && rho < 80) || (rho >= 160 && rho < 220))"

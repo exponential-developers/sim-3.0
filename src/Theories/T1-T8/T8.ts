@@ -111,7 +111,6 @@ class t8Sim extends theoryClass<theory> {
   msTimer: number;
   ssPoint: number;
   milestoneVariant: number;
-  //isMX: boolean;
 
   getBuyingConditions(): conditionFunction[] {
     const idleStrat = new Array(5).fill(true);
@@ -188,8 +187,7 @@ class t8Sim extends theoryClass<theory> {
 
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T8: idleStrat,
-      T8M1: idleStrat,
-      T8M3: idleStrat,
+      T8Coast: idleCoastStrat,
       T8noC3: noC3Strat,
       T8noC3Coast: noC3CoastStrat,
       T8noC5: noC5Strat,
@@ -197,9 +195,6 @@ class t8Sim extends theoryClass<theory> {
       T8noC35: noC35Strat,
       T8noC35Coast: noC35CoastStrat,
       T8Snax: snaxStrat,
-      T8Coast: idleCoastStrat,
-      T8M1Coast: idleCoastStrat,
-      T8M3Coast: idleCoastStrat,
       T8noC3d: noC3dStrat,
       T8noC3dCoast: noC3dCoastStrat,
       T8noC3dSingleMS: noC3dStrat,
@@ -222,10 +217,6 @@ class t8Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
     switch (this.strat) {
-      case "T8M1Coast":
-      case "T8M1": return [1, 0, 2];
-      case "T8M3Coast":
-      case "T8M3": return [3, 0];
       case "T8noC3":
       case "T8noC3Coast":
       case "T8noC3dCoast":
@@ -362,7 +353,7 @@ class t8Sim extends theoryClass<theory> {
     this.trimBoughtVars();
     const result = this.createResult(stratExtra);
     if (this.strat.includes("SingleMS")) { //T8NoC3dSingleMS
-      result.strat = `T8M${this.milestoneVariant}${result.strat.slice(2)}`;
+      result.strat = result.strat.replace("SingleMS", `SingleMS${this.milestoneVariant}`);
     }
     return getBestResult(result, this.bestForkRes);
   }
