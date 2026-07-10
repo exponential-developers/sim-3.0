@@ -463,9 +463,6 @@
         "T8noC35dCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 72 && rho < 160"
         },
-        "T8Play": {
-          "stratFilterCondition": "false"
-        },
         "T8PlayCoast": {
           "stratFilterCondition": "Active && ((rho >= 20 && rho < 52) || (rho >= 220))"
         },

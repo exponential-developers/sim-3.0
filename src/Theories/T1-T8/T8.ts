@@ -141,13 +141,6 @@ class t8Sim extends theoryClass<theory> {
       false
     ];
     const noC35dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, false];
-    const playStrat = [
-      () => this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost),
-      true,
-      () => this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost),
-      true,
-      () => this.variables[4].cost + l10(4) < Math.min(this.variables[1].cost, this.variables[3].cost),
-    ];
     const playCoastStrat = [
       () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(8) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
@@ -190,7 +183,6 @@ class t8Sim extends theoryClass<theory> {
       T8noC5dCoast: noC5dCoastStrat,
       T8noC35d: noC35dStrat,
       T8noC35dCoast: noC35dStrat,
-      T8Play: playStrat,
       T8PlayCoast: playCoastStrat,
       T8PlaySolarswap: playSolarswapStrat,
       T8PlaySolarswapCoast: playSolarswapCoastStrat
@@ -220,7 +212,6 @@ class t8Sim extends theoryClass<theory> {
       case "T8noC35Coast":
       case "T8noC35dCoast":
       case "T8noC35d": return [2, 0];
-      case "T8Play":
       case "T8PlayCoast": return milestoneCount < 4 ? [0, 3] : [2, 0, 3, 1];
       case "T8PlaySolarswap":
       case "T8PlaySolarswapCoast": return milestoneCount < 4 ? [0, 3] : [0, 2, 3, 1];
