@@ -19,6 +19,7 @@ const orphanCoastStrats = [
   "T8PlayCoast",
   "T8PlaySolarswapCoast",
   "T8PlayNoC3SolarswapCoast",
+  "T8PlayNoC5SolarswapCoast",
   "T8NoC5dCoast"
 ];
 
