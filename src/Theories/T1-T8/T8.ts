@@ -19,7 +19,7 @@ const orphanCoastStrats = [
   "T8PlayCoast",
   "T8PlaySolarswapCoast",
   "T8PlayNoC3SolarswapCoast",
-  "T8NoC3d2SolarswapCoast"
+  "T8NoC5dCoast"
 ];
 
 export default async function t8(data: theoryData): Promise<simResult> {
@@ -70,7 +70,7 @@ export default async function t8(data: theoryData): Promise<simResult> {
       if (result.pubRho < singleMSPoint) break;
     }
     // If result is outside of the bounds of the SingleMS, then properly handle the blank output.
-    if (result === defaultResult()) {
+    if (result.strat === "Result undefined") {
       result.theory = data.theory;
       result.sigma = data.sigma;
       result.lastPub = data.rho;
@@ -163,15 +163,22 @@ class t8Sim extends theoryClass<theory> {
       () => this.variables[4].shouldBuy && (this.variables[4].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
     ];
 
-    const noC5dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, true, true, false];
     const noC5dCoastStrat = [
       () => this.variables[0].shouldBuy && (this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
-      () => this.variables[4].shouldBuy,
+      () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
       false
     ];
+
     const noC35dStrat = [() => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost), true, false, true, false];
+    const noC35dCoastStrat = [
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      true,
+      false,
+      true,
+      false,
+    ];
 
     const playCoastStrat = [
       () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost)),
@@ -180,6 +187,28 @@ class t8Sim extends theoryClass<theory> {
       true,
       () => this.variables[4].shouldBuy && (this.variables[4].cost + l10(4) < Math.min(this.variables[1].cost, this.variables[3].cost)),
     ];
+    const playNoC5CoastStrat = [
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      true,
+      () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(2.5) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      true,
+      false,
+    ];
+    const playNoC35Strat = [
+      () => this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost),
+      true,
+      false,
+      true,
+      false,
+    ];
+    const playNoC35CoastStrat = [
+      () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost)),
+      true,
+      false,
+      true,
+      false,
+    ];
+
     const playSolarswapCoastStrat = [
       () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(5 + 0.5 * (this.variables[0].level % 10)) < Math.min(this.variables[1].cost, this.variables[3].cost)),
       true,
@@ -211,12 +240,13 @@ class t8Sim extends theoryClass<theory> {
       T8NoC3d2Coast: noC3d2CoastStrat,
       T8NoC3dSingleMS0Coast: noC3dCoastStrat,
       T8NoC3dSingleMS2Coast: noC3dCoastStrat,
-      T8NoC5d: noC5dStrat,
       T8NoC5dCoast: noC5dCoastStrat,
       T8NoC35d: noC35dStrat,
-      T8NoC35dCoast: noC35dStrat,
+      T8PlayNoC35: playNoC35Strat,
+      T8NoC35dCoast: noC35dCoastStrat,
+      T8PlayNoC35Coast: playNoC35CoastStrat,
       T8PlayCoast: playCoastStrat,
-      T8NoC3d2SolarswapCoast: noC3d2CoastStrat,
+      T8PlayNoC5SolarswapCoast: playNoC5CoastStrat,
       T8PlaySolarswapCoast: playSolarswapCoastStrat,
       T8PlayNoC3SolarswapCoast: playNoC3SolarswapCoastStrat,
     };
@@ -239,16 +269,17 @@ class t8Sim extends theoryClass<theory> {
       case "T8NoC3dSingleMS2Coast": return this.maxRho < this.singleMSPoint ? [2, 0, 3] : [3, 0, 2];
       case "T8NoC5":
       case "T8NoC5Coast":
-      case "T8NoC5dCoast":
-      case "T8NoC5d": return [0, 2, 1];
+      case "T8NoC5dCoast": return [0, 2, 1];
       case "T8NoC35":
       case "T8NoC35Coast":
-      case "T8NoC35dCoast":
-      case "T8NoC35d": return [2, 0];
+      case "T8NoC35d":
+      case "T8PlayNoC35":
+      case "T8PlayNoC35Coast":
+      case "T8NoC35dCoast": return [2, 0];
       case "T8PlayCoast": return milestoneCount < 4 ? [0, 3] : [2, 0, 3, 1];
       case "T8PlaySolarswapCoast": return milestoneCount < 4 ? [0, 3] : [0, 2, 3, 1];
-      case "T8NoC3d2SolarswapCoast":
-      case "T8PlayNoC3SolarswapCoast": return milestoneCount < 4 ? [0, 3] : [0, 2, 3];
+      case "T8PlayNoC3SolarswapCoast": return [0, 2, 3];
+      case "T8PlayNoC5SolarswapCoast": return [0, 2, 1];
     }
 
     if (milestoneCount < 3) return [0];
