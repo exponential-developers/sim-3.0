@@ -828,6 +828,24 @@
           "stratFilterCondition": "Active || Very-Active"
         }
       }
+    },
+    "FS": {
+      "tauFactor": 0.6180339887498948,
+      "UI_visible": false,
+      "strats": {
+        "FS": {
+          "stratFilterCondition": "true"
+        },
+        "FSd": {
+          "stratFilterCondition": "Very-Active"
+        },
+        "FSStopNM": {
+          "stratFilterCondition": "true"
+        },
+        "FSdStopNM": {
+          "stratFilterCondition": "Very-Active"
+        }
+      }
     }
   },
   "stratCategories": ["Best Overall", "Best Active", "Best Semi-Idle", "Best Idle"],

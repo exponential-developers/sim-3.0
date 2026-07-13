@@ -22,6 +22,7 @@ import mf from "../Theories/CTs/MF";
 import bap from "../Theories/CTs/BaP";
 import bt from "../Theories/Unofficial-CTs/BT";
 import tc from "../Theories/Unofficial-CTs/TC";
+import fs from "../Theories/Unofficial-CTs/FS";
 
 const output = qs(".output");
 
@@ -44,7 +45,8 @@ const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResu
     MF: mf,
     BaP: bap,
     BT: bt,
-    TC: tc
+    TC: tc,
+    FS: fs
 }
 
 async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
