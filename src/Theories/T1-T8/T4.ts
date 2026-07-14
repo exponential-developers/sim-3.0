@@ -54,15 +54,6 @@ class t4Sim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      T4C3d: [
-        false,
-        false,
-        true,
-        ...new Array(3).fill(false),
-        () =>
-            this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost),
-        () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost,
-      ],
       T4C3dcoast2: [
         false,
         false,
@@ -71,6 +62,15 @@ class t4Sim extends theoryClass<theory> {
         () => this.variables[6].shouldBuy &&
             (this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
         () => this.variables[7].shouldBuy && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
+      ],
+      T4C3d: [
+        false,
+        false,
+        true,
+        ...new Array(3).fill(false),
+        () =>
+            this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost),
+        () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost,
       ],
       T4C3coast2: [
         false,
@@ -116,7 +116,7 @@ class t4Sim extends theoryClass<theory> {
       T4C56: [...new Array(4).fill(false), true, true, true, true],
       T4C4: [...new Array(3).fill(false), true, false, false, true, true],
       T4C5: [...new Array(4).fill(false), true, false, true, true],
-      T4: new Array(8).fill(true),
+      T4: new Array(8).fill(true)
     };
     return toCallables(conditions[this.strat]);
   }

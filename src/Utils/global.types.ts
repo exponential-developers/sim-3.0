@@ -4,9 +4,26 @@ declare global {
   type conditionFunction = () => boolean;
 
   type theoryType = keyof typeof jsonData.theories;
+  type BaseStratKeys<S> = {
+    [K in keyof S]:
+      S[K] extends { derivedStrats: any }
+        ? never
+        : K;
+  }[keyof S];
+
+  type DerivedStratKeys<S> = {
+    [K in keyof S]:
+      S[K] extends { derivedStrats: infer D }
+        ? keyof D
+        : never;
+  }[keyof S];
+
   type stratType = {
-    [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
+    [T in theoryType]:
+      | BaseStratKeys<typeof jsonData.theories[T]["strats"]>
+      | DerivedStratKeys<typeof jsonData.theories[T]["strats"]>;
   };
+
 
   type TheoryDataStructure = {
     [key: string]: {
