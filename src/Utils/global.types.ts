@@ -6,14 +6,14 @@ declare global {
   type theoryType = keyof typeof jsonData.theories;
   type BaseStratKeys<S> = {
     [K in keyof S]:
-      S[K] extends { derivedStrats: any }
+      S[K] extends { subStrats: any }
         ? never
         : K;
   }[keyof S];
 
-  type DerivedStratKeys<S> = {
+  type SubStratKeys<S> = {
     [K in keyof S]:
-      S[K] extends { derivedStrats: infer D }
+      S[K] extends { subStrats: infer D }
         ? keyof D
         : never;
   }[keyof S];
@@ -21,7 +21,7 @@ declare global {
   type stratType = {
     [T in theoryType]:
       | BaseStratKeys<typeof jsonData.theories[T]["strats"]>
-      | DerivedStratKeys<typeof jsonData.theories[T]["strats"]>;
+      | SubStratKeys<typeof jsonData.theories[T]["strats"]>;
   };
 
 
@@ -34,6 +34,13 @@ declare global {
           stratFilterCondition: string;
           forcedCondition?: string;
           UI_visible?: boolean;
+          subStrats?: {
+            [key: string]: {
+              stratFilterCondition: string;
+              forcedCondition?: string;
+              UI_visible?: boolean;
+            }
+          }
         }
       }
     }
@@ -48,6 +55,7 @@ declare global {
     queryType: "single";
     theory: theoryType;
     strat: string;
+    subStrat: string;
     rho: number;
     cap?: number;
     lastStrat?: string;
@@ -57,6 +65,7 @@ declare global {
     queryType: "chain";
     theory: theoryType;
     strat: string;
+    subStrat: string;
     rho: number;
     cap: number;
     hardCap: boolean;
@@ -66,6 +75,7 @@ declare global {
     queryType: "step";
     theory: theoryType;
     strat: string;
+    subStrat: string;
     rho: number;
     cap: number;
     step: number;
@@ -81,6 +91,7 @@ declare global {
     queryType: "amount";
     theory: theoryType;
     strat: string;
+    subStrat: string;
     rho: number;
     amount: number;
   }
@@ -89,6 +100,7 @@ declare global {
     queryType: "time";
     theory: theoryType;
     strat: string;
+    subStrat: string;
     rho: number;
     time: number;
     hardCap: boolean;
@@ -103,13 +115,14 @@ declare global {
   }
 
   type StepChainQuery = BaseSimQuery & {
-    queryType: "step_chain"
-    theory: theoryType
-    strat: string
-    rho: number
-    cap: number
-    step: number
-    hardCap: boolean
+    queryType: "step_chain";
+    theory: theoryType;
+    strat: string;
+    subStrat: string;
+    rho: number;
+    cap: number;
+    step: number;
+    hardCap: boolean;
   }
 
   type SimQuery = SingleSimQuery 

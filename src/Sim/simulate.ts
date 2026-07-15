@@ -2,7 +2,7 @@ import jsonData from "../Data/data.json" with { type: "json" };
 import { global } from "./main";
 import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
 import { qs } from "../Utils/DOMhelpers";
-import { getStrats } from "./strats";
+import { getStrats, getSubStrats } from "./strats";
 import t1 from "../Theories/T1-T8/T1";
 import t2 from "../Theories/T1-T8/T2";
 import t3 from "../Theories/T1-T8/T3";
@@ -52,7 +52,11 @@ const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResu
 async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
     const strats = jsonData.stratCategories.includes(query.strat) 
         ? getStrats(query.theory, query.rho, query.strat, query.lastStrat ?? "")
-        : [query.strat];
+        : (
+            jsonData.subStratCategories.includes(query.subStrat)
+            ? getSubStrats(query.theory, query.strat, query.rho, query.subStrat, query.lastStrat ?? "")
+            : [{strat: query.strat, subStrat: query.subStrat}]
+        );
 
     let bestRes = defaultResult();
     for (let strat of strats) {
@@ -60,7 +64,7 @@ async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
             theory: query.theory,
             sigma: query.sigma,
             rho: query.rho,
-            strat: strat,
+            strat: strat.subStrat,
             recovery: null,
             cap: query.cap ?? null,
             recursionValue: null,
@@ -96,6 +100,7 @@ async function chainSim(query: ChainSimQuery, doLog = true): Promise<ChainSimRes
             queryType: "single",
             theory: query.theory,
             strat: query.strat,
+            subStrat: query.subStrat,
             rho: rho,
             sigma: query.sigma,
             settings: query.settings,
@@ -140,6 +145,7 @@ async function amountSim(query: AmountSimQuery, doLog = true): Promise<ChainSimR
             queryType: "single",
             theory: query.theory,
             strat: query.strat,
+            subStrat: query.subStrat,
             rho: rho,
             sigma: query.sigma,
             settings: query.settings,
@@ -184,6 +190,7 @@ async function timeSim(query: TimeSimQuery): Promise<ChainSimResponse> {
             queryType: "single",
             theory: query.theory,
             strat: query.strat,
+            subStrat: query.subStrat,
             rho: rho,
             sigma: query.sigma,
             settings: query.settings,
@@ -227,6 +234,7 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
             queryType: "single",
             theory: query.theory,
             strat: query.strat,
+            subStrat: query.subStrat,
             rho: rho,
             sigma: query.sigma,
             settings: query.settings,
@@ -253,7 +261,7 @@ async function comparisonSim(query: ComparisonSimQuery): Promise<StepSimResponse
         results.push((await singleSim({
             ...query,
             queryType: "single",
-            strat
+            ...strat
         })).result)
     }
 
@@ -276,7 +284,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         output.innerText = `Simulating ${theory}/${lastTheory}`;
         await sleep();
 
-        const queryData: Omit<SingleSimQuery, "strat"> = {
+        const queryData: Omit<SingleSimQuery, "strat" | "subStrat"> = {
             queryType: "single",
             theory: theory,
             rho: rho,
@@ -286,12 +294,14 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         const activeRes = query.stratType != "idle"
             ? (await singleSim({
                 strat: query.veryActive ? "Best Overall" : "Best Active",
+                subStrat: query.veryActive ? "Best Overall" : "Best Active",
                 ...queryData
             })).result
             : defaultResult();
         const idleRes = query.stratType != "active"
             ? (await singleSim({
                 strat: query.semiIdle ? "Best Semi-Idle" : "Best Idle",
+                subStrat: query.semiIdle ? "Best Semi-Idle" : "Best Idle",
                 ...queryData
             })).result
             : defaultResult();
@@ -335,6 +345,7 @@ async function stepChainSim(query: StepChainQuery): Promise<StepSimResponse> {
             rho,
             theory: query.theory,
             strat: query.strat,
+            subStrat: query.subStrat,
             cap: query.cap,
             hardCap: query.hardCap
         }, false);

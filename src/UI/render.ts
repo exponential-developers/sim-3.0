@@ -5,7 +5,8 @@ import { getSimState } from "./simState";
 
 //Inputs
 const theorySelector = qs<HTMLSelectElement>(".theory");
-const stratSelector = qs<HTMLSelectElement>(".strat");
+const stratSelector = qs<HTMLSelectElement>("#stratSelectionWrapper > .strat");
+const subStratSelector = qs<HTMLSelectElement>("#subStratSelectionWrapper > .strat");
 const capInputWrapper = qs(".capWrapper");
 const modeSelector = qs<HTMLSelectElement>(".mode");
 const sigmaInput = qs<HTMLInputElement>(".sigma");
@@ -18,6 +19,7 @@ const showUnofficials = qs<HTMLInputElement>(".unofficials");
 
 //Other containers/elements
 const stratSelectionWrapper = qs("#stratSelectionWrapper");
+const subStratSelectionWrapper = qs("#subStratSelectionWrapper");
 const extraInputs = qs(".extraInputs");
 const timeDiffWrapper = qs(".timeDiffWrapper");
 const singleInput = qsa(".controls")[0];
@@ -56,6 +58,7 @@ event(modeSelector, "input", modeUpdate);
 populateTheoryList(showUnofficials.checked);
 theoryUpdate();
 event(theorySelector, "change", theoryUpdate);
+event(stratSelector, "change", subStratUpdate);
 
 event(showUnofficials, "click", () => {
     populateTheoryList(showUnofficials.checked);
@@ -91,12 +94,12 @@ function populateSingleSimFields(rewriteCurrency: boolean = false): void {
 function modeUpdate(): void {
   const newMode = modeSelector.value;
 
-
   singleInput.style.display = "none";
   capInputWrapper.style.display = "none";
   hardCapWrapper.style.display = "none";
 
   stratSelectionWrapper.style.display = "none";
+  subStratSelectionWrapper.style.display = "none";
   extraInputs.style.display = "none";
   simAllInputs.style.display = "none";
   simAllInputArea.style.display = "none";
@@ -105,7 +108,15 @@ function modeUpdate(): void {
   timeDiffWrapper.style.display = "none";
 
   // Displays the strat selector
-  if (newMode !== "Comparison") stratSelectionWrapper.style.display = "block";
+  if (newMode !== "All" && newMode !== "Comparison") {
+    stratSelectionWrapper.style.display = "block";
+    const currentTheory = theorySelector.value as theoryType;
+    const theoryStrats = (data.theories as TheoryDataStructure)[currentTheory].strats;
+    if (
+      !data.stratCategories.includes(stratSelector.value)
+      && ("subStrats" in (theoryStrats[stratSelector.value] ?? []))
+    ) subStratSelectionWrapper.style.display = "block";
+  }
   // Displays the single-theory inputs
   if (newMode !== "All" && newMode !== "Time diff.") singleInput.style.display = "grid";
   // Displays the cap input for chain/steps mode
@@ -134,11 +145,31 @@ function modeUpdate(): void {
 
 function theoryUpdate() {
   const currentTheory = theorySelector.value as theoryType;
+  const theoryStrats = (data.theories as TheoryDataStructure)[currentTheory].strats;
   const currentTheoryStrats = Object.keys(data.theories[currentTheory].strats).filter(
-    (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
+    (strat) => theoryStrats[strat].UI_visible !== false
   );
   populateSelectElement(stratSelector, data.stratCategories.concat(currentTheoryStrats));
+  subStratUpdate();
   populateSingleSimFields(true);
+}
+
+function subStratUpdate() {
+  console.log(data.subStratCategories, stratSelector.value);
+  const currentTheory = theorySelector.value as theoryType;
+  const theoryStrats = (data.theories as TheoryDataStructure)[currentTheory].strats;
+  console.log((theoryStrats[stratSelector.value] ?? []), "subStrats" in (theoryStrats[stratSelector.value] ?? []));
+  if (
+    data.stratCategories.includes(stratSelector.value)
+    || !("subStrats" in (theoryStrats[stratSelector.value] ?? []))
+  ) {
+    subStratSelectionWrapper.style.display = "none";
+  }
+  else {
+    subStratSelectionWrapper.style.display = "block";
+    const currentTheorySubStrats = Object.keys(theoryStrats[stratSelector.value].subStrats ?? {});
+    populateSelectElement(subStratSelector, data.subStratCategories.concat(currentTheorySubStrats));
+  }
 }
 
 function themeUpdate() {

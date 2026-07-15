@@ -5,7 +5,8 @@ import { qs } from "../Utils/DOMhelpers";
 //Inputs
 const modeSelector = qs<HTMLSelectElement>(".mode");
 const theorySelector = qs<HTMLSelectElement>(".theory");
-const stratSelector = qs<HTMLSelectElement>(".strat");
+const stratSelector = qs<HTMLSelectElement>("#stratSelectionWrapper > .strat");
+const subStratSelector = qs<HTMLSelectElement>("#subStratSelectionWrapper > .strat");
 const sigmaInput = qs<HTMLInputElement>(".sigma");
 const currencyInput = qs<HTMLInputElement>(".input");
 const capInput = qs<HTMLInputElement>(".cap");
@@ -98,6 +99,7 @@ function parseSingleSim(): SingleSimQuery {
         queryType: "single",
         theory: theory,
         strat: stratSelector.value,
+        subStrat: subStratSelector.value,
         sigma: sigma,
         rho: parseCurrency(currencyInput.value, theory, sigma),
         settings: parseSettings()
@@ -112,6 +114,7 @@ function parseChainSim(): ChainSimQuery {
         queryType: "chain",
         theory: theory,
         strat: stratSelector.value,
+        subStrat: subStratSelector.value,
         sigma: sigma,
         rho: parseCurrency(currencyInput.value, theory, sigma),
         cap: parseCurrency(capInput.value, theory, sigma),
@@ -128,6 +131,7 @@ function parseStepSim(): StepSimQuery {
         queryType: "step",
         theory: theory,
         strat: stratSelector.value,
+        subStrat: subStratSelector.value,
         sigma: sigma,
         rho: parseCurrency(currencyInput.value, theory, sigma),
         cap: parseCurrency(capInput.value, theory, sigma),
@@ -157,6 +161,7 @@ function parseAmountSim(): AmountSimQuery {
         queryType: "amount",
         theory: theory,
         strat: stratSelector.value,
+        subStrat: subStratSelector.value,
         sigma: sigma,
         rho: parseCurrency(currencyInput.value, theory, sigma),
         amount: parseInt(modeInput.value),
@@ -193,6 +198,7 @@ function parseTimeSim(): TimeSimQuery {
         queryType: "time",
         theory: theory,
         strat: stratSelector.value,
+        subStrat: subStratSelector.value,
         sigma: sigma,
         rho: parseCurrency(currencyInput.value, theory, sigma),
         time,
@@ -209,6 +215,7 @@ function parseStepChainSim(): StepChainQuery {
         queryType: "step_chain",
         theory: theory,
         strat: stratSelector.value,
+        subStrat: subStratSelector.value,
         sigma: sigma,
         rho: parseCurrency(currencyInput.value, theory, sigma),
         cap: parseCurrency(capInput.value, theory, sigma),
