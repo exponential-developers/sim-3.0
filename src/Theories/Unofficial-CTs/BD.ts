@@ -24,8 +24,6 @@ class bdSim extends theoryClass<theory> {
   cachedRowTerm: number;
   rowTermIsDirty: boolean;
 
-  dk: number; // used by BPd
-
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BD: [
@@ -82,7 +80,6 @@ class bdSim extends theoryClass<theory> {
     this.k = -Infinity;
     this.cachedRowTerm = 0;
     this.rowTermIsDirty = true;
-    this.dk = -Infinity;
     this.pubUnlock = 8;
     this.milestoneUnlocks = [4, 10, 25, 45, 65, 90, 130, 190, 250, 310, 340, 370, 400, 425, 445, 455, 465, 475, 485, 510, 535, 560, 585].map(value => value / this.tauFactor);
     this.milestonesMax = [3, 1, 1, 4, 6, 4, 4];
@@ -147,12 +144,12 @@ class bdSim extends theoryClass<theory> {
   }
   tick() {
     let target = l10(Math.floor(this.variables[6].value / 2));
-    this.dk = this.variables[4].value;
-    if (this.milestones[2] > 0) this.dk += this.variables[5].value;
-    if (this.milestones[4] > 0) this.dk += l10(10) * (bdSim.SYMMETRY_STEP * this.milestones[4]);
-    this.dk -= l10(bdSim.K_TIME_DIVISOR);
+    let dk = this.variables[4].value;
+    if (this.milestones[2] > 0) dk += this.variables[5].value;
+    if (this.milestones[4] > 0) dk += l10(10) * (bdSim.SYMMETRY_STEP * this.milestones[4]);
+    dk -= l10(bdSim.K_TIME_DIVISOR);
     if (this.k < target) {
-        this.k = add(this.k, l10(this.dt) + this.dk);
+        this.k = add(this.k, l10(this.dt) + dk);
         this.k = Math.min(this.k, target);
         if (this.k < target) {
             this.rowTermIsDirty = true;
