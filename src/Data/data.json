@@ -846,6 +846,21 @@
           "stratFilterCondition": "Very-Active"
         }
       }
+    },
+    "BD": {
+      "tauFactor": 0.4,
+      "UI_visible":false,
+      "strats": {
+        "BD": {
+          "stratFilterCondition": "true"
+        },
+        "BDStopC12": {
+          "stratFilterCondition": "true"
+        },
+        "BDdStopC12": {
+          "stratFilterCondition": "Very-Active"
+        }
+      }
     }
   },
   "stratCategories": ["Best Overall", "Best Active", "Best Semi-Idle", "Best Idle"],
