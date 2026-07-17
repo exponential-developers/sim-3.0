@@ -187,6 +187,18 @@ export function getLastLevel(variable: string, arr: varBuy[]): number {
   return 0;
 }
 
+let factorialCache = [0];
+/**
+ * Returns n! as a l10 number
+ * @param n 
+ */
+export function getFactorial(n: number) {
+  while (factorialCache.length <= n) {
+    factorialCache.push(l10(factorialCache.length) + factorialCache[factorialCache.length - 1]);
+  }
+  return factorialCache[n];
+}
+
 /**
  * @param {number} sigma Number of students
  * @returns the R9 multiplier as a log value

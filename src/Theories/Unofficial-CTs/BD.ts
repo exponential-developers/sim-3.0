@@ -3,7 +3,7 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, toCallables, parseLog10String, add, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { l10, toCallables, parseLog10String, add, getLastLevel, getBestResult, getFactorial } from "../../Utils/helpers";
 
 export default async function bd(data: theoryData): Promise<simResult> {
   let res;
@@ -112,12 +112,7 @@ class bdSim extends theoryClass<theory> {
     return this.createResult();
   }
   getBinomialCoefficient(row: number, position: number): number {
-    let mirroredPosition = Math.min(position, row - position);
-    let result = l10(1);
-    for (let i = 1; i <= mirroredPosition; i++) {
-        result += l10(row - mirroredPosition + i) - l10(i);
-    }
-    return result;
+    return getFactorial(row) - getFactorial(position) - getFactorial(row - position);
   }
   getPolynomialExponent(): number {
     let result = 0.25 * this.milestones[3]; // 1
