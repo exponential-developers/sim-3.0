@@ -90,12 +90,27 @@ export default async function fs(data: theoryData): Promise<simResult> {
 
     const sim1 = new fsSim(data2);
     const res1 = await sim1.simulate();
-    const lastN = getLastLevel("n", res1.boughtVars.slice(0, getLastIndex("c3", res1.boughtVars)));
-    const lastM = getLastLevel("m", res1.boughtVars.slice(0, getLastIndex("c4", res1.boughtVars)));
+    let lastN = getLastLevel("n", res1.boughtVars.slice(0, getLastIndex("c3", res1.boughtVars)));
+    let lastM = getLastLevel("m", res1.boughtVars.slice(0, getLastIndex("c4", res1.boughtVars)));
+
     let sim = new fsSim(data);
     sim.variables[2].setOriginalCap(lastN);
     sim.variables[3].setOriginalCap(lastM);
     res = await sim.simulate();
+    let lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
+    let lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+
+    while (lastM != lastM1 || lastN != lastN1) {
+      lastN = lastN1;
+      lastM = lastM1;
+      sim = new fsSim(data);
+      sim.variables[2].setOriginalCap(lastN);
+      sim.variables[3].setOriginalCap(lastM);
+      res = await sim.simulate();
+      lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
+      lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+    }
+
   } else {
     const sim = new fsSim(data);
     res = await sim.simulate();
