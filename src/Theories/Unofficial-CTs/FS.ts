@@ -9,9 +9,9 @@ import { add, binaryInsertionSearch, getLastLevel, l10, toCallables } from "../.
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
 
-const fibLogCache = [Number.NEGATIVE_INFINITY, 0];
+const fibLogCache = [-Infinity, 0];
 const lucasLogCache = [l10(2), 0];
-const tribLogCache = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, 0];
+const tribLogCache = [-Infinity, -Infinity, 0];
 
 const ensureFibLogCache = (n: number) => {
   for (let i = fibLogCache.length; i <= n; i++) {
@@ -185,17 +185,7 @@ class fsSim extends theoryClass<theory> {
   }
 
   updateMilestones(): void {
-    const rho = Math.max(this.maxRho, this.lastPub);
-    let milestoneCount =
-      this.milestoneUnlockSteps > 0
-        ? Math.floor(rho / this.milestoneUnlockSteps)
-        : binaryInsertionSearch(this.milestoneUnlocks, rho);
-    this.milestones = new Array(this.milestonesMax.length).fill(0);
-
-    const unlockOrder = [0, 1, 2, 2, 3, 3, 4, 4, 4, 5];
-    for (let i = 0; i < unlockOrder.length && milestoneCount > 0; i++, milestoneCount--) {
-      this.milestones[unlockOrder[i]]++;
-    }
+    super.updateMilestones()
 
     const base =
       this.milestones[4] > 2
@@ -232,25 +222,25 @@ class fsSim extends theoryClass<theory> {
       new Variable({
         name: "c2",
         currency: this.rho,
-        cost: new ExponentialCost(21, Math.log2(21), true),
-        valueScaling: new ExponentialValue(1.5),
+        cost: new ExponentialCost(21, 21),
+        valueScaling: new ExponentialValue(1.5), // changing base
       }),
       new Variable({
         name: "n",
         currency: this.rho,
-        cost: new ExponentialCost(3, Math.log2(3), true),
+        cost: new ExponentialCost(3, 3),
         valueScaling: new LinearValue(1),
       }),
       new Variable({
         name: "m",
         currency: this.rho,
-        cost: new ExponentialCost(2, Math.log2(5), true),
+        cost: new ExponentialCost(2, 5),
         valueScaling: new LinearValue(1),
       }),
       new Variable({
         name: "c3",
         currency: this.F,
-        cost: new ExponentialCost(987, Math.log2(610), true),
+        cost: new ExponentialCost(987, 610),
         valueScaling: new ExponentialValue(2),
       }),
       new Variable({
@@ -262,7 +252,7 @@ class fsSim extends theoryClass<theory> {
       new Variable({
         name: "f2",
         currency: this.F,
-        cost: new ExponentialCost(2584, Math.log2(14930352), true),
+        cost: new ExponentialCost(2584, 14930352),
         valueScaling: new ExponentialValue(5),
       }),
       new Variable({
@@ -274,13 +264,13 @@ class fsSim extends theoryClass<theory> {
       new Variable({
         name: "l2",
         currency: this.L,
-        cost: new ExponentialCost(1, Math.log2(87403803), true),
+        cost: new ExponentialCost(1, 87403803),
         valueScaling: new ExponentialValue(4),
       }),
       new Variable({
         name: "c4",
         currency: this.L,
-        cost: new ExponentialCost(1, Math.log2(987), true),
+        cost: new ExponentialCost(1, 987),
         valueScaling: new ExponentialValue(3),
       }),
     ];
