@@ -2,7 +2,7 @@ import { parseQuery } from "./parse";
 import { simulate } from "./simulate";
 import { writeSimResponse } from "./write";
 import { setSimState } from "../UI/simState";
-import { qs, event } from "../Utils/DOMhelpers";
+import { event } from "../Utils/DOMhelpers";
 import { cacheFilterQuery, cacheFilterResponse, setCache } from "./cache";
 import { refreshDOMEventLoop } from "../Utils/helpers";
 import { loadSave } from "../UI/buttonEvents";

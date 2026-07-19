@@ -56,10 +56,11 @@ async function createImage(mode: "download" | "copy") {
       }
     })
   )
-  .catch(() => console.log("Failed creating image."));
-
-  show(lastHeader);
-  varBuyCells.forEach((elem) => show(elem));
+  .catch(() => console.log("Failed creating image."))
+  .finally(() => {
+    show(lastHeader);
+    varBuyCells.forEach((elem) => show(elem));
+  });
 }
 
 function makeTableCsv(): string {
