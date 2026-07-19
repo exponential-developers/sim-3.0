@@ -10,7 +10,8 @@ import {
   getLastLevel,
   l10,
   subtract,
-  toCallables
+  toCallables,
+  getFactorial
 } from "../../Utils/helpers";
 
 export default async function fi(data: theoryData): Promise<simResult> {
@@ -32,11 +33,6 @@ export default async function fi(data: theoryData): Promise<simResult> {
     res = await sim.simulate();
   }
   return res;
-}
-
-const factoriallogs = [0];
-for (let i = 1; i < 9; i++) {
-  factoriallogs.push(l10(i) + factoriallogs[i-1]);
 }
 
 type theory = "FI";
@@ -197,20 +193,20 @@ class fiSim extends theoryClass<theory> {
 
   approxEX(limit: number): number {
     return add(
-        limit * 6 - factoriallogs[6], limit * 5 - factoriallogs[5], limit * 4 - factoriallogs[4], limit * 3 - factoriallogs[3],
-        limit * 2 - factoriallogs[2], limit
+        limit * 6 - getFactorial(6), limit * 5 - getFactorial(5), limit * 4 - getFactorial(4), limit * 3 - getFactorial(3),
+        limit * 2 - getFactorial(2), limit
     );
   }
 
   approxSin(limit: number): number {
-    let positives = add(limit * 2 - factoriallogs[2], limit * 6 - factoriallogs[6]);
-    let negatives = limit * 4 - factoriallogs[4];
+    let positives = add(limit * 2 - getFactorial(2), limit * 6 - getFactorial(6));
+    let negatives = limit * 4 - getFactorial(4);
     return subtract(positives, negatives);
   }
 
   approxCos(limit: number): number {
-    let positives = add(limit, limit * 5 - factoriallogs[5]);
-    let negatives = limit * 3 - factoriallogs[3];
+    let positives = add(limit, limit * 5 - getFactorial(5));
+    let negatives = limit * 3 - getFactorial(3);
     return subtract(positives, negatives);
   }
 

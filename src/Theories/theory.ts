@@ -389,14 +389,15 @@ export default abstract class theoryClass<theory extends theoryType> {
         if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
           minCost = [rawCost[i] + weights[i], i];
         }
-      if (minCost[1] !== -1 && rawCost[minCost[1]] < this.rho.value) {
-        this.rho.subtract(this.variables[minCost[1]].cost);
+      if (minCost[1] !== -1 && rawCost[minCost[1]] < (this.variables[minCost[1]].currency ?? this.rho).value) {
+        (this.variables[minCost[1]].currency ?? this.rho).subtract(this.variables[minCost[1]].cost);
         if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
           this.boughtVars.push({ 
             variable: this.variables[minCost[1]].name, 
             level: this.variables[minCost[1]].level + 1, 
             cost: this.variables[minCost[1]].cost, 
-            timeStamp: this.t 
+            timeStamp: this.t,
+            symbol: (this.variables[minCost[1]].currency ?? this.rho).symbol
           });
         }
         this.variables[minCost[1]].buy();
