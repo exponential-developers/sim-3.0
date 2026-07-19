@@ -1,18 +1,7 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qs, qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, tau } from "../Utils/DOMhelpers";
-
-// Settings
-const generateTotalPurchaseList = qs<HTMLInputElement>(".totalPurchaseList");
-
-// Outputs
-const table = qs(".simTable");
-const theadRow = qs<HTMLTableRowElement>(".simTable > thead > tr");
-const tbody = qs(".simTable > tbody");
-
-const varBuyDialog = qs<HTMLDialogElement>(".boughtVars");
-const varBuyTable = qs<HTMLTableSectionElement>(".boughtVarsOtp");
-const varBuyListCloseBtn = qs<HTMLButtonElement>(".boughtVarsCloseBtn");
+import { qsa, ce, removeAllChilds, downloadString, getTableHeaders, tau, openDialog, bindDialogCloseEvents, hide } from "../Utils/DOMhelpers";
+import UI from "../UI/elements";
 
 const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
         'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' +
@@ -32,24 +21,24 @@ let totalBuys: varBuy[] = [];
 
 // Utils
 function clearTable() {
-    removeAllChilds(tbody);
+    removeAllChilds(UI.outputs.tableBody);
 }
 function setTableClass(cl: ("big" | "small")) {
-    table.classList.remove("big", "small");
-    table.classList.add(cl);
+    UI.outputs.table.classList.remove("big", "small");
+    UI.outputs.table.classList.add(cl);
 }
 function setTableMode(mode: string) {
-    table.setAttribute("simMode", mode);
+    UI.outputs.table.setAttribute("simMode", mode);
 }
 function getTableMode(): string {
-    return table.getAttribute("simMode") ?? "";
+    return UI.outputs.table.getAttribute("simMode") ?? "";
 }
 function setTableHeaders(...headers: string[]) {
-    removeAllChilds(theadRow);
+    removeAllChilds(UI.outputs.tableHeadRow);
     headers.forEach(header => {
         const cell = ce("th");
         cell.innerHTML = header;
-        theadRow.appendChild(cell);
+        UI.outputs.tableHeadRow.appendChild(cell);
     })
 }
 
@@ -84,7 +73,7 @@ function makeVarBuyCsv(arr: varBuy[]): string {
 }
 
 function addVarBuyCell(row: HTMLTableRowElement, buys: varBuy[], addToTotal = true, rowspan = 1) {
-    if (addToTotal && generateTotalPurchaseList.checked) {
+    if (addToTotal && UI.settings.totalPurchaseList.checked) {
         totalBuys.push(...buys);
         totalBuys.push({variable: "---", level: 0, cost: 0, timeStamp: 0});
     }
@@ -136,23 +125,20 @@ function highlightResetCells() {
 
 /** Generates and open the var buy list */
 function openVarModal(arr: varBuy[]) {
-  document.body.style.overflow = "hidden";
-  varBuyDialog.showModal();
-  removeAllChilds(varBuyTable);
+  openDialog(UI.buyList.dialog);
+  removeAllChilds(UI.buyList.table);
   for (let varBuy of arr) {
     const row = ce<HTMLTableRowElement>("tr");
     addTableCell(row, varBuy.variable);
     addTableCell(row, varBuy.level.toString());
     addTableCell(row, `${logToExp(varBuy.cost, 2)}<span style="margin-left:.1em">${getCurrencySymbol(varBuy.symbol)}</span>`);
     addTableCell(row, convertTime(varBuy.timeStamp));
-    varBuyTable.appendChild(row);
+    UI.buyList.table.appendChild(row);
   }
   highlightResetCells();
 }
 
-event(varBuyListCloseBtn, "pointerdown", () => varBuyDialog.close());
-
-event(varBuyDialog, "close", () => document.body.style.overflow = "auto");
+bindDialogCloseEvents(UI.buyList.dialog, UI.buyList.closeBtn);
 
 // Response writers
 
@@ -169,7 +155,7 @@ function writeSingleSimResponse(response: SingleSimResponse) {
     addTableCell(row, res.tauH == 0 ? "0" : formatNumber(res.tauH));
     addTableCell(row, convertTime(res.time));
     addVarBuyCell(row, res.boughtVars);
-    tbody.append(row);
+    UI.outputs.tableBody.append(row);
 }
 
 function writeChainSimResponse(response: ChainSimResponse) {
@@ -196,15 +182,15 @@ function writeChainSimResponse(response: ChainSimResponse) {
     addTableCell(resRow, convertTime(response.totalTime));
 
     fillTableRow(labelRow, 1);
-    if(generateTotalPurchaseList.checked) {
+    if(UI.settings.totalPurchaseList.checked) {
         addVarBuyCell(resRow, totalBuys, false);
     }
     else {
         fillTableRow(resRow, 1);
     }
 
-    tbody.append(labelRow);
-    tbody.append(resRow);
+    UI.outputs.tableBody.append(labelRow);
+    UI.outputs.tableBody.append(resRow);
 }
 
 function writeStepSimResponse(response: StepSimResponse) {
@@ -212,12 +198,12 @@ function writeStepSimResponse(response: StepSimResponse) {
         responseType: "single",
         result: res
     }));
-    if (generateTotalPurchaseList.checked) {
+    if (UI.settings.totalPurchaseList.checked) {
         const resRow = ce<HTMLTableRowElement>("tr");
         fillTableRow(resRow, 8);
         addTableCell(resRow, "Total");
         addVarBuyCell(resRow, totalBuys, false);
-        tbody.append(resRow);
+        UI.outputs.tableBody.append(resRow);
     }
 }
 
@@ -259,8 +245,8 @@ function writeSimAllResponse(response: SimAllResponse) {
                 completeSimAllLine(rowActive, res.active);
                 completeSimAllLine(rowPassive, res.idle);
 
-                tbody.appendChild(rowActive);
-                tbody.appendChild(rowPassive);
+                UI.outputs.tableBody.appendChild(rowActive);
+                UI.outputs.tableBody.appendChild(rowPassive);
             }
             else {
                 const uniqueRes = response.stratType == "active" ? res.active : res.idle;
@@ -270,7 +256,7 @@ function writeSimAllResponse(response: SimAllResponse) {
                 addTableCell(row, logToExp(res.lastPub, 2));
                 completeSimAllLine(row, uniqueRes);
 
-                tbody.appendChild(row);
+                UI.outputs.tableBody.appendChild(row);
             }
         })
 
@@ -278,11 +264,11 @@ function writeSimAllResponse(response: SimAllResponse) {
             const bufferRow1 = ce<HTMLTableRowElement>("tr");
             const bufferRow2 = ce<HTMLTableRowElement>("tr");
 
-            bufferRow1.style.display = "none";
+            hide(bufferRow1);
             addTableCell(bufferRow2, "---");
 
-            tbody.appendChild(bufferRow1);
-            tbody.appendChild(bufferRow2);
+            UI.outputs.tableBody.appendChild(bufferRow1);
+            UI.outputs.tableBody.appendChild(bufferRow2);
         }
     })
 }

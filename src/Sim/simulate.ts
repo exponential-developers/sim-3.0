@@ -1,7 +1,6 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { global } from "./main";
 import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
-import { qs } from "../Utils/DOMhelpers";
 import { getStrats } from "./strats";
 import t1 from "../Theories/T1-T8/T1";
 import t2 from "../Theories/T1-T8/T2";
@@ -25,8 +24,8 @@ import tc from "../Theories/Unofficial-CTs/TC";
 import fs from "../Theories/Unofficial-CTs/FS";
 import bd from "../Theories/Unofficial-CTs/BD";
 import ilc from "../Theories/Unofficial-CTs/ILC";
+import UI from "../UI/elements";
 
-const output = qs(".output");
 
 const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResult>) } = {
     T1: t1,
@@ -92,7 +91,7 @@ async function chainSim(query: ChainSimQuery, doLog = true): Promise<ChainSimRes
         const ts = performance.now();
         if (ts - lastLog > 250 && doLog) {
             lastLog = ts;
-            output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
             await sleep();
         }
 
@@ -136,7 +135,7 @@ async function amountSim(query: AmountSimQuery, doLog = true): Promise<ChainSimR
         const ts = performance.now();
         if (ts - lastLog > 250 && doLog) {
             lastLog = ts;
-            output.textContent = `Simulating ${i+1}/${query.amount} pubs`;
+            UI.outputs.log.textContent = `Simulating ${i+1}/${query.amount} pubs`;
             await sleep();
         }
 
@@ -180,7 +179,7 @@ async function timeSim(query: TimeSimQuery): Promise<ChainSimResponse> {
         const ts = performance.now();
         if (ts - lastLog > 250) {
             lastLog = ts;
-            output.textContent = `Simulating ${convertTime(time)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${convertTime(time)}/${stopStr}`;
             await sleep();
         }
 
@@ -223,7 +222,7 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
         const ts = performance.now();
         if (ts - lastLog > 250) {
             lastLog = ts;
-            output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
             await sleep();
         }
 
@@ -277,7 +276,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         if (rho <= 0) continue;
         if (!global.simulating) break;
         
-        output.innerText = `Simulating ${theory}/${lastTheory}`;
+        UI.outputs.log.innerText = `Simulating ${theory}/${lastTheory}`;
         await sleep();
 
         const queryData: Omit<SingleSimQuery, "strat"> = {
@@ -328,7 +327,7 @@ async function stepChainSim(query: StepChainQuery): Promise<StepSimResponse> {
         const ts = performance.now();
         if (ts - lastLog > 250) {
             lastLog = ts;
-            output.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
             await sleep();
         }
 

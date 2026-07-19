@@ -15,7 +15,7 @@ export const qsa = <T extends HTMLElement>(name: string) => document.querySelect
 /** Alias of document.createElement */
 export const ce = <T extends HTMLElement>(type: string) => (document.createElement(type) as T) ?? raise(`HtmlElement ${type} could not be created.`);
 /** Adds an event listener to `element` */
-export const event = <T>(element: HTMLElement, eventType: string, callback: (e: T) => void) => element.addEventListener(eventType, (e) => callback(e as T));
+export const event = (element: HTMLElement, eventType: string, callback: (e?: Event) => void) => element.addEventListener(eventType, (e) => callback(e));
 
 /** Removes all childs of `element` */
 export const removeAllChilds = (element: HTMLElement) => {
@@ -45,6 +45,19 @@ export function downloadString(str: string, filename: string) {
     }
 }
 
+/**
+ * Returns the table headers
+ * @param tableType Type of table
+ * 
+ * "single": Single theory table
+ * 
+ * "all": All mode table with A/I comparison
+ * 
+ * "all_one": All mode without A/I comparison
+ * @param headerType Return type (html or text for csv export)
+ * @param sigma Sigma
+ * @returns List of table headers
+ */
 export function getTableHeaders(tableType: "single" | "all" | "all_one", headerType: "html" | "text", sigma?: number): string[] {
   if (tableType !== "single") {
       let headers = [
@@ -76,4 +89,63 @@ export function getTableHeaders(tableType: "single" | "all" | "all_one", headerT
     ];
     return headers;
   };
+}
+
+/**
+ * Animates a button by giving it a specific class for a given delay
+ * @param button Button to animate
+ * @param text Text to display
+ * @param delay Length of the animation in ms (default 1000)
+ * @param animateClass CSS class used for the animation (default "buttongreen")
+ */
+export function animateButton(button: HTMLButtonElement, text: string, delay = 1000, animateClass = "buttongreen") {
+  const previousText = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = text;
+  button.classList.add(animateClass);
+  setTimeout(() => {
+    button.disabled = false;
+    button.innerHTML = previousText;
+    button.classList.remove(animateClass);
+  }, delay);
+}
+
+/**
+ * Opens a dialog
+ * @param dialog Dialog to open
+ */
+export function openDialog(dialog: HTMLDialogElement) {
+  dialog.showModal();
+  document.body.style.overflow = "hidden";
+}
+
+/**
+ * Binds events to close a dialog properly
+ * @param dialog Dialog
+ * @param closeBtn Close button of the dialog
+ * @param onClosed Function to call when the dialog is closed (optional)
+ */
+export function bindDialogCloseEvents(dialog: HTMLDialogElement, closeBtn: HTMLButtonElement, onClosed?: () => void) {
+  event(closeBtn, "pointerdown", () => dialog.close());
+
+  event(dialog, "close", () => {
+    if (onClosed) onClosed();
+    document.body.style.overflow = "auto";
+  })
+}
+
+/**
+ * Hides an element by giving it the 'hidden' class
+ * @param element Element to hide
+ */
+export function hide(element: HTMLElement) {
+  element.classList.add("hidden");
+}
+
+/**
+ * Shows an element by removing the 'hidden' class from it
+ * @param element Element to show
+ */
+export function show(element: HTMLElement) {
+  element.classList.remove("hidden");
 }

@@ -5,42 +5,45 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Theory Simulator</title>
-    <link rel="stylesheet" href="./Styles/fonts/Computer Modern Bright Semibold/cmun-bright-semibold.css" />
     <link rel="stylesheet" href="./Styles/fonts/Computer Modern Concrete/Concrete/cmun-concrete.css" />
     <link rel="stylesheet" href="./Styles/main.css" />
     <link rel="stylesheet" href="./Styles/navbar.css" />
     <link rel="stylesheet" href="./Styles/controls.css" />
     <link rel="stylesheet" href="./Styles/output.css" />
+    <link rel="stylesheet" href="./Styles/dialogs.css" />
     <link rel="stylesheet" href="./Styles/narrow.css" />
     <link rel="stylesheet" href="./Styles/themes.css" />
     <link rel="icon" href="https://conicgames.github.io/exponentialidle/assets/favicon/favicon.ico">
     <script>
       const defaultTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "classic";
       const state = JSON.parse(localStorage.getItem("simState") ?? `{}`);
-      const theme = (state && state.settings && state.settings.theme) ? state.settings.theme : defaultTheme
+      const theme = state?.settings?.theme ?? defaultTheme;
       document.documentElement.setAttribute("theme", theme);
     </script>
     <script defer type="module" src="./build/bundle.js"></script>
   </head>
+
   <body>
-    <div class="nav">
-      <div style="margin-top: auto; margin-bottom: 0.2rem">
-        <span style="font-size: 0.9rem">v3.0.0 (Alpha)</span>
-        <button style="margin-left: 1rem; cursor: pointer" class="settingsButtons">Changelog</button>
-        <button style="margin-left: 1rem; cursor: pointer" class="settingsButtons instructionsBtn">Instructions</button>
-        <button style="margin-left: 0.8rem" class="settingsBtn"></button>
+    <nav>
+      <div>
+        <span class="versionLabel">v3.0.0 (Alpha)</span>
+        <button class="navBtns">Changelog</button>
+        <button class="instructionsBtn navBtns">Instructions</button>
+        <button class="settingsBtn"></button>
       </div>
-      <h1 class="nav-title" style="font-family: Computer Modern Concrete; font-weight: 600">e<sup>x</sup> Theory simulator</h1>
-    </div>
+
+      <h1 class="nav-title">e<sup>x</sup> Theory simulator</h1>
+    </nav>
+
     <div class="content-wrapper">
-      <div class="controls">
+      <div class="baseControlsWrapper controlsWrapper hidden">
         <div>
-          <span class="description">Theory: </span>
-          <select class="theory"></select>
+          <span class="inputLabel">Theory: </span>
+          <select class="theorySelector"></select>
         </div>
-        <div id="stratSelectionWrapper">
-          <span class="description">Strat: </span>
-          <select class="strat">
+        <div class="stratSelectionWrapper">
+          <span class="inputLabel">Strat: </span>
+          <select class="stratSelector">
             <option value="Best Overall">Best Overall</option>
             <option value="Best Active">Best Active</option>
             <option value="Best Semi-Idle">Best Semi-Idle</option>
@@ -48,66 +51,66 @@
           </select>
         </div>
         <div>
-          <span class="description">Sigma: </span>
-          <input type="text" class="sigma" style="width: 3.5rem" placeholder="<number>" spellcheck="false" />
+          <span class="inputLabel">Sigma: </span>
+          <input type="text" class="sigmaInput" placeholder="<number>" spellcheck="false" />
         </div>
         <div>
-          <span class="description">Input: </span>
-          <input type="text" class="input" style="width: 5rem" placeholder="<rho>[r/t/m]>" spellcheck="false" />
+          <span class="inputLabel">Input: </span>
+          <input type="text" class="currencyInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
-        <div class="capWrapper">
-          <span class="description">Cap: </span>
-          <input type="text" class="cap" style="width: 5rem" placeholder="<rho>[r/t/m]>" spellcheck="false" />
+        <div class="capInputWrapper">
+          <span class="inputLabel">Cap: </span>
+          <input type="text" class="capInput" placeholder="<rho>[r/t/m]>" spellcheck="false" />
         </div>
       </div>
-      <div class="controls">
+      <div class="extraControlsWrapper controlsWrapper">
         <div>
-          <span class="description">Mode: </span>
-          <select class="mode"></select>
+          <span class="inputLabel">Mode: </span>
+          <select class="modeSelector"></select>
         </div>
-        <div class="hardCapWrapper" style="display: none">
-          <span class="description">Hard cap? </span>
-          <input style="position: relative; width: min(1rem, 5vw); outline: none" type="checkbox" class="hardCap" />
+        <div class="hardCapWrapper hidden">
+          <span class="inputLabel">Hard cap? </span>
+          <input class="hardCapToggle" type="checkbox" />
         </div>
-        <div class="extraInputs">
-          <span class="extraInputDescription" style="margin-right: 0.8rem">mode inputs</span>
-          <div class="simAllInputs">
-            <button class="saveDist">Save distribution</button>
-            <span style="font-size: 0.75rem">Semi-Idle: </span>
-            <input type="checkbox" class="semi-idle" style="position: relative" checked="true" />
-            <button class="getDist">Get distribution</button>
-            <span style="font-size: 0.75rem">Hard Active: </span>
-            <input type="checkbox" class="hard-active" style="position: relative" />
-            <button class="loadSave">Load save</button>
+        <div class="extraInputWrapper hidden">
+          <span class="extraInputDescription"></span>
+          <div class="simAllInputWrapper">
+            <button class="saveDistBtn">Save distribution</button>
+            <span class="simAllCheckboxLabel">Semi-Idle: </span>
+            <input class="semiIdleToggle" type="checkbox" checked="true" />
+            <button class="getDistBtn">Get distribution</button>
+            <span class="simAllCheckboxLabel">Very Active: </span>
+            <input class="hardActiveToggle" type="checkbox" />
+            <button class="loadSaveBtn">Load save</button>
           </div>
           <textarea class="simAllInputArea" cols="30" spellcheck="false"></textarea>
-          <textarea class="modeInput" cols="30" spellcheck="false"></textarea>
+          <textarea class="extraInput" cols="30" spellcheck="false"></textarea>
         </div>
-        <div class="timeDiffWrapper" style="display: none">
+        <div class="timeDiffWrapper hidden">
           <input type="text" class="timeDiffInput" />
           <input type="text" class="timeDiffInput" />
           <input type="text" class="timeDiffInput" />
           <table class="timeDiffTable"></table>
         </div>
       </div>
-      <div class="button-wrapper">
-        <button class="imageC">Copy Image</button>
-        <button class="imageD">Download Image</button>
-        <button class="csvD">Download CSV</button>
-        <button class="clear">Clear all results</button>
-        <button class="clearInput">Clear all inputs</button>
-        <button class="simulate">Simulate</button>
+      <div class="actionBar">
+        <button class="copyImageBtn">Copy Image</button>
+        <button class="downloadImageBtn">Download Image</button>
+        <button class="downloadCsvBtn">Download CSV</button>
+        <button class="clearResultsBtn">Clear all results</button>
+        <button class="clearInputsBtn">Clear all inputs</button>
+        <button class="simulateBtn">Simulate</button>
       </div>
-      <span class="output" style="display: block"></span>
+      <span class="log"></span>
       <table class="simTable">
         <thead><tr></tr></thead>
         <tbody></tbody>
       </table>
     </div>
     <dialog class="settings">
-      <h1 style="margin-bottom: 1.5rem">Sim settings</h1>
-      <button class="settingsCloseBtn">X</button>
-      <div class="sliderContainer" style="margin-bottom: 2rem">
+      <h1 class="dialogTitle">Sim settings</h1>
+      <button class="settingsCloseBtn dialogCloseBtn">X</button>
+      <div class="sliderContainer">
         <label for="dtSlider">dt:</label><br />
         <input type="range" class="dt" step="0.1" max="10" min="0" value="8.1943" id="dtSlider" />
         <span class="sliderOtp dtOtp">1.5</span> <br />
@@ -124,7 +127,7 @@
         <input type="range" class="boughtVarsDelta" step="1" min="5" max="30" value="5" id="boughtVarsDeltaSlider" />
         <span class="sliderOtp boughtVarsDeltaOtp">e5ρ</span><br />
 
-        <button class="resetSettings settingsButtons">Reset</button>
+        <button class="resetSettings navBtns">Reset</button>
       </div>
       <span>Theme: </span> <select class="themeSelector"></select><br /><br />
       <span>Strats simmed in "all" mode: </span> 
@@ -145,10 +148,10 @@
       <span>Generate a total purchase list: </span> <input type="checkbox" class="totalPurchaseList" /><br /><br />
     </dialog>
     <dialog class="boughtVars">
-      <button class="boughtVarsCloseBtn">X</button>
-      <div style="overflow: auto; max-height: 55vh; position: relative; padding-right: 1rem">
-        <table style="margin: 0">
-          <thead style="position: sticky; top: 0%; background-color: var(--dialog-bg)">
+      <button class="boughtVarsCloseBtn dialogCloseBtn">X</button>
+      <div class="boughtVarsTableWrapper">
+        <table>
+          <thead>
             <td>Variable</td>
             <td>Lvl</td>
             <td>Cost</td>
@@ -172,77 +175,111 @@
       </div>
     </dialog>
     <dialog class="instructions">
-      <h1 style="margin-bottom: 1.5rem">Instructions</h1>
-      <button class="instructionsCloseBtn">X</button>
-      <h2>About the sim:</h2>
-      <br>&nbsp;
-      <ul>
-        <li>
-          <strong>Mode:</strong> You can select from different modes allowing you to do more varied inputs. Each mode is described below:
-          <ul>
-            <li>
-              <strong>All:</strong> This will give you an input field where you can enter all of the values of your theories. The input order for your values will be : <br>
-              Sigma T1 T2 ... T7 T8 WSP SL ... BaP.<br> 
-              If you don't want to sim a theory, enter 0. <br /><br />
-              You also have the option to put an "r" or "m" at the end of each value. "r" means that it is a rho value, and will not be affected by rho/tau conversion. "m" means that the value is the total
-              multiplier (make sure to have maximum possible levels of r9 bought, because this will affect the result), and it will be automatically converted to rho. By default, all values are expected as tau.
-              <br />
-              <br /> Example: 95 230 50m 250 300 300 70m 250 200 7e100r
-              <br>&nbsp;
-            </li>
-            <li>
-              <strong>Single:</strong> You will sim one publish for a single theory using a single (or let it automatically find the best) strategy.
-              <br>&nbsp;
-            </li>
-            <li>
-              <strong>Chain:</strong> For Chain Sims, you are required to enter a value for "Cap." This sims every publish until it gets to your desired tau/rho. <br /> Hard Cap?: This button hard caps the
-              tau/rho to the cap you placed instead of simming the entire publication.
-              <br>&nbsp;
-            </li>
-            <li>
-              <strong>Step:</strong> A Variant of Chain that will sim in steps of n x tau/rho where n is any number.
-              <br>&nbsp;
-            </li>
-          </ul>
-        </li>
-        <li>
-          <strong>Changelog:</strong> See all the versions, changes, and updates to the sim.
-        </li>
-        <li>
-          <strong>Copy Image: </strong>This button will copy the output of the sim to your Clipboard
-        </li>
-        <li>
-          <strong>Download Image:</strong> This button will download a .png to your device, mobile or pc.
-        </li>
-        <li>
-          <strong>Clear Results: </strong>This will clear your last Sims results.
-        </li>
-        <li>
-          <strong>Simulate:</strong> "Execute order 66" aka, start simulating.
-        </li>
-        <li>
-          Below are explanations for what the different input fields do that are visible if you are not in "All" or "Time diff." mode:
-          <ul>
-            <li>
-              <strong>Theory:</strong> You can select a theory for you to simulate in this dropdown. This will allow you to sim only 1 theory at a time.
-            </li>
-            <li>
-              <strong>Strat:</strong> When simulating 1 sim at a time, you can select a strategy that you would like to use for the sim. This drop-down will have all known strategies that are effective.
-            </li>
-            <li>
-              <strong>Sigma:</strong> Generally, you would want to put your total students in here, but you can put any value in here. This is adaptive for R9, so if you enter students &lt; 65 you
-              will not have R9, or if you enter 65&lt;sigma&lt;75, you will have 1R9, etc.
-            </li>
-            <li>
-              <strong>Input:</strong> This is where you will enter your theory's rho/tau/multiplier. Accepted inputs are x.xxexxxx, xxxx or the value in log10. You can optionally put an r/t/m after the value,
-              to indicate whether it's a rho, tau or total multiplier value. Default is rho.
-            </li>
-            <li>
-              <strong>Cap:</strong> This is only used when you use chain or steps mode. This is a value for how far it will simulate. Same formats apply here as for Input.
-            </li>
-          </ul>
-        </li>
-      </ul>
+      <button class="instructionsCloseBtn dialogCloseBtn">X</button>
+      <h1 class="dialogTitle">Instructions</h1>
+      <div class="instructionsContent">
+        <h2>About the sim:</h2>
+        <br>&nbsp;
+        <ul>
+          <li>
+            <strong>Mode:</strong> 
+            You can select from different modes allowing you to do more varied inputs. 
+            Each mode is described below:
+            <ul>
+              <li>
+                <strong>All:</strong> 
+                This will give you an input field where you can enter all of the values of your theories. 
+                The input order for your values will be : <br>
+                Sigma T1 T2 ... T7 T8 WSP SL ... BaP.<br> 
+                If you don't want to sim a theory, enter 0. <br /><br />
+                You also have the option to put an "r" or "m" at the end of each value. 
+                "r" means that it is a rho value, and will not be affected by rho/tau conversion. 
+                "m" means that the value is the total multiplier 
+                (make sure to have maximum possible levels of r9 bought, because this will affect the result), 
+                and it will be automatically converted to rho. 
+                By default, all values are expected as tau.
+                <br />
+                <br /> Example: 95 230 50m 250 300 300 70m 250 200 7e100r
+                <br>&nbsp;
+              </li>
+              <li>
+                <strong>Single:</strong> 
+                You will sim one publish for a single theory using a single 
+                (or let it automatically find the best) strategy.
+                <br>&nbsp;
+              </li>
+              <li>
+                <strong>Chain:</strong> 
+                For Chain Sims, you are required to enter a value for "Cap." 
+                This sims every publish until it gets to your desired tau/rho. <br /> 
+                Hard Cap?: This button hard caps the tau/rho to the cap you placed 
+                instead of simming the entire publication.
+                <br>&nbsp;
+              </li>
+              <li>
+                <strong>Step:</strong> 
+                A Variant of Chain that will sim in steps of n x tau/rho where n is any number.
+                <br>&nbsp;
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Changelog:</strong> 
+            See all the versions, changes, and updates to the sim.
+          </li>
+          <li>
+            <strong>Copy Image: </strong>
+            This button will copy the output of the sim to your Clipboard
+          </li>
+          <li>
+            <strong>Download Image:</strong> 
+            This button will download a .png to your device, mobile or pc.
+          </li>
+          <li>
+            <strong>Clear Results: </strong>
+            This will clear your last Sims results.
+          </li>
+          <li>
+            <strong>Simulate:</strong> 
+            "Execute order 66" aka, start simulating.
+          </li>
+          <li>
+            Below are explanations for what the different input fields do 
+            that are visible if you are not in "All" or "Time diff." mode:
+            <ul>
+              <li>
+                <strong>Theory:</strong> 
+                You can select a theory for you to simulate in this dropdown. 
+                This will allow you to sim only 1 theory at a time.
+              </li>
+              <li>
+                <strong>Strat:</strong> 
+                When simulating 1 sim at a time, you can select a strategy that you would like to use for the sim. 
+                This drop-down will have all known strategies that are effective.
+              </li>
+              <li>
+                <strong>Sigma:</strong> 
+                Generally, you would want to put your total students in here, but you can put any value in here. 
+                This is adaptive for R9, so if you enter students &lt; 65 you will not have R9, 
+                or if you enter 65&lt;sigma&lt;75, you will have 1R9, etc.
+              </li>
+              <li>
+                <strong>Input:</strong> 
+                This is where you will enter your theory's rho/tau/multiplier. 
+                Accepted inputs are x.xxexxxx, xxxx or the value in log10. 
+                You can optionally put an r/t/m after the value, 
+                to indicate whether it's a rho, tau or total multiplier value. Default is rho.
+              </li>
+              <li>
+                <strong>Cap:</strong> 
+                This is only used when you use chain or steps mode. 
+                This is a value for how far it will simulate. Same formats apply here as for Input.
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      
     </dialog>
   </body>
 </html>
