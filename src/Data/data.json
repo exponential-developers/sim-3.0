@@ -858,6 +858,18 @@
           "stratFilterCondition": "Active || Very-Active"
         }
       }
+    },
+    "ILC": {
+      "tauFactor": 2,
+      "UI_visible":false,
+      "strats": {
+        "ILC": {
+          "stratFilterCondition": "true"
+        },
+        "ILCd": {
+          "stratFilterCondition": "Active || Very-Active"
+        }
+      }
     }
   },
   "stratCategories": ["Best Overall", "Best Active", "Best Semi-Idle", "Best Idle"],
