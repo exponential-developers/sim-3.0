@@ -26,7 +26,6 @@ import bd from "../Theories/Unofficial-CTs/BD";
 import ilc from "../Theories/Unofficial-CTs/ILC";
 import UI from "../UI/elements";
 
-const output = qs(".output");
 
 const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResult>) } = {
     T1: t1,

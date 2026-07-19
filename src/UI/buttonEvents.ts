@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import { qs, qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, animateButton, hide, show } from "../Utils/DOMhelpers";
+import { qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, animateButton, hide, show } from "../Utils/DOMhelpers";
 import UI from "./elements";
 import { refreshDOMEventLoop } from "../Utils/helpers";
 
