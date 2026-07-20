@@ -834,25 +834,25 @@
       "UI_visible": false,
       "strats": {
         "FS": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "Idle"
         },
         "FSCoast": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "!Idle && rho < 13"
         },
         "FSd": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "false"
         },
         "FSdCoast": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "Very-Active && rho < 13"
         },
         "FSStopNM": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "false"
         },
         "FSStopNMCoast": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "!Idle"
         },
         "FSdStopNM": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "false"
         },
         "FSdStopNMCoast": {
           "stratFilterCondition": "Very-Active"

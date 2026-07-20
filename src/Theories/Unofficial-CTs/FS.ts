@@ -85,73 +85,57 @@ class SequenceCost extends BaseCost {
 export default async function fs(data: theoryData): Promise<simResult> {
   let res;
   if (data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
-
-    const sim1 = new fsSim(data2);
-    const res1 = await sim1.simulate();
-    const lastC1 = getLastLevel("c1", res1.boughtVars);
-    let lastN = getLastLevel("n", res1.boughtVars);
-    let lastM = getLastLevel("m", res1.boughtVars);
+    let initialSim = new fsSim(data);
+    let initialRes = await initialSim.simulate();
+    let lastN = getLastLevel("n", initialRes.boughtVars.slice(0, getLastIndex("c3", initialRes.boughtVars)));
+    let lastM = getLastLevel("m", initialRes.boughtVars.slice(0, getLastIndex("c4", initialRes.boughtVars)));
     if (data.strat.includes("StopNM")) {
-      lastN = getLastLevel("n", res1.boughtVars.slice(0, getLastIndex("c3", res1.boughtVars)));
-      lastM = getLastLevel("m", res1.boughtVars.slice(0, getLastIndex("c4", res1.boughtVars)));
+      let newLastN = lastN;
+      let newLastM = lastM;
 
-      let sim2 = new fsSim(data);
-      sim2.variables[2].setOriginalCap(lastN);
-      sim2.variables[3].setOriginalCap(lastM);
-      res = await sim2.simulate();
-      let lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
-      let lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
-
-      while (lastM != lastM1 || lastN != lastN1) {
-        lastN = lastN1;
-        lastM = lastM1;
-        sim2 = new fsSim(data);
-        sim2.variables[2].setOriginalCap(lastN);
-        sim2.variables[3].setOriginalCap(lastM);
-        res = await sim2.simulate();
-        lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
-        lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+      do {
+        lastN = newLastN;
+        lastM = newLastM;
+        initialSim = new fsSim(data);
+        initialSim.variables[2].setOriginalCap(lastN);
+        initialSim.variables[3].setOriginalCap(lastM);
+        initialRes = await initialSim.simulate();
+        newLastN = getLastLevel("n", initialRes.boughtVars.slice(0, getLastIndex("c3", initialRes.boughtVars)));
+        newLastM = getLastLevel("m", initialRes.boughtVars.slice(0, getLastIndex("c4", initialRes.boughtVars)));
       }
-
-      lastN = lastN1;
-      lastM = lastM1;
+      while (lastM != newLastM || lastN != newLastN)
     }
+
+    const lastC1 = getLastLevel("c1", initialRes.boughtVars);
 
     let sim = new fsSim(data);
     sim.variables[0].setOriginalCap(lastC1);
     // Max is
-    sim.variables[0].configureCap(13);
+    sim.variables[0].configureCap(8);
     sim.variables[2].setOriginalCap(lastN);
     sim.variables[3].setOriginalCap(lastM);
     res = await sim.simulate();
   } else if (data.strat.includes("StopNM")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("StopNM", "");
-
-    const sim1 = new fsSim(data2);
-    const res1 = await sim1.simulate();
-    let lastN = getLastLevel("n", res1.boughtVars.slice(0, getLastIndex("c3", res1.boughtVars)));
-    let lastM = getLastLevel("m", res1.boughtVars.slice(0, getLastIndex("c4", res1.boughtVars)));
-
     let sim = new fsSim(data);
-    sim.variables[2].setOriginalCap(lastN);
-    sim.variables[3].setOriginalCap(lastM);
     res = await sim.simulate();
-    let lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
-    let lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+    let lastN = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
+    let lastM = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
 
-    while (lastM != lastM1 || lastN != lastN1) {
-      lastN = lastN1;
-      lastM = lastM1;
+    let newLastN = lastN;
+    let newLastM = lastM;
+    do {
+      lastN = newLastN;
+      lastM = newLastM;
       sim = new fsSim(data);
       sim.variables[2].setOriginalCap(lastN);
       sim.variables[3].setOriginalCap(lastM);
       res = await sim.simulate();
-      lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
-      lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+      newLastN = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
+      newLastM = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
     }
+    while (lastM != newLastM || lastN != newLastN)
+
+    return res;
 
   } else {
     const sim = new fsSim(data);
@@ -383,8 +367,9 @@ class fsSim extends theoryClass<theory> {
     this.trimBoughtVars();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
     let varCaps = "";
+    const mString = this.milestones[1] > 1 ? `M: ${lastLevels[3]}` : "";
     varCaps += this.strat.includes("Coast") ? ` c1: ${lastLevels[0]}` : "" ;
-    varCaps += this.strat.includes("StopNM") ? ` N: ${lastLevels[2]} M: ${lastLevels[3]}` : "" ;
+    varCaps += this.strat.includes("StopNM") ? ` N: ${lastLevels[2]}` + mString : "" ;
     return getBestResult(this.createResult(varCaps), this.bestForkRes);
   }
 
@@ -425,7 +410,8 @@ class fsSim extends theoryClass<theory> {
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached() 
     ) {
-      this.variables[id].shouldFork = true;
+      if (this.variables[id].level > this.variables[id].originalCap + 5) this.variables[id].stopBuying()
+      else this.variables[id].shouldFork = true;
     }
   }
   copyFrom(other: this) {
