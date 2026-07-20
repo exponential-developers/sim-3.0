@@ -154,41 +154,34 @@ class fsSim extends theoryClass<theory> {
   targetPubRho: number;
 
   getBuyingConditions(): conditionFunction[] {
-    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      FS: new Array(10).fill(true),
-      FSCoast: [
-        () => this.variables[0].shouldBuy,
-        ...new Array(9).fill(true)
-      ],
-      FSd: [
-        //c1 mod 13
+    const dStrat = toCallables([
+      //c1 mod 13
         () => this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
         true, //c2
         () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
         () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
         true, //c3
         //f1 mod 34
-        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
+        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) 
+            < Math.min(this.variables[4].cost, this.milestones[2] > 1 ? this.variables[6].cost : Infinity), //f1
         () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
         //l1 mod 47
-        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
+        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) 
+            < Math.min(this.variables[9].cost, this.milestones[3] > 1 ? this.variables[8].cost : Infinity), //l1
         () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
         true, //c4
+    ]);
+    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+      FS: new Array(10).fill(true),
+      FSCoast: [
+        () => this.variables[0].shouldBuy,
+        ...new Array(9).fill(true)
       ],
+      FSd: dStrat,
       FSdCoast: [
         //c1 mod 13
-        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
-        true, //c2
-        () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
-        () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
-        true, //c3
-        //f1 mod 34
-        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
-        () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
-        //l1 mod 47
-        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
-        () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
-        true, //c4
+        () => this.variables[0].shouldBuy && dStrat[0](),
+        ...dStrat.slice(1)
       ],
       FSStopNM: [
         true,
@@ -206,33 +199,19 @@ class fsSim extends theoryClass<theory> {
       ],
       FSdStopNM: [
         //c1 mod 13
-        () => this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
+        () => dStrat[0](), //c1
         true, //c2
-        () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.variables[2].underOriginalCap() && this.milestones[0] > 0, //n
-        () => this.variables[3].cost + l10(2) < this.variables[1].cost && this.variables[3].underOriginalCap(), //m
-        true, //c3
-        //f1 mod 34
-        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
-        () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
-        //l1 mod 47
-        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
-        () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
-        true, //c4
+        () => dStrat[2]() && this.variables[2].underOriginalCap(), //n
+        () => dStrat[3]() && this.variables[3].underOriginalCap(), //m
+        ...dStrat.slice(4)
       ],
       FSdStopNMCoast: [
         //c1 mod 13
-        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
+        () => this.variables[0].shouldBuy && dStrat[0](), //c1
         true, //c2
-        () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.variables[2].underOriginalCap() && this.milestones[0] > 0, //n
-        () => this.variables[3].cost + l10(2) < this.variables[1].cost && this.variables[3].underOriginalCap(), //m
-        true, //c3
-        //f1 mod 34
-        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
-        () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
-        //l1 mod 47
-        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
-        () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
-        true, //c4
+        () => dStrat[2]() && this.variables[2].underOriginalCap(), //n
+        () => dStrat[3]() && this.variables[3].underOriginalCap(), //m
+        ...dStrat.slice(4)
       ],
     };
     return toCallables(conditions[this.strat]);
