@@ -77,7 +77,7 @@ export function getTableHeaders(tableType: "single" | "all" | "all_one", headerT
   }
   else {
     let headers = [
-      '<span style="padding-inline: 0.5rem">Theory</span>',
+      headerType === "html" ? '<span style="padding-inline: 0.5rem">Theory</span>' : 'Theory',
       headerType === "html" ? sigma_t : "σ",
       'Last Pub',
       'Max Rho',
