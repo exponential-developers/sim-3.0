@@ -170,52 +170,42 @@ class fsSim extends theoryClass<theory> {
   targetPubRho: number;
 
   getBuyingConditions(): conditionFunction[] {
-    const fsd = [
-      //c1 mod 13
-      () => this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
-      true, //c2
-      () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
-      () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
-      true, //c3
-      //f1 mod 34
-      () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
-      () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
-      //l1 mod 47
-      () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
-      () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
-      true, //c4
-    ];
-    // poorly done fix for FSd breaking at 3.79e10 rho for some reason
-    if (this.lastPub > 10.575 && this.lastPub < 10.58) {
-        fsd[2] = true;
-    };
-    const fsdCoast = [
-      //c1 mod 13
-      () => this.variables[0].shouldBuy && this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
-      true, //c2
-      () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
-      () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
-      true, //c3
-      //f1 mod 34
-      () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
-      () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
-      //l1 mod 47
-      () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
-      () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
-      true, //c4
-    ];
-    // poorly done fix for FSd breaking at 3.79e10 rho for some reason
-    if (this.lastPub > 10.575 && this.lastPub < 10.58) {
-        fsdCoast[2] = true;
-    };
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FS: new Array(10).fill(true),
       FSCoast: [
         () => this.variables[0].shouldBuy,
         ...new Array(9).fill(true)
       ],
-      FSd: fsd,
-      FSdCoast: fsdCoast,
+      FSd: [
+        //c1 mod 13
+        () => this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
+        true, //c2
+        () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
+        () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
+        true, //c3
+        //f1 mod 34
+        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
+        () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
+        //l1 mod 47
+        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
+        () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
+        true, //c4
+      ],
+      FSdCoast: [
+        //c1 mod 13
+        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
+        true, //c2
+        () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
+        () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
+        true, //c3
+        //f1 mod 34
+        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
+        () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
+        //l1 mod 47
+        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
+        () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
+        true, //c4
+      ],
       FSStopNM: [
         true,
         true,
@@ -391,6 +381,7 @@ class fsSim extends theoryClass<theory> {
   }
 
   async simulate(): Promise<simResult> {
+    if (this.lastPub < 13) this.simEndConditions = [() => this.t > this.pubT * 4];
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
