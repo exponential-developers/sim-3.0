@@ -836,13 +836,25 @@
         "FS": {
           "stratFilterCondition": "true"
         },
+        "FSCoast": {
+          "stratFilterCondition": "true"
+        },
         "FSd": {
+          "stratFilterCondition": "Very-Active"
+        },
+        "FSdCoast": {
           "stratFilterCondition": "Very-Active"
         },
         "FSStopNM": {
           "stratFilterCondition": "true"
         },
+        "FSStopNMCoast": {
+          "stratFilterCondition": "true"
+        },
         "FSdStopNM": {
+          "stratFilterCondition": "Very-Active"
+        },
+        "FSdStopNMCoast": {
           "stratFilterCondition": "Very-Active"
         }
       }
