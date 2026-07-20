@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
-import { add, binaryInsertionSearch, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import { add, getBestResult, binaryInsertionSearch, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
@@ -122,7 +122,7 @@ export default async function fs(data: theoryData): Promise<simResult> {
     let sim = new fsSim(data);
     sim.variables[0].setOriginalCap(lastC1);
     // Max is
-    sim.variables[0].configureCap(4);
+    sim.variables[0].configureCap(13);
     sim.variables[2].setOriginalCap(lastN);
     sim.variables[3].setOriginalCap(lastM);
     res = await sim.simulate();
@@ -397,14 +397,14 @@ class fsSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      if(this.variables[0].shouldFork) await this.doForkVariable(0);      
     }
     this.trimBoughtVars();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
     let varCaps = "";
     varCaps += this.strat.includes("Coast") ? ` c1: ${lastLevels[0]}` : "" ;
     varCaps += this.strat.includes("StopNM") ? ` N: ${lastLevels[2]} M: ${lastLevels[3]}` : "" ;
-    return this.createResult(varCaps);
+    return getBestResult(this.createResult(varCaps), this.bestForkRes);
   }
 
   tick() {
@@ -449,8 +449,8 @@ class fsSim extends theoryClass<theory> {
   }
   copyFrom(other: this) {
     super.copyFrom(other);
-    this.F = other.F;
-    this.L = other.L;
+    this.F = other.F.copy();
+    this.L = other.L.copy();
     this.tVar = other.tVar;
     this.targetPubRho = other.targetPubRho;
   }
