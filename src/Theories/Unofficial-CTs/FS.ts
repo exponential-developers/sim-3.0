@@ -84,7 +84,49 @@ class SequenceCost extends BaseCost {
 
 export default async function fs(data: theoryData): Promise<simResult> {
   let res;
-  if (data.strat.includes("StopNM")) {
+  if (data.strat.includes("Coast")) {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "");
+
+    const sim1 = new fsSim(data2);
+    const res1 = await sim1.simulate();
+    const lastC1 = getLastLevel("c1", res1.boughtVars);
+    let lastN = getLastLevel("n", res1.boughtVars);
+    let lastM = getLastLevel("m", res1.boughtVars);
+    if (data.strat.includes("StopNM")) {
+      lastN = getLastLevel("n", res1.boughtVars.slice(0, getLastIndex("c3", res1.boughtVars)));
+      lastM = getLastLevel("m", res1.boughtVars.slice(0, getLastIndex("c4", res1.boughtVars)));
+
+      let sim2 = new fsSim(data);
+      sim2.variables[2].setOriginalCap(lastN);
+      sim2.variables[3].setOriginalCap(lastM);
+      res = await sim2.simulate();
+      let lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
+      let lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+
+      while (lastM != lastM1 || lastN != lastN1) {
+        lastN = lastN1;
+        lastM = lastM1;
+        sim2 = new fsSim(data);
+        sim2.variables[2].setOriginalCap(lastN);
+        sim2.variables[3].setOriginalCap(lastM);
+        res = await sim2.simulate();
+        lastN1 = getLastLevel("n", res.boughtVars.slice(0, getLastIndex("c3", res.boughtVars)));
+        lastM1 = getLastLevel("m", res.boughtVars.slice(0, getLastIndex("c4", res.boughtVars)));
+      }
+
+      lastN = lastN1;
+      lastM = lastM1;
+    }
+
+    let sim = new fsSim(data);
+    sim.variables[0].setOriginalCap(lastC1);
+    // Max is
+    sim.variables[0].configureCap(4);
+    sim.variables[2].setOriginalCap(lastN);
+    sim.variables[3].setOriginalCap(lastM);
+    res = await sim.simulate();
+  } else if (data.strat.includes("StopNM")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
     data2.strat = data2.strat.replace("StopNM", "");
 
@@ -147,11 +189,42 @@ class fsSim extends theoryClass<theory> {
     if (this.lastPub > 10.575 && this.lastPub < 10.58) {
         fsd[2] = true;
     };
+    const fsdCoast = [
+      //c1 mod 13
+      () => this.variables[0].shouldBuy && this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
+      true, //c2
+      () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.milestones[0] > 0, //n
+      () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
+      true, //c3
+      //f1 mod 34
+      () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
+      () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
+      //l1 mod 47
+      () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
+      () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
+      true, //c4
+    ];
+    // poorly done fix for FSd breaking at 3.79e10 rho for some reason
+    if (this.lastPub > 10.575 && this.lastPub < 10.58) {
+        fsdCoast[2] = true;
+    };
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FS: new Array(10).fill(true),
+      FSCoast: [
+        () => this.variables[0].shouldBuy,
+        ...new Array(9).fill(true)
+      ],
       FSd: fsd,
+      FSdCoast: fsdCoast,
       FSStopNM: [
         true,
+        true,
+        () => this.variables[2].underOriginalCap(),
+        () => this.variables[3].underOriginalCap(),
+        ...new Array(6).fill(true)
+      ],
+      FSStopNMCoast: [
+        () => this.variables[0].shouldBuy,
         true,
         () => this.variables[2].underOriginalCap(),
         () => this.variables[3].underOriginalCap(),
@@ -160,6 +233,21 @@ class fsSim extends theoryClass<theory> {
       FSdStopNM: [
         //c1 mod 13
         () => this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
+        true, //c2
+        () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.variables[2].underOriginalCap() && this.milestones[0] > 0, //n
+        () => this.variables[3].cost + l10(2) < this.variables[1].cost && this.variables[3].underOriginalCap(), //m
+        true, //c3
+        //f1 mod 34
+        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) < Math.min(this.variables[4].cost, this.variables[6].cost), //f1
+        () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
+        //l1 mod 47
+        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) < Math.min(this.variables[8].cost, this.variables[9].cost), //l1
+        () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
+        true, //c4
+      ],
+      FSdStopNMCoast: [
+        //c1 mod 13
+        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(1 + (this.variables[0].level % 13) / 2) < this.variables[1].cost, //c1
         true, //c2
         () => this.variables[2].cost + l10(2) < this.variables[1].cost && this.variables[2].underOriginalCap() && this.milestones[0] > 0, //n
         () => this.variables[3].cost + l10(2) < this.variables[1].cost && this.variables[3].underOriginalCap(), //m
@@ -309,14 +397,14 @@ class fsSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
+      if(this.variables[0].shouldFork) await this.doForkVariable(0);
     }
     this.trimBoughtVars();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
-    return this.createResult(
-      this.strat.includes("StopNM")
-        ? ` N: ${lastLevels[2]} M: ${lastLevels[3]}`
-        : ""
-    );
+    let varCaps = "";
+    varCaps += this.strat.includes("Coast") ? ` c1: ${lastLevels[0]}` : "" ;
+    varCaps += this.strat.includes("StopNM") ? ` N: ${lastLevels[2]} M: ${lastLevels[3]}` : "" ;
+    return this.createResult(varCaps);
   }
 
   tick() {
@@ -347,5 +435,28 @@ class fsSim extends theoryClass<theory> {
       if (this.milestones[3] > 1) lMultiplier += this.variables[8].value;
       this.L.add(lucasLog + lMultiplier + this.totMult + logdt);
     }
+  }
+
+  onVariablePurchased(id: number): void {
+    if(
+        id === 0 &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached() 
+    ) {
+      this.variables[id].shouldFork = true;
+    }
+  }
+  copyFrom(other: this) {
+    super.copyFrom(other);
+    this.F = other.F;
+    this.L = other.L;
+    this.tVar = other.tVar;
+    this.targetPubRho = other.targetPubRho;
+  }
+  copy() {
+    let sim = new fsSim(this.getDataForCopy());
+    sim.copyFrom(this);
+    return sim;
   }
 }
