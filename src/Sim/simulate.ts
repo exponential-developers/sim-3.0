@@ -67,7 +67,8 @@ async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
             recovery: null,
             cap: query.cap ?? null,
             recursionValue: null,
-            settings: query.settings
+            settings: query.settings,
+            theorySpecificInputs: query.theorySpecificInputs
         }
         const res = await simFunction[query.theory](data);
         bestRes = getBestResult(bestRes, res);

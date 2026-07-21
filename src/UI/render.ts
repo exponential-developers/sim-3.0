@@ -5,6 +5,7 @@ import { getSimState } from "./simState";
 import UI from "./elements";
 
 const theories = Object.keys(data.theories) as theoryType[];
+const theoryData = data.theories as TheoryDataStructure;
 
 /** Populates a select element with the given items */
 function populateSelectElement(select: HTMLSelectElement, items: string[], clear = true) {
@@ -18,7 +19,7 @@ function populateSelectElement(select: HTMLSelectElement, items: string[], clear
 }
 function populateTheoryList(showUnofficials: boolean) {
   populateSelectElement(UI.controls.theorySelector, theories.filter(theory => 
-    (data.theories as TheoryDataStructure)[theory].UI_visible !== false || showUnofficials));
+    theoryData[theory].UI_visible !== false || showUnofficials));
 }
 
 //Renders theories, strats and modes options on page load
@@ -67,6 +68,29 @@ function populateSingleSimFields(rewriteCurrency: boolean = false): void {
   }
 }
 
+function createSpecificInputForTheory(theory: theoryType) {
+  const inputs = theoryData[theory].theorySpecificInputs;
+  if (inputs) {
+    for (let input of inputs) {
+      const div = ce<HTMLDivElement>("div");
+      div.innerHTML = `
+          <span class="inputLabel">${input}: </span>
+          <input type="text" spellcheck="false" theory="${theory}"/>
+      `;
+      div.setAttribute("theory", theory);
+      UI.controls.theorySpecificInputWrapper.appendChild(div);
+    }
+  }
+}
+
+function updateTheorySpecificInputs(): void {
+  removeAllChilds(UI.controls.theorySpecificInputWrapper);
+  if (UI.controls.modeSelector.value === "Single sim") {
+    const currentTheory = UI.controls.theorySelector.value as theoryType;
+    createSpecificInputForTheory(currentTheory);
+  }
+}
+
 function modeUpdate(): void {
   const newMode = UI.controls.modeSelector.value;
 
@@ -109,15 +133,17 @@ function modeUpdate(): void {
   if (newMode === "Time diff.") show(UI.controls.timeDiffWrapper);
 
   populateSingleSimFields();
+  updateTheorySpecificInputs();
 }
 
 function theoryUpdate() {
   const currentTheory = UI.controls.theorySelector.value as theoryType;
   const currentTheoryStrats = Object.keys(data.theories[currentTheory].strats).filter(
-    (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
+    (strat) => theoryData[currentTheory].strats[strat].UI_visible !== false
   );
   populateSelectElement(UI.controls.stratSelector, data.stratCategories.concat(currentTheoryStrats));
   populateSingleSimFields(true);
+  updateTheorySpecificInputs();
 }
 
 function themeUpdate() {

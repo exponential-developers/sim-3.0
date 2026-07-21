@@ -1,4 +1,4 @@
-import { qs } from "../Utils/DOMhelpers";
+import { qs, qsa } from "../Utils/DOMhelpers";
 
 const UI = {
     nav: {
@@ -25,6 +25,13 @@ const UI = {
 
         extraInputWrapper: qs(".extraInputWrapper"),
         extraInputDesc: qs(".extraInputDescription"),
+
+        theorySpecificInputWrapper: qs(".theorySpecificInputWrapper"),
+        theorySpecificInputs: (theory?: theoryType) => {
+            return theory 
+            ? qsa(`.theorySpecificInputWrapper > div[theory="${theory}"]`)
+            : qsa(`.theorySpecificInputWrapper > div`)
+        },
 
         simAllInputWrapper: qs(".simAllInputWrapper"),
         saveDistBtn: qs<HTMLButtonElement>(".saveDistBtn"),

@@ -8,16 +8,22 @@
   margin-top: 1.5rem;
 }
 .controlsWrapper input,
-.controlsWrapper select {
+.controlsWrapper select,
+.theorySpecificInputWrapper input {
   font-size: 0.75rem;
   background-color: var(--input-bg);
   color: var(--input-f-clr);
   border-color: var(--btn-border-clr);
 }
 
-.controlsWrapper input[type="text"] {
+.controlsWrapper input[type="text"],
+.theorySpecificInputWrapper input[type="text"] {
   border: none;
   outline: 1px solid var(--btn-border-clr);
+}
+
+.theorySpecificInputWrapper > div {
+  margin-top: 0.5rem;
 }
 
 .sigmaInput {
@@ -54,6 +60,12 @@
 }
 .timeDiffWrapper input {
   width: 20rem;
+}
+
+.theorySpecificInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 /* Action bar */

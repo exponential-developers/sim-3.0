@@ -65,6 +65,16 @@ function parseSigma(required: boolean): number {
     }
 }
 
+function parseTheorySpecificInputs(theory?: theoryType): string[] {
+    let res: string[] = [];
+
+    UI.controls.theorySpecificInputs(theory).forEach((div) => {
+        res.push(div.querySelector<HTMLInputElement>("input")?.value ?? '');
+    })
+
+    return res;
+}
+
 function parseSingleSim(): SingleSimQuery {
     const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
@@ -75,7 +85,8 @@ function parseSingleSim(): SingleSimQuery {
         strat: UI.controls.stratSelector.value,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
-        settings: parseSettings()
+        settings: parseSettings(),
+        theorySpecificInputs: parseTheorySpecificInputs()
     }
 }
 

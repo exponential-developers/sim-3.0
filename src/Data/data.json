@@ -813,6 +813,7 @@
     },
     "TC": {
       "tauFactor": 0.45,
+      "theorySpecificInputs": ["Achievement count"],
       "UI_visible":false,
       "strats": {
         "TC": {

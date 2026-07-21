@@ -11,6 +11,7 @@ declare global {
   type TheoryDataStructure = {
     [key: string]: {
       tauFactor: number;
+      theorySpecificInputs?: string[];
       UI_visible?: boolean;
       strats: {
         [key: string]: {
@@ -25,6 +26,7 @@ declare global {
   type BaseSimQuery = {
     sigma: number;
     settings: Settings;
+    theorySpecificInputs?: string[];
   }
 
   type SingleSimQuery = BaseSimQuery & {
@@ -149,6 +151,7 @@ declare global {
     cap: null | number;
     recursionValue: null | number | number[];
     settings: Settings;
+    theorySpecificInputs?: string[];
   }
 
   type SettingsSimAllStratsMode = "all" | "active" | "idle";

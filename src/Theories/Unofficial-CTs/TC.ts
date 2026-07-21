@@ -6,6 +6,13 @@ import { ExponentialCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 export default async function tc(data: theoryData): Promise<simResult> {
+  if (data.theorySpecificInputs) {
+    const validate = tcSim.validateTheorySpecificInputs(data.theorySpecificInputs);
+    if (validate !== true) {
+      throw new Error(validate);
+    }
+  }
+
   let res;
   if (data.strat.includes("Coast")) {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
@@ -74,6 +81,16 @@ class tcSim extends theoryClass<theory> {
   T: number;
   setPoint: number;
   targetT: number;
+
+  static validateTheorySpecificInputs(values: string[]): true | string {
+    if (values.length !== 1) return `Expected 1 value, got ${values.length}`;
+    const val = values[0].trim();
+    if (val === '') return true;
+    if (!/[0-9]*/.test(values[0])) return `Invalid value ${val}. Expected a number between 0 and 18.`;
+    const num = Number(val);
+    if (num < 0 || num > 18) return `Invalid value ${val}. Expected a number between 0 and 18.`;
+    return true;
+  }
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -159,6 +176,9 @@ class tcSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
+  estimateAchievementMultiplier() {
+    return this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
+  }
   constructor(data: theoryData) {
     super(data);
     this.totMult = this.getTotMult(data.rho);
@@ -185,7 +205,9 @@ class tcSim extends theoryClass<theory> {
     this.targetT = Math.round(rng * (120 - 60) + 60);
     this.setPoint = pidSettings[3];
 
-    this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
+    this.achievementMulti = data.theorySpecificInputs && /[0-9]+/.test(data.theorySpecificInputs[0])
+      ? Math.pow(30, 1 / 18 * Number(data.theorySpecificInputs[0])) 
+      : this.estimateAchievementMultiplier();
     this.pubUnlock = 8;
     this.variables = [
       new Variable({ name: "c1", cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
