@@ -34,7 +34,6 @@ function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
         const theory = getTheoryFromIndex(i);
         if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) { return val; }
         if (theory === "EF" && query.settings.showA23 !== cachedQuery.settings.showA23) { return val; }
-        if (theory === "MF" && query.settings.mfResetDepth !== cachedQuery.settings.mfResetDepth) { return val; }
         if (val == cachedQuery.values[i]) { return -5; }
         return val;
     })

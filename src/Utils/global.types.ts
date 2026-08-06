@@ -156,7 +156,6 @@ declare global {
   type Settings = {
     dt: number;
     ddt: number;
-    mfResetDepth: number;
     boughtVarsDelta: number;
     theme: string;
     simAllStrats: SettingsSimAllStratsMode;
@@ -164,6 +163,7 @@ declare global {
     showA23: boolean;
     showUnofficials: boolean;
     totalPurchaseList: boolean;
+    ctSettings: Map<string, any>;
   }
 
   interface simResult {

@@ -4,6 +4,8 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
+import { ParametersBuilder } from "../../UI/ctSettings";
+import { parseInteger } from "../../Sim/parse";
 
 // Bruteforce strength
 type theory = "MF";
@@ -17,6 +19,23 @@ const depthConvert = [
     45, // depth == 5
 ]
 // Bruteforce strength END
+
+export function applyCustomSettings(builder: ParametersBuilder) {
+  builder.addInputButton({
+    id: "depth",
+    text: "Depth",
+    placeholder: "<0..5>",
+    parse: (input) => {
+      const errorMessage = "Depth must be an integer that's >= 0 and <= 5.";
+      let result = parseInteger(input, errorMessage);
+
+      if (result.errorMessage !== undefined || result.value < 0 || result.value > 5)
+        return { value: undefined, errorMessage };
+
+      return result;
+    },
+  });
+}
 
 // Reset
 export default async function mf(data: theoryData): Promise<simResult> {
@@ -494,7 +513,7 @@ class mfSim extends theoryClass<theory> {
 
   constructor(data: theoryData, resetBundle: resetBundle) {
     super(data);
-    this.mfResetDepth = this.settings.mfResetDepth;
+    this.mfResetDepth = this.settings.ctSettings.get("depth");
     this.c = 0;
     this.x = 0;
     this.i = 0;

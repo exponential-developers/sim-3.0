@@ -1,19 +1,20 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
 import UI from "../UI/elements";
+import { parseCustomTheorySettings } from "../UI/ctSettings";
 
 export function parseSettings(): Settings {
     return {
         dt: parseFloat(UI.settings.dtOtp.textContent ?? "1.5"),
         ddt: parseFloat(UI.settings.ddtOtp.textContent ?? "1.0001"),
-        mfResetDepth: parseInt(UI.settings.mfDepthOtp.textContent ?? "0"),
         boughtVarsDelta: parseInt(UI.settings.boughtVarsDeltaSlider.value),
         theme: UI.settings.themeSelector.value,
         simAllStrats: UI.settings.simAllStrats.value as SettingsSimAllStratsMode,
         completedCTs: UI.settings.completedCTs.value as SettingsCompletedCTsMode,
         showA23: UI.settings.showA23.checked,
         showUnofficials: UI.settings.showUnofficials.checked,
-        totalPurchaseList: UI.settings.totalPurchaseList.checked
+        totalPurchaseList: UI.settings.totalPurchaseList.checked,
+        ctSettings: parseCustomTheorySettings(),
     }
 }
 
@@ -63,6 +64,15 @@ function parseSigma(required: boolean): number {
         }
         return 0;
     }
+}
+
+export function parseInteger(input: string, errorMessage: string): { value: any, errorMessage?: string } {
+    const value = parseInt(input);
+
+    if (Number.isNaN(value) || value !== parseFloat(input))
+        return { value: null, errorMessage: errorMessage };
+
+    return { value };
 }
 
 function parseSingleSim(): SingleSimQuery {

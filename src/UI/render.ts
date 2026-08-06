@@ -3,6 +3,7 @@ import { findIndex, getIndexFromTheory } from "../Utils/helpers";
 import { event, ce, removeAllChilds, hide, show } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
 import UI from "./elements";
+import { applyCustomTheoryParameters } from "./ctSettings";
 
 const theories = Object.keys(data.theories) as theoryType[];
 
@@ -118,6 +119,7 @@ function theoryUpdate() {
   );
   populateSelectElement(UI.controls.stratSelector, data.stratCategories.concat(currentTheoryStrats));
   populateSingleSimFields(true);
+  applyCustomTheoryParameters(currentTheory);
 }
 
 function themeUpdate() {
