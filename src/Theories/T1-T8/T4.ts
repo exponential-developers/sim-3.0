@@ -82,31 +82,31 @@ class t4Sim extends theoryClass<theory> {
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
       T4C3dC12rcv: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
-        () => this.maxRho < this.lastPub, 
-        true, 
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub,
+        () => this.maxRho < this.lastPub,
+        true,
         ...new Array(3).fill(false),
-        () => this.variables[6].cost + 1 < this.variables[7].cost, 
+        () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
       T4C356dC12rcv: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
-        () => this.maxRho < this.lastPub, 
-        true, 
-        false, 
-        true, 
-        true, 
-        () => this.variables[6].cost + 1 < this.variables[7].cost, 
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub,
+        () => this.maxRho < this.lastPub,
+        true,
+        false,
+        true,
+        true,
+        () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
       T4C456dC12rcvMS: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub, 
-        () => this.maxRho < this.lastPub, 
-        false, 
-        true, 
-        true, 
-        true, 
-        () => this.variables[6].cost + 1 < this.variables[7].cost, 
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub,
+        () => this.maxRho < this.lastPub,
+        false,
+        true,
+        true,
+        true,
+        () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
       T4C123d: [() => this.variables[0].cost + 1 < this.variables[1].cost, true, true, false, false, false, () => this.variables[6].cost + 1 < this.variables[7].cost, true],
@@ -115,6 +115,15 @@ class t4Sim extends theoryClass<theory> {
       T4C12: [true, true, ...new Array(6).fill(false)],
       T4C56: [...new Array(4).fill(false), true, true, true, true],
       T4C4: [...new Array(3).fill(false), true, false, false, true, true],
+      T4C4d: [
+        ...new Array(3).fill(false),
+        true,
+        false,
+        false,
+        () =>
+            this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[3].cost),
+        () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[3].cost,
+      ],
       T4C5: [...new Array(4).fill(false), true, false, true, true],
       T4: new Array(8).fill(true),
     };
@@ -122,13 +131,13 @@ class t4Sim extends theoryClass<theory> {
   }
   getVariableAvailability() {
     const conditions: conditionFunction[] = [
-      () => true, 
-      () => true, 
-      () => true, 
-      () => this.milestones[0] > 0, 
-      () => this.milestones[0] > 1, 
-      () => this.milestones[0] > 2, 
-      () => true, 
+      () => true,
+      () => true,
+      () => true,
+      () => this.milestones[0] > 0,
+      () => this.milestones[0] > 1,
+      () => this.milestones[0] > 2,
+      () => true,
       () => true
     ];
     return conditions;
@@ -146,7 +155,7 @@ class t4Sim extends theoryClass<theory> {
       case "T4C356dC12rcv": return [1, 2, 0];
       case "T4C456dC12rcvMS": {
         if (this.maxRho < this.lastPub) return [1, 2, 0]
-        else if (this.t % 100 < 50) return [2, 0, 1] 
+        else if (this.t % 100 < 50) return [2, 0, 1]
         else return [0, 2, 1];
       }
       case "T4C123d": return [1, 2];
@@ -155,6 +164,10 @@ class t4Sim extends theoryClass<theory> {
       case "T4C12": return [1];
       case "T4C56": return [0, 2];
       case "T4C4": {
+        this.milestonesMax = [1, 0, 3];
+        return [0, 2];
+      }
+      case "T4C4d": {
         this.milestonesMax = [1, 0, 3];
         return [0, 2];
       }

@@ -194,6 +194,10 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 125",
           "forcedCondition": "rho >= 25"
         },
+        "T4C4d": {
+          "stratFilterCondition": "(Active || Very-Active) && rho < 75",
+          "forcedCondition": "rho >= 25"
+        },
         "T4C5": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 150",
           "forcedCondition": "rho >= 50"
