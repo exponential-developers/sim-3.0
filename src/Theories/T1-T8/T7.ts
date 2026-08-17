@@ -36,6 +36,7 @@ class t7Sim extends theoryClass<theory> {
   drho13: number;
   drho23: number;
   c2ratio: number = Infinity;
+  maxRho2: number;
 
   getBuyingConditions(): conditionFunction[] {
     const q1CoastCond = () => this.variables[0].shouldBuy;
@@ -107,6 +108,7 @@ class t7Sim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.rho2 = new Currency;
+    this.maxRho2 = 0;
     this.pubUnlock = 10;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [1, 1, 1, 1, 3];
@@ -128,6 +130,22 @@ class t7Sim extends theoryClass<theory> {
     if (this.lastPub >= 275) this.c2ratio = 50;
     if (this.lastPub >= 300) this.c2ratio = Infinity;
     this.updateMilestones();
+  }
+  updateSimStatus() {
+    if (this.rho.value > this.maxRho) this.maxRho = this.rho.value;
+    this.updateT();
+    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
+    if (this.rho2.value > this.maxRho2) this.maxRho2 = this.rho2.value;
+
+    this.tauH = this.tauFactor * (this.maxRho - this.lastPub) / (this.t / 3600);
+    if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
+      this.maxTauH = this.tauH;
+      this.pubT = this.t;
+      this.pubRho = this.maxRho2;
+    }
+
+    this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
+    this.ticks++;
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
