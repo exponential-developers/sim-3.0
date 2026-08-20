@@ -112,15 +112,15 @@ class slSim extends theoryClass<theory> {
         () => this.variables[3].shouldBuy
       ],
       SLStopAd: [
-        () => this.curMult < 4.5 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
+        () => this.curMult < 4.5 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 1) < this.variables[1].cost,
         () => this.curMult < 4.5,
-        () => this.curMult < 6 && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,
+        () => this.curMult < 6 && this.variables[2].cost + l10(1 + this.variables[2].level % 4) < this.variables[3].cost,
         () => this.curMult < 6,
       ],
       SLdCoast: [
-        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
+        () => this.variables[0].shouldBuy && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 1) < this.variables[1].cost,
         () => this.variables[1].shouldBuy,
-        () => this.variables[2].shouldBuy && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,
+        () => this.variables[2].shouldBuy && this.variables[2].cost + l10(1 + this.variables[2].level % 4) < this.variables[3].cost,
         () => this.variables[3].shouldBuy,
       ],
       SLMS: [
@@ -130,9 +130,9 @@ class slSim extends theoryClass<theory> {
         () => this.curMult < 7.5
       ],
       SLMSd: [
-        () => this.curMult < 4 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 0.0001) < this.variables[1].cost,
+        () => this.curMult < 4 && this.variables[0].cost + l10(2 * (this.variables[0].level % 3) + 1) < this.variables[1].cost,
         () => this.curMult < 4,
-        () => this.curMult < 7.5 && this.variables[2].cost + l10(this.variables[2].cost % 4) < this.variables[3].cost,
+        () => this.curMult < 7.5 && this.variables[2].cost + l10(1 + this.variables[2].level % 4) < this.variables[3].cost,
         () => this.curMult < 7.5,
       ],
     };
