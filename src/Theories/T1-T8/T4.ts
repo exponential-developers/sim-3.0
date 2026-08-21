@@ -69,7 +69,7 @@ class t4Sim extends theoryClass<theory> {
         () => this.variables[2].shouldBuy,
         ...new Array(3).fill(false),
         () => this.variables[6].shouldBuy &&
-            (this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
+            (this.variables[6].cost + l10(7 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
         () => this.variables[7].shouldBuy && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
       ],
       T4C3coast2: [
