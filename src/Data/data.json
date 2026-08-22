@@ -150,13 +150,13 @@
     "T4": {
       "tauFactor": 1,
       "strats": {
-        "T4C3dcoast2": {
+        "T4C3dCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 240"
         },
         "T4C3d": {
           "stratFilterCondition": "false"
         },
-        "T4C3coast2": {
+        "T4C3Coast": {
           "stratFilterCondition": "Semi-Idle && rho >= 240"
         },
         "T4C3": {
