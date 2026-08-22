@@ -508,13 +508,15 @@
           "stratFilterCondition": "Idle || rho < 25"
         },
         "SLStopA": {
-          "stratFilterCondition": "Semi-Idle"
+          "stratFilterCondition": "false",
+          "UI_visible": false
         },
         "SLCoast": {
           "stratFilterCondition": "Semi-Idle"
         },
         "SLStopAd": {
-          "stratFilterCondition": "(Active || Very-Active) && rho >= 300"
+          "stratFilterCondition": "false",
+          "UI_visible": false
         },
         "SLdCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 300"
