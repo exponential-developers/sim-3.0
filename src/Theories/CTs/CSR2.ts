@@ -64,6 +64,7 @@ class csr2Sim extends theoryClass<theory> {
       CSR2: idlestrat,
       CSR2PT: idlestrat,
       CSR2d: activeStrat,
+      CSR2dPT: activeStrat,
       CSR2XL: activeXLstrat,
       CSR2XLPT: activeXLstrat
     };
