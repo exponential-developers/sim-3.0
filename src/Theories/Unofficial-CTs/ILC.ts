@@ -91,7 +91,7 @@ class ilcSim extends theoryClass<theory> {
     return conditions;
   }
   getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.39 - l10(1200));
+    return Math.max(0, val * this.tauFactor * 0.39 - 7 * l10(Math.E));
   }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
