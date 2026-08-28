@@ -59,9 +59,9 @@ export function convertTime(secs: number): string {
   return result;
 }
 
-/** 
+/**
  * Formats a number to the given precision (default 6 digits)
- * 
+ *
  * This function removes the `+` in the scientific form
  * */
 export function formatNumber(value: number, precision = 6): string {
@@ -92,7 +92,7 @@ export function add_old(value1: number, value2: number): number {
   return wholePart1 + l10(fractionalPart1 + fractionalPart2 / 10 ** (wholePart1 - wholePart2));
 }
 
-/** Adds two log10 values 
+/** Adds two log10 values
  * @returns the result as a log10 value
 */
 export function add2(value1: number, value2: number): number {
@@ -101,7 +101,7 @@ export function add2(value1: number, value2: number): number {
   return max != -Infinity ? max + l10(1 + 10**(min-max)) : max;
 }
 
-/** Adds multiple log10 values 
+/** Adds multiple log10 values
  * @returns the result as a log10 value
 */
 export function add(...values: number[]): number {
@@ -126,7 +126,7 @@ export function subtract(value1: number, value2: number): number {
 
 /**
  * Returns the index `target` would have if inserted in `arr`
- * 
+ *
  * This is equivalent to count how many elements in `arr` are strictly lower than `target`
  * @param arr Number array sorted in increasing order with no repetitions
  * @param target Target number
@@ -161,9 +161,9 @@ export function defaultResult(): simResult {
 
 /**
  * Returns the result with the highest tau/hr.
- * 
+ *
  * Null values are replaced with a default result of tau/hr = 0.
- * 
+ *
  * If tau/hr are identical, the first result is returned.
  */
 export function getBestResult(res1: simResult | null, res2: simResult | null): simResult {
@@ -186,11 +186,19 @@ export function getLastLevel(variable: string, arr: varBuy[]): number {
   }
   return 0;
 }
+export function getLastLevelCost(variable: string, arr: varBuy[]): number {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i].variable == variable) {
+      return arr[i].cost;
+    }
+  }
+  return 0;
+}
 
 let factorialCache = [0];
 /**
  * Returns n! as a l10 number
- * @param n 
+ * @param n
  */
 export function getFactorial(n: number) {
   while (factorialCache.length <= n) {
@@ -228,7 +236,7 @@ export function getddtFromSlider(val: number): number {
  * @param theory The theory to return rho for
  * @param value The multiplier as a log10 value
  * @param sigma Number of students
- * @returns 
+ * @returns
  */
 export function reverseMulti(theory: string, value: number, sigma: number) {
   const R9 = getR9multiplier(sigma);

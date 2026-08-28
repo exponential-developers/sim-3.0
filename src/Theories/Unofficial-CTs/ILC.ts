@@ -3,9 +3,9 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, toCallables, parseLog10String, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { l10, toCallables, parseLog10String, getLastLevel, getBestResult, getLastLevelCost } from "../../Utils/helpers";
 
-const LAST_COAST_VAR = 3;
+const LAST_COAST_VAR = 5;
 
 export default async function ilc(data: theoryData): Promise<simResult> {
   // const sim = new ilcSim(data);
@@ -20,13 +20,20 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     const sim1 = new ilcSim(data2);
     const res1 = await sim1.simulate();
     let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
-    // TODO: e2 to e4 coasting, currently disabled.
     let caps = [6, 1, 1, 1, 1, 1];
     let sim2 = new ilcSim(data);
     for(let i = 0; i <= LAST_COAST_VAR; i++) {
       let lastVal = getLastLevel(vars[i], res1.boughtVars);
-      sim2.variables[i].setOriginalCap(lastVal);
-      sim2.variables[i].configureCap(caps[i]);
+      if(lastVal !== 0) {
+        let lastCost =  getLastLevelCost(vars[i], res1.boughtVars);
+        sim2.variables[i].setOriginalCap(lastVal);
+        if(lastCost < data2.rho - 2) {
+          sim2.variables[i].configureCap(0);
+        }
+        else {
+          sim2.variables[i].configureCap(caps[i]);
+        }
+      }
     }
     return await sim2.simulate();
   }
@@ -157,7 +164,12 @@ class ilcSim extends theoryClass<theory> {
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()
     ) {
-      this.variables[id].shouldFork = true;
+      if(this.variables[id].originalCap === this.variables[id].level) {
+        this.variables[id].shouldBuy = false;
+      }
+      else {
+        this.variables[id].shouldFork = true;
+      }
     }
   }
 
