@@ -89,7 +89,7 @@ class ilcSim extends theoryClass<theory> {
     return conditions;
   }
   getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.39 - l10(1100));
+    return Math.max(0, val * this.tauFactor * 0.39 - l10(1200));
   }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
@@ -103,8 +103,8 @@ class ilcSim extends theoryClass<theory> {
     this.variables = [
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(1, 2.37)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "c2", cost: new ExponentialCost(2, 2560), valueScaling: new ExponentialValue() }),
-      new Variable({ name: "e1", cost: new ExponentialCost(10, 5), valueScaling: new StepwisePowerSumValue(2, 6, 1) }),
-      new Variable({ name: "e2", cost: new ExponentialCost(25, 1210000), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "e1", cost: new ExponentialCost(10, 50), valueScaling: new StepwisePowerSumValue(2, 6, 1) }),
+      new Variable({ name: "e2", cost: new ExponentialCost(25, 150000), valueScaling: new ExponentialValue(2) }),
       new Variable({ name: "e3", cost: new ExponentialCost(1e10, 4000000000), valueScaling: new ExponentialValue(3) }),
       new Variable({ name: "e4", cost: new ExponentialCost(1e20, 190000000000000), valueScaling: new ExponentialValue(4) })
     ];
