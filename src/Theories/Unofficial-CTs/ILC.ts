@@ -5,6 +5,8 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String, getLastLevel, getBestResult } from "../../Utils/helpers";
 
+const LAST_COAST_VAR = 2;
+
 export default async function ilc(data: theoryData): Promise<simResult> {
   // const sim = new ilcSim(data);
   if(!data.strat.includes("Coast")) {
@@ -18,10 +20,10 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     const sim1 = new ilcSim(data2);
     const res1 = await sim1.simulate();
     let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
-    // TODO: e1 to e4 coasting, currently disabled.
+    // TODO: e2 to e4 coasting, currently disabled.
     let caps = [6, 1, 1, 1, 1, 1];
     let sim2 = new ilcSim(data);
-    for(let i = 0; i < 2; i++) {
+    for(let i = 0; i <= LAST_COAST_VAR; i++) {
       let lastVal = getLastLevel(vars[i], res1.boughtVars);
       sim2.variables[i].setOriginalCap(lastVal);
       sim2.variables[i].configureCap(caps[i]);
@@ -117,7 +119,7 @@ class ilcSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      for(let i = 0; i < 2; i++) {
+      for(let i = 0; i <= LAST_COAST_VAR; i++) {
         if(this.variables[i].shouldFork) await this.doForkVariable(i);
       }
     }
@@ -125,7 +127,7 @@ class ilcSim extends theoryClass<theory> {
     this.trimBoughtVars();
     if(this.strat.includes("Coast")) {
       let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i <= LAST_COAST_VAR; i++) {
         stratExtra += this.variables[i].prepareExtraForCap(getLastLevel(vars[i], this.boughtVars));
       }
     }
@@ -150,7 +152,7 @@ class ilcSim extends theoryClass<theory> {
   }
   onVariablePurchased(id: number) {
     if(
-        [0, 1].includes(id) &&
+        (id <= LAST_COAST_VAR) &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
         this.variables[id].coastingCapReached()
