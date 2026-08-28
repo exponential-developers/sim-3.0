@@ -6,10 +6,32 @@ import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String, add, getLastLevel, getBestResult, getFactorial } from "../../Utils/helpers";
 
 export default async function bd(data: theoryData): Promise<simResult> {
-  let res;
-  const sim = new bdSim(data);
-  res = await sim.simulate();
-  return res;
+  if(!data.strat.includes("Coast")) {
+    const sim = new bdSim(data);
+    const res = await sim.simulate();
+    return res;
+  }
+  else {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "");
+    const sim1 = new bdSim(data2);
+    const res1 = await sim1.simulate();
+    let vars = ["a1", "b1", "c1"];
+    let indexes = [0, 2, 4];
+    let caps = [5, 5, 5];
+    if(!data2.strat.includes("BDd")) {
+      // Raise the semi-idle cap.
+      caps[1] = 10;
+      caps[2] = 10;
+    }
+    let sim2 = new bdSim(data);
+    for(let i = 0; i < 3; i++) {
+      let lastVal = getLastLevel(vars[i], res1.boughtVars);
+      sim2.variables[indexes[i]].setOriginalCap(lastVal);
+      sim2.variables[indexes[i]].configureCap(caps[i]);
+    }
+    return await sim2.simulate();
+  }
 }
 
 type theory = "BD";
@@ -25,35 +47,53 @@ class bdSim extends theoryClass<theory> {
   rowTermIsDirty: boolean;
 
   getBuyingConditions(): conditionFunction[] {
-    const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+    const conditions: Record<stratType[theory], conditionFunction[]> = {
       BD: [
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+      ],
+      BDCoast: [
+        () => this.variables[0].shouldBuy,
+        () => true,
+        () => this.variables[2].shouldBuy,
+        () => true,
+        () => this.variables[4].shouldBuy,
+        () => true,
+        () => true,
       ],
       BDd: [
         () => this.variables[0].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[0].level % 10) + l10(1 + 0.05 * this.milestones[0]) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value),
-        true,
+        () => true,
         () => this.variables[2].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[2].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value),
-        true,
+        () => true,
         () => this.variables[4].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[4].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value),
-        true,
-        true,
+        () => true,
+        () => true,
+      ],
+      BDdCoast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[0].level % 10) + l10(1 + 0.05 * this.milestones[0]) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
+        () => true,
+        () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[2].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
+        () => true,
+        () => this.variables[4].shouldBuy && (this.variables[4].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[4].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
+        () => true,
+        () => true,
       ],
     };
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
     const conditions: conditionFunction[] = [
-      () => true, 
       () => true,
-      () => true, 
+      () => true,
+      () => true,
       () => this.milestones[1] > 0,
-      () => true, 
+      () => true,
       () => this.milestones[2] > 0,
       () => true,
     ];
@@ -100,10 +140,20 @@ class bdSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
+      for(let i = 0; i < 7; i++) {
+        if(this.variables[i].shouldFork) await this.doForkVariable(i);
+      }
     }
+    let stratExtra = '';
     this.trimBoughtVars();
-
-    return this.createResult();
+    if(this.strat.includes("Coast")) {
+      let vars = ["a1", "b1", "c1"];
+      let indexes = [0, 2, 4]
+      for (let i = 0; i < 3; i++) {
+        stratExtra += this.variables[indexes[i]].prepareExtraForCap(getLastLevel(vars[i], this.boughtVars));
+      }
+    }
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
   getBinomialCoefficient(n: number, k: number): number {
     return getFactorial(n) - getFactorial(k) - getFactorial(n - k);
@@ -134,12 +184,12 @@ class bdSim extends theoryClass<theory> {
     const fullRowFraction = this.milestones[5] / this.milestonesMax[5];
 
     let baseTerm;
-    if (this.milestones[5] === 0) 
+    if (this.milestones[5] === 0)
       baseTerm = this.getBinomialCoefficient(n, k);
-    else if (this.milestones[5] === this.milestonesMax[5]) 
+    else if (this.milestones[5] === this.milestonesMax[5])
       baseTerm = this.getPartialSum(n, k);
-    else 
-      baseTerm = this.getBinomialCoefficient(n, k) * (1 - fullRowFraction) 
+    else
+      baseTerm = this.getBinomialCoefficient(n, k) * (1 - fullRowFraction)
       + this.getPartialSum(n, k) * fullRowFraction;
 
     this.cachedRowTerm = baseTerm + this.getPolynomialExponent() * l10(1 + n);
@@ -185,6 +235,15 @@ class bdSim extends theoryClass<theory> {
     return copySim;
   }
   onVariablePurchased(id: number): void {
+    if(
+        [0, 2, 4].includes(id) &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached() &&
+        !this.variables[id].aboveOriginalCap()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
     if (id == 6) this.rowTermIsDirty = true;
   }
 }
