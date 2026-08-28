@@ -5,7 +5,7 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String, getLastLevel, getBestResult } from "../../Utils/helpers";
 
-const LAST_COAST_VAR = 2;
+const LAST_COAST_VAR = 3;
 
 export default async function ilc(data: theoryData): Promise<simResult> {
   // const sim = new ilcSim(data);
