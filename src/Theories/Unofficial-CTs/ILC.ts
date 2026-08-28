@@ -33,11 +33,11 @@ export default async function ilc(data: theoryData): Promise<simResult> {
 type theory = "ILC";
 
 class ilcSim extends theoryClass<theory> {
-  logAttractorPoints = [ // re, im
-    [-0.11919307341454844813, 0.75058329393243957757],
-    [-0.114671, 0.763914],
-    [-0.109499109769577, 0.778497586048476],
-    [-0.103534, 0.794542]
+  logAttractorPointsConstants = [ // -ln(q), ln(C)
+    [0.55958025121547164703, -1.3567399465875839466],
+    [0.553346, -1.40365],
+    [0.54660087299449209265, -1.4589578628112783156],
+    [0.539266, -1.52466],
   ];
 
   getBuyingConditions(): conditionFunction[] {
@@ -89,7 +89,7 @@ class ilcSim extends theoryClass<theory> {
     return conditions;
   }
   getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.39 - l10(200));
+    return Math.max(0, val * this.tauFactor * 0.39 - l10(1200));
   }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
@@ -103,10 +103,10 @@ class ilcSim extends theoryClass<theory> {
     this.variables = [
       new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(1, 2.37)), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "c2", cost: new ExponentialCost(2, 2560), valueScaling: new ExponentialValue() }),
-      new Variable({ name: "e1", cost: new ExponentialCost(10, 608400), valueScaling: new ExponentialValue(1.4) }),
-      new Variable({ name: "e2", cost: new ExponentialCost(25, 1210000), valueScaling: new ExponentialValue(1.43) }),
-      new Variable({ name: "e3", cost: new ExponentialCost(1e10, 18840000000 ** 2), valueScaling: new ExponentialValue(1.46) }),
-      new Variable({ name: "e4", cost: new ExponentialCost(1e20, 3970000000000000000 ** 2), valueScaling: new ExponentialValue(1.49) })
+      new Variable({ name: "e1", cost: new ExponentialCost(10, 50), valueScaling: new StepwisePowerSumValue(2, 6, 1) }),
+      new Variable({ name: "e2", cost: new ExponentialCost(25, 1210000), valueScaling: new ExponentialValue(2) }),
+      new Variable({ name: "e3", cost: new ExponentialCost(1e10, 4000000000), valueScaling: new ExponentialValue(3) }),
+      new Variable({ name: "e4", cost: new ExponentialCost(1e20, 190000000000000), valueScaling: new ExponentialValue(4) })
     ];
     this.updateMilestones();
   }
@@ -132,19 +132,19 @@ class ilcSim extends theoryClass<theory> {
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
     // return this.createResult();
   }
-  calculateN(reX: number, imX: number, index: number, epsilon: number): number {
-    reX -= this.logAttractorPoints[index][0];
-    imX -= this.logAttractorPoints[index][1];
-    return Math.ceil((l10(reX ** 2 + imX ** 2) / 2 - epsilon) / l10(Math.sqrt(this.logAttractorPoints[index][0] ** 2 + this.logAttractorPoints[index][1] ** 2)));
+  calculateN(index: number, epsilon: number): number {
+    const constants = this.logAttractorPointsConstants[index];
+
+    return Math.max(Math.ceil((constants[1] + epsilon / Math.LOG10E) / constants[0]), 0);
   }
   tick() {
     let epsilon = this.variables[2].value + this.variables[3].value;
     if (this.milestones[0] > 0) epsilon += this.variables[4].value;
-    if (this.milestones[1] > 0) epsilon += this.variables[5].value;
-    const nBase = l10(1.1 + 0.01 * this.milestones[1]);
-    const N = this.calculateN(0, 1, this.milestones[2], epsilon);
+    if (this.milestones[0] > 1) epsilon += this.variables[5].value;
+    const nBase = 1.1 + 0.01 * this.milestones[1];
+    const N = this.calculateN(this.milestones[2], epsilon);
 
-    const rhodot = this.totMult + this.variables[0].value * (1 + 0.02 * this.milestones[3]) + this.variables[1].value + N * nBase;
+    const rhodot = this.totMult + this.variables[0].value * (1 + 0.02 * this.milestones[3]) + this.variables[1].value + N * l10(nBase);
 
     this.rho.add(rhodot + l10(this.dt));
   }
