@@ -889,6 +889,12 @@
         },
         "ILCd": {
           "stratFilterCondition": "Active || Very-Active"
+        },
+        "ILCCoast": {
+          "stratFilterCondition": "true"
+        },
+        "ILCdCoast": {
+          "stratFilterCondition": "Active || Very-Active"
         }
       }
     }

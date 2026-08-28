@@ -26,25 +26,25 @@ export default class Variable {
   value: number;
   /**
    * Value used for hotab coasting.
-   * 
+   *
    * Original Cap is the original max level bought of the variable when the strat was ran without coasting.
    */
   originalCap: number;
   /**
    * Value used for hotab coasting.
-   * 
+   *
    * This is the level cap of the variable for coasting rules.
    */
   startCapAt: number;
   /**
    * Value used for hotab coasting.
-   * 
+   *
    * If the variable should be bought according to coasting rules.
    */
   shouldBuy: boolean;
   /**
    * Value used for hotab coasting.
-   * 
+   *
    * If a fork will be created to see if this variable will be bought, according to coasting rules.
    */
   shouldFork: boolean;
@@ -78,9 +78,9 @@ export default class Variable {
     }
   }
   /** This group of methods will facilitate hard-stopping a variable during coasting */
-  /** 
+  /**
    * Sets the original cap to the given value.
-   * 
+   *
    * The original cap is the variable level it has when doing the strat without coasting.
    */
   setOriginalCap(originalCap: number) {
@@ -128,7 +128,7 @@ export default class Variable {
   }
   /**
    * If the variable level is strictly above its original cap.
-   * 
+   *
    * This can be used to indicate the sim to stop forking
    * @returns true if the variable level is above its original cap
    */

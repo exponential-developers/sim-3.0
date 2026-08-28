@@ -3,12 +3,31 @@ import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, toCallables, parseLog10String } from "../../Utils/helpers";
+import { l10, toCallables, parseLog10String, getLastLevel, getBestResult } from "../../Utils/helpers";
 
 export default async function ilc(data: theoryData): Promise<simResult> {
-  const sim = new ilcSim(data);
-  const res = await sim.simulate();
-  return res;
+  // const sim = new ilcSim(data);
+  if(!data.strat.includes("Coast")) {
+    const sim = new ilcSim(data);
+    const res = await sim.simulate();
+    return res;
+  }
+  else {
+    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "");
+    const sim1 = new ilcSim(data2);
+    const res1 = await sim1.simulate();
+    let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
+    // TODO: e1 to e4 coasting, currently disabled.
+    let caps = [6, 1, 1, 1, 1, 1];
+    let sim2 = new ilcSim(data);
+    for(let i = 0; i < 2; i++) {
+      let lastVal = getLastLevel(vars[i], res1.boughtVars);
+      sim2.variables[i].setOriginalCap(lastVal);
+      sim2.variables[i].configureCap(caps[i]);
+    }
+    return await sim2.simulate();
+  }
 }
 
 type theory = "ILC";
@@ -23,21 +42,44 @@ class ilcSim extends theoryClass<theory> {
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      ILC: [true, true, true, true, true, true],
+      ILC: [
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+        () => true
+      ],
       ILCd: [
         () => this.variables[0].cost + 1 < this.variables[1].cost,
-        true,
-        true,
-        true,
-        true,
-        true
+        () => true,
+        () => true,
+        () => true,
+        () => true,
+        () => true
+      ],
+      ILCCoast: [
+        () => this.variables[0].shouldBuy,
+        () => this.variables[1].shouldBuy,
+        () => this.variables[2].shouldBuy,
+        () => this.variables[3].shouldBuy,
+        () => this.variables[4].shouldBuy,
+        () => this.variables[5].shouldBuy
+      ],
+      ILCdCoast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + 1 < this.variables[1].cost),
+        () => this.variables[1].shouldBuy,
+        () => this.variables[2].shouldBuy,
+        () => this.variables[3].shouldBuy,
+        () => this.variables[4].shouldBuy,
+        () => this.variables[5].shouldBuy
       ],
     };
     return toCallables(conditions[this.strat]);
   }
   getVariableAvailability(): conditionFunction[] {
     const conditions: conditionFunction[] = [
-      () => true, 
+      () => true,
       () => true,
       () => true,
       () => true,
@@ -75,9 +117,20 @@ class ilcSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
+      for(let i = 0; i < 2; i++) {
+        if(this.variables[i].shouldFork) await this.doForkVariable(i);
+      }
     }
+    let stratExtra = '';
     this.trimBoughtVars();
-    return this.createResult();
+    if(this.strat.includes("Coast")) {
+      let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
+      for (let i = 0; i < 2; i++) {
+        stratExtra += this.variables[i].prepareExtraForCap(getLastLevel(vars[i], this.boughtVars));
+      }
+    }
+    return getBestResult(this.createResult(stratExtra), this.bestForkRes);
+    // return this.createResult();
   }
   calculateN(reX: number, imX: number, index: number, epsilon: number): number {
     reX -= this.logAttractorPoints[index][0];
@@ -94,5 +147,24 @@ class ilcSim extends theoryClass<theory> {
     const rhodot = this.totMult + this.variables[0].value * (1 + 0.02 * this.milestones[3]) + this.variables[1].value + N * nBase;
 
     this.rho.add(rhodot + l10(this.dt));
+  }
+  onVariablePurchased(id: number) {
+    if(
+        [0, 1].includes(id) &&
+        this.strat.includes("Coast") &&
+        this.variables[id].shouldBuy &&
+        this.variables[id].coastingCapReached()
+    ) {
+      this.variables[id].shouldFork = true;
+    }
+  }
+
+  copyFrom(other: this) {
+    super.copyFrom(other);
+  }
+  copy() {
+    let newsim = new ilcSim(super.getDataForCopy());
+    newsim.copyFrom(this);
+    return newsim;
   }
 }
