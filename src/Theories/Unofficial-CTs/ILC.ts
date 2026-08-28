@@ -51,7 +51,7 @@ class ilcSim extends theoryClass<theory> {
         () => true
       ],
       ILCd: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost,
+        () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) < this.variables[1].cost,
         () => true,
         () => true,
         () => true,
@@ -67,7 +67,7 @@ class ilcSim extends theoryClass<theory> {
         () => this.variables[5].shouldBuy
       ],
       ILCdCoast: [
-        () => this.variables[0].shouldBuy && (this.variables[0].cost + 1 < this.variables[1].cost),
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) < this.variables[1].cost),
         () => this.variables[1].shouldBuy,
         () => this.variables[2].shouldBuy,
         () => this.variables[3].shouldBuy,
