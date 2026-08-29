@@ -891,10 +891,10 @@
       "UI_visible":false,
       "strats": {
         "ILC": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "false"
         },
         "ILCd": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "ILCCoast": {
           "stratFilterCondition": "true"

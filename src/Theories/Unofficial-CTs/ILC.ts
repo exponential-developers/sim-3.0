@@ -70,6 +70,7 @@ export default async function ilc(data: theoryData): Promise<simResult> {
 type theory = "ILC";
 
 class ilcSim extends theoryClass<theory> {
+  rhodot: number;
   logAttractorPointsConstants = [ // -ln(q), ln(C)
     [0.55958025121547164703, -1.3567399465875839466],
     [0.553346, -1.40365],
@@ -133,6 +134,7 @@ class ilcSim extends theoryClass<theory> {
   }
   constructor(data: theoryData) {
     super(data);
+    this.rhodot = 0;
     this.pubUnlock = 6;
     this.milestoneUnlocks = [25, 50, 75, 100, 120, 140, 160, 180, 200, 220];
     this.milestonesMax = [2, 2, 3, 3];
@@ -145,14 +147,32 @@ class ilcSim extends theoryClass<theory> {
       new Variable({ name: "e3", cost: new ExponentialCost(1e10, 4000000000), valueScaling: new ExponentialValue(3) }),
       new Variable({ name: "e4", cost: new ExponentialCost(1e20, 190000000000000), valueScaling: new ExponentialValue(4) })
     ];
-    this.updateMilestones();
+    this.updateMilestonesNoMS();
+    this.updateRhoDot();
   }
+  updateRhoDot() {
+    let epsilon = this.variables[2].value + this.variables[3].value;
+    if (this.milestones[0] > 0) epsilon += this.variables[4].value;
+    if (this.milestones[0] > 1) epsilon += this.variables[5].value;
+    const nBase = 1.1 + 0.01 * this.milestones[1];
+    const N = this.calculateN(this.milestones[2], epsilon);
+
+    this.rhodot = this.totMult + this.variables[0].value * (1 + 0.02 * this.milestones[3]) + this.variables[1].value + N * l10(nBase);
+  }
+  updateMilestonesNoMS(): boolean {
+    let res = super.updateMilestonesNoMS();
+    if(res) {
+      this.updateRhoDot();
+    }
+    return res;
+  }
+
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      this.updateMilestones();
+      this.updateMilestonesNoMS();
       this.buyVariables();
       for(let i = 0; i <= LAST_COAST_VAR; i++) {
         if(this.variables[i].shouldFork) await this.doForkVariable(i);
@@ -175,16 +195,12 @@ class ilcSim extends theoryClass<theory> {
     return Math.max(Math.ceil((constants[1] + epsilon / Math.LOG10E) / constants[0]), 0);
   }
   tick() {
-    let epsilon = this.variables[2].value + this.variables[3].value;
-    if (this.milestones[0] > 0) epsilon += this.variables[4].value;
-    if (this.milestones[0] > 1) epsilon += this.variables[5].value;
-    const nBase = 1.1 + 0.01 * this.milestones[1];
-    const N = this.calculateN(this.milestones[2], epsilon);
-
-    const rhodot = this.totMult + this.variables[0].value * (1 + 0.02 * this.milestones[3]) + this.variables[1].value + N * l10(nBase);
-
-    this.rho.add(rhodot + l10(this.dt));
+    this.rho.add(this.rhodot + l10(this.dt));
   }
+  onAnyVariablePurchased() {
+    this.updateRhoDot();
+  }
+
   onVariablePurchased(id: number) {
     if(
         (id <= LAST_COAST_VAR) &&
@@ -203,6 +219,7 @@ class ilcSim extends theoryClass<theory> {
 
   copyFrom(other: this) {
     super.copyFrom(other);
+    this.rhodot = other.rhodot;
   }
   copy() {
     let newsim = new ilcSim(super.getDataForCopy());
