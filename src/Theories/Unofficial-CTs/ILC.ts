@@ -20,7 +20,8 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     const sim1 = new ilcSim(data2);
     const res1 = await sim1.simulate();
     let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
-    let caps = [6, 1, 1, 1, 1, 1];
+    // In testing - coasting up to last 4 levels of e1 seems to work, but lands on a worse pub cycle.
+    let caps = [6, 1, 2, 1, 1, 1];
     let sim2 = new ilcSim(data);
     for(let i = 0; i <= LAST_COAST_VAR; i++) {
       let lastVal = getLastLevel(vars[i], res1.boughtVars);
@@ -33,6 +34,11 @@ export default async function ilc(data: theoryData): Promise<simResult> {
         else {
           sim2.variables[i].configureCap(caps[i]);
         }
+      }
+      else {
+        // We are so deep that no purchase receipt exists.
+        sim2.variables[i].setOriginalCap(sim1.variables[i].level);
+        sim2.variables[i].configureCap(0);
       }
     }
     return await sim2.simulate();
