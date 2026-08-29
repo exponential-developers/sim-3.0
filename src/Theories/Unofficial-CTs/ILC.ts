@@ -21,7 +21,7 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     const res1 = await sim1.simulate();
     let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
     // In testing - coasting up to last 4 levels of e1 seems to work, but lands on a worse pub cycle.
-    let caps = [6, 1, 2, 1, 1, 1];
+    let caps = [6, 1, 5, 1, 1, 1];
     let sim2 = new ilcSim(data);
     for(let i = 0; i <= LAST_COAST_VAR; i++) {
       let lastVal = getLastLevel(vars[i], res1.boughtVars);
@@ -112,6 +112,17 @@ class ilcSim extends theoryClass<theory> {
   constructor(data: theoryData) {
     super(data);
     this.pubUnlock = 6;
+    if(data.rho >= this.pubUnlock) {
+      this.simEndConditions.push(
+          () => {
+            if(this.maxRho < this.lastPub) {
+              return false;
+            }
+            // If multiplier for this pub is over 3, we bail out.
+            return 10 ** (this.getTotMult(this.maxRho) - this.totMult) >= 3;
+          }
+      )
+    }
     this.milestoneUnlocks = [25, 50, 75, 100, 120, 140, 160, 180, 200, 220];
     this.milestonesMax = [2, 2, 3, 3];
     this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
