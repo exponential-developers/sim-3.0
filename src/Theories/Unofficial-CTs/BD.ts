@@ -197,13 +197,13 @@ class bdSim extends theoryClass<theory> {
   }
   tick() {
     const target = l10(Math.floor(this.variables[6].value / 2));
-    const symmetrySpeed = bdSim.SYMMETRY_STEP * this.milestones[4];
     const vb2 = this.milestones[1] > 0 ? this.variables[3].value : 0;
     const vc2 = this.milestones[2] > 0 ? this.variables[5].value : 0;
-    const prev_k = this.k;
 
     // Updates k
     if (this.k < target) {
+        const prev_k = this.k;
+        const symmetrySpeed = bdSim.SYMMETRY_STEP * this.milestones[4];
         const dk = l10(this.dt) + vc2 + symmetrySpeed - l10(bdSim.K_TIME_DIVISOR);
         this.k = add(this.k, dk);
         this.k = Math.min(this.k, target);
