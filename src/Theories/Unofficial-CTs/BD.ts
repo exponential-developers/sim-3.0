@@ -43,6 +43,12 @@ class bdSim extends theoryClass<theory> {
 
   q: number;
   k: number;
+  vb2: number;
+  vc2: number;
+  target: number;
+  symmetrySpeed: number;
+  variableTerm: number;
+  drho: number;
   cachedRowTerm: number;
   rowTermIsDirty: boolean;
 
@@ -124,21 +130,40 @@ class bdSim extends theoryClass<theory> {
       new Variable({ name: "c2", cost: new ExponentialCost(1e25, 10.15, true), valueScaling: new ExponentialValue() }),
       new Variable({ name: "n", cost: new ExponentialCost(20, 2.5615, true), valueScaling: new LinearValue(1, 1) })
     ];
-    this.updateMilestones();
+    this.updateMilestonesNoMS();
+    // Init value cache:
+    // We set these to 0 to make TS happy:
+    this.vb2 = 0;
+    this.vc2 = 0;
+    this.target = 0;
+    this.symmetrySpeed = 0;
+    this.variableTerm = 0;
+    this.drho = 0;
+    this.updateCachedValues();
   }
-  updateMilestones() {
-    const prev_ms = this.milestones.reduce((p, c) => p+c, 0);
-    super.updateMilestones();
-    const new_ms = this.milestones.reduce((p, c) => p+c, 0);
-    // Only update this if sum of milestones changed
-    if (new_ms > prev_ms) this.rowTermIsDirty = true;
+  updateCachedValues() {
+    // Compute values tied only to variables and milestones.
+    this.target = l10(Math.floor(this.variables[6].value / 2));
+    this.vb2 = this.milestones[1] > 0 ? this.variables[3].value : 0;
+    this.vc2 = this.milestones[2] > 0 ? this.variables[5].value : 0;
+    this.symmetrySpeed = bdSim.SYMMETRY_STEP * this.milestones[4];
+    this.variableTerm = (this.variables[2].value + this.vb2 + this.variables[4].value + this.vc2) * 0.5;
+    this.drho = (1 + 0.05 * this.milestones[0]) * this.variables[0].value + this.variables[1].value;
+  }
+  updateMilestonesNoMS(): boolean {
+    let changed = super.updateMilestonesNoMS();
+    if(changed) {
+      this.updateCachedValues();
+      this.rowTermIsDirty = true;
+    }
+    return changed
   }
   async simulate(): Promise<simResult> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      this.updateMilestones();
+      this.updateMilestonesNoMS();
       this.buyVariables();
       for(let i = 0; i < 7; i++) {
         if(this.variables[i].shouldFork) await this.doForkVariable(i);
@@ -171,7 +196,7 @@ class bdSim extends theoryClass<theory> {
   }
   getPolynomialExponent(): number {
     let result = 0.25 * this.milestones[3]; // 1
-    result += bdSim.SYMMETRY_STEP * this.milestones[4]; // 1.5
+    result += this.symmetrySpeed; // 1.5
     result += bdSim.LATE_BOOST_STEP * this.milestones[6]; // 0.2
     return result;
   }
@@ -196,17 +221,12 @@ class bdSim extends theoryClass<theory> {
     this.rowTermIsDirty = false;
   }
   tick() {
-    const target = l10(Math.floor(this.variables[6].value / 2));
-    const vb2 = this.milestones[1] > 0 ? this.variables[3].value : 0;
-    const vc2 = this.milestones[2] > 0 ? this.variables[5].value : 0;
-
     // Updates k
-    if (this.k < target) {
+    if (this.k < this.target) {
         const prev_k = this.k;
-        const symmetrySpeed = bdSim.SYMMETRY_STEP * this.milestones[4];
-        const dk = l10(this.dt) + vc2 + symmetrySpeed - l10(bdSim.K_TIME_DIVISOR);
+        const dk = l10(this.dt) + this.vc2 + this.symmetrySpeed - l10(bdSim.K_TIME_DIVISOR);
         this.k = add(this.k, dk);
-        this.k = Math.min(this.k, target);
+        this.k = Math.min(this.k, this.target);
         if (this.k > prev_k) {
             this.rowTermIsDirty = true;
         }
@@ -216,11 +236,8 @@ class bdSim extends theoryClass<theory> {
         this.updateRowTerm();
     }
 
-    const variableTerm = (this.variables[2].value + vb2 + this.variables[4].value + vc2) * 0.5;
-    this.q = add(this.q, l10(this.dt) + variableTerm + this.cachedRowTerm);
-
-    let drho = (1 + 0.05 * this.milestones[0]) * this.variables[0].value + this.variables[1].value;
-    this.rho.add(l10(this.dt) + this.totMult + drho + this.q);
+    this.q = add(this.q, l10(this.dt) + this.variableTerm + this.cachedRowTerm);
+    this.rho.add(l10(this.dt) + this.totMult + this.drho + this.q);
   }
   copyFrom(other: this) {
     super.copyFrom(other);
@@ -228,12 +245,18 @@ class bdSim extends theoryClass<theory> {
     this.k = other.k;
     this.cachedRowTerm = other.cachedRowTerm;
     this.rowTermIsDirty = true;
+    // We force-recompute cached values after all copies for good measure.
+    this.updateCachedValues();
   }
   copy() {
     let copySim = new bdSim(this.getDataForCopy());
     copySim.copyFrom(this);
     return copySim;
   }
+  onAnyVariablePurchased() {
+    this.updateCachedValues();
+  }
+
   onVariablePurchased(id: number): void {
     if(
         [0, 2, 4].includes(id) &&
