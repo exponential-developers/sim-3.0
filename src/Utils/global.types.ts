@@ -8,9 +8,32 @@ declare global {
     [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
   };
 
+  type SpecificInputValidationType = {
+    type: "int" | "float" | "exp",
+    min: number,
+    max: number
+  } | {
+    type: "string"
+  }
+
+  type SpecificInputType = {label: string} & ({
+    type: "textbox",
+    validation: SpecificInputValidationType
+  } | {
+    type: "slider",
+    validation: SpecificInputValidationType,
+    step: number
+  } | {
+    type: "dropdown",
+    choices: string[]
+  });
+
   type TheoryDataStructure = {
     [key: string]: {
       tauFactor: number;
+      specificInputs?: {
+        [key: string]: SpecificInputType
+      };
       UI_visible?: boolean;
       strats: {
         [key: string]: {
