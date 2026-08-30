@@ -876,7 +876,7 @@
           "stratFilterCondition": "true"
         },
         "BDd": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "BDCoast": {
           "stratFilterCondition": "Semi-Idle || Idle"
