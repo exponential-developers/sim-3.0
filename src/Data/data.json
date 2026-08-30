@@ -685,6 +685,18 @@
     },
     "MF": {
       "tauFactor": 1,
+      "specificInputs": {
+        "depth": {
+          "label": "Depth",
+          "type": "slider",
+          "validation": {
+            "type": "int",
+            "min": 0,
+            "max": 5
+          },
+          "step": 1
+        }
+      },
       "strats": {
         "MF": {
           "stratFilterCondition": "Idle"
