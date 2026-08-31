@@ -14,11 +14,13 @@ import {
   getFactorial
 } from "../../Utils/helpers";
 
-export default async function fi(data: theoryData): Promise<simResult> {
+type theory = "FI";
+
+export default async function fi(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new fiSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -34,8 +36,6 @@ export default async function fi(data: theoryData): Promise<simResult> {
   }
   return res;
 }
-
-type theory = "FI";
 
 class fiSim extends theoryClass<theory> {
   q: number;
@@ -216,7 +216,7 @@ class fiSim extends theoryClass<theory> {
     return subtract(positives, negatives) - l10(Math.log(10));
   }
 
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.r = 0;

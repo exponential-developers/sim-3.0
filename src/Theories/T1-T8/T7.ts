@@ -6,11 +6,13 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add_old, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
 
-export default async function t7(data: theoryData): Promise<simResult> {
+type theory = "T7";
+
+export default async function t7(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new t7Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -26,8 +28,6 @@ export default async function t7(data: theoryData): Promise<simResult> {
 
   return res;
 }
-
-type theory = "T7";
 
 const add = add_old;
 
@@ -104,7 +104,7 @@ class t7Sim extends theoryClass<theory> {
   getTotMult(val: number): number {
     return Math.max(0, val * 0.152) + getR9multiplier(this.sigma);
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.rho2 = new Currency;
     this.pubUnlock = 10;

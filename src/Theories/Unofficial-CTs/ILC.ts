@@ -7,7 +7,9 @@ import { l10, toCallables, parseLog10String, getLastLevel, getBestResult, getLas
 
 const LAST_COAST_VAR = 5;
 
-export default async function ilc(data: theoryData): Promise<simResult> {
+type theory = "ILC";
+
+export default async function ilc(data: theoryData<theory>): Promise<simResult> {
   // const sim = new ilcSim(data);
   if(!data.strat.includes("Coast")) {
     const sim = new ilcSim(data);
@@ -15,8 +17,8 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     return res;
   }
   else {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new ilcSim(data2);
     if(data2.rho >= sim1.pubUnlock) {
       sim1.simEndConditions.push(
@@ -66,8 +68,6 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     return await sim2.simulate();
   }
 }
-
-type theory = "ILC";
 
 class ilcSim extends theoryClass<theory> {
   rhodot: number;
@@ -132,7 +132,7 @@ class ilcSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.rhodot = 0;
     this.pubUnlock = 6;

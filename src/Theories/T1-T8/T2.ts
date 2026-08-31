@@ -5,7 +5,9 @@ import { StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getR9multiplier, toCallables, getBestResult, defaultResult } from "../../Utils/helpers";
 
-export default async function t2(data: theoryData): Promise<simResult> {
+type theory = "T2";
+
+export default async function t2(data: theoryData<theory>): Promise<simResult> {
   let bestSim: t2Sim;
   let bestSimRes: simResult;
   if(data.strat == "T2Haxolotl") {
@@ -72,8 +74,6 @@ export default async function t2(data: theoryData): Promise<simResult> {
   }
   return bestSimRes;
 }
-
-type theory = "T2";
 
 class t2Sim extends theoryClass<theory> {
   q1: number;
@@ -197,7 +197,7 @@ class t2Sim extends theoryClass<theory> {
     }
     return [0, 1, 2, 3];
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q1 = -Infinity;
     this.q2 = 0;

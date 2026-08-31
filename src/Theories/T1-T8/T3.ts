@@ -6,15 +6,17 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
 
-export default async function t3(data: theoryData): Promise<simResult> {
+type theory = "T3";
+
+export default async function t3(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new t3Sim(data);
     res = await sim.simulate();
   }
   else {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new t3Sim(data2);
     const res1 = await sim1.simulate();
     const lastB2 = getLastLevel("b2", res1.boughtVars);
@@ -28,8 +30,6 @@ export default async function t3(data: theoryData): Promise<simResult> {
   }
   return res;
 }
-
-type theory = "T3";
 
 class t3Sim extends theoryClass<theory> {
   rho2: Currency;
@@ -275,7 +275,7 @@ class t3Sim extends theoryClass<theory> {
   getTotMult(val: number): number {
     return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");

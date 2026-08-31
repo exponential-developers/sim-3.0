@@ -5,11 +5,13 @@ import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Util
 import { ExponentialCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
-export default async function tc(data: theoryData): Promise<simResult> {
+type theory = "TC";
+
+export default async function tc(data: theoryData<theory>): Promise<simResult> {
   let res;
   if (data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new tcSim(data2);
     const res1 = await sim1.simulate();
     // const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -28,8 +30,6 @@ export default async function tc(data: theoryData): Promise<simResult> {
   }
   return res;
 }
-
-type theory = "TC";
 
 /**
  * Simulates a 16-bit LFSR with 16 internal clock cycles per output.
@@ -159,7 +159,7 @@ class tcSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.totMult = this.getTotMult(data.rho);
     // System parameters

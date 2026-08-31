@@ -65,28 +65,28 @@ function parseSigma(required: boolean): number {
     }
 }
 
-function parseSingleSim(): SingleSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseSingleSim<T extends theoryType>(): SingleSimQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "single",
         theory: theory,
-        strat: UI.controls.stratSelector.value,
+        strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         settings: parseSettings()
     }
 }
 
-function parseChainSim(): ChainSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseChainSim<T extends theoryType>(): ChainSimQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "chain",
         theory: theory,
-        strat: UI.controls.stratSelector.value,
+        strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
@@ -95,14 +95,14 @@ function parseChainSim(): ChainSimQuery {
     }
 }
 
-function parseStepSim(): StepSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseStepSim<T extends theoryType>(): StepSimQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "step",
         theory: theory,
-        strat: UI.controls.stratSelector.value,
+        strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
@@ -111,8 +111,8 @@ function parseStepSim(): StepSimQuery {
     }
 }
 
-function parseComparisonSim(): ComparisonSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseComparisonSim<T extends theoryType>(): ComparisonSimQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
@@ -124,14 +124,14 @@ function parseComparisonSim(): ComparisonSimQuery {
     }
 }
 
-function parseAmountSim(): AmountSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseAmountSim<T extends theoryType>(): AmountSimQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "amount",
         theory: theory,
-        strat: UI.controls.stratSelector.value,
+        strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         amount: parseInt(UI.controls.extraInput.value),
@@ -139,8 +139,8 @@ function parseAmountSim(): AmountSimQuery {
     }
 }
 
-function parseTimeSim(): TimeSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseTimeSim<T extends theoryType>(): TimeSimQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     const timeStr = UI.controls.extraInput.value;
@@ -167,7 +167,7 @@ function parseTimeSim(): TimeSimQuery {
     return {
         queryType: "time",
         theory: theory,
-        strat: UI.controls.stratSelector.value,
+        strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         time,
@@ -176,14 +176,14 @@ function parseTimeSim(): TimeSimQuery {
     }
 }
 
-function parseStepChainSim(): StepChainQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parseStepChainSim<T extends theoryType>(): StepChainQuery<T> {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "step_chain",
         theory: theory,
-        strat: UI.controls.stratSelector.value,
+        strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         cap: parseCurrency(UI.controls.capInput.value, theory, sigma),

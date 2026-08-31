@@ -5,12 +5,12 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
-export default async function wsp(data: theoryData): Promise<simResult> {
+export default async function wsp(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
-    let data2: theoryData = {
+    let data2: theoryData<theory> = {
       ...data,
-      strat: data.strat.replace("Coast", "").replace("PostRecovery", "")
+      strat: data.strat.replace("Coast", "").replace("PostRecovery", "") as stratType[theory]
     };
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
@@ -130,7 +130,7 @@ class wspSim extends theoryClass<theory> {
     const chi = 10 ** (l10(Math.PI) + vc1 + vn - add(vc1, vn - l10(3) * this.milestones[2])) + 1;
     this.S = this.sineRatioK(this.variables[2].value, chi / Math.PI);
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.pubUnlock = 8;

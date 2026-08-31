@@ -55,7 +55,7 @@ function mergeSortedLists(list1: number[], list2: number[]): number[] {
 let rzZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzSpecificZeros);
 let rzdZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzdSpecificZeros);
 
-export default async function rz(data: theoryData) {
+export default async function rz(data: theoryData<theory>) {
     // Normal BH
     if(data.strat.includes("BH") && !data.strat.includes("Rewind") && data.rho >= 600) {
         let zeroList = data.strat.startsWith("RZd") ? rzdZeros : rzZeros;
@@ -507,7 +507,7 @@ class rzSim extends theoryClass<theory> {
         }
     }
 
-    constructor(data: theoryData) {
+    constructor(data: theoryData<theory>) {
         super(data);
         this.delta = new Currency("delta");
         this.t_var = 0;

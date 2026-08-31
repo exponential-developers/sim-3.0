@@ -5,13 +5,13 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String } from "../../Utils/helpers";
 
-export default async function bt(data: theoryData): Promise<simResult> {
+type theory = "BT";
+
+export default async function bt(data: theoryData<theory>): Promise<simResult> {
   const sim = new btSim(data);
   const res = await sim.simulate();
   return res;
 }
-
-type theory = "BT";
 
 class btSim extends theoryClass<theory> {
   getBuyingConditions(): conditionFunction[] {
@@ -39,7 +39,7 @@ class btSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [1, 0, 2, 3];
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.pubUnlock = 7;
     this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
