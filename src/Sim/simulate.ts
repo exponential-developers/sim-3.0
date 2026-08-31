@@ -28,7 +28,7 @@ import ilc from "../Theories/Unofficial-CTs/ILC";
 import UI from "../UI/elements";
 
 
-const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResult>) } = {
+const simFunction: { [theory in theoryType]: ((data: theoryData<theory>) => Promise<simResult>) } = {
     T1: t1,
     T2: t2,
     T3: t3,
@@ -53,14 +53,14 @@ const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResu
     ILC: ilc,
 }
 
-async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
-    const strats = jsonData.stratCategories.includes(query.strat)
+async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promise<SingleSimResponse> {
+    const strats = query.strat == "Best Active" || query.strat == "Best Overall" || query.strat == "Best Semi-Idle" || query.strat == "Best Idle"
         ? getStrats(query.theory, query.rho, query.strat, query.lastStrat ?? "")
         : [query.strat];
 
     let bestRes = defaultResult();
     for (let strat of strats) {
-        const data: theoryData = {
+        const data: theoryData<T> = {
             theory: query.theory,
             sigma: query.sigma,
             rho: query.rho,
@@ -80,7 +80,7 @@ async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
     }
 }
 
-async function chainSim(query: ChainSimQuery, doLog = true): Promise<ChainSimResponse> {
+async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = true): Promise<ChainSimResponse> {
     let rho = query.rho;
     let time = 0;
     let lastStrat = "";
@@ -125,7 +125,7 @@ async function chainSim(query: ChainSimQuery, doLog = true): Promise<ChainSimRes
     }
 }
 
-async function amountSim(query: AmountSimQuery, doLog = true): Promise<ChainSimResponse> {
+async function amountSim<T extends theoryType>(query: AmountSimQuery<T>, doLog = true): Promise<ChainSimResponse> {
     let rho = query.rho;
     let time = 0;
     let lastStrat = "";
@@ -168,7 +168,7 @@ async function amountSim(query: AmountSimQuery, doLog = true): Promise<ChainSimR
     }
 }
 
-async function timeSim(query: TimeSimQuery): Promise<ChainSimResponse> {
+async function timeSim<T extends theoryType>(query: TimeSimQuery<T>): Promise<ChainSimResponse> {
     let rho = query.rho;
     let time = 0;
     let lastStrat = "";
@@ -212,7 +212,7 @@ async function timeSim(query: TimeSimQuery): Promise<ChainSimResponse> {
     }
 }
 
-async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
+async function stepSim<T extends theoryType>(query: StepSimQuery<T>): Promise<StepSimResponse> {
     let rho = query.rho;
     let lastStrat = "";
     const results: simResult[] = [];
@@ -305,7 +305,63 @@ async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
     }
 }
 
-async function comparisonSim(query: ComparisonSimQuery): Promise<StepSimResponse> {
+async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
+    let rho = query.rho;
+    let cap = query.cap;
+    const stopStr = logToExp(rho);
+
+    let current = cap - query.step;
+    let lastLog = 0;
+    let lastStrat = "";
+    let pubTable: [number, number][] = [[0, 0]]; // Cap is reachable in 0 time.
+    while(current > rho - 0.00001) {
+        const ts = performance.now();
+        if (ts - lastLog > 250) {
+            lastLog = ts;
+            UI.outputs.log.textContent = `Simulating ${logToExp(current, 0)}/${stopStr}`;
+            await sleep();
+        }
+        let pubCollector = new StepPubTableCollector(current, query.step, cap);
+        collectorCache.currentCollector = pubCollector;
+        const res = (await singleSim({
+            queryType: "single",
+            theory: query.theory,
+            strat: query.strat,
+            rho: current,
+            sigma: query.sigma,
+            settings: query.settings,
+            lastStrat: lastStrat
+        })).result;
+        if (!global.simulating) break;
+        current -= query.step;
+        lastStrat = res.strat.split(" ")[0];
+        let currentTable = pubCollector.timings;
+        let min_time = Infinity;
+        let min_target = Infinity;
+        for(let i = currentTable.length - 1; i > 0; i--) {
+            let step_delta = i * query.step;
+            if(current + step_delta > cap + 0.0000001) {
+                //We overshot.
+                continue;
+            }
+            if(pubTable[pubTable.length - i][0] + currentTable[i] < min_time) {
+                min_time = pubTable[pubTable.length - i][0] + currentTable[i];
+                min_target = cap - (pubTable.length - i) * query.step
+            }
+        }
+        pubTable.push([min_time, min_target]);
+    }
+    collectorCache.currentCollector = noopCollector;
+    return {
+        cap: cap,
+        start: rho,
+        step: query.step,
+        responseType: "pub_table",
+        pub_table: pubTable
+    }
+}
+
+async function comparisonSim<T extends theoryType>(query: ComparisonSimQuery<T>): Promise<StepSimResponse> {
     const strats = getStrats(query.theory, query.rho, "", "", false);
     const results: simResult[] = [];
 
@@ -336,7 +392,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         UI.outputs.log.innerText = `Simulating ${theory}/${lastTheory}`;
         await sleep();
 
-        const queryData: Omit<SingleSimQuery, "strat"> = {
+        const queryData: Omit<SingleSimQuery<typeof theory>, "strat"> = {
             queryType: "single",
             theory: theory,
             rho: rho,
@@ -374,7 +430,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     }
 }
 
-async function stepChainSim(query: StepChainQuery): Promise<StepSimResponse> {
+async function stepChainSim<T extends theoryType>(query: StepChainQuery<T>): Promise<StepSimResponse> {
     let rho = query.rho;
     const results: simResult[] = [];
     const stopStr = logToExp(query.cap);

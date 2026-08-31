@@ -82,7 +82,9 @@ class SequenceCost extends BaseCost {
   }
 }
 
-export default async function fs(data: theoryData): Promise<simResult> {
+type theory = "FS";
+
+export default async function fs(data: theoryData<theory>): Promise<simResult> {
   let res;
   if (data.strat.includes("Coast")) {
     let initialSim = new fsSim(data);
@@ -144,8 +146,6 @@ export default async function fs(data: theoryData): Promise<simResult> {
 
   return res;
 }
-
-type theory = "FS";
 
 class fsSim extends theoryClass<theory> {
   F: Currency;
@@ -258,7 +258,7 @@ class fsSim extends theoryClass<theory> {
     }
   }
 
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.F = new Currency("F");
     this.L = new Currency("L");

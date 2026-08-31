@@ -14,7 +14,7 @@ import jsonData from "../Data/data.json";
 /** Base class for a theory */
 export default abstract class theoryClass<theory extends theoryType> {
   /** Theory */
-  readonly theory: theoryType;
+  readonly theory: theory;
   /** Current strategy */
   readonly strat: stratType[theory];
   /** tau/rho conversion rate */
@@ -137,7 +137,7 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   bestForkRes: simResult;
 
-  constructor(readonly data: theoryData) {
+  constructor(readonly data: theoryData<theory>) {
     this.bestForkRes = defaultResult();
     this.pubTableCollector = collectorCache.currentCollector;
     this.theory = data.theory;
@@ -213,12 +213,12 @@ export default abstract class theoryClass<theory extends theoryType> {
   }
 
   /** Returns the theoryData needed to create a copy */
-  getDataForCopy(): theoryData {
+  getDataForCopy(): theoryData<theory> {
     return {
       theory: this.theory,
       sigma: this.sigma,
       rho: this.lastPub,
-      strat: this.strat as string,
+      strat: this.strat,
       recovery: { ...this.recovery },
       cap: this.cap,
       recursionValue: null,

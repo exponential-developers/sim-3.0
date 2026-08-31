@@ -11,9 +11,9 @@ type stratConditionFunction = (
   laststrat: string
 ) => boolean;
 
-type TheoryStratDataType = { 
+type TheoryStratDataType<T extends theoryType> = { 
   strats: {
-    [key: string]: {
+    [key in stratType[T]]: {
       stratFilterCondition: stratConditionFunction;
       forcedCondition: stratConditionFunction;
     };
@@ -21,26 +21,30 @@ type TheoryStratDataType = {
 };
 
 type StratsDataType = {
-  [key: string]: TheoryStratDataType
+  [key in theoryType]: TheoryStratDataType<key>
 };
 
 const stratData = convertConditions(structuredClone(jsonData.theories) as TheoryDataStructure);
 
-function convertConditions(theoryData: TheoryDataStructure): StratsDataType {
-  let returnedData: StratsDataType = {};
-  for (const theory of Object.keys(theoryData)) {
-    let currentTheory: TheoryStratDataType = {
-      strats: {}
-    };
-    for (const strat of Object.keys(theoryData[theory].strats)) {
-      currentTheory.strats[strat] = {
-        stratFilterCondition: Function(...stratConditionArgs, parseExpression(theoryData[theory].strats[strat].stratFilterCondition)) as stratConditionFunction,
-        forcedCondition: Function(...stratConditionArgs, parseExpression(theoryData[theory].strats[strat].forcedCondition ?? "")) as stratConditionFunction
-      }
+function buildTheoryStratFilters<T extends theoryType>(
+  theoryData: TheoryDataStructure[T]
+): TheoryStratDataType<T> {
+  const strats: Record<string, any> = {};
+  for (const strat of (Object.keys(theoryData.strats) as stratType[T][])) {
+    strats[strat] = {
+      stratFilterCondition: Function(...stratConditionArgs, parseExpression(theoryData.strats[strat].stratFilterCondition)) as stratConditionFunction,
+      forcedCondition: Function(...stratConditionArgs, parseExpression(theoryData.strats[strat].forcedCondition ?? "")) as stratConditionFunction
     }
-    returnedData[theory] = currentTheory;
   }
-  return returnedData;
+  return { strats } as TheoryStratDataType<T>;
+}
+
+function convertConditions(theoryData: TheoryDataStructure): StratsDataType {
+  const returnedData: Record<theoryType, any> = {} as any;
+  for (const theory of (Object.keys(theoryData) as theoryType[])) {
+    returnedData[theory] = buildTheoryStratFilters(theoryData[theory]);
+  }
+  return returnedData as StratsDataType;
 }
 
 function parseExpression(expression: string) {
@@ -50,10 +54,10 @@ function parseExpression(expression: string) {
   return `return ${expression}`;
 }
 
-export function getStrats(theory: theoryType, rho: number, type: string, lastStrat: string, stratFilter = true): string[] {
-  const strats = [];
+export function getStrats<T extends theoryType>(theory: T, rho: number, type: string, lastStrat: string, stratFilter = true): stratType[T][] {
+  const strats: stratType[T][] = [];
   const args = [...jsonData.stratCategories.map((v) => v === type), rho, lastStrat] as [boolean, boolean, boolean, boolean, number, string];
-  for (const strat of Object.keys(stratData[theory].strats)) {
+  for (const strat of (Object.keys(stratData[theory].strats) as stratType[T][])) {
     if (
       (stratData[theory].strats[strat].stratFilterCondition(...args) || !stratFilter) 
       && stratData[theory].strats[strat].forcedCondition(...args)

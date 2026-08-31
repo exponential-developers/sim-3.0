@@ -14,11 +14,13 @@ import {
     getBestResult
 } from "../../Utils/helpers";
 
-export default async function t6(data: theoryData): Promise<simResult> {
+type theory = "T6";
+
+export default async function t6(data: theoryData<theory>): Promise<simResult> {
     let res;
     if (data.strat.includes("Coast")) {
-        let data2: theoryData = JSON.parse(JSON.stringify(data));
-        data2.strat = data2.strat.replace("Coast", "");
+        let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+        data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
         const sim1 = new t6Sim(data2);
         const res1 = await sim1.simulate();
         const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -41,8 +43,6 @@ export default async function t6(data: theoryData): Promise<simResult> {
     }
     return res;
 }
-
-type theory = "T6";
 
 class t6Sim extends theoryClass<theory> {
     q: number;
@@ -352,7 +352,7 @@ class t6Sim extends theoryClass<theory> {
         return this.totMult + add(term1, term2, term3, term4);
     }
 
-    constructor(data: theoryData) {
+    constructor(data: theoryData<theory>) {
         super(data);
         this.q = -Infinity;
         this.r = 0;

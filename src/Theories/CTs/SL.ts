@@ -5,14 +5,16 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, l2, toCallables, getBestResult, getLastLevel } from "../../Utils/helpers";
 
-export default async function sl(data: theoryData): Promise<simResult> {
+type theory = "SL";
+
+export default async function sl(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new slSim(data);
     res = await sim.simulate();
   }
   else {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
     if(data2.strat == "SLCoast") {
       data2.strat = "SLStopA";
     }
@@ -88,8 +90,6 @@ export default async function sl(data: theoryData): Promise<simResult> {
   }
   return res;
 }
-
-type theory = "SL";
 
 class slSim extends theoryClass<theory> {
   rho2: number;
@@ -195,7 +195,7 @@ class slSim extends theoryClass<theory> {
     const y = l10(l10(2) / Math.LOG10E + x / Math.LOG10E + l10(Math.PI) / Math.LOG10E) - (l10(2) + x);
     this.inverseE_Gamma = 0 - Math.LOG10E - add(subtract(y, y + y - l10(2)), y + y + y + l10(6));
   };
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.rho2 = 0;
     this.rho3 = 0;

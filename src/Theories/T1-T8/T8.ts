@@ -14,9 +14,11 @@ const singleMSPoints = [
   Array.from({length: 104-53+1}, (_, lvl) => l10(1e2) + (l10(2) * (1.15 * Math.log2(5))) * (lvl + 53))
 ];
 
-export default async function t8(data: theoryData): Promise<simResult> {
+type theory = "T8";
+
+export default async function t8(data: theoryData<theory>): Promise<simResult> {
   async function getResult (
-    data: theoryData,
+    data: theoryData<theory>,
     singleMSPoint: number = 0
   ): Promise<simResult> {
     let res;
@@ -25,8 +27,8 @@ export default async function t8(data: theoryData): Promise<simResult> {
       res = await sim.simulate();
     }
     else {
-      let data2: theoryData = JSON.parse(JSON.stringify(data));
-      if (data2.strat !== "T8PlayCoast") data2.strat = data2.strat.replace("Coast", "");
+      let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+      if (data2.strat !== "T8PlayCoast") data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
       const sim1 = new t8Sim(data2, singleMSPoint);
       const res1 = await sim1.simulate();
       const lastC1 = getLastLevel("c1", res1.boughtVars);
@@ -67,8 +69,6 @@ export default async function t8(data: theoryData): Promise<simResult> {
   }
   return result;
 }
-
-type theory = "T8";
 
 class t8Sim extends theoryClass<theory> {
   bounds: number[][][];
@@ -251,7 +251,7 @@ class t8Sim extends theoryClass<theory> {
     }
   }
   constructor(
-    data: theoryData,
+    data: theoryData<theory>,
     singleMSPoint: number = 0
   ) {
     super(data);

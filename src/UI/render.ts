@@ -112,9 +112,9 @@ function modeUpdate(): void {
   populateSingleSimFields();
 }
 
-function theoryUpdate() {
-  const currentTheory = UI.controls.theorySelector.value as theoryType;
-  const currentTheoryStrats = Object.keys(data.theories[currentTheory].strats).filter(
+function theoryUpdate<T extends theoryType>() {
+  const currentTheory = UI.controls.theorySelector.value as T;
+  const currentTheoryStrats = (Object.keys(data.theories[currentTheory].strats) as stratType[T][]).filter(
     (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
   );
   populateSelectElement(UI.controls.stratSelector, data.stratCategories.concat(currentTheoryStrats));

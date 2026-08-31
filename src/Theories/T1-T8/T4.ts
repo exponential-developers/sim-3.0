@@ -13,15 +13,17 @@ import {
   getBestResult,
 } from "../../Utils/helpers";
 
-export default async function t4(data: theoryData): Promise<simResult> {
+type theory = "T4";
+
+export default async function t4(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new t4Sim(data);
     res = await sim.simulate();
   }
   else {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new t4Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -46,8 +48,6 @@ export default async function t4(data: theoryData): Promise<simResult> {
   }
   return res;
 }
-
-type theory = "T4";
 
 class t4Sim extends theoryClass<theory> {
   q: number;
@@ -178,7 +178,7 @@ class t4Sim extends theoryClass<theory> {
       case "T4": return [0, 2, 1];
     }
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.pubUnlock = 9;

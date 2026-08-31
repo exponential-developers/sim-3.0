@@ -26,7 +26,7 @@ const depthConvert = [
 // Bruteforce strength END
 
 // Reset
-export default async function mf(data: theoryData): Promise<simResult> {
+export default async function mf(data: theoryData<theory>): Promise<simResult> {
   let resetBundles: resetBundle[] = [
     [0, 1, 0, 0],
     [0, 1, 0, 1],
@@ -500,7 +500,7 @@ class mfSim extends theoryClass<theory> {
     this.c = xterm + omegaterm + vterm + l10(8.67e23)
   }
 
-  constructor(data: theoryData, resetBundle: resetBundle) {
+  constructor(data: theoryData<theory>, resetBundle: resetBundle) {
     super(data);
     this.mfResetDepth = this.settings.mfResetDepth;
     this.c = 0;
