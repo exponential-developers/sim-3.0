@@ -99,6 +99,7 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
+            theorySpecificInputs: query.theorySpecificInputs,
             strat: query.strat,
             rho: rho,
             sigma: query.sigma,
@@ -143,6 +144,7 @@ async function amountSim<T extends theoryType>(query: AmountSimQuery<T>, doLog =
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
+            theorySpecificInputs: query.theorySpecificInputs,
             strat: query.strat,
             rho: rho,
             sigma: query.sigma,
@@ -187,6 +189,7 @@ async function timeSim<T extends theoryType>(query: TimeSimQuery<T>): Promise<Ch
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
+            theorySpecificInputs: query.theorySpecificInputs,
             strat: query.strat,
             rho: rho,
             sigma: query.sigma,
@@ -230,6 +233,7 @@ async function stepSim<T extends theoryType>(query: StepSimQuery<T>): Promise<St
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
+            theorySpecificInputs: query.theorySpecificInputs,
             strat: query.strat,
             rho: rho,
             sigma: query.sigma,
@@ -395,6 +399,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         const queryData: Omit<SingleSimQuery<typeof theory>, "strat"> = {
             queryType: "single",
             theory: theory,
+            theorySpecificInputs: query.theorySpecificInputs[theory],
             rho: rho,
             sigma: query.sigma,
             settings: query.settings
@@ -450,6 +455,7 @@ async function stepChainSim<T extends theoryType>(query: StepChainQuery<T>): Pro
             sigma: query.sigma,
             rho,
             theory: query.theory,
+            theorySpecificInputs: query.theorySpecificInputs,
             strat: query.strat,
             cap: query.cap,
             hardCap: query.hardCap

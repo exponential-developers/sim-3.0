@@ -43,13 +43,17 @@ event(UI.settings.showUnofficials, "click", () => {
     theoryUpdate();
 });
 
-for (let theory of theories) {
+function populateSpecificInputMenuForTheory<T extends theoryType>(theory: T) {
   if (theoryData[theory].specificInputs) {
-    for (let inputId of Object.keys(theoryData[theory].specificInputs)) {
+    for (let inputId of (Object.keys(theoryData[theory].specificInputs)) as SpecificInputOf[T][]) {
       let div = generateSpecificInputWidgetWrapper(theory, inputId, theoryData[theory].specificInputs[inputId], true);
       UI.specificInputsDialog.contentWrapper.appendChild(div);
     }
   }
+}
+
+for (let theory of theories) {
+  populateSpecificInputMenuForTheory(theory);
 }
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {

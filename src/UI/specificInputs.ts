@@ -39,6 +39,7 @@ export function generateSpecificInputWidgetWrapper(
     const div = ce<HTMLDivElement>("div");
     div.setAttribute("theory", theory);
     div.setAttribute("inputid", id);
+    div.setAttribute("inputtype", input.type);
 
     const label = ce<HTMLSpanElement>("span");
     label.innerText = (allMode ? `${theory} - ` : "") + input.label + ":";
