@@ -5,7 +5,7 @@ export abstract class BasePubTableCollector {
     abstract collectData(theory: theoryClass<any>): void;
 }
 
-export class NullPubTableCollector {
+export class NullPubTableCollector implements BasePubTableCollector {
     // Noop implementation
     collectData(theory: theoryClass<any>): void {}
 }
