@@ -1,6 +1,12 @@
 import jsonData from "../Data/data.json" with { type: "json" };
-import { getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
+import { getTheories, getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
 import UI from "../UI/elements";
+
+type ParsedSpecificInput<T extends theoryType> = {
+    theory: T,
+    id: SpecificInputOf[T],
+    value?: string
+}
 
 export function parseSettings(): Settings {
     return {
@@ -51,6 +57,35 @@ function parseCurrency(str: string, theory: theoryType, sigma: number, defaultTy
     return value;
 }
 
+function parseSpecificInputSlider(div: Element): string | undefined {
+    const span = div.querySelector("specificInputSliderOutput");
+    if (span == null) return undefined;
+    return span.innerHTML;
+}
+
+function parseSpecificInput<T extends theoryType>(div: Element): ParsedSpecificInput<T> {
+    const theory = div.getAttribute("theory") as T;
+    const id = div.getAttribute("inputid") as SpecificInputOf[T];
+    const inputType = div.getAttribute("inputtype") as SpecificInputType["type"];
+    let value: string | undefined;
+    switch (inputType) {
+        case "slider": value = parseSpecificInputSlider(div);
+    }
+
+    return {theory, id, value};
+}
+
+function parseAllModeSpecificInputs(): SpecificInputFullRecord {
+    let record: {[theory in theoryType]: Partial<Record<string, string>>} = 
+        Object.fromEntries(getTheories().map((t) => [t, {}])) as {[theory in theoryType]: Partial<Record<string, string>>};
+    for (let div of UI.specificInputsDialog.contentWrapper.children) {
+        let parsed = parseSpecificInput(div);
+        record[parsed.theory][parsed.id] = parsed.value;
+    }
+
+    return record;
+}
+
 function parseSigma(required: boolean): number {
     const str = UI.controls.sigmaInput.value.replace(" ", "");
     const match = str.match(/^\d+$/g);
@@ -72,6 +107,7 @@ function parseSingleSim<T extends theoryType>(): SingleSimQuery<T> {
     return {
         queryType: "single",
         theory: theory,
+        theorySpecificInputs: {},
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -86,6 +122,7 @@ function parseChainSim<T extends theoryType>(): ChainSimQuery<T> {
     return {
         queryType: "chain",
         theory: theory,
+        theorySpecificInputs: {},
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -102,6 +139,7 @@ function parseStepSim<T extends theoryType>(): StepSimQuery<T> {
     return {
         queryType: "step",
         theory: theory,
+        theorySpecificInputs: {},
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -118,6 +156,7 @@ function parseComparisonSim<T extends theoryType>(): ComparisonSimQuery<T> {
     return {
         queryType: "comparison",
         theory: theory,
+        theorySpecificInputs: {},
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         settings: parseSettings()
@@ -131,6 +170,7 @@ function parseAmountSim<T extends theoryType>(): AmountSimQuery<T> {
     return {
         queryType: "amount",
         theory: theory,
+        theorySpecificInputs: {},
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -167,6 +207,7 @@ function parseTimeSim<T extends theoryType>(): TimeSimQuery<T> {
     return {
         queryType: "time",
         theory: theory,
+        theorySpecificInputs: {},
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -183,6 +224,7 @@ function parseStepChainSim<T extends theoryType>(): StepChainQuery<T> {
     return {
         queryType: "step_chain",
         theory: theory,
+        theorySpecificInputs: {},
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -221,6 +263,7 @@ function parseSimAll(): SimAllQuery {
 
     return {
         queryType: "all",
+        theorySpecificInputs: parseAllModeSpecificInputs(),
         sigma: sigma,
         values: values,
         veryActive: UI.controls.veryActiveToggle.checked,

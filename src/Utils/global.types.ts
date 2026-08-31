@@ -7,6 +7,11 @@ declare global {
   type stratType = {
     [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
   };
+  type SpecificInputOf = {
+    [key in theoryType]: (typeof jsonData.theories)[key] extends { specificInputs: infer SI }
+      ? keyof SI
+      : never
+  }
 
   type SpecificInputNumberValidation = {
     type: "int" | "float" | "exp",
@@ -41,11 +46,13 @@ declare global {
 
   type SpecificInputType = SpecificInputTextbox | SpecificInputSlider | SpecificInputDropdown;
 
+  type SpecificInputFullRecord = {[theory in theoryType]: Partial<Record<SpecificInputOf[theory], string>>};
+
   type TheoryDataStructure = {
     [theory in theoryType]: {
       tauFactor: number;
       specificInputs?: {
-        [input: string]: SpecificInputType
+        [key in SpecificInputOf[theory]]: SpecificInputType
       };
       UI_visible?: boolean;
       strats: {
@@ -63,53 +70,52 @@ declare global {
     settings: Settings;
   }
 
+  type BaseSingleTheoryQuery<T extends theoryType> = BaseSimQuery & {
+    theory: T;
+    theorySpecificInputs: Partial<Record<SpecificInputOf[T], string>>
+  }
+
   type stratCategoryType = "Best Overall" | "Best Active" | "Best Semi-Idle" | "Best Idle";
   type FullStratType<T extends theoryType> = stratType[T] | stratCategoryType;
 
-  type SingleSimQuery<T extends theoryType> = BaseSimQuery & {
+  type SingleSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "single";
-    theory: T;
     strat: FullStratType<T>;
     rho: number;
     cap?: number;
     lastStrat?: string;
   }
 
-  type ChainSimQuery<T extends theoryType> = BaseSimQuery & {
+  type ChainSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "chain";
-    theory: T;
     strat: FullStratType<T>;
     rho: number;
     cap: number;
     hardCap: boolean;
   }
 
-  type StepSimQuery<T extends theoryType> = BaseSimQuery & {
+  type StepSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "step";
-    theory: T;
     strat: FullStratType<T>;
     rho: number;
     cap: number;
     step: number;
   }
 
-  type ComparisonSimQuery<T extends theoryType> = BaseSimQuery & {
+  type ComparisonSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "comparison";
-    theory: T;
     rho: number;
   }
 
-  type AmountSimQuery<T extends theoryType> = BaseSimQuery & {
+  type AmountSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "amount";
-    theory: T;
     strat: FullStratType<T>;
     rho: number;
     amount: number;
   }
 
-  type TimeSimQuery<T extends theoryType> = BaseSimQuery & {
+  type TimeSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "time";
-    theory: T;
     strat: FullStratType<T>;
     rho: number;
     time: number;
@@ -118,15 +124,15 @@ declare global {
 
   type SimAllQuery = BaseSimQuery & {
     queryType: "all";
+    theorySpecificInputs: SpecificInputFullRecord
     values: number[];
     veryActive: boolean;
     semiIdle: boolean;
     stratType: SettingsSimAllStratsMode;
   }
 
-  type StepChainQuery<T extends theoryType> = BaseSimQuery & {
+  type StepChainQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "step_chain"
-    theory: T
     strat: FullStratType<T>
     rho: number
     cap: number
