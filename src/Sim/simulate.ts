@@ -53,7 +53,7 @@ const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResu
 }
 
 async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
-    const strats = jsonData.stratCategories.includes(query.strat) 
+    const strats = jsonData.stratCategories.includes(query.strat)
         ? getStrats(query.theory, query.rho, query.strat, query.lastStrat ?? "")
         : [query.strat];
 
@@ -248,6 +248,43 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
     }
 }
 
+async function pubTableSim(query: PubTableSimQuery): Promise<StepSimResponse> {
+    let rho = query.rho;
+    let lastStrat = "";
+    const results: simResult[] = [];
+    const stopStr = logToExp(query.cap);
+    let lastLog = 0;
+
+    while (rho < query.cap + 0.00001) {
+        const ts = performance.now();
+        if (ts - lastLog > 250) {
+            lastLog = ts;
+            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            await sleep();
+        }
+
+        const res = (await singleSim({
+            queryType: "single",
+            theory: query.theory,
+            strat: query.strat,
+            rho: rho,
+            sigma: query.sigma,
+            settings: query.settings,
+            lastStrat: lastStrat
+        })).result;
+        if (!global.simulating) break;
+
+        results.push(res);
+        rho += query.step;
+        lastStrat = res.strat.split(" ")[0];
+    }
+
+    return {
+        responseType: "step",
+        results: results
+    }
+}
+
 async function comparisonSim(query: ComparisonSimQuery): Promise<StepSimResponse> {
     const strats = getStrats(query.theory, query.rho, "", "", false);
     const results: simResult[] = [];
@@ -275,7 +312,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         const rho = query.values[i];
         if (rho <= 0) continue;
         if (!global.simulating) break;
-        
+
         UI.outputs.log.innerText = `Simulating ${theory}/${lastTheory}`;
         await sleep();
 
@@ -384,6 +421,7 @@ export async function simulate(query: SimQuery): Promise<SimResponse> {
         case "comparison": return await comparisonSim(query);
         case "all": return await simAll(query);
         case "step_chain": return await stepChainSim(query);
+        case "pub_table": return await pubTableSim(query);
         case "amount": return await amountSim(query);
         case "time": return await timeSim(query);
         default: {

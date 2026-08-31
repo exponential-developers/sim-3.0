@@ -17,7 +17,7 @@ function populateSelectElement(select: HTMLSelectElement, items: string[], clear
   }
 }
 function populateTheoryList(showUnofficials: boolean) {
-  populateSelectElement(UI.controls.theorySelector, theories.filter(theory => 
+  populateSelectElement(UI.controls.theorySelector, theories.filter(theory =>
     (data.theories as TheoryDataStructure)[theory].UI_visible !== false || showUnofficials));
 }
 
@@ -87,12 +87,13 @@ function modeUpdate(): void {
   // Displays the single-theory inputs
   if (newMode !== "All" && newMode !== "Time diff.") show(UI.controls.baseWrapper);
   // Displays the cap input for chain/steps mode
-  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain") show(UI.controls.capInputWrapper);
+  if (newMode === "Chain" || newMode === "Steps" || newMode === "StepChain" || newMode == "Pub Table") show(UI.controls.capInputWrapper);
   // Displays the hard cap input
   if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) show(UI.controls.hardCapWrapper);
 
+  console.log(newMode)
   // Extra Inputs
-  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain") 
+  if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain")
     show(UI.controls.extraInputWrapper)
   if (newMode === "All") {
     show(UI.controls.simAllInputWrapper);
@@ -103,9 +104,11 @@ function modeUpdate(): void {
   else {
     show(UI.controls.extraInput);
   }
+  console.log(data.modeInputDescriptions[findIndex(data.modes, newMode)])
   UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
+  console.log(data.modeInputPlaceholder[findIndex(data.modes, newMode)])
   UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
-  
+
   if (newMode === "Time diff.") show(UI.controls.timeDiffWrapper);
 
   populateSingleSimFields();

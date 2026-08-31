@@ -111,6 +111,22 @@ function parseStepSim(): StepSimQuery {
     }
 }
 
+function parsePubTableSim(): PubTableSimQuery {
+    const theory = UI.controls.theorySelector.value as theoryType;
+    const sigma = parseSigma(isMainTheory(theory));
+
+    return {
+        queryType: "pub_table",
+        theory: theory,
+        strat: UI.controls.stratSelector.value,
+        sigma: sigma,
+        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        step: parseExponentialValue(UI.controls.extraInput.value),
+        settings: parseSettings()
+    }
+}
+
 function parseComparisonSim(): ComparisonSimQuery {
     const theory = UI.controls.theorySelector.value as theoryType;
     const sigma = parseSigma(isMainTheory(theory));
@@ -197,7 +213,7 @@ function parseSimAll(): SimAllQuery {
     const settings = parseSettings();
     const str = UI.controls.simAllInputArea.value;
     let split = str.split(" ").map(s => s.replace("\n", "")).filter(s => s != "");
-    
+
     const sigmaStr = split.shift() ?? "";
     if (split.length < 1) throw "Student count and at least one theory value that is not 0 is required.";
     if (split.length > Object.keys(jsonData.theories).length) {
@@ -240,6 +256,7 @@ export function parseQuery(): SimQuery {
         case "Amount": return parseAmountSim();
         case "Time": return parseTimeSim();
         case "StepChain": return parseStepChainSim();
+        case "Pub Table": return parsePubTableSim();
         default: throw "This mode is not supported.";
     }
 }

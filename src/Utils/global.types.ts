@@ -54,6 +54,15 @@ declare global {
     step: number;
   }
 
+  type PubTableSimQuery = BaseSimQuery & {
+    queryType: "pub_table";
+    theory: theoryType;
+    strat: string;
+    rho: number;
+    cap: number;
+    step: number;
+  }
+
   type ComparisonSimQuery = BaseSimQuery & {
     queryType: "comparison";
     theory: theoryType;
@@ -95,14 +104,15 @@ declare global {
     hardCap: boolean
   }
 
-  type SimQuery = SingleSimQuery 
-    | ChainSimQuery 
-    | StepSimQuery 
-    | ComparisonSimQuery 
-    | AmountSimQuery 
-    | TimeSimQuery 
-    | SimAllQuery 
-    | StepChainQuery;
+  type SimQuery = SingleSimQuery
+    | ChainSimQuery
+    | StepSimQuery
+    | ComparisonSimQuery
+    | AmountSimQuery
+    | TimeSimQuery
+    | SimAllQuery
+    | StepChainQuery
+    | PubTableSimQuery;
 
   type SingleSimResponse = {
     responseType: "single";
