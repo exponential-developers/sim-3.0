@@ -1,13 +1,6 @@
 import { formatNumber, getddtFromSlider, getdtFromSlider } from "../Utils/helpers";
-import { bindDialogCloseEvents, event, openDialog } from "../Utils/DOMhelpers";
-import { setSimState } from "./simState";
+import { event } from "../Utils/DOMhelpers";
 import UI from "./elements";
-
-event(UI.nav.settingsBtn, "pointerdown", () => openDialog(UI.settings.dialog));
-bindDialogCloseEvents(UI.settings.dialog, UI.settings.closeBtn, setSimState);
-
-event(UI.nav.instructionsBtn, "pointerdown", () => openDialog(UI.instructions.dialog));
-bindDialogCloseEvents(UI.instructions.dialog, UI.instructions.closeBtn);
 
 event(UI.settings.dtSlider, "input", () => {
   UI.settings.dtOtp.textContent = formatNumber(getdtFromSlider(parseFloat(UI.settings.dtSlider.value)), 4);

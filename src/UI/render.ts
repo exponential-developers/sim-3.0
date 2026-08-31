@@ -1,10 +1,12 @@
 import data from "../Data/data.json" with { type: "json" };
-import { findIndex, getIndexFromTheory } from "../Utils/helpers";
+import { findIndex, getIndexFromTheory, getTheories } from "../Utils/helpers";
 import { event, ce, removeAllChilds, hide, show } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
 import UI from "./elements";
+import { generateSpecificInputWidgetWrapper } from "./specificInputs";
 
-const theories = Object.keys(data.theories) as theoryType[];
+const theories = getTheories();
+const theoryData = data.theories as TheoryDataStructure;
 
 /** Populates a select element with the given items */
 function populateSelectElement(select: HTMLSelectElement, items: string[], clear = true) {
@@ -18,7 +20,7 @@ function populateSelectElement(select: HTMLSelectElement, items: string[], clear
 }
 function populateTheoryList(showUnofficials: boolean) {
   populateSelectElement(UI.controls.theorySelector, theories.filter(theory => 
-    (data.theories as TheoryDataStructure)[theory].UI_visible !== false || showUnofficials));
+    theoryData[theory].UI_visible !== false || showUnofficials));
 }
 
 //Renders theories, strats and modes options on page load
@@ -40,6 +42,15 @@ event(UI.settings.showUnofficials, "click", () => {
     populateTheoryList(UI.settings.showUnofficials.checked);
     theoryUpdate();
 });
+
+for (let theory of theories) {
+  if (theoryData[theory].specificInputs) {
+    for (let inputId of Object.keys(theoryData[theory].specificInputs)) {
+      let div = generateSpecificInputWidgetWrapper(theory, inputId, theoryData[theory].specificInputs[inputId], true);
+      UI.specificInputsDialog.contentWrapper.appendChild(div);
+    }
+  }
+}
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {
   // Sigma field
@@ -81,6 +92,7 @@ function modeUpdate(): void {
   show(UI.controls.extraInputDesc);
   hide(UI.controls.extraInput);
   hide(UI.controls.timeDiffWrapper);
+  hide(UI.controls.specificInputsMenuButtonWrapper);
 
   // Displays the strat selector
   if (newMode !== "Comparison") show(UI.controls.stratSelectorWrapper);
@@ -98,6 +110,7 @@ function modeUpdate(): void {
     show(UI.controls.simAllInputWrapper);
     hide(UI.controls.extraInputDesc);
     show(UI.controls.simAllInputArea);
+    show(UI.controls.specificInputsMenuButtonWrapper);
     UI.controls.simAllInputArea.placeholder = data.modeInputPlaceholder[0];
   }
   else {

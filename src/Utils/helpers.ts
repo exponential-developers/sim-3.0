@@ -27,6 +27,10 @@ export function getIndexFromTheory(theory: string): number {
 export function getTheoryFromIndex(index: number): theoryType {
   return Object.keys(jsonData.theories)[index] as theoryType;
 }
+/** Returns the list of theories */
+export function getTheories(): theoryType[] {
+  return Object.keys(jsonData.theories) as theoryType[]
+}
 
 /** Parses a value of the form x.xex to a log10 value */
 export function parseLog10String(num: string): number {

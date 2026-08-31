@@ -38,6 +38,9 @@ const UI = {
 
         timeDiffWrapper: qs(".timeDiffWrapper"),
 
+        specificInputsMenuButtonWrapper: qs(".specificInputsMenuButtonWrapper"),
+        specificInputsMenuButton: qs<HTMLButtonElement>(".specificInputsMenuButton"),
+
         copyImageBtn: qs<HTMLButtonElement>(".copyImageBtn"),
         downloadImageBtn: qs(".downloadImageBtn"),
         downloadCsvBtn: qs(".downloadCsvBtn"),
@@ -71,6 +74,11 @@ const UI = {
         showA23: qs<HTMLInputElement>(".a23"),
         showUnofficials: qs<HTMLInputElement>(".unofficials"),
         totalPurchaseList: qs<HTMLInputElement>(".totalPurchaseList")
+    },
+    specificInputsDialog: {
+        dialog: qs<HTMLDialogElement>(".specificInputsDialog"),
+        closeBtn: qs<HTMLButtonElement>(".specificInputsCloseBtn"),
+        contentWrapper: qs(".specificInputsMenuWrapper")
     },
     buyList: {
         dialog: qs<HTMLDialogElement>(".boughtVars"),
