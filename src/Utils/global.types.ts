@@ -127,6 +127,10 @@ declare global {
     totalTime: number;
   }
 
+  type PubTableResponse = {
+    responseType: "pub_table";
+    pub_table: [number, number][]
+  }
   type StepSimResponse = {
     responseType: "step";
     results: simResult[];
@@ -140,7 +144,7 @@ declare global {
     results: simAllResult[];
   }
 
-  type SimResponse = SingleSimResponse | ChainSimResponse | StepSimResponse | SimAllResponse;
+  type SimResponse = SingleSimResponse | ChainSimResponse | StepSimResponse | SimAllResponse | PubTableResponse;
 
   interface varBuy {
     variable: string;

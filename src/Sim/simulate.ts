@@ -1,4 +1,5 @@
 import jsonData from "../Data/data.json" with { type: "json" };
+import { collectorCache, noopCollector, StepPubTableCollector } from "../Utils/pubTableCollector";
 import { global } from "./main";
 import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
 import { getStrats } from "./strats";
@@ -248,40 +249,56 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
     }
 }
 
-async function pubTableSim(query: PubTableSimQuery): Promise<StepSimResponse> {
+async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
     let rho = query.rho;
-    let lastStrat = "";
-    const results: simResult[] = [];
-    const stopStr = logToExp(query.cap);
-    let lastLog = 0;
+    let cap = query.cap;
+    const stopStr = logToExp(rho);
 
-    while (rho < query.cap + 0.00001) {
+    let current = cap - query.step;
+    let lastLog = 0;
+    let lastStrat = "";
+    let pubTable: [number, number][] = [[0, 0]]; // Cap is reachable in 0 time.
+    while(current > rho - 0.00001) {
         const ts = performance.now();
         if (ts - lastLog > 250) {
             lastLog = ts;
-            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${logToExp(current, 0)}/${stopStr}`;
             await sleep();
         }
-
+        let pubCollector = new StepPubTableCollector(current, query.step, cap);
+        collectorCache.currentCollector = pubCollector;
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
             strat: query.strat,
-            rho: rho,
+            rho: current,
             sigma: query.sigma,
             settings: query.settings,
             lastStrat: lastStrat
         })).result;
         if (!global.simulating) break;
-
-        results.push(res);
-        rho += query.step;
+        current -= query.step;
         lastStrat = res.strat.split(" ")[0];
+        let currentTable = pubCollector.timings;
+        let min_time = Infinity;
+        let min_target = Infinity;
+        for(let i = currentTable.length - 1; i > 0; i--) {
+            let step_delta = i * query.step;
+            if(current + step_delta > cap + 0.0000001) {
+                //We overshot.
+                continue;
+            }
+            if(pubTable[pubTable.length - i][0] + currentTable[i] < min_time) {
+                min_time = pubTable[pubTable.length - i][0] + currentTable[i];
+                min_target = pubTable.length - i
+            }
+        }
+        pubTable.push([min_time, min_target]);
     }
-
+    collectorCache.currentCollector = noopCollector;
     return {
-        responseType: "step",
-        results: results
+        responseType: "pub_table",
+        pub_table: pubTable
     }
 }
 
