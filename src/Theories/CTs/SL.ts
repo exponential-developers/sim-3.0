@@ -222,6 +222,7 @@ class slSim extends theoryClass<theory> {
       for(let varIndex = 0; varIndex < this.variables.length; varIndex++) {
         if(this.variables[varIndex].shouldFork) await this.doForkVariable(varIndex);
       }
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let extra = '';

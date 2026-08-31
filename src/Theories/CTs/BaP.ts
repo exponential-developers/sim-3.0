@@ -35,7 +35,7 @@ class bapSim extends theoryClass<theory> {
     const semiidlestrat = new Array(12).fill(() => this.maxRho < this.getNextCoast() - l10(25));
     const activestrat = [
       true,
-      () => this.variables[1].cost + l10(0.5 * this.variables[0].level % 64) < this.variables[2].cost 
+      () => this.variables[1].cost + l10(0.5 * this.variables[0].level % 64) < this.variables[2].cost
         && (this.milestones[0] > 0 || this.variables[1].level < 65),
       ...new Array(10).fill(true)
     ]
@@ -110,7 +110,7 @@ class bapSim extends theoryClass<theory> {
 
     //let approx_sum = 1 / c1 + BigNumber.ONE / (BigNumber.TWO * (c1.pow(BigNumber.TWO)));
     let approx_sum = add(-c1, -l10(2) - 2*c1)
-    
+
     if (r_ms) {
         if (c1 <= 10) { // higher accuracy estimate
             return -approx_sum;
@@ -118,7 +118,7 @@ class bapSim extends theoryClass<theory> {
             return c1;
         }
     }
-    
+
     //return BigNumber.from(Math.PI * Math.PI) / BigNumber.SIX - approx_sum + BigNumber.ONE / c1.pow(BigNumber.TWO);
     return add(subtract(l10(Math.PI*Math.PI/6), approx_sum), -2*c1);
   }
@@ -226,6 +226,7 @@ class bapSim extends theoryClass<theory> {
         const res = await fork.simulate();
         if(res.pubRho >=1500)this.bestRes = getBestResult(this.bestRes, res);
       }
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     const result = this.createResult();

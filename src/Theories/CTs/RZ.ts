@@ -447,7 +447,7 @@ class rzSim extends theoryClass<theory> {
         }
 
         // This is a method to prevent the non-convergence of the algorithm
-        const bhLockPreventionCoeff = this.bhProcessCounter < 100 ? 1 : Math.E ** (-0.001*(this.bhProcessCounter - 100)); 
+        const bhLockPreventionCoeff = this.bhProcessCounter < 100 ? 1 : Math.E ** (-0.001*(this.bhProcessCounter - 100));
 
         if (zResult === null){
             zResult = zeta(this.t_var, this.ticks, this.offGrid, lookups.zetaLookup);
@@ -559,7 +559,7 @@ class rzSim extends theoryClass<theory> {
                 valueScaling: new ExponentialValue(2),
             }),
         ];
-        
+
         this.bhAtRecovery = false;
         this.bhzTerm = 0;
         this.bhdTerm = 0;
@@ -593,6 +593,7 @@ class rzSim extends theoryClass<theory> {
                 if (this.lastPub < 600) this.updateMilestones();
                 if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
                 this.buyVariables();
+                this.pubTableCollector.collectData(this);
             }
         }
         catch (error) {
@@ -680,7 +681,7 @@ class rzSim extends theoryClass<theory> {
         }
     }
     onVariablePurchased(id: number): void {
-        if (id == 2 && this.bhRewindStatus == 2) { 
+        if (id == 2 && this.bhRewindStatus == 2) {
             // Reset RZdBHRewind status when buying b
             // To make sure the cache is recomputed with the new b value
             this.bhRewindT = 0;

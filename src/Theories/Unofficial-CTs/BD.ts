@@ -168,6 +168,7 @@ class bdSim extends theoryClass<theory> {
       for(let i = 0; i < 7; i++) {
         if(this.variables[i].shouldFork) await this.doForkVariable(i);
       }
+      this.pubTableCollector.collectData(this);
     }
     let stratExtra = '';
     this.trimBoughtVars();

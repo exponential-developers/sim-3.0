@@ -223,7 +223,7 @@ class t2Sim extends theoryClass<theory> {
       new Variable({ name: "r3", cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
       new Variable({ name: "r4", cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
     ];
-    
+
     this.targetRho = -1;
     this.stop1 = 3500;
     this.stop2 = 2700;
@@ -243,6 +243,7 @@ class t2Sim extends theoryClass<theory> {
       this.updateSimStatus();
       if (this.lastPub < 250) this.updateMilestones();
       this.buyVariables();
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let stratExtra = ["T2MCAlt3", "T2Haxolotl"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";

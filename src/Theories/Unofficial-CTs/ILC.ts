@@ -177,6 +177,7 @@ class ilcSim extends theoryClass<theory> {
       for(let i = 0; i <= LAST_COAST_VAR; i++) {
         if(this.variables[i].shouldFork) await this.doForkVariable(i);
       }
+      this.pubTableCollector.collectData(this);
     }
     let stratExtra = '';
     this.trimBoughtVars();

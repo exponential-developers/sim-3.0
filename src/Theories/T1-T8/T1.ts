@@ -239,6 +239,7 @@ class t1Sim extends theoryClass<theory> {
       if (this.variables[0].shouldFork) await this.doForkVariable(0);
       if (this.variables[1].shouldFork) await this.doForkVariable(1);
       if (this.variables[4].shouldFork) await this.doForkVariable(4);
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let stratExtra = "";
