@@ -7,6 +7,7 @@ module.exports = {
       "./src/Sim/write.ts",
       "./src/UI/buttonEvents.ts",
       "./src/UI/render.ts",
+      "./src/UI/dialogs.ts",
       "./src/UI/settings.ts",
       "./src/UI/simState.ts",
       "./src/UI/elements.ts"

@@ -8,25 +8,38 @@ declare global {
     [key in theoryType]: keyof (typeof jsonData.theories)[key]["strats"];
   };
 
-  type SpecificInputValidationType = {
+  type SpecificInputNumberValidation = {
     type: "int" | "float" | "exp",
     min: number,
     max: number
-  } | {
+  }
+
+  type SpecificInputValidationType = SpecificInputNumberValidation | {
     type: "string"
   }
 
-  type SpecificInputType = {label: string} & ({
+  type SpecificInputTextbox = {
+    label: string,
     type: "textbox",
-    validation: SpecificInputValidationType
-  } | {
-    type: "slider",
     validation: SpecificInputValidationType,
-    step: number
-  } | {
+    placeholder?: string
+  }
+
+  type SpecificInputSlider = {
+    label: string,
+    type: "slider",
+    validation: SpecificInputNumberValidation,
+    step: number,
+    default?: number
+  }
+
+  type SpecificInputDropdown = {
+    label: string,
     type: "dropdown",
     choices: string[]
-  });
+  }
+
+  type SpecificInputType = SpecificInputTextbox | SpecificInputSlider | SpecificInputDropdown;
 
   type TheoryDataStructure = {
     [theory in theoryType]: {
