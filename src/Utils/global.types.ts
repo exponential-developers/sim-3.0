@@ -54,6 +54,15 @@ declare global {
     step: number;
   }
 
+  type PubTableSimQuery = BaseSimQuery & {
+    queryType: "pub_table";
+    theory: theoryType;
+    strat: string;
+    rho: number;
+    cap: number;
+    step: number;
+  }
+
   type ComparisonSimQuery = BaseSimQuery & {
     queryType: "comparison";
     theory: theoryType;
@@ -95,14 +104,15 @@ declare global {
     hardCap: boolean
   }
 
-  type SimQuery = SingleSimQuery 
-    | ChainSimQuery 
-    | StepSimQuery 
-    | ComparisonSimQuery 
-    | AmountSimQuery 
-    | TimeSimQuery 
-    | SimAllQuery 
-    | StepChainQuery;
+  type SimQuery = SingleSimQuery
+    | ChainSimQuery
+    | StepSimQuery
+    | ComparisonSimQuery
+    | AmountSimQuery
+    | TimeSimQuery
+    | SimAllQuery
+    | StepChainQuery
+    | PubTableSimQuery;
 
   type SingleSimResponse = {
     responseType: "single";
@@ -117,6 +127,13 @@ declare global {
     totalTime: number;
   }
 
+  type PubTableResponse = {
+    responseType: "pub_table";
+    cap: number,
+    step: number,
+    start: number,
+    pub_table: [number, number][]
+  }
   type StepSimResponse = {
     responseType: "step";
     results: simResult[];
@@ -130,7 +147,7 @@ declare global {
     results: simAllResult[];
   }
 
-  type SimResponse = SingleSimResponse | ChainSimResponse | StepSimResponse | SimAllResponse;
+  type SimResponse = SingleSimResponse | ChainSimResponse | StepSimResponse | SimAllResponse | PubTableResponse;
 
   interface varBuy {
     variable: string;

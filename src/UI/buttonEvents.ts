@@ -25,6 +25,9 @@ event(UI.controls.downloadCsvBtn, "pointerdown", () => {
   }
   downloadString(makeTableCsv(), "sim_results.csv");
 })
+event(UI.controls.downloadPubTable, "pointerdown", () => {
+  downloadString(makePubTableJson(), "table.json");
+})
 
 async function createImage(mode: "download" | "copy") {
   if (UI.outputs.tableHeadRow.childElementCount == 0) {
@@ -61,6 +64,20 @@ async function createImage(mode: "download" | "copy") {
     show(lastHeader);
     varBuyCells.forEach((elem) => show(elem));
   });
+}
+
+function makePubTableJson(): string {
+  let data = UI.outputData.pubTable;
+  let table_form: Record<string, Record<string, string | number>> = {}
+  let current = UI.outputData.pubTableParams.cap;
+  for(let item of data) {
+    table_form[current.toFixed(4)] = {
+      "next": item[1].toFixed(4),
+      "time": item[0]
+    }
+    current -= UI.outputData.pubTableParams.step;
+  }
+  return JSON.stringify(table_form, null, 2);
 }
 
 function makeTableCsv(): string {

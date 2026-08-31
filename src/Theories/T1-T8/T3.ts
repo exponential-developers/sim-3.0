@@ -53,9 +53,9 @@ class t3Sim extends theoryClass<theory> {
       ],
       T3Play: [
         () => (this.curMult < 2 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
-        () => this.curMult < 2 
-          ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost) 
-            && this.variables[1].cost + l10(2) < this.variables[7].cost 
+        () => this.curMult < 2
+          ? this.variables[1].cost + l10(4) < Math.min(this.variables[4].cost, this.variables[10].cost)
+            && this.variables[1].cost + l10(2) < this.variables[7].cost
           : true,
         () => this.variables[2].cost + l10(8) < this.variables[8].cost && this.variables[2].cost + l10(2) < this.variables[11].cost,
         false,
@@ -310,6 +310,7 @@ class t3Sim extends theoryClass<theory> {
       this.buyVariables();
       if(this.variables[1].shouldFork) await this.doForkVariable(1);
       if(this.variables[2].shouldFork) await this.doForkVariable(2);
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let stratExtra = "";

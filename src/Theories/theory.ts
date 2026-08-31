@@ -1,4 +1,5 @@
 import Currency from "../Utils/currency";
+import { BasePubTableCollector, collectorCache } from "../Utils/pubTableCollector";
 import Variable from "../Utils/variable";
 import {
   binaryInsertionSearch,
@@ -74,13 +75,15 @@ export default abstract class theoryClass<theory extends theoryType> {
   pubT: number;
   /** final rho of the publication */
   pubRho: number;
+  /** pub table collector, will be overridden in relevant methods */
+  pubTableCollector: BasePubTableCollector;
 
   // Publication conditions
-  /** 
+  /**
    * Prevents the sim from publishing if one of these conditions is not satisfied
    */
   forcedPubConditions: conditionFunction[];
-  /** 
+  /**
    * If one of these conditions is reached, the publication ends at that point
    */
   pubConditions: conditionFunction[];
@@ -99,28 +102,28 @@ export default abstract class theoryClass<theory extends theoryType> {
   milestones: number[];
   /** Maximum level for each milestone */
   milestonesMax: number[];
-  /** 
-   * Milestone unlock points 
-   * 
+  /**
+   * Milestone unlock points
+   *
    * This is overwritten if `milestoneUnlockSteps` is set
    * */
   milestoneUnlocks: number[];
-  /** 
+  /**
    * Steps of rho at which milestones are unlocked
-   * 
+   *
    * Takes priority over `milestoneUnlocks`
    */
   milestoneUnlockSteps: number;
 
-  /** 
+  /**
    * Returns the buying conditions for each variable.
-   * 
+   *
    * This is only called once during the simulation.
    * */
   abstract getBuyingConditions(): conditionFunction[];
   /**
    * Returns the variable availability of each variable.
-   * 
+   *
    * This is only called once during the simulation.
    */
   abstract getVariableAvailability(): conditionFunction[];
@@ -136,6 +139,7 @@ export default abstract class theoryClass<theory extends theoryType> {
 
   constructor(readonly data: theoryData) {
     this.bestForkRes = defaultResult();
+    this.pubTableCollector = collectorCache.currentCollector;
     this.theory = data.theory;
     this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
@@ -188,6 +192,7 @@ export default abstract class theoryClass<theory extends theoryType> {
    * Copies the base attributes from `other`
    */
   copyFrom(other: this): void {
+    this.pubTableCollector = other.pubTableCollector;
     this.cap = other.cap;
     this.totMult = other.totMult;
     this.dt = other.dt;
@@ -224,7 +229,7 @@ export default abstract class theoryClass<theory extends theoryType> {
   /**
    * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
    * It does not need to feature all milestones.
-   * 
+   *
    * This is called each time `updateMilestones` is called.
    */
   abstract getMilestonePriority(): number[];
@@ -235,7 +240,7 @@ export default abstract class theoryClass<theory extends theoryType> {
   updateMilestones(): void {
     const rho = Math.max(this.maxRho, this.lastPub);
     const priority = this.getMilestonePriority();
-    let milestoneCount = this.milestoneUnlockSteps > 0 
+    let milestoneCount = this.milestoneUnlockSteps > 0
       ? Math.floor(rho / this.milestoneUnlockSteps)
       : binaryInsertionSearch(this.milestoneUnlocks, rho);
     this.milestones = new Array(this.milestonesMax.length).fill(0);
@@ -314,7 +319,7 @@ export default abstract class theoryClass<theory extends theoryType> {
       this.pubT = this.t;
       this.pubRho = this.maxRho;
     }
-    
+
     this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
     this.ticks++;
   }
@@ -336,9 +341,9 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   extraBuyingCondition(id: number): boolean {return true;};
 
-  /** 
-   * Buys variables. 
-   * 
+  /**
+   * Buys variables.
+   *
    * Variables are bought from the end of the variable list.
    * */
   buyVariables() {
@@ -348,10 +353,10 @@ export default abstract class theoryClass<theory extends theoryType> {
       while (true) {
         if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
           if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
-            this.boughtVars.push({ 
-              variable: this.variables[i].name, 
-              level: this.variables[i].level + 1, 
-              cost: this.variables[i].cost, 
+            this.boughtVars.push({
+              variable: this.variables[i].name,
+              level: this.variables[i].level + 1,
+              cost: this.variables[i].cost,
               timeStamp: this.t,
               symbol: currency.symbol
             });
@@ -368,14 +373,14 @@ export default abstract class theoryClass<theory extends theoryType> {
 
   /**
    * Returns the weights for the costs when using `buyVariablesWeight`.
-   * 
+   *
    * This function is called each time `buyVariablesWeight` is ran.
    */
   getVariableWeights?(): number[];
 
   /**
    * Buys variables using a weighted cost algorithm.
-   * 
+   *
    * The weight of the cost of each variable must be defined by `getVariableWeights`.
    */
   buyVariablesWeight() {
@@ -392,10 +397,10 @@ export default abstract class theoryClass<theory extends theoryType> {
       if (minCost[1] !== -1 && rawCost[minCost[1]] < (this.variables[minCost[1]].currency ?? this.rho).value) {
         (this.variables[minCost[1]].currency ?? this.rho).subtract(this.variables[minCost[1]].cost);
         if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
-          this.boughtVars.push({ 
-            variable: this.variables[minCost[1]].name, 
-            level: this.variables[minCost[1]].level + 1, 
-            cost: this.variables[minCost[1]].cost, 
+          this.boughtVars.push({
+            variable: this.variables[minCost[1]].name,
+            level: this.variables[minCost[1]].level + 1,
+            cost: this.variables[minCost[1]].cost,
             timeStamp: this.t,
             symbol: (this.variables[minCost[1]].currency ?? this.rho).symbol
           });
@@ -426,10 +431,10 @@ export default abstract class theoryClass<theory extends theoryType> {
           let confirmPurchase = await this.confirmPurchase(i);
           if (!confirmPurchase) break;
           if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
-            this.boughtVars.push({ 
-              variable: this.variables[i].name, 
-              level: this.variables[i].level + 1, 
-              cost: this.variables[i].cost, 
+            this.boughtVars.push({
+              variable: this.variables[i].name,
+              level: this.variables[i].level + 1,
+              cost: this.variables[i].cost,
               timeStamp: this.t,
               symbol: currency.symbol
             });

@@ -92,7 +92,7 @@ class t8Sim extends theoryClass<theory> {
       true,
       () => this.variables[4].shouldBuy,
     ];
-    
+
     const noC3Strat = [true, true, false, true, true];
     const noC3CoastStrat = [
       () => this.variables[0].shouldBuy,
@@ -310,6 +310,7 @@ class t8Sim extends theoryClass<theory> {
       if(this.variables[0].shouldFork) await this.doForkVariable(0)
       if(this.variables[2].shouldFork) await this.doForkVariable(2)
       if(this.variables[4].shouldFork) await this.doForkVariable(4)
+      this.pubTableCollector.collectData(this);
     }
     let stratExtra = "";
     if (this.strat.includes("SingleMS")) {

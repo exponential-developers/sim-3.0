@@ -602,6 +602,7 @@ class mfSim extends theoryClass<theory> {
       if(this.forkOnC1) {
         await this.doForkC1();
       }
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let stratExtra = ` Depth: ${this.mfResetDepth}`;

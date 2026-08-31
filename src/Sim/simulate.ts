@@ -1,4 +1,5 @@
 import jsonData from "../Data/data.json" with { type: "json" };
+import { collectorCache, noopCollector, StepPubTableCollector } from "../Utils/pubTableCollector";
 import { global } from "./main";
 import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
 import { getStrats } from "./strats";
@@ -53,7 +54,7 @@ const simFunction: { [key in theoryType]: ((data: theoryData) => Promise<simResu
 }
 
 async function singleSim(query: SingleSimQuery): Promise<SingleSimResponse> {
-    const strats = jsonData.stratCategories.includes(query.strat) 
+    const strats = jsonData.stratCategories.includes(query.strat)
         ? getStrats(query.theory, query.rho, query.strat, query.lastStrat ?? "")
         : [query.strat];
 
@@ -248,6 +249,62 @@ async function stepSim(query: StepSimQuery): Promise<StepSimResponse> {
     }
 }
 
+async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
+    let rho = query.rho;
+    let cap = query.cap;
+    const stopStr = logToExp(rho);
+
+    let current = cap - query.step;
+    let lastLog = 0;
+    let lastStrat = "";
+    let pubTable: [number, number][] = [[0, 0]]; // Cap is reachable in 0 time.
+    while(current > rho - 0.00001) {
+        const ts = performance.now();
+        if (ts - lastLog > 250) {
+            lastLog = ts;
+            UI.outputs.log.textContent = `Simulating ${logToExp(current, 0)}/${stopStr}`;
+            await sleep();
+        }
+        let pubCollector = new StepPubTableCollector(current, query.step, cap);
+        collectorCache.currentCollector = pubCollector;
+        const res = (await singleSim({
+            queryType: "single",
+            theory: query.theory,
+            strat: query.strat,
+            rho: current,
+            sigma: query.sigma,
+            settings: query.settings,
+            lastStrat: lastStrat
+        })).result;
+        if (!global.simulating) break;
+        current -= query.step;
+        lastStrat = res.strat.split(" ")[0];
+        let currentTable = pubCollector.timings;
+        let min_time = Infinity;
+        let min_target = Infinity;
+        for(let i = currentTable.length - 1; i > 0; i--) {
+            let step_delta = i * query.step;
+            if(current + step_delta > cap + 0.0000001) {
+                //We overshot.
+                continue;
+            }
+            if(pubTable[pubTable.length - i][0] + currentTable[i] < min_time) {
+                min_time = pubTable[pubTable.length - i][0] + currentTable[i];
+                min_target = cap - (pubTable.length - i) * query.step
+            }
+        }
+        pubTable.push([min_time, min_target]);
+    }
+    collectorCache.currentCollector = noopCollector;
+    return {
+        cap: cap,
+        start: rho,
+        step: query.step,
+        responseType: "pub_table",
+        pub_table: pubTable
+    }
+}
+
 async function comparisonSim(query: ComparisonSimQuery): Promise<StepSimResponse> {
     const strats = getStrats(query.theory, query.rho, "", "", false);
     const results: simResult[] = [];
@@ -275,7 +332,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         const rho = query.values[i];
         if (rho <= 0) continue;
         if (!global.simulating) break;
-        
+
         UI.outputs.log.innerText = `Simulating ${theory}/${lastTheory}`;
         await sleep();
 
@@ -384,6 +441,7 @@ export async function simulate(query: SimQuery): Promise<SimResponse> {
         case "comparison": return await comparisonSim(query);
         case "all": return await simAll(query);
         case "step_chain": return await stepChainSim(query);
+        case "pub_table": return await pubTableSim(query);
         case "amount": return await amountSim(query);
         case "time": return await timeSim(query);
         default: {

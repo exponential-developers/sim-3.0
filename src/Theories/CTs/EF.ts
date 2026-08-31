@@ -163,14 +163,14 @@ class efSim extends theoryClass<theory> {
     const stage = binaryInsertionSearch(this.milestoneUnlocks, rho);
     this.nextMilestoneCost = this.milestoneUnlocks[stage] || Infinity;
     super.updateMilestones();
-    if (this.variables[4].valueScaling instanceof ExponentialValue 
-        && this.variables[4].valueScaling.power !== 1.1 + 0.01 * this.milestones[3]) 
+    if (this.variables[4].valueScaling instanceof ExponentialValue
+        && this.variables[4].valueScaling.power !== 1.1 + 0.01 * this.milestones[3])
     {
       this.variables[4].valueScaling.power = 1.1 + 0.01 * this.milestones[3];
       this.variables[4].reCalculate();
     }
-    if (this.variables[6].valueScaling instanceof ExponentialValue 
-        && this.variables[6].valueScaling.power !== 1.1 + 0.0125 * this.milestones[4]) 
+    if (this.variables[6].valueScaling instanceof ExponentialValue
+        && this.variables[6].valueScaling.power !== 1.1 + 0.0125 * this.milestones[4])
     {
       this.variables[6].valueScaling.power = 1.1 + 0.0125 * this.milestones[4];
       this.variables[6].reCalculate();
@@ -263,6 +263,7 @@ class efSim extends theoryClass<theory> {
           this.bestRes = getBestResult(this.bestRes, res);
         }
       }
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
@@ -286,7 +287,7 @@ class efSim extends theoryClass<theory> {
     const I = c + l10(Math.abs(Math.sin(this.t_var)));
     if (this.milestones[0] > 0) this.R.add(logbonus + R * 2);
     if (this.milestones[0] > 1) this.I.add(logbonus + I * 2);
-    
+
     const a = this.milestones[1] > 0 ? (this.variables[7].value + this.variables[8].value + this.variables[9].value) * (0.1 * this.milestones[2] + 1) : 0;
     switch (this.milestones[0]) {
       case 0:
@@ -308,7 +309,7 @@ class efSim extends theoryClass<theory> {
     const lowbounds = [0, 0.6, 0.2, 0, 0, 0, 0, 0.3, 0, 0];
     const highbounds = [0, 1.8, 1.5, 0, 0, 0, 0, 1.5, 0, 0];
     const doDynamicCoasting = this.forcedPubRho == Infinity && this.strat != "EF";
-    
+
     if (this.forcedPubRho - this.variables[id].cost <= lowbounds[id] || (doDynamicCoasting && this.getForcedDynamicCoastingConditions()[id]())) {
       this.coasting[id] = true;
       return false;

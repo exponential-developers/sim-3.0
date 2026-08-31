@@ -162,11 +162,11 @@ class fsSim extends theoryClass<theory> {
         () => this.variables[3].cost + l10(2) < this.variables[1].cost, //m
         true, //c3
         //f1 mod 34
-        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1) 
+        () => this.variables[5].cost + l10((this.variables[5].level % 34) + 1)
             < Math.min(this.variables[4].cost, this.milestones[2] > 1 ? this.variables[6].cost : Infinity), //f1
         () => this.variables[6].cost + l10(5) < this.variables[4].cost, //f2
         //l1 mod 47
-        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1) 
+        () => this.variables[7].cost + l10((this.variables[7].level % 47) + 1)
             < Math.min(this.variables[9].cost, this.milestones[3] > 1 ? this.variables[8].cost : Infinity), //l1
         () => this.variables[8].cost + l10(4) < this.variables[9].cost, //l2
         true, //c4
@@ -341,7 +341,8 @@ class fsSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
-      if(this.variables[0].shouldFork) await this.doForkVariable(0);      
+      if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     const lastLevels = this.variables.map((variable) => getLastLevel(variable.name, this.boughtVars));
@@ -387,7 +388,7 @@ class fsSim extends theoryClass<theory> {
         id === 0 &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
-        this.variables[id].coastingCapReached() 
+        this.variables[id].coastingCapReached()
     ) {
       if (this.variables[id].level > this.variables[id].originalCap + 5) this.variables[id].stopBuying()
       else this.variables[id].shouldFork = true;

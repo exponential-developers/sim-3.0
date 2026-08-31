@@ -171,7 +171,7 @@ class fiSim extends theoryClass<theory> {
       this.maxLambda = lambda;
     }
   }
-  
+
   norm_int(limit: number): number {
     switch (this.milestones[5]) {
       case 0:
@@ -248,6 +248,7 @@ class fiSim extends theoryClass<theory> {
       this.updateMilestones();
       this.buyVariables();
       if(this.variables[1].shouldFork) await this.doForkVariable(1);
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let stratExtra = "";
@@ -264,9 +265,9 @@ class fiSim extends theoryClass<theory> {
     this.q = add(this.q, vq1 + this.variables[2].value + l10(this.dt));
     this.r = add(this.r, vden + l10(this.dt));
 
-    const integral = (this.milestones[0] 
-      ? this.norm_int(this.q - (this.milestones[5] < 3 ? l10(Math.PI) : 0)) 
-      : this.q - l10(Math.PI)) 
+    const integral = (this.milestones[0]
+      ? this.norm_int(this.q - (this.milestones[5] < 3 ? l10(Math.PI) : 0))
+      : this.q - l10(Math.PI))
       * (1 / Math.PI);
     const vm = this.milestones[3] ? this.variables[4].value : 0;
     const vn = this.milestones[4] ? this.variables[5].value : 0;

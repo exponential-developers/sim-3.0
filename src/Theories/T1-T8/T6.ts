@@ -397,6 +397,7 @@ class t6Sim extends theoryClass<theory> {
             this.ticks++;
             if (this.variables[0].shouldFork) await this.doForkVariable(0);
             if (this.variables[2].shouldFork) await this.doForkVariable(2);
+            this.pubTableCollector.collectData(this);
         }
         this.trimBoughtVars();
         let stratExtra = this.strat.includes("T6Snax") ? " " + logToExp(this.stopC12[0], 1) : "";

@@ -240,6 +240,7 @@ class csr2Sim extends theoryClass<theory> {
           this.bestRes = getBestResult(this.bestRes, res);
         }
       }
+      this.pubTableCollector.collectData(this);
     }
     if (this.recursionValue[1] === 1 || this.strat !== "CSR2XL")
       this.trimBoughtVars();

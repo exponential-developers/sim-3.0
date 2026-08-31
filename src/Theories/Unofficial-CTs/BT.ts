@@ -18,8 +18,8 @@ class btSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BT: [true, true, true],
       BTd: [
-        () => this.variables[0].cost + l10(this.lastPub < 275 ? 12 + (this.variables[0].level % 10) : 10 + (this.variables[0].level % 10)) < this.variables[1].cost, 
-        true, 
+        () => this.variables[0].cost + l10(this.lastPub < 275 ? 12 + (this.variables[0].level % 10) : 10 + (this.variables[0].level % 10)) < this.variables[1].cost,
+        true,
         true
       ],
     };
@@ -27,7 +27,7 @@ class btSim extends theoryClass<theory> {
   }
   getVariableAvailability(): conditionFunction[] {
     const conditions: conditionFunction[] = [
-      () => true, 
+      () => true,
       () => true,
       () => this.milestones[2] > 0
     ];
@@ -59,6 +59,7 @@ class btSim extends theoryClass<theory> {
       this.updateSimStatus();
       this.updateMilestones();
       this.buyVariables();
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     return this.createResult();

@@ -41,6 +41,7 @@ const UI = {
         copyImageBtn: qs<HTMLButtonElement>(".copyImageBtn"),
         downloadImageBtn: qs(".downloadImageBtn"),
         downloadCsvBtn: qs(".downloadCsvBtn"),
+        downloadPubTable: qs(".downloadPubTable"),
         clearResultsBtn: qs(".clearResultsBtn"),
         clearInputsBtn: qs(".clearInputsBtn"),
         simulateBtn: qs(".simulateBtn")
@@ -80,6 +81,14 @@ const UI = {
     instructions: {
         dialog: qs<HTMLDialogElement>(".instructions"),
         closeBtn: qs<HTMLButtonElement>(".instructionsCloseBtn")
+    },
+    outputData: {
+        pubTable: [[0, 0]],
+        pubTableParams: {
+            cap: 0,
+            start: 0,
+            step: 0,
+        }
     }
 };
 

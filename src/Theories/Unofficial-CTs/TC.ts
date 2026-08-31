@@ -33,7 +33,7 @@ type theory = "TC";
 
 /**
  * Simulates a 16-bit LFSR with 16 internal clock cycles per output.
- * @param {number} seed - The input value 
+ * @param {number} seed - The input value
  * @returns {number} A random float between 0 and 1
  */
 function lfsr16BitScrambled(seed: number): number {
@@ -222,7 +222,7 @@ class tcSim extends theoryClass<theory> {
       this.buyVariables();
       if (this.variables[1].shouldFork) await this.doForkVariable(1);
       if (this.variables[5].shouldFork) await this.doForkVariable(5);
-
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let stratExtra= '';

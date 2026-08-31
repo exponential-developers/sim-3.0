@@ -145,7 +145,7 @@ class wspSim extends theoryClass<theory> {
     ];
     this.S = 0;
     this.updateS_flag = false;
-    
+
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }
@@ -157,6 +157,7 @@ class wspSim extends theoryClass<theory> {
       if (this.lastPub < 200) this.updateMilestones();
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     let extra = '';

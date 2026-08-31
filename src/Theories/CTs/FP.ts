@@ -256,6 +256,7 @@ class fpSim extends theoryClass<theory> {
           this.bestRes = getBestResult(this.bestRes, res);
         }
       }
+      this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
     const result = this.createResult();

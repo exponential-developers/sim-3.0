@@ -1,6 +1,17 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qsa, ce, removeAllChilds, downloadString, getTableHeaders, tau, openDialog, bindDialogCloseEvents, hide } from "../Utils/DOMhelpers";
+import {
+    qsa,
+    ce,
+    removeAllChilds,
+    downloadString,
+    getTableHeaders,
+    tau,
+    openDialog,
+    bindDialogCloseEvents,
+    hide,
+    show
+} from "../Utils/DOMhelpers";
 import UI from "../UI/elements";
 
 const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
@@ -10,11 +21,11 @@ const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" view
     '<polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>\n' +
     '</svg>'
 
-const eyeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" ' + 
-        'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' + 
-        'stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">\n' + 
-    ' <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>\n' + 
-    ' <circle cx="12" cy="12" r="3"></circle>\n' + 
+const eyeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" ' +
+        'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">\n' +
+    ' <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>\n' +
+    ' <circle cx="12" cy="12" r="3"></circle>\n' +
     '</svg>';
 
 let totalBuys: varBuy[] = [];
@@ -94,7 +105,7 @@ function addVarBuyCell(row: HTMLTableRowElement, buys: varBuy[], addToTotal = tr
 
     cell.appendChild(viewBtn);
     cell.appendChild(downloadBtn);
-    
+
     if (rowspan > 1) cell.setAttribute("rowspan", String(rowspan));
     row.appendChild(cell);
 }
@@ -273,7 +284,21 @@ function writeSimAllResponse(response: SimAllResponse) {
     })
 }
 
+function preparePubTableResponse(response: PubTableResponse) {
+    UI.outputData.pubTable = response.pub_table;
+    UI.outputData.pubTableParams.cap = response.cap;
+    UI.outputData.pubTableParams.step = response.step;
+    UI.outputData.pubTableParams.start = response.start;
+    show(UI.controls.downloadPubTable)
+}
+
 export function writeSimResponse(response: SimResponse) {
+    if(response.responseType == "pub_table") {
+        console.log("Constructed pub table. Total t: ", convertTime(response.pub_table[response.pub_table.length-1][0]));
+        preparePubTableResponse(response);
+        return;
+    }
+    hide(UI.controls.downloadPubTable)
     const mode = response.responseType;
 
     if (mode != "single" || getTableMode() != mode) {
