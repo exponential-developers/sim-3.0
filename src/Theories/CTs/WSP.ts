@@ -4,6 +4,15 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import pubtable from "./helpers/BaPpubtable.json";
+
+import activePubTable from "./helpers/table_wsp_0_1_active_coast.json";
+import passivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
+
+type pubRecord = {
+  next: string;
+  time: number;
+}
 
 export default async function wsp(data: theoryData): Promise<simResult> {
   let res;
@@ -145,6 +154,17 @@ class wspSim extends theoryClass<theory> {
     ];
     this.S = 0;
     this.updateS_flag = false;
+    if(this.strat == "WSPdStopC1Coast" || this.strat == "WSPStopC1Coast") {
+      if (this.lastPub < 1499)
+      {
+        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let table: Record<string, pubRecord> =
+            this.strat.includes("WSPd") ? activePubTable : passivePubTable;
+        let nextRho = parseFloat(table[pubSeek].next);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
+    }
 
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();

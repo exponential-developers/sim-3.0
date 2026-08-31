@@ -482,16 +482,16 @@
       "tauFactor": 0.4,
       "strats": {
         "WSP": {
-          "stratFilterCondition": "(Idle || Semi-Idle) && rho < 525"
+          "stratFilterCondition": "Idle && rho < 525"
         },
         "WSPStopC1": {
-          "stratFilterCondition": "(Idle || Semi-Idle)"
+          "stratFilterCondition": "Idle"
         },
         "WSPStopC1Coast": {
           "stratFilterCondition": "Semi-Idle"
         },
         "WSPdStopC1": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "false"
         },
         "WSPdStopC1Coast": {
           "stratFilterCondition": "Active || Very-Active"
