@@ -100,6 +100,7 @@
         <button class="clearResultsBtn">Clear all results</button>
         <button class="clearInputsBtn">Clear all inputs</button>
         <button class="simulateBtn">Simulate</button>
+        <button class="downloadPubTable hidden">Download Pub Table</button>
       </div>
       <span class="log"></span>
       <table class="simTable">
@@ -114,7 +115,7 @@
         <label for="dtSlider">dt:</label><br />
         <input type="range" class="dt" step="0.1" max="10" min="0" value="8.1943" id="dtSlider" />
         <span class="sliderOtp dtOtp">1.5</span> <br />
-        
+
         <label for="ddtSlider">&Delta;dt:</label><br />
         <input type="range" class="ddt" step="0.1" max="10" min="0" value="2.71233" id="ddtSlider" />
         <span class="sliderOtp ddtOtp">1.0001</span><br />
@@ -130,13 +131,13 @@
         <button class="resetSettings navBtns">Reset</button>
       </div>
       <span>Theme: </span> <select class="themeSelector"></select><br /><br />
-      <span>Strats simmed in "all" mode: </span> 
+      <span>Strats simmed in "all" mode: </span>
       <select class="simallstrats">
         <option value="all">Active and Idle</option>
         <option value="active">Active only</option>
         <option value="idle">Idle only</option>
       </select><br /><br />
-      <span>Simulate completed CTs in all mode: </span> 
+      <span>Simulate completed CTs in all mode: </span>
       <select class="completedcts">
         <option value="in">Alongside other CTs</option>
         <option value="end">After other CTs</option>
@@ -182,49 +183,49 @@
         <br>&nbsp;
         <ul>
           <li>
-            <strong>Mode:</strong> 
-            You can select from different modes allowing you to do more varied inputs. 
+            <strong>Mode:</strong>
+            You can select from different modes allowing you to do more varied inputs.
             Each mode is described below:
             <ul>
               <li>
-                <strong>All:</strong> 
-                This will give you an input field where you can enter all of the values of your theories. 
+                <strong>All:</strong>
+                This will give you an input field where you can enter all of the values of your theories.
                 The input order for your values will be : <br>
-                Sigma T1 T2 ... T7 T8 WSP SL ... BaP.<br> 
+                Sigma T1 T2 ... T7 T8 WSP SL ... BaP.<br>
                 If you don't want to sim a theory, enter 0. <br /><br />
-                You also have the option to put an "r" or "m" at the end of each value. 
-                "r" means that it is a rho value, and will not be affected by rho/tau conversion. 
-                "m" means that the value is the total multiplier 
-                (make sure to have maximum possible levels of r9 bought, because this will affect the result), 
-                and it will be automatically converted to rho. 
+                You also have the option to put an "r" or "m" at the end of each value.
+                "r" means that it is a rho value, and will not be affected by rho/tau conversion.
+                "m" means that the value is the total multiplier
+                (make sure to have maximum possible levels of r9 bought, because this will affect the result),
+                and it will be automatically converted to rho.
                 By default, all values are expected as tau.
                 <br />
                 <br /> Example: 95 230 50m 250 300 300 70m 250 200 7e100r
                 <br>&nbsp;
               </li>
               <li>
-                <strong>Single:</strong> 
-                You will sim one publish for a single theory using a single 
+                <strong>Single:</strong>
+                You will sim one publish for a single theory using a single
                 (or let it automatically find the best) strategy.
                 <br>&nbsp;
               </li>
               <li>
-                <strong>Chain:</strong> 
-                For Chain Sims, you are required to enter a value for "Cap." 
-                This sims every publish until it gets to your desired tau/rho. <br /> 
-                Hard Cap?: This button hard caps the tau/rho to the cap you placed 
+                <strong>Chain:</strong>
+                For Chain Sims, you are required to enter a value for "Cap."
+                This sims every publish until it gets to your desired tau/rho. <br />
+                Hard Cap?: This button hard caps the tau/rho to the cap you placed
                 instead of simming the entire publication.
                 <br>&nbsp;
               </li>
               <li>
-                <strong>Step:</strong> 
+                <strong>Step:</strong>
                 A Variant of Chain that will sim in steps of n x tau/rho where n is any number.
                 <br>&nbsp;
               </li>
             </ul>
           </li>
           <li>
-            <strong>Changelog:</strong> 
+            <strong>Changelog:</strong>
             See all the versions, changes, and updates to the sim.
           </li>
           <li>
@@ -232,7 +233,7 @@
             This button will copy the output of the sim to your Clipboard
           </li>
           <li>
-            <strong>Download Image:</strong> 
+            <strong>Download Image:</strong>
             This button will download a .png to your device, mobile or pc.
           </li>
           <li>
@@ -240,46 +241,46 @@
             This will clear your last Sims results.
           </li>
           <li>
-            <strong>Simulate:</strong> 
+            <strong>Simulate:</strong>
             "Execute order 66" aka, start simulating.
           </li>
           <li>
-            Below are explanations for what the different input fields do 
+            Below are explanations for what the different input fields do
             that are visible if you are not in "All" or "Time diff." mode:
             <ul>
               <li>
-                <strong>Theory:</strong> 
-                You can select a theory for you to simulate in this dropdown. 
+                <strong>Theory:</strong>
+                You can select a theory for you to simulate in this dropdown.
                 This will allow you to sim only 1 theory at a time.
               </li>
               <li>
-                <strong>Strat:</strong> 
-                When simulating 1 sim at a time, you can select a strategy that you would like to use for the sim. 
+                <strong>Strat:</strong>
+                When simulating 1 sim at a time, you can select a strategy that you would like to use for the sim.
                 This drop-down will have all known strategies that are effective.
               </li>
               <li>
-                <strong>Sigma:</strong> 
-                Generally, you would want to put your total students in here, but you can put any value in here. 
-                This is adaptive for R9, so if you enter students &lt; 65 you will not have R9, 
+                <strong>Sigma:</strong>
+                Generally, you would want to put your total students in here, but you can put any value in here.
+                This is adaptive for R9, so if you enter students &lt; 65 you will not have R9,
                 or if you enter 65&lt;sigma&lt;75, you will have 1R9, etc.
               </li>
               <li>
-                <strong>Input:</strong> 
-                This is where you will enter your theory's rho/tau/multiplier. 
-                Accepted inputs are x.xxexxxx, xxxx or the value in log10. 
-                You can optionally put an r/t/m after the value, 
+                <strong>Input:</strong>
+                This is where you will enter your theory's rho/tau/multiplier.
+                Accepted inputs are x.xxexxxx, xxxx or the value in log10.
+                You can optionally put an r/t/m after the value,
                 to indicate whether it's a rho, tau or total multiplier value. Default is rho.
               </li>
               <li>
-                <strong>Cap:</strong> 
-                This is only used when you use chain or steps mode. 
+                <strong>Cap:</strong>
+                This is only used when you use chain or steps mode.
                 This is a value for how far it will simulate. Same formats apply here as for Input.
               </li>
             </ul>
           </li>
         </ul>
       </div>
-      
+
     </dialog>
   </body>
 </html>

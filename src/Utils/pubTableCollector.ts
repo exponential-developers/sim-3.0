@@ -28,7 +28,8 @@ export class StepPubTableCollector implements BasePubTableCollector {
             // We are not interested if we are over cap.
             return;
         }
-        if(theory.maxRho < theory.pubUnlock || theory.maxRho < this.lastPub) {
+        // 0.000001 is precision boundary
+        if((theory.maxRho + 0.0000001) < theory.pubUnlock || theory.maxRho < this.lastPub) {
             // We are not interested if pubs are not yet available.
             return;
         }

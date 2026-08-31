@@ -290,13 +290,16 @@ async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
             }
             if(pubTable[pubTable.length - i][0] + currentTable[i] < min_time) {
                 min_time = pubTable[pubTable.length - i][0] + currentTable[i];
-                min_target = pubTable.length - i
+                min_target = cap - (pubTable.length - i) * query.step
             }
         }
         pubTable.push([min_time, min_target]);
     }
     collectorCache.currentCollector = noopCollector;
     return {
+        cap: cap,
+        start: rho,
+        step: query.step,
         responseType: "pub_table",
         pub_table: pubTable
     }

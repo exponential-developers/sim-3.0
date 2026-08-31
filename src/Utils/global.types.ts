@@ -129,6 +129,9 @@ declare global {
 
   type PubTableResponse = {
     responseType: "pub_table";
+    cap: number,
+    step: number,
+    start: number,
     pub_table: [number, number][]
   }
   type StepSimResponse = {

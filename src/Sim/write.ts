@@ -1,6 +1,17 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { convertTime, formatNumber, isMainTheory, logToExp } from "../Utils/helpers";
-import { qsa, ce, removeAllChilds, downloadString, getTableHeaders, tau, openDialog, bindDialogCloseEvents, hide } from "../Utils/DOMhelpers";
+import {
+    qsa,
+    ce,
+    removeAllChilds,
+    downloadString,
+    getTableHeaders,
+    tau,
+    openDialog,
+    bindDialogCloseEvents,
+    hide,
+    show
+} from "../Utils/DOMhelpers";
 import UI from "../UI/elements";
 
 const downloadIcon = '<svg xmlns="http://www.w3.org" width="24" height="24" viewBox="0 0 24 24" ' +
@@ -273,12 +284,21 @@ function writeSimAllResponse(response: SimAllResponse) {
     })
 }
 
+function preparePubTableResponse(response: PubTableResponse) {
+    UI.outputData.pubTable = response.pub_table;
+    UI.outputData.pubTableParams.cap = response.cap;
+    UI.outputData.pubTableParams.step = response.step;
+    UI.outputData.pubTableParams.start = response.start;
+    show(UI.controls.downloadPubTable)
+}
+
 export function writeSimResponse(response: SimResponse) {
     if(response.responseType == "pub_table") {
-        console.log(response.pub_table)
         console.log("Constructed pub table. Total t: ", convertTime(response.pub_table[response.pub_table.length-1][0]));
+        preparePubTableResponse(response);
         return;
     }
+    hide(UI.controls.downloadPubTable)
     const mode = response.responseType;
 
     if (mode != "single" || getTableMode() != mode) {
