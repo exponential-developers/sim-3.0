@@ -11,3 +11,7 @@ export class NullPubTableCollector implements BasePubTableCollector {
 }
 
 export let noopCollector = new NullPubTableCollector();
+
+export let collectorCache: Record<string, BasePubTableCollector> = {
+    currentCollector: noopCollector
+}

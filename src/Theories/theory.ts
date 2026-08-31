@@ -1,5 +1,5 @@
 import Currency from "../Utils/currency";
-import { BasePubTableCollector, noopCollector } from "../Utils/pubTableCollector";
+import { BasePubTableCollector, collectorCache } from "../Utils/pubTableCollector";
 import Variable from "../Utils/variable";
 import {
   binaryInsertionSearch,
@@ -139,7 +139,7 @@ export default abstract class theoryClass<theory extends theoryType> {
 
   constructor(readonly data: theoryData) {
     this.bestForkRes = defaultResult();
-    this.pubTableCollector = noopCollector;
+    this.pubTableCollector = collectorCache.currentCollector;
     this.theory = data.theory;
     this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
