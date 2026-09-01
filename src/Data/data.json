@@ -488,12 +488,18 @@
           "stratFilterCondition": "Idle"
         },
         "WSPStopC1Coast": {
+          "stratFilterCondition": "false"
+        },
+        "WSPPTStopC1Coast": {
           "stratFilterCondition": "Semi-Idle"
         },
         "WSPdStopC1": {
           "stratFilterCondition": "false"
         },
         "WSPdStopC1Coast": {
+          "stratFilterCondition": "false"
+        },
+        "WSPdPTStopC1Coast": {
           "stratFilterCondition": "Active || Very-Active"
         },
         "WSPPostRecoveryStopC1Coast": {
