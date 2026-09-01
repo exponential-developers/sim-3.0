@@ -16,7 +16,6 @@ export function setSimState() {
       settings: {
         dt: UI.settings.dtOtp.textContent,
         ddt: UI.settings.ddtOtp.textContent,
-        mfResetDepth: UI.settings.mfDepthOtp.textContent,
         boughtVarsDelta: UI.settings.boughtVarsDeltaSlider.value,
         simAllStrats: UI.settings.simAllStrats.value,
         completedCTs: UI.settings.completedCTs.value,
@@ -57,14 +56,12 @@ export function getSimState() {
 
   UI.settings.dtOtp.textContent = state.settings.dt;
   UI.settings.ddtOtp.textContent = state.settings.ddt;
-  UI.settings.mfDepthOtp.textContent = state.settings.mfResetDepth ?? "0";
   UI.settings.boughtVarsDeltaOtp.textContent = `e${state.settings.boughtVarsDelta ?? 5}ρ`;
   // Determines the slider position based on the stored value (see helpers.ts)
   UI.settings.dtSlider.value = 
     String(round(Math.log2((state.settings.dt - 0.15) / (4.9 / (1 + 2 ** parseFloat(UI.settings.dtSlider.max)))), 4));
   UI.settings.ddtSlider.value = 
     String(round(Math.log((state.settings.ddt - 1) / (0.3 / 3 ** parseFloat(UI.settings.ddtSlider.max))) / Math.log(3), 4));
-  UI.settings.mfDepthSlider.value = UI.settings.mfDepthOtp.textContent ?? "0";
   UI.settings.boughtVarsDeltaSlider.value = state.settings.boughtVarsDelta ?? 5;
 
   UI.settings.themeSelector.value = state.settings.theme ?? defaultTheme;

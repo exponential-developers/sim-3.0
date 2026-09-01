@@ -12,7 +12,6 @@ export function parseSettings(): Settings {
     return {
         dt: parseFloat(UI.settings.dtOtp.textContent ?? "1.5"),
         ddt: parseFloat(UI.settings.ddtOtp.textContent ?? "1.0001"),
-        mfResetDepth: parseInt(UI.settings.mfDepthOtp.textContent ?? "0"),
         boughtVarsDelta: parseInt(UI.settings.boughtVarsDeltaSlider.value),
         theme: UI.settings.themeSelector.value,
         simAllStrats: UI.settings.simAllStrats.value as SettingsSimAllStratsMode,

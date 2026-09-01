@@ -63,8 +63,6 @@ const UI = {
         dtOtp: qs(".dtOtp"),
         ddtSlider: qs<HTMLInputElement>(".ddt"),
         ddtOtp: qs(".ddtOtp"),
-        mfDepthSlider: qs<HTMLInputElement>(".mfDepth"),
-        mfDepthOtp: qs(".mfDepthOtp"),
         boughtVarsDeltaSlider: qs<HTMLInputElement>(".boughtVarsDelta"),
         boughtVarsDeltaOtp: qs(".boughtVarsDeltaOtp"),
         resetBtn: qs(".resetSettings"),

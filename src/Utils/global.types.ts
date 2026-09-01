@@ -203,7 +203,6 @@ declare global {
   type Settings = {
     dt: number;
     ddt: number;
-    mfResetDepth: number;
     boughtVarsDelta: number;
     theme: string;
     simAllStrats: SettingsSimAllStratsMode;
