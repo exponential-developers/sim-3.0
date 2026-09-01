@@ -550,7 +550,6 @@ class mfSim extends theoryClass<theory> {
     this.precomp_va2 = 10 ** this.variables[3].value;
     if(data.strat.includes("PT")) {
       let pubSeek = (Math.round(this.lastPub * 20) / 20).toFixed(4);
-      console.log(pubSeek);
       let table: Record<string, pubRecord> = passivePubTable
       if(pubSeek in table) {
         let nextRho = parseFloat(table[pubSeek].next);

@@ -104,9 +104,7 @@ function modeUpdate(): void {
   else {
     show(UI.controls.extraInput);
   }
-  console.log(data.modeInputDescriptions[findIndex(data.modes, newMode)])
   UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
-  console.log(data.modeInputPlaceholder[findIndex(data.modes, newMode)])
   UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
 
   if (newMode === "Time diff.") show(UI.controls.timeDiffWrapper);
