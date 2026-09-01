@@ -1,6 +1,6 @@
 import { global } from "../../Sim/main";
 import activePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
-import passivePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
+import passivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast.json";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
