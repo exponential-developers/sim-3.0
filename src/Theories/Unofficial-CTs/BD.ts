@@ -1,9 +1,16 @@
 import { global } from "../../Sim/main";
+import activePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
+import passivePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
 import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String, add, getLastLevel, getBestResult, getFactorial } from "../../Utils/helpers";
+
+type pubRecord = {
+  next: string;
+  time: number;
+}
 
 export default async function bd(data: theoryData): Promise<simResult> {
   if(!data.strat.includes("Coast")) {
@@ -13,7 +20,7 @@ export default async function bd(data: theoryData): Promise<simResult> {
   }
   else {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    data2.strat = data2.strat.replace("Coast", "").replace("PT", "");
     const sim1 = new bdSim(data2);
     const res1 = await sim1.simulate();
     let vars = ["a1", "b1", "c1"];
@@ -72,6 +79,15 @@ class bdSim extends theoryClass<theory> {
         () => true,
         () => true,
       ],
+      BDPTCoast: [
+        () => this.variables[0].shouldBuy,
+        () => true,
+        () => this.variables[2].shouldBuy,
+        () => true,
+        () => this.variables[4].shouldBuy,
+        () => true,
+        () => true,
+      ],
       BDd: [
         () => this.variables[0].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[0].level % 10) + l10(1 + 0.05 * this.milestones[0]) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value),
         () => true,
@@ -82,6 +98,15 @@ class bdSim extends theoryClass<theory> {
         () => true,
       ],
       BDdCoast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[0].level % 10) + l10(1 + 0.05 * this.milestones[0]) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
+        () => true,
+        () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[2].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
+        () => true,
+        () => this.variables[4].shouldBuy && (this.variables[4].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[4].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
+        () => true,
+        () => true,
+      ],
+      BDdPTCoast: [
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[0].level % 10) + l10(1 + 0.05 * this.milestones[0]) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
         () => true,
         () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(9 + 0.956581 + 0.00221792 * this.variables[2].level % 10) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[5].cost, this.variables[6].value)),
@@ -130,6 +155,17 @@ class bdSim extends theoryClass<theory> {
       new Variable({ name: "c2", cost: new ExponentialCost(1e25, 10.15, true), valueScaling: new ExponentialValue() }),
       new Variable({ name: "n", cost: new ExponentialCost(20, 2.5615, true), valueScaling: new LinearValue(1, 1) })
     ];
+    if(this.strat.includes("PT")) {
+      if (this.lastPub < 1499)
+      {
+        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let table: Record<string, pubRecord> =
+            this.strat.includes("BDd") ? activePubTable : passivePubTable;
+        let nextRho = parseFloat(table[pubSeek].next);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
+    }
     this.updateMilestonesNoMS();
     // Init value cache:
     // We set these to 0 to make TS happy:

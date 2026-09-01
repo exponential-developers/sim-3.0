@@ -888,10 +888,16 @@
           "stratFilterCondition": "false"
         },
         "BDCoast": {
-          "stratFilterCondition": "Semi-Idle || Idle"
+          "stratFilterCondition": "(Semi-Idle || Idle) && rho > 1499"
+        },
+        "BDPTCoast": {
+          "stratFilterCondition": "(Semi-Idle || Idle) && rho <= 1499"
         },
         "BDdCoast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 1499"
+        },
+        "BDdPTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 1499"
         }
       }
     },
