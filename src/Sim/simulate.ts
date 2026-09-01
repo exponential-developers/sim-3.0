@@ -58,9 +58,11 @@ async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promis
         : [query.strat];
 
     let bestRes = defaultResult();
+    
     for (let strat of strats) {
         const data: theoryData<T> = {
             theory: query.theory,
+            specificInputs: query.theorySpecificInputs,
             sigma: query.sigma,
             rho: query.rho,
             strat: strat,

@@ -687,7 +687,7 @@
       "tauFactor": 1,
       "specificInputs": {
         "depth": {
-          "label": "Depth",
+          "label": "Reset depth",
           "type": "slider",
           "validation": {
             "type": "int",

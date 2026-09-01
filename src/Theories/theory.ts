@@ -20,6 +20,8 @@ export default abstract class theoryClass<theory extends theoryType> {
   readonly tauFactor: number;
   /** Sim settings used in the simulation */
   readonly settings: Settings;
+  /** Specific inputs */
+  readonly specificInputs: SpecificInputRecord<theory>;
 
   // Theory
   /** rho at which publications are unlocked */
@@ -140,6 +142,7 @@ export default abstract class theoryClass<theory extends theoryType> {
     this.strat = data.strat as stratType[theory];
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     this.settings = data.settings;
+    this.specificInputs = data.specificInputs;
     this.prevMilestoneCount = -1;
 
     //theory
@@ -211,6 +214,7 @@ export default abstract class theoryClass<theory extends theoryType> {
   getDataForCopy(): theoryData<theory> {
     return {
       theory: this.theory,
+      specificInputs: this.specificInputs,
       sigma: this.sigma,
       rho: this.lastPub,
       strat: this.strat,

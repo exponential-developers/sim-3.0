@@ -40,6 +40,7 @@ const UI = {
 
         specificInputsMenuButtonWrapper: qs(".specificInputsMenuButtonWrapper"),
         specificInputsMenuButton: qs<HTMLButtonElement>(".specificInputsMenuButton"),
+        specificInputsWrapper: qs(".specificInputsWrapper"),
 
         copyImageBtn: qs<HTMLButtonElement>(".copyImageBtn"),
         downloadImageBtn: qs(".downloadImageBtn"),

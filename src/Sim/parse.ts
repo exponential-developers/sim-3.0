@@ -58,7 +58,7 @@ function parseCurrency(str: string, theory: theoryType, sigma: number, defaultTy
 }
 
 function parseSpecificInputSlider(div: Element): string | undefined {
-    const span = div.querySelector("specificInputSliderOutput");
+    const span = div.querySelector(".specificInputSliderOutput");
     if (span == null) return undefined;
     return span.innerHTML;
 }
@@ -86,6 +86,16 @@ function parseAllModeSpecificInputs(): SpecificInputFullRecord {
     return record;
 }
 
+function parseTheorySpecificInputs<T extends theoryType>(): SpecificInputRecord<T> {
+    let record: SpecificInputRecord<T> = {};
+    for (let div of UI.controls.specificInputsWrapper.children) {
+        let parsed = parseSpecificInput<T>(div);
+        record[parsed.id] = parsed.value;
+    }
+
+    return record;
+}
+
 function parseSigma(required: boolean): number {
     const str = UI.controls.sigmaInput.value.replace(" ", "");
     const match = str.match(/^\d+$/g);
@@ -107,7 +117,7 @@ function parseSingleSim<T extends theoryType>(): SingleSimQuery<T> {
     return {
         queryType: "single",
         theory: theory,
-        theorySpecificInputs: {},
+        theorySpecificInputs: parseTheorySpecificInputs(),
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -122,7 +132,7 @@ function parseChainSim<T extends theoryType>(): ChainSimQuery<T> {
     return {
         queryType: "chain",
         theory: theory,
-        theorySpecificInputs: {},
+        theorySpecificInputs: parseTheorySpecificInputs(),
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -139,7 +149,7 @@ function parseStepSim<T extends theoryType>(): StepSimQuery<T> {
     return {
         queryType: "step",
         theory: theory,
-        theorySpecificInputs: {},
+        theorySpecificInputs: parseTheorySpecificInputs(),
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -156,7 +166,7 @@ function parseComparisonSim<T extends theoryType>(): ComparisonSimQuery<T> {
     return {
         queryType: "comparison",
         theory: theory,
-        theorySpecificInputs: {},
+        theorySpecificInputs: parseTheorySpecificInputs(),
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
         settings: parseSettings()
@@ -170,7 +180,7 @@ function parseAmountSim<T extends theoryType>(): AmountSimQuery<T> {
     return {
         queryType: "amount",
         theory: theory,
-        theorySpecificInputs: {},
+        theorySpecificInputs: parseTheorySpecificInputs(),
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
@@ -224,7 +234,7 @@ function parseStepChainSim<T extends theoryType>(): StepChainQuery<T> {
     return {
         queryType: "step_chain",
         theory: theory,
-        theorySpecificInputs: {},
+        theorySpecificInputs: parseTheorySpecificInputs(),
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),

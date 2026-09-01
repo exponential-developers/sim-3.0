@@ -43,17 +43,17 @@ event(UI.settings.showUnofficials, "click", () => {
     theoryUpdate();
 });
 
-function populateSpecificInputMenuForTheory<T extends theoryType>(theory: T) {
+function populateSpecificInputsForTheory<T extends theoryType>(theory: T, container: HTMLElement, allMode: boolean = false) {
   if (theoryData[theory].specificInputs) {
     for (let inputId of (Object.keys(theoryData[theory].specificInputs)) as SpecificInputOf[T][]) {
-      let div = generateSpecificInputWidgetWrapper(theory, inputId, theoryData[theory].specificInputs[inputId], true);
-      UI.specificInputsDialog.contentWrapper.appendChild(div);
+      let div = generateSpecificInputWidgetWrapper(theory, inputId, theoryData[theory].specificInputs[inputId], allMode);
+      container.appendChild(div);
     }
   }
 }
 
 for (let theory of theories) {
-  populateSpecificInputMenuForTheory(theory);
+  populateSpecificInputsForTheory(theory, UI.specificInputsDialog.contentWrapper, true);
 }
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {
@@ -97,6 +97,7 @@ function modeUpdate(): void {
   hide(UI.controls.extraInput);
   hide(UI.controls.timeDiffWrapper);
   hide(UI.controls.specificInputsMenuButtonWrapper);
+  hide(UI.controls.specificInputsWrapper);
 
   // Displays the strat selector
   if (newMode !== "Comparison") show(UI.controls.stratSelectorWrapper);
@@ -119,6 +120,7 @@ function modeUpdate(): void {
   }
   else {
     show(UI.controls.extraInput);
+    show(UI.controls.specificInputsWrapper);
   }
   UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
   UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
@@ -135,6 +137,8 @@ function theoryUpdate<T extends theoryType>() {
   );
   populateSelectElement(UI.controls.stratSelector, data.stratCategories.concat(currentTheoryStrats));
   populateSingleSimFields(true);
+  removeAllChilds(UI.controls.specificInputsWrapper);
+  populateSpecificInputsForTheory(currentTheory, UI.controls.specificInputsWrapper, false);
 }
 
 function themeUpdate() {

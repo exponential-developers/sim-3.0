@@ -494,7 +494,7 @@ class mfSim extends theoryClass<theory> {
 
   constructor(data: theoryData<theory>, resetBundle: resetBundle) {
     super(data);
-    this.mfResetDepth = this.settings.mfResetDepth;
+    this.mfResetDepth = parseInt(data.specificInputs["depth"] ?? "0");
     this.c = 0;
     this.x = 0;
     this.i = 0;
