@@ -4,7 +4,6 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/BaPpubtable.json";
 
 import activePubTable from "./helpers/table_wsp_0_1_active_coast.json";
 import passivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";

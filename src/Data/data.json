@@ -708,6 +708,9 @@
           "stratFilterCondition": "false"
         },
         "MFRCCoast": {
+          "stratFilterCondition": "false"
+        },
+        "MFRCPTCoast": {
           "stratFilterCondition": "Semi-Idle"
         },
         "MFCoast": {
@@ -879,7 +882,7 @@
       "UI_visible":false,
       "strats": {
         "BD": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "false"
         },
         "BDd": {
           "stratFilterCondition": "false"

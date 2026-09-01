@@ -5,6 +5,13 @@ import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
 
+import passivePubTable from "./helpers/table_mf_0_05_mfrccoast.json";
+
+type pubRecord = {
+  next: string;
+  time: number;
+}
+
 // Bruteforce strength
 type theory = "MF";
 type resetBundle = [number, number, number, number];
@@ -380,6 +387,7 @@ class mfSim extends theoryClass<theory> {
       MFCoast: idleStrat,
       MFRC: idleRCStrat,
       MFRCCoast: idleRCStrat,
+      MFRCPTCoast: idleRCStrat,
       MFdCoast: activeStrat,
       MFd2Coast: activeStrat2,
       MFd3Coast: activeStrat3,
@@ -540,6 +548,14 @@ class mfSim extends theoryClass<theory> {
     this.precomp_vterm = -1;
     this.precomp_va1 = -1;
     this.precomp_va2 = 10 ** this.variables[3].value;
+    if(data.strat.includes("PT")) {
+      let pubSeek = (Math.round(this.lastPub * 20) / 20).toFixed(4);
+      console.log(pubSeek);
+      let table: Record<string, pubRecord> = passivePubTable
+      let nextRho = parseFloat(table[pubSeek].next);
+      this.doSimEndConditions = () => false;
+      this.pubConditions.push(() => this.maxRho >= nextRho);
+    }
     this.updateMilestonesNoMS();
     // This will update precomp_vterm:
     this.precomputeExps();
