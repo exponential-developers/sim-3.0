@@ -121,6 +121,7 @@ function modeUpdate(): void {
   hide(UI.controls.timeDiffWrapper);
   hide(UI.controls.specificInputsMenuButtonWrapper);
   hide(UI.controls.specificInputsWrapper);
+  hide(UI.controls.stratSpecificInputsWrapper);
 
   // Displays the strat selector
   if (newMode !== "Comparison") show(UI.controls.stratSelectorWrapper);
@@ -144,6 +145,7 @@ function modeUpdate(): void {
   else {
     show(UI.controls.extraInput);
     show(UI.controls.specificInputsWrapper);
+    if (newMode !== "Comparison") show(UI.controls.stratSpecificInputsWrapper);
   }
   UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
   UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
@@ -168,6 +170,7 @@ function theoryUpdate<T extends theoryType>() {
 function stratUpdate<theory extends theoryType, strat extends stratType[theory]>() {
   const currentTheory = UI.controls.theorySelector.value as theory;
   const currentStrat = UI.controls.stratSelector.value as strat;
+  removeAllChilds(UI.controls.stratSpecificInputsWrapper);
   populateStratSpecificInputsForTheory(currentTheory, currentStrat, UI.controls.stratSpecificInputsWrapper);
 }
 
