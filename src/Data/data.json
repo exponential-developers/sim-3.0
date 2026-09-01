@@ -708,10 +708,10 @@
           "stratFilterCondition": "false"
         },
         "MFRCCoast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "(Semi-Idle) && rho > 599"
         },
         "MFRCPTCoast": {
-          "stratFilterCondition": "Semi-Idle"
+          "stratFilterCondition": "(Semi-Idle) && rho <= 599"
         },
         "MFCoast": {
           "stratFilterCondition": "false"
