@@ -36,6 +36,9 @@ populateTheoryList(UI.settings.showUnofficials.checked);
 theoryUpdate();
 event(UI.controls.theorySelector, "change", theoryUpdate);
 
+stratUpdate();
+event(UI.controls.stratSelector, "change", stratUpdate);
+
 event(UI.settings.showUnofficials, "click", () => {
     populateTheoryList(UI.settings.showUnofficials.checked);
     theoryUpdate();
@@ -43,11 +46,31 @@ event(UI.settings.showUnofficials, "click", () => {
 
 function populateSpecificInputsForTheory<T extends theoryType>(theory: T, container: HTMLElement, allMode: boolean = false) {
   if (theoryData[theory].specificInputs) {
-    for (let inputId of (Object.keys(theoryData[theory].specificInputs)) as SpecificInputOf[T][]) {
+    for (let inputId of Object.keys(theoryData[theory].specificInputs) as SpecificInputOf[T][]) {
       let div = generateSpecificInputWidgetWrapper(theory, inputId, theoryData[theory].specificInputs[inputId], allMode);
       container.appendChild(div);
     }
   }
+}
+function populateStratSpecificInputsForTheory<T extends theoryType, S extends stratType[T]>(
+  theory: T,
+  strat: S,
+  container: HTMLElement
+) {
+  if (!theoryData[theory].strats[strat]?.specificInputs) return;
+  for (let inputId of Object.keys(theoryData[theory].strats[strat].specificInputs) as StratSpecificInputOf[T][S][]) {
+    let input = theoryData[theory].strats[strat].specificInputs[inputId];
+    if (input === null) {
+      if (!theoryData[theory].stratSpecificInputs?.[inputId]) {
+        console.warn(`Could not find strat specific input with id '${inputId}'`);
+        continue;
+      }
+      input = theoryData[theory].stratSpecificInputs[inputId];
+    }
+    let div = generateSpecificInputWidgetWrapper(theory, inputId, input, false);
+    container.appendChild(div);
+  }
+  
 }
 
 for (let theory of theories) {
@@ -139,6 +162,13 @@ function theoryUpdate<T extends theoryType>() {
   populateSingleSimFields(true);
   removeAllChilds(UI.controls.specificInputsWrapper);
   populateSpecificInputsForTheory(currentTheory, UI.controls.specificInputsWrapper, false);
+  stratUpdate();
+}
+
+function stratUpdate<theory extends theoryType, strat extends stratType[theory]>() {
+  const currentTheory = UI.controls.theorySelector.value as theory;
+  const currentStrat = UI.controls.stratSelector.value as strat;
+  populateStratSpecificInputsForTheory(currentTheory, currentStrat, UI.controls.stratSpecificInputsWrapper);
 }
 
 function themeUpdate() {

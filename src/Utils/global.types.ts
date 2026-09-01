@@ -12,6 +12,13 @@ declare global {
       ? keyof SI
       : never
   }
+  type StratSpecificInputOf = {
+    [theory in theoryType]: {
+      [strat in stratType[theory]]: (typeof jsonData.theories)[theory]["strats"][strat] extends { specificInputs: infer SI }
+      ? keyof SI
+      : never
+    }
+  }
 
   type SpecificInputNumberValidation = {
     type: "int" | "float" | "exp",
@@ -55,12 +62,16 @@ declare global {
       specificInputs?: {
         [key in SpecificInputOf[theory]]: SpecificInputType
       };
+      stratSpecificInputs?: Record<string, SpecificInputType>,
       UI_visible?: boolean;
       strats: {
         [strat in stratType[theory]]: {
           stratFilterCondition: string;
           forcedCondition?: string;
           UI_visible?: boolean;
+          specificInputs?: {
+            [key in StratSpecificInputOf[theory][strat]]: SpecificInputType | null
+          }
         }
       }
     }
