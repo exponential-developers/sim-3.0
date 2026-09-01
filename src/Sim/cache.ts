@@ -46,6 +46,7 @@ function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
         || query.veryActive !== cachedQuery.veryActive) {
         return query;
     }
+    if (!cachedQuery.theorySpecificInputs) return query;
     query.values = query.values.map((val, i) => {
         const theory = getTheoryFromIndex(i);
         if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) return val;
