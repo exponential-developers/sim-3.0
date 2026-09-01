@@ -28,8 +28,6 @@ function populateTheoryList(showUnofficials: boolean) {
 populateSelectElement(UI.settings.themeSelector, data.themes);
 event(UI.settings.themeSelector, "change", themeUpdate);
 
-getSimState();
-
 populateSelectElement(UI.controls.modeSelector, data.modes);
 modeUpdate();
 event(UI.controls.modeSelector, "input", modeUpdate);
@@ -55,6 +53,8 @@ function populateSpecificInputsForTheory<T extends theoryType>(theory: T, contai
 for (let theory of theories) {
   populateSpecificInputsForTheory(theory, UI.specificInputsDialog.contentWrapper, true);
 }
+
+getSimState();
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {
   // Sigma field
