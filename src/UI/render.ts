@@ -23,27 +23,6 @@ function populateTheoryList(showUnofficials: boolean) {
     theoryData[theory].UI_visible !== false || showUnofficials));
 }
 
-//Renders theories, strats and modes options on page load
-
-populateSelectElement(UI.settings.themeSelector, data.themes);
-event(UI.settings.themeSelector, "change", themeUpdate);
-
-populateSelectElement(UI.controls.modeSelector, data.modes);
-modeUpdate();
-event(UI.controls.modeSelector, "input", modeUpdate);
-
-populateTheoryList(UI.settings.showUnofficials.checked);
-theoryUpdate();
-event(UI.controls.theorySelector, "change", theoryUpdate);
-
-stratUpdate();
-event(UI.controls.stratSelector, "change", stratUpdate);
-
-event(UI.settings.showUnofficials, "click", () => {
-    populateTheoryList(UI.settings.showUnofficials.checked);
-    theoryUpdate();
-});
-
 function populateSpecificInputsForTheory<T extends theoryType>(theory: T, container: HTMLElement, allMode: boolean = false) {
   if (theoryData[theory].specificInputs) {
     for (let inputId of Object.keys(theoryData[theory].specificInputs) as SpecificInputOf[T][]) {
@@ -70,14 +49,7 @@ function populateStratSpecificInputsForTheory<T extends theoryType, S extends st
     let div = generateSpecificInputWidgetWrapper(theory, inputId, input, false);
     container.appendChild(div);
   }
-  
 }
-
-for (let theory of theories) {
-  populateSpecificInputsForTheory(theory, UI.specificInputsDialog.contentWrapper, true);
-}
-
-getSimState();
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {
   // Sigma field
@@ -179,3 +151,32 @@ function themeUpdate() {
   const root = document.documentElement;
   root.setAttribute("theme", UI.settings.themeSelector.value);
 }
+
+//Renders theories, strats and modes options on page load
+
+event(UI.settings.themeSelector, "change", themeUpdate);
+
+event(UI.controls.modeSelector, "input", modeUpdate);
+
+event(UI.controls.theorySelector, "change", theoryUpdate);
+
+event(UI.controls.stratSelector, "change", stratUpdate);
+
+event(UI.settings.showUnofficials, "click", () => {
+    populateTheoryList(UI.settings.showUnofficials.checked);
+    theoryUpdate();
+});
+
+for (let theory of theories) {
+  populateSpecificInputsForTheory(theory, UI.specificInputsDialog.contentWrapper, true);
+}
+
+populateSelectElement(UI.settings.themeSelector, data.themes);
+populateSelectElement(UI.controls.modeSelector, data.modes);
+
+getSimState();
+
+populateTheoryList(UI.settings.showUnofficials.checked);
+
+modeUpdate();
+theoryUpdate();
