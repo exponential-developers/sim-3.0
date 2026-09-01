@@ -150,9 +150,11 @@ class ilcSim extends theoryClass<theory> {
     if(data.strat.includes("PT")) {
       let pubSeek = (Math.round(this.lastPub * 100) / 100).toFixed(4);
       let table: Record<string, pubRecord> = ilcTable
-      let nextRho = parseFloat(table[pubSeek].next);
-      this.doSimEndConditions = () => false;
-      this.pubConditions.push(() => this.maxRho >= nextRho);
+      if(pubSeek in table) {
+        let nextRho = parseFloat(table[pubSeek].next);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
     }
     this.updateMilestonesNoMS();
     this.updateRhoDot();
