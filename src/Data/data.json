@@ -234,7 +234,7 @@
       "tauFactor": 1,
       "stratSpecificInputs": {
         "idleRcvStop": {
-          "label": "IdleRecoveryStop (eXρ before recovery)",
+          "label": "Idle Recovery Stop (eXρ before recovery)",
           "type": "slider",
           "validation": {
             "type": "int",
@@ -283,36 +283,6 @@
           "stratFilterCondition": "false",
           "specificInputs": {"idleRcvStop": null}
         },
-        "T6SnaxIdleRecoveryM1": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM1Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM2": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM2Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM3": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM3Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM4": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM4Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM5": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM5Coast": {
-          "stratFilterCondition": "false"
-        },
         "T6C3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 25"
         },
@@ -336,11 +306,13 @@
         },
         "T6C5dIdleRecovery": {
           "stratFilterCondition": "false",
-          "forcedCondition": "rho >= 125"
+          "forcedCondition": "rho >= 125",
+          "specificInputs": {"idleRcvStop": null}
         },
         "T6C5dIdleRecoveryCoast": {
           "stratFilterCondition": "false",
-          "forcedCondition": "rho >= 125"
+          "forcedCondition": "rho >= 125",
+          "specificInputs": {"idleRcvStop": null}
         },
         "T6AI": {
           "stratFilterCondition": "Very-Active && rho >= 100"
