@@ -4,7 +4,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
-import { add, getBestResult, binaryInsertionSearch, getLastLevel, l10, toCallables, subtract } from "../../Utils/helpers";
+import { add, getBestResult, binaryInsertionSearch, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
