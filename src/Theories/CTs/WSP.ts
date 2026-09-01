@@ -19,7 +19,7 @@ export default async function wsp(data: theoryData): Promise<simResult> {
   if(data.strat.includes("Coast")) {
     let data2: theoryData = {
       ...data,
-      strat: data.strat.replace("Coast", "").replace("PostRecovery", "")
+      strat: data.strat.replace("PT", "").replace("Coast", "").replace("PostRecovery", "")
     };
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
@@ -86,6 +86,7 @@ class wspSim extends theoryClass<theory> {
       WSP: [true, true, true, true, true],
       WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
       WSPStopC1Coast: WSPStopC1CoastQ1,
+      WSPPTStopC1Coast: WSPStopC1CoastQ1,
       WSPPostRecoveryStopC1Coast: [
         () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
         true,
@@ -104,7 +105,8 @@ class wspSim extends theoryClass<theory> {
             Math.min(this.variables[1].cost, this.variables[2].cost, this.milestones[1] > 0 ? this.variables[4].cost : Infinity) || this.t < 15,
         true,
       ],
-      WSPdStopC1Coast: WSPdStopC1CoastQ1
+      WSPdStopC1Coast: WSPdStopC1CoastQ1,
+      WSPdPTStopC1Coast: WSPdStopC1CoastQ1
     };
     return toCallables(conditions[this.strat]);
   }
@@ -154,7 +156,7 @@ class wspSim extends theoryClass<theory> {
     ];
     this.S = 0;
     this.updateS_flag = false;
-    if(this.strat == "WSPdStopC1Coast" || this.strat == "WSPStopC1Coast") {
+    if(this.strat == "WSPdPTStopC1Coast" || this.strat == "WSPPTStopC1Coast") {
       if (this.lastPub < 1499)
       {
         let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
