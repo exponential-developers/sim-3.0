@@ -4,10 +4,13 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
-import { add, getBestResult, binaryInsertionSearch, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import { add, getBestResult, binaryInsertionSearch, getLastLevel, l10, toCallables, subtract } from "../../Utils/helpers";
 
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
+
+const PHI_LOG_VALUE = l10(PHI_VALUE);
+const SQRT5_LOG_VALUE = l10(SQRT5_VALUE);
 
 const fibLogCache = [-Infinity, 0];
 const lucasLogCache = [l10(2), 0];
@@ -34,6 +37,11 @@ const ensureTribonacciLogCache = (n: number) => {
 const getFibLog = (n: number): number => {
   const index = Math.floor(n);
   if (index <= 0) return Number.NEGATIVE_INFINITY;
+  if (index >= 50) {
+    // (phi^n - (1 - phi)^n) / sqrt(5)
+    // the second term aka "(1 - phi)^n" is ommited due to being too small at this point (3.55e-11)
+    return n * PHI_LOG_VALUE - SQRT5_LOG_VALUE;
+  }
   ensureFibLogCache(index);
   return fibLogCache[index];
 };
@@ -41,6 +49,11 @@ const getFibLog = (n: number): number => {
 const getLucasLog = (n: number): number => {
   const index = Math.floor(n);
   if (index < 0) return Number.NEGATIVE_INFINITY;
+  if (index >= 50) {
+    // phi^n + (1 - phi)^n
+    // see comment above, in getFibLog
+    return n * PHI_LOG_VALUE;
+  }
   ensureLucasLogCache(index);
   return lucasLogCache[index];
 };
