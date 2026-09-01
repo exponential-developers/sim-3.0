@@ -53,6 +53,10 @@ declare global {
 
   type SpecificInputType = SpecificInputTextbox | SpecificInputSlider | SpecificInputDropdown;
   
+  type StratSpecificInputRecord<T extends theoryType, S extends stratType[T]> = Partial<Record<StratSpecificInputOf[T][S], string>>;
+  type GeneralStratSpecificInputRecord<T extends theoryType, S extends FullStratType<T>> = 
+    S extends stratCategoryType ? {} : S extends stratType[T] ? StratSpecificInputRecord<T, S> : never;
+
   type SpecificInputRecord<theory extends theoryType> = Partial<Record<SpecificInputOf[theory], string>>;
   type SpecificInputFullRecord = {[theory in theoryType]: SpecificInputRecord<theory>};
 
@@ -90,26 +94,28 @@ declare global {
   type stratCategoryType = "Best Overall" | "Best Active" | "Best Semi-Idle" | "Best Idle";
   type FullStratType<T extends theoryType> = stratType[T] | stratCategoryType;
 
-  type SingleSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
+  type SingleSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "single";
-    strat: FullStratType<T>;
+    strat: S;
+    stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
     rho: number;
     cap?: number;
     lastStrat?: string;
   }
 
-  type ChainSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
+  type ChainSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "chain";
-    strat: FullStratType<T>;
+    strat: S;
+    stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
     rho: number;
     cap: number;
     hardCap: boolean;
   }
 
-  type StepSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
+  type StepSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "step";
-    theory: T;
-    strat: FullStratType<T>;
+    strat: S;
+    stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
     rho: number;
     cap: number;
     step: number;
@@ -129,16 +135,18 @@ declare global {
     rho: number;
   }
 
-  type AmountSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
+  type AmountSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "amount";
-    strat: FullStratType<T>;
+    strat: S;
+    stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
     rho: number;
     amount: number;
   }
 
-  type TimeSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
+  type TimeSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "time";
-    strat: FullStratType<T>;
+    strat: S;
+    stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
     rho: number;
     time: number;
     hardCap: boolean;
@@ -153,9 +161,10 @@ declare global {
     stratType: SettingsSimAllStratsMode;
   }
 
-  type StepChainQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
+  type StepChainQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "step_chain"
-    strat: FullStratType<T>
+    strat: S,
+    stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
     rho: number
     cap: number
     step: number
@@ -215,12 +224,13 @@ declare global {
     timeStamp: number;
   }
 
-  type theoryData<T extends theoryType> = {
+  type theoryData<T extends theoryType, S extends stratType[T] = stratType[T]> = {
     theory: T;
     specificInputs: SpecificInputRecord<T>;
+    stratSpecificInputs: StratSpecificInputRecord<T, S>;
     sigma: number;
     rho: number;
-    strat: stratType[T];
+    strat: S;
     recovery: null | { value: number; time: number; recoveryTime: boolean };
     cap: null | number;
     recursionValue: null | number | number[];
