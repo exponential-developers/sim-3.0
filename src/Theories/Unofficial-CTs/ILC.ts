@@ -138,6 +138,7 @@ class ilcSim extends theoryClass<theory> {
     return [0, 1, 2, 3];
   }
   constructor(data: theoryData<theory>) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.rhodot = 0;
     this.pubUnlock = 6;
