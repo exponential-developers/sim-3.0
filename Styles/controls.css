@@ -109,9 +109,13 @@ textarea::placeholder {
   font-size: 0.6rem;
 }
 
-/* Specific inputs menu */
+/* Specific inputs */
 
 .specificInputsMenuButtonWrapper {
+  margin: 0.3rem 0;
+}
+
+.specificInputsWrapper {
   margin: 0.3rem 0;
 }
 

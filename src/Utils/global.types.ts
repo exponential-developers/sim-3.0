@@ -45,8 +45,9 @@ declare global {
   }
 
   type SpecificInputType = SpecificInputTextbox | SpecificInputSlider | SpecificInputDropdown;
-
-  type SpecificInputFullRecord = {[theory in theoryType]: Partial<Record<SpecificInputOf[theory], string>>};
+  
+  type SpecificInputRecord<theory extends theoryType> = Partial<Record<SpecificInputOf[theory], string>>;
+  type SpecificInputFullRecord = {[theory in theoryType]: SpecificInputRecord<theory>};
 
   type TheoryDataStructure = {
     [theory in theoryType]: {
@@ -72,7 +73,7 @@ declare global {
 
   type BaseSingleTheoryQuery<T extends theoryType> = BaseSimQuery & {
     theory: T;
-    theorySpecificInputs: Partial<Record<SpecificInputOf[T], string>>
+    theorySpecificInputs: SpecificInputRecord<T>
   }
 
   type stratCategoryType = "Best Overall" | "Best Active" | "Best Semi-Idle" | "Best Idle";
@@ -205,6 +206,7 @@ declare global {
 
   type theoryData<T extends theoryType> = {
     theory: T;
+    specificInputs: SpecificInputRecord<T>;
     sigma: number;
     rho: number;
     strat: stratType[T];
