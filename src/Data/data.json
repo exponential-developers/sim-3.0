@@ -903,9 +903,15 @@
           "stratFilterCondition": "false"
         },
         "ILCCoast": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "false"
         },
         "ILCdCoast": {
+          "stratFilterCondition": "false"
+        },
+        "ILCPTCoast": {
+          "stratFilterCondition": "true"
+        },
+        "ILCdPTCoast": {
           "stratFilterCondition": "Active || Very-Active"
         }
       }

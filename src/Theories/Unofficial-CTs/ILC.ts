@@ -4,8 +4,14 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String, getLastLevel, getBestResult, getLastLevelCost } from "../../Utils/helpers";
+import ilcTable from "../CTs/helpers/table_ilc_0_01_ilccoast.json";
 
 const LAST_COAST_VAR = 5;
+
+type pubRecord = {
+  next: string;
+  time: number;
+}
 
 export default async function ilc(data: theoryData): Promise<simResult> {
   // const sim = new ilcSim(data);
@@ -16,35 +22,13 @@ export default async function ilc(data: theoryData): Promise<simResult> {
   }
   else {
     let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "");
+    data2.strat = data2.strat.replace("Coast", "").replace("PT", "");
     const sim1 = new ilcSim(data2);
-    if(data2.rho >= sim1.pubUnlock) {
-      sim1.simEndConditions.push(
-          () => {
-            if(sim1.maxRho < sim1.lastPub) {
-              return false;
-            }
-            // If multiplier for this pub is over 3, we bail out.
-            return 10 ** (sim1.getTotMult(sim1.maxRho) - sim1.totMult) >= 3;
-          }
-      )
-    }
     const res1 = await sim1.simulate();
     let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
     // In testing - coasting up to last 4 levels of e1 seems to work, but lands on a worse pub cycle.
     let caps = [6, 1, 5, 1, 1, 1];
     let sim2 = new ilcSim(data);
-    if(data2.rho >= sim2.pubUnlock) {
-      sim2.simEndConditions.push(
-          () => {
-            if(sim2.maxRho < sim2.lastPub) {
-              return false;
-            }
-            // If multiplier for this pub is over 3, we bail out.
-            return 10 ** (sim2.getTotMult(sim2.maxRho) - sim2.totMult) >= 3;
-          }
-      )
-    }
     for(let i = 0; i <= LAST_COAST_VAR; i++) {
       let lastVal = getLastLevel(vars[i], res1.boughtVars);
       if(lastVal !== 0) {
@@ -104,7 +88,23 @@ class ilcSim extends theoryClass<theory> {
         () => this.variables[4].shouldBuy,
         () => this.variables[5].shouldBuy
       ],
+      ILCPTCoast: [
+        () => this.variables[0].shouldBuy,
+        () => this.variables[1].shouldBuy,
+        () => this.variables[2].shouldBuy,
+        () => this.variables[3].shouldBuy,
+        () => this.variables[4].shouldBuy,
+        () => this.variables[5].shouldBuy
+      ],
       ILCdCoast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) < this.variables[1].cost),
+        () => this.variables[1].shouldBuy,
+        () => this.variables[2].shouldBuy,
+        () => this.variables[3].shouldBuy,
+        () => this.variables[4].shouldBuy,
+        () => this.variables[5].shouldBuy
+      ],
+      ILCdPTCoast: [
         () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10)) < this.variables[1].cost),
         () => this.variables[1].shouldBuy,
         () => this.variables[2].shouldBuy,
@@ -147,6 +147,13 @@ class ilcSim extends theoryClass<theory> {
       new Variable({ name: "e3", cost: new ExponentialCost(1e10, 4000000000), valueScaling: new ExponentialValue(3) }),
       new Variable({ name: "e4", cost: new ExponentialCost(1e20, 190000000000000), valueScaling: new ExponentialValue(4) })
     ];
+    if(data.strat.includes("PT")) {
+      let pubSeek = (Math.round(this.lastPub * 100) / 100).toFixed(4);
+      let table: Record<string, pubRecord> = ilcTable
+      let nextRho = parseFloat(table[pubSeek].next);
+      this.doSimEndConditions = () => false;
+      this.pubConditions.push(() => this.maxRho >= nextRho);
+    }
     this.updateMilestonesNoMS();
     this.updateRhoDot();
   }
