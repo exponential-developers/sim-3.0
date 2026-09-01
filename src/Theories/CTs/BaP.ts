@@ -6,13 +6,13 @@ import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/BaPpubtable.json" with { type: "json" };
 
-export default async function bap(data: theoryData): Promise<simResult> {
+type theory = "BaP";
+
+export default async function bap(data: theoryData<theory>): Promise<simResult> {
   const sim = new bapSim(data);
   const res = await sim.simulate();
   return res;
 }
-
-type theory = "BaP";
 
 interface pubTable {
   [key: string]: {
@@ -159,7 +159,7 @@ class bapSim extends theoryClass<theory> {
     return nextCoast;
   }
 
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = new Array(9).fill(-1e60);
     this.r = -1e60;

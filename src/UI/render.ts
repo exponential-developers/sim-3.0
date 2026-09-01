@@ -1,10 +1,12 @@
 import data from "../Data/data.json" with { type: "json" };
-import { findIndex, getIndexFromTheory } from "../Utils/helpers";
+import { findIndex, getIndexFromTheory, getTheories } from "../Utils/helpers";
 import { event, ce, removeAllChilds, hide, show } from "../Utils/DOMhelpers";
 import { getSimState } from "./simState";
 import UI from "./elements";
+import { generateSpecificInputWidgetWrapper } from "./specificInputs";
 
-const theories = Object.keys(data.theories) as theoryType[];
+const theories = getTheories();
+const theoryData = data.theories as TheoryDataStructure;
 
 /** Populates a select element with the given items */
 function populateSelectElement(select: HTMLSelectElement, items: string[], clear = true) {
@@ -17,16 +19,14 @@ function populateSelectElement(select: HTMLSelectElement, items: string[], clear
   }
 }
 function populateTheoryList(showUnofficials: boolean) {
-  populateSelectElement(UI.controls.theorySelector, theories.filter(theory =>
-    (data.theories as TheoryDataStructure)[theory].UI_visible !== false || showUnofficials));
+  populateSelectElement(UI.controls.theorySelector, theories.filter(theory => 
+    theoryData[theory].UI_visible !== false || showUnofficials));
 }
 
 //Renders theories, strats and modes options on page load
 
 populateSelectElement(UI.settings.themeSelector, data.themes);
 event(UI.settings.themeSelector, "change", themeUpdate);
-
-getSimState();
 
 populateSelectElement(UI.controls.modeSelector, data.modes);
 modeUpdate();
@@ -36,10 +36,48 @@ populateTheoryList(UI.settings.showUnofficials.checked);
 theoryUpdate();
 event(UI.controls.theorySelector, "change", theoryUpdate);
 
+stratUpdate();
+event(UI.controls.stratSelector, "change", stratUpdate);
+
 event(UI.settings.showUnofficials, "click", () => {
     populateTheoryList(UI.settings.showUnofficials.checked);
     theoryUpdate();
 });
+
+function populateSpecificInputsForTheory<T extends theoryType>(theory: T, container: HTMLElement, allMode: boolean = false) {
+  if (theoryData[theory].specificInputs) {
+    for (let inputId of Object.keys(theoryData[theory].specificInputs) as SpecificInputOf[T][]) {
+      let div = generateSpecificInputWidgetWrapper(theory, inputId, theoryData[theory].specificInputs[inputId], allMode);
+      container.appendChild(div);
+    }
+  }
+}
+function populateStratSpecificInputsForTheory<T extends theoryType, S extends stratType[T]>(
+  theory: T,
+  strat: S,
+  container: HTMLElement
+) {
+  if (!theoryData[theory].strats[strat]?.specificInputs) return;
+  for (let inputId of Object.keys(theoryData[theory].strats[strat].specificInputs) as StratSpecificInputOf[T][S][]) {
+    let input = theoryData[theory].strats[strat].specificInputs[inputId];
+    if (input === null) {
+      if (!theoryData[theory].stratSpecificInputs?.[inputId]) {
+        console.warn(`Could not find strat specific input with id '${inputId}'`);
+        continue;
+      }
+      input = theoryData[theory].stratSpecificInputs[inputId];
+    }
+    let div = generateSpecificInputWidgetWrapper(theory, inputId, input, false);
+    container.appendChild(div);
+  }
+  
+}
+
+for (let theory of theories) {
+  populateSpecificInputsForTheory(theory, UI.specificInputsDialog.contentWrapper, true);
+}
+
+getSimState();
 
 function populateSingleSimFields(rewriteCurrency: boolean = false): void {
   // Sigma field
@@ -81,6 +119,9 @@ function modeUpdate(): void {
   show(UI.controls.extraInputDesc);
   hide(UI.controls.extraInput);
   hide(UI.controls.timeDiffWrapper);
+  hide(UI.controls.specificInputsMenuButtonWrapper);
+  hide(UI.controls.specificInputsWrapper);
+  hide(UI.controls.stratSpecificInputsWrapper);
 
   // Displays the strat selector
   if (newMode !== "Comparison") show(UI.controls.stratSelectorWrapper);
@@ -99,10 +140,13 @@ function modeUpdate(): void {
     show(UI.controls.simAllInputWrapper);
     hide(UI.controls.extraInputDesc);
     show(UI.controls.simAllInputArea);
+    show(UI.controls.specificInputsMenuButtonWrapper);
     UI.controls.simAllInputArea.placeholder = data.modeInputPlaceholder[0];
   }
   else {
     show(UI.controls.extraInput);
+    show(UI.controls.specificInputsWrapper);
+    if (newMode !== "Comparison") show(UI.controls.stratSpecificInputsWrapper);
   }
   UI.controls.extraInputDesc.textContent = data.modeInputDescriptions[findIndex(data.modes, newMode)];
   UI.controls.extraInput.placeholder = data.modeInputPlaceholder[findIndex(data.modes, newMode)];
@@ -112,13 +156,23 @@ function modeUpdate(): void {
   populateSingleSimFields();
 }
 
-function theoryUpdate() {
-  const currentTheory = UI.controls.theorySelector.value as theoryType;
-  const currentTheoryStrats = Object.keys(data.theories[currentTheory].strats).filter(
+function theoryUpdate<T extends theoryType>() {
+  const currentTheory = UI.controls.theorySelector.value as T;
+  const currentTheoryStrats = (Object.keys(data.theories[currentTheory].strats) as stratType[T][]).filter(
     (strat) => (data.theories as TheoryDataStructure)[currentTheory].strats[strat].UI_visible !== false
   );
   populateSelectElement(UI.controls.stratSelector, data.stratCategories.concat(currentTheoryStrats));
   populateSingleSimFields(true);
+  removeAllChilds(UI.controls.specificInputsWrapper);
+  populateSpecificInputsForTheory(currentTheory, UI.controls.specificInputsWrapper, false);
+  stratUpdate();
+}
+
+function stratUpdate<theory extends theoryType, strat extends stratType[theory]>() {
+  const currentTheory = UI.controls.theorySelector.value as theory;
+  const currentStrat = UI.controls.stratSelector.value as strat;
+  removeAllChilds(UI.controls.stratSpecificInputsWrapper);
+  populateStratSpecificInputsForTheory(currentTheory, currentStrat, UI.controls.stratSpecificInputsWrapper);
 }
 
 function themeUpdate() {

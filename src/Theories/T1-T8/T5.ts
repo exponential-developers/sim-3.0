@@ -13,14 +13,16 @@ import {
   getBestResult
 } from "../../Utils/helpers";
 
-export default async function t5(data: theoryData): Promise<simResult> {
+type theory = "T5";
+
+export default async function t5(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
     if(data2.strat == "T5Idle2Coast") {
       data2.strat = "T5IdleCoast";
     }
-    data2.strat = data2.strat.replace("Coast", "");
+    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
     const sim1 = new t5Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -44,7 +46,6 @@ export default async function t5(data: theoryData): Promise<simResult> {
   return res;
 }
 
-type theory = "T5";
 const L10_2_3 = l10(2 / 3);
 const L10_2 = l10(2);
 const L10_1_5 = l10(1.5);
@@ -131,7 +132,7 @@ class t5Sim extends theoryClass<theory> {
     }
     return Math.min(newq, qcap)
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.pubUnlock = 7;

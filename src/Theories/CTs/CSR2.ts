@@ -6,13 +6,13 @@ import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, getLastLevel, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/CSR2pubtable.json" with { type: "json" };
 
-export default async function csr2(data: theoryData): Promise<simResult> {
+type theory = "CSR2";
+
+export default async function csr2(data: theoryData<theory>): Promise<simResult> {
   const sim = new csr2Sim(data);
   const res = await sim.simulate(data);
   return res;
 }
-
-type theory = "CSR2";
 
 type pubTable = {[key: string]: number};
 const lowboundsActive = [0.65, 0.15, 0.85, 0, 0];
@@ -151,7 +151,7 @@ class csr2Sim extends theoryClass<theory> {
       }
     }
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.updateError_flag = true;
@@ -211,7 +211,7 @@ class csr2Sim extends theoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate(data: theoryData): Promise<simResult> {
+  async simulate(data: theoryData<theory>): Promise<simResult> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }

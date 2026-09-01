@@ -7,7 +7,7 @@ import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/help
 import pubtable from "./helpers/FPpubtable.json" with { type: "json" };
 import extended_pubtable from "./helpers/FPextendedPT.json" with { type: "json" };
 
-export default async function fp(data: theoryData): Promise<simResult> {
+export default async function fp(data: theoryData<theory>): Promise<simResult> {
   const sim = new fpSim(data);
   const res = await sim.simulate();
   return res;
@@ -168,7 +168,7 @@ class fpSim extends theoryClass<theory> {
     this.U_n = this.U(this.n);
     this.S_n = this.S(Math.floor(Math.sqrt(this.n)));
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.r = 0;

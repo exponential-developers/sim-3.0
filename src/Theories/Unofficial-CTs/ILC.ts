@@ -13,7 +13,9 @@ type pubRecord = {
   time: number;
 }
 
-export default async function ilc(data: theoryData): Promise<simResult> {
+type theory = "ILC";
+
+export default async function ilc(data: theoryData<theory>): Promise<simResult> {
   // const sim = new ilcSim(data);
   if(!data.strat.includes("Coast")) {
     const sim = new ilcSim(data);
@@ -21,8 +23,8 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     return res;
   }
   else {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "").replace("PT", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "").replace("PT", "") as stratType[theory];
     const sim1 = new ilcSim(data2);
     const res1 = await sim1.simulate();
     let vars = ["c1", "c2", "e1", "e2", "e3", "e4"];
@@ -50,8 +52,6 @@ export default async function ilc(data: theoryData): Promise<simResult> {
     return await sim2.simulate();
   }
 }
-
-type theory = "ILC";
 
 class ilcSim extends theoryClass<theory> {
   rhodot: number;
@@ -132,7 +132,7 @@ class ilcSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.rhodot = 0;
     this.pubUnlock = 6;

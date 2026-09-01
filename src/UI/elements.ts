@@ -38,6 +38,11 @@ const UI = {
 
         timeDiffWrapper: qs(".timeDiffWrapper"),
 
+        specificInputsMenuButtonWrapper: qs(".specificInputsMenuButtonWrapper"),
+        specificInputsMenuButton: qs<HTMLButtonElement>(".specificInputsMenuButton"),
+        specificInputsWrapper: qs(".specificInputsWrapper"),
+        stratSpecificInputsWrapper: qs(".stratSpecificInputsWrapper"),
+
         copyImageBtn: qs<HTMLButtonElement>(".copyImageBtn"),
         downloadImageBtn: qs(".downloadImageBtn"),
         downloadCsvBtn: qs(".downloadCsvBtn"),
@@ -60,8 +65,6 @@ const UI = {
         dtOtp: qs(".dtOtp"),
         ddtSlider: qs<HTMLInputElement>(".ddt"),
         ddtOtp: qs(".ddtOtp"),
-        mfDepthSlider: qs<HTMLInputElement>(".mfDepth"),
-        mfDepthOtp: qs(".mfDepthOtp"),
         boughtVarsDeltaSlider: qs<HTMLInputElement>(".boughtVarsDelta"),
         boughtVarsDeltaOtp: qs(".boughtVarsDeltaOtp"),
         resetBtn: qs(".resetSettings"),
@@ -72,6 +75,11 @@ const UI = {
         showA23: qs<HTMLInputElement>(".a23"),
         showUnofficials: qs<HTMLInputElement>(".unofficials"),
         totalPurchaseList: qs<HTMLInputElement>(".totalPurchaseList")
+    },
+    specificInputsDialog: {
+        dialog: qs<HTMLDialogElement>(".specificInputsDialog"),
+        closeBtn: qs<HTMLButtonElement>(".specificInputsCloseBtn"),
+        contentWrapper: qs(".specificInputsMenuWrapper")
     },
     buyList: {
         dialog: qs<HTMLDialogElement>(".boughtVars"),

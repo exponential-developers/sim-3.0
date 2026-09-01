@@ -3,24 +3,25 @@ import { BasePubTableCollector, collectorCache } from "../Utils/pubTableCollecto
 import Variable from "../Utils/variable";
 import {
   binaryInsertionSearch,
-  convertTime,
   defaultResult,
-  formatNumber,
-  getBestResult,
-  logToExp
+  getBestResult
 } from "../Utils/helpers";
 import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
-export default abstract class theoryClass<theory extends theoryType> {
+export default abstract class theoryClass<theory extends theoryType, strat extends stratType[theory] = stratType[theory]> {
   /** Theory */
-  readonly theory: theoryType;
+  readonly theory: theory;
   /** Current strategy */
-  readonly strat: stratType[theory];
+  readonly strat: strat;
   /** tau/rho conversion rate */
   readonly tauFactor: number;
   /** Sim settings used in the simulation */
   readonly settings: Settings;
+  /** Specific inputs */
+  readonly specificInputs: SpecificInputRecord<theory>;
+  /** Strat specific inputs */
+  readonly stratSpecificInputs: StratSpecificInputRecord<theory, strat>;
 
   // Theory
   /** rho at which publications are unlocked */
@@ -137,13 +138,15 @@ export default abstract class theoryClass<theory extends theoryType> {
    */
   bestForkRes: simResult;
 
-  constructor(readonly data: theoryData) {
+  constructor(readonly data: theoryData<theory>) {
     this.bestForkRes = defaultResult();
     this.pubTableCollector = collectorCache.currentCollector;
     this.theory = data.theory;
-    this.strat = data.strat as stratType[theory];
+    this.strat = data.strat as strat;
     this.tauFactor = jsonData.theories[data.theory].tauFactor;
     this.settings = data.settings;
+    this.specificInputs = data.specificInputs;
+    this.stratSpecificInputs = data.stratSpecificInputs;
     this.prevMilestoneCount = -1;
 
     //theory
@@ -213,12 +216,14 @@ export default abstract class theoryClass<theory extends theoryType> {
   }
 
   /** Returns the theoryData needed to create a copy */
-  getDataForCopy(): theoryData {
+  getDataForCopy(): theoryData<theory, strat> {
     return {
       theory: this.theory,
+      specificInputs: this.specificInputs,
+      stratSpecificInputs: this.stratSpecificInputs,
       sigma: this.sigma,
       rho: this.lastPub,
-      strat: this.strat as string,
+      strat: this.strat,
       recovery: { ...this.recovery },
       cap: this.cap,
       recursionValue: null,

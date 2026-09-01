@@ -232,6 +232,18 @@
     },
     "T6": {
       "tauFactor": 1,
+      "stratSpecificInputs": {
+        "idleRcvStop": {
+          "label": "Idle Recovery Stop (eXρ before recovery)",
+          "type": "slider",
+          "validation": {
+            "type": "int",
+            "min": 0,
+            "max": 10
+          },
+          "step": 1
+        }
+      },
       "strats": {
         "T6": {
           "stratFilterCondition": "rho < 25"
@@ -264,40 +276,12 @@
           "stratFilterCondition": "Semi-Idle && rho >= 400"
         },
         "T6SnaxIdleRecovery": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "false",
+          "specificInputs": {"idleRcvStop": null}
         },
         "T6SnaxIdleRecoveryCoast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM1": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM1Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM2": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM2Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM3": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM3Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM4": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM4Coast": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM5": {
-          "stratFilterCondition": "false"
-        },
-        "T6SnaxIdleRecoveryM5Coast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "false",
+          "specificInputs": {"idleRcvStop": null}
         },
         "T6C3d": {
           "stratFilterCondition": "(Active || Very-Active) && rho < 25"
@@ -322,11 +306,13 @@
         },
         "T6C5dIdleRecovery": {
           "stratFilterCondition": "false",
-          "forcedCondition": "rho >= 125"
+          "forcedCondition": "rho >= 125",
+          "specificInputs": {"idleRcvStop": null}
         },
         "T6C5dIdleRecoveryCoast": {
           "stratFilterCondition": "false",
-          "forcedCondition": "rho >= 125"
+          "forcedCondition": "rho >= 125",
+          "specificInputs": {"idleRcvStop": null}
         },
         "T6AI": {
           "stratFilterCondition": "Very-Active && rho >= 100"
@@ -629,8 +615,8 @@
         "FIMSdPermaSwapCoast":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1025 && rho < 1150"
         }
-      }}
-    ,
+      }
+    },
     "FP": {
       "tauFactor": 0.3,
       "strats": {
@@ -691,6 +677,18 @@
     },
     "MF": {
       "tauFactor": 1,
+      "specificInputs": {
+        "depth": {
+          "label": "Reset depth",
+          "type": "slider",
+          "validation": {
+            "type": "int",
+            "min": 0,
+            "max": 5
+          },
+          "step": 1
+        }
+      },
       "strats": {
         "MF": {
           "stratFilterCondition": "Idle"

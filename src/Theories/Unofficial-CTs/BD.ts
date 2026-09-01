@@ -12,15 +12,15 @@ type pubRecord = {
   time: number;
 }
 
-export default async function bd(data: theoryData): Promise<simResult> {
+export default async function bd(data: theoryData<theory>): Promise<simResult> {
   if(!data.strat.includes("Coast")) {
     const sim = new bdSim(data);
     const res = await sim.simulate();
     return res;
   }
   else {
-    let data2: theoryData = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "").replace("PT", "");
+    let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
+    data2.strat = data2.strat.replace("Coast", "").replace("PT", "") as stratType[theory];
     const sim1 = new bdSim(data2);
     const res1 = await sim1.simulate();
     let vars = ["a1", "b1", "c1"];
@@ -136,7 +136,7 @@ class bdSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [1, 2, 0, 3, 4, 5, 6];
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.q = 0;
     this.k = -Infinity;

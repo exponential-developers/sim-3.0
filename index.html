@@ -93,13 +93,22 @@
           <table class="timeDiffTable"></table>
         </div>
       </div>
+      <div class="specificInputsMenuButtonWrapper">
+        <button class="specificInputsMenuButton">Change theory-specific inputs</button>
+      </div>
+      <div class="specificInputsWrapper">
+        
+      </div>
+      <div class="stratSpecificInputsWrapper">
+        
+      </div>
       <div class="actionBar">
         <button class="copyImageBtn">Copy Image</button>
         <button class="downloadImageBtn">Download Image</button>
         <button class="downloadCsvBtn">Download CSV</button>
         <button class="clearResultsBtn">Clear all results</button>
         <button class="clearInputsBtn">Clear all inputs</button>
-        <button class="simulateBtn">Simulate</button>
+        <button class="simulateBtn green">Simulate</button>
         <button class="downloadPubTable hidden">Download Pub Table</button>
       </div>
       <span class="log"></span>
@@ -119,10 +128,6 @@
         <label for="ddtSlider">&Delta;dt:</label><br />
         <input type="range" class="ddt" step="0.1" max="10" min="0" value="2.71233" id="ddtSlider" />
         <span class="sliderOtp ddtOtp">1.0001</span><br />
-
-        <label for="mfDepthSlider">MF reset depth:</label><br />
-        <input type="range" class="mfDepth" step="1" max="5" min="0" value="0" id="mfDepthSlider" />
-        <span class="sliderOtp mfDepthOtp">0</span><br />
 
         <label for="boughtVarsDeltaSlider">Show bought vars in recovery:</label><br />
         <input type="range" class="boughtVarsDelta" step="1" min="5" max="30" value="5" id="boughtVarsDeltaSlider" />
@@ -147,6 +152,13 @@
       <span>Show a2 and a3 lvl in EFAI strat output: </span> <input type="checkbox" class="a23" /><br /><br />
       <span>Show unofficial CTs: </span> <input type="checkbox" class="unofficials" /><br /><br />
       <span>Generate a total purchase list: </span> <input type="checkbox" class="totalPurchaseList" /><br /><br />
+    </dialog>
+    <dialog class="specificInputsDialog">
+      <h1 class="dialogTitle">Specific Inputs</h1>
+      <button class="specificInputsCloseBtn dialogCloseBtn">X</button>
+      <div class="specificInputsMenuWrapper">
+        
+      </div>
     </dialog>
     <dialog class="boughtVars">
       <button class="boughtVarsCloseBtn dialogCloseBtn">X</button>

@@ -7,7 +7,9 @@ import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/EFpubtable.json" with { type: "json" };
 
-export default async function ef(data: theoryData): Promise<simResult> {
+type theory = "EF";
+
+export default async function ef(data: theoryData<theory>): Promise<simResult> {
   if (data.strat !== "EFPlay") {
     const sim = new efSim(data);
     const res = await sim.simulate();
@@ -26,8 +28,6 @@ export default async function ef(data: theoryData): Promise<simResult> {
   const res = await sim.simulate();
   return res;
 }
-
-type theory = "EF";
 
 type pubTable = {[key: string]: number};
 
@@ -176,7 +176,7 @@ class efSim extends theoryClass<theory> {
       this.variables[6].reCalculate();
     }
   }
-  constructor(data: theoryData) {
+  constructor(data: theoryData<theory>) {
     super(data);
     this.R = new Currency("R");
     this.I = new Currency("I");
