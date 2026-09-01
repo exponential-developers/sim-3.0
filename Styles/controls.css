@@ -121,7 +121,8 @@ textarea::placeholder {
   margin: 0.3rem 0;
 }
 
-.specificInputsWrapper {
+.specificInputsWrapper,
+.stratSpecificInputsWrapper {
   margin: 0.3rem 0;
 }
 
