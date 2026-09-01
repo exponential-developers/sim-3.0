@@ -148,6 +148,9 @@ export default async function fs(data: theoryData<theory>): Promise<simResult> {
 }
 
 class fsSim extends theoryClass<theory> {
+  rhodot: number;
+  fdot: number;
+  ldot: number;
   F: Currency;
   L: Currency;
   tVar: number;
@@ -240,26 +243,11 @@ class fsSim extends theoryClass<theory> {
     return Math.max(0, (val * this.tauFactor) / SQRT5_VALUE);
   }
 
-  updateMilestones(): void {
-    super.updateMilestones()
-
-    const base =
-      this.milestones[4] > 2
-        ? PHI_VALUE
-        : this.milestones[4] > 1
-        ? 1.6
-        : this.milestones[4] > 0
-        ? 11 / 7
-        : 1.5;
-    const c2Scaling = this.variables[1].valueScaling;
-    if (c2Scaling instanceof ExponentialValue && c2Scaling.power !== base) {
-      c2Scaling.power = base;
-      this.variables[1].reCalculate();
-    }
-  }
-
   constructor(data: theoryData<theory>) {
     super(data);
+    this.rhodot = 0;
+    this.fdot = 0;
+    this.ldot = 0;
     this.F = new Currency("F");
     this.L = new Currency("L");
     this.tVar = 1;
@@ -330,7 +318,34 @@ class fsSim extends theoryClass<theory> {
         valueScaling: new ExponentialValue(3),
       }),
     ];
-    this.updateMilestones();
+    this.updateMilestonesNoMS();
+    this.updateRhoDot();
+    this.updateFDot();
+    this.updateLDot();
+  }
+
+  updateMilestonesNoMS(): boolean {
+    let res = super.updateMilestonesNoMS();
+    if (res) {
+      const base =
+        this.milestones[4] > 2
+        ? PHI_VALUE
+        : this.milestones[4] > 1
+        ? 1.6
+        : this.milestones[4] > 0
+        ? 11 / 7
+        : 1.5;
+      const c2Scaling = this.variables[1].valueScaling;
+      if (c2Scaling instanceof ExponentialValue && c2Scaling.power !== base) {
+        c2Scaling.power = base;
+        this.variables[1].reCalculate();
+      }
+
+      this.updateRhoDot();
+      this.updateFDot();
+      this.updateLDot();
+    }
+    return res;
   }
 
   async simulate(): Promise<simResult> {
@@ -339,7 +354,7 @@ class fsSim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      this.updateMilestones();
+      this.updateMilestonesNoMS();
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
       this.pubTableCollector.collectData(this);
@@ -353,42 +368,63 @@ class fsSim extends theoryClass<theory> {
     return getBestResult(this.createResult(varCaps), this.bestForkRes);
   }
 
-  tick() {
-    const logdt = l10(this.dt);
-    this.tVar += this.dt;
-
-    const tFactor = -0.3 * l10(Math.max(1, this.tVar));
-    let rhoTerm = this.variables[0].value + this.variables[1].value + tFactor;
+  updateRhoDot() {
+    let rhoTerm = this.variables[0].value + this.variables[1].value;
     if (this.milestones[0] > 0) rhoTerm += this.variables[4].value;
     if (this.milestones[1] > 0) rhoTerm += this.variables[9].value;
-    if (this.milestones[5] > 0) {
-      rhoTerm += getTribonacciLog(getTribonacciIndex(this.tVar));
-    }
 
-    this.rho.add(rhoTerm + this.totMult + logdt);
+    this.rhodot = this.totMult + rhoTerm;
+  }
 
+  updateFDot() {
     const fibLog = getFibLog(this.variables[2].level);
     let fMultiplier = 0;
     if (this.milestones[2] > 0) fMultiplier += this.variables[5].value;
     if (this.milestones[2] > 1) fMultiplier += this.variables[6].value;
 
-    this.F.add(fibLog + fMultiplier + this.totMult + logdt);
+    this.fdot = this.totMult + fibLog + fMultiplier;
+  }
 
+  updateLDot() {
+    const lucasLog = getLucasLog(this.variables[3].level);
+    let lMultiplier = 0;
+    if (this.milestones[3] > 0) lMultiplier += this.variables[7].value;
+    if (this.milestones[3] > 1) lMultiplier += this.variables[8].value;
+
+    this.ldot = this.totMult + lucasLog + lMultiplier;
+  }
+
+  tick() {
+    const logdt = l10(this.dt);
+    this.tVar += this.dt;
+
+    const tFactor = -0.3 * l10(Math.max(1, this.tVar));
+    let rhoTerm = this.rhodot + tFactor;
+    if (this.milestones[5] > 0) {
+      rhoTerm += getTribonacciLog(getTribonacciIndex(this.tVar));
+    }
+    this.rho.add(rhoTerm + logdt);
+
+    this.F.add(this.fdot + logdt);
     if (this.milestones[1] > 0) {
-      const lucasLog = getLucasLog(this.variables[3].level);
-      let lMultiplier = 0;
-      if (this.milestones[3] > 0) lMultiplier += this.variables[7].value;
-      if (this.milestones[3] > 1) lMultiplier += this.variables[8].value;
-      this.L.add(lucasLog + lMultiplier + this.totMult + logdt);
+      this.L.add(this.ldot + logdt);
     }
   }
 
   onVariablePurchased(id: number): void {
+    if ([0, 1, 4, 9].includes(id)) {
+      this.updateRhoDot();
+    } else if ([2, 5, 6].includes(id)) {
+      this.updateFDot();
+    } else if ([3, 7, 8].includes(id)) {
+      this.updateLDot();
+    }
+
     if(
-        id === 0 &&
-        this.strat.includes("Coast") &&
-        this.variables[id].shouldBuy &&
-        this.variables[id].coastingCapReached()
+      id === 0 &&
+      this.strat.includes("Coast") &&
+      this.variables[id].shouldBuy &&
+      this.variables[id].coastingCapReached()
     ) {
       if (this.variables[id].level > this.variables[id].originalCap + 5) this.variables[id].stopBuying()
       else this.variables[id].shouldFork = true;
@@ -396,6 +432,9 @@ class fsSim extends theoryClass<theory> {
   }
   copyFrom(other: this) {
     super.copyFrom(other);
+    this.rhodot = other.rhodot;
+    this.fdot = other.fdot;
+    this.ldot = other.ldot;
     this.F = other.F.copy();
     this.L = other.L.copy();
     this.tVar = other.tVar;
