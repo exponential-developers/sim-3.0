@@ -552,9 +552,11 @@ class mfSim extends theoryClass<theory> {
       let pubSeek = (Math.round(this.lastPub * 20) / 20).toFixed(4);
       console.log(pubSeek);
       let table: Record<string, pubRecord> = passivePubTable
-      let nextRho = parseFloat(table[pubSeek].next);
-      this.doSimEndConditions = () => false;
-      this.pubConditions.push(() => this.maxRho >= nextRho);
+      if(pubSeek in table) {
+        let nextRho = parseFloat(table[pubSeek].next);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
     }
     this.updateMilestonesNoMS();
     // This will update precomp_vterm:
