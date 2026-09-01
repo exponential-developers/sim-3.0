@@ -12,11 +12,6 @@ type pubRecord = {
   time: number;
 }
 
-type pubRecord = {
-  next: string;
-  time: number;
-}
-
 export default async function bd(data: theoryData<theory>): Promise<simResult> {
   if(!data.strat.includes("Coast")) {
     const sim = new bdSim(data);

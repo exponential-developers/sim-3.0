@@ -13,14 +13,6 @@ type pubRecord = {
   time: number;
 }
 
-import activePubTable from "./helpers/table_wsp_0_1_active_coast.json";
-import passivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
-
-type pubRecord = {
-  next: string;
-  time: number;
-}
-
 export default async function wsp(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {

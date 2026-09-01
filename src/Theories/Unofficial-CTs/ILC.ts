@@ -13,11 +13,6 @@ type pubRecord = {
   time: number;
 }
 
-type pubRecord = {
-  next: string;
-  time: number;
-}
-
 type theory = "ILC";
 
 export default async function ilc(data: theoryData<theory>): Promise<simResult> {
@@ -137,7 +132,6 @@ class ilcSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
   }
-  constructor(data: theoryData<theory>) {
   constructor(data: theoryData<theory>) {
     super(data);
     this.rhodot = 0;

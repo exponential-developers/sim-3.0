@@ -300,63 +300,9 @@ async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
-            strat: query.strat,
-            rho: current,
-            sigma: query.sigma,
-            settings: query.settings,
-            lastStrat: lastStrat
-        })).result;
-        if (!global.simulating) break;
-        current -= query.step;
-        lastStrat = res.strat.split(" ")[0];
-        let currentTable = pubCollector.timings;
-        let min_time = Infinity;
-        let min_target = Infinity;
-        for(let i = currentTable.length - 1; i > 0; i--) {
-            let step_delta = i * query.step;
-            if(current + step_delta > cap + 0.0000001) {
-                //We overshot.
-                continue;
-            }
-            if(pubTable[pubTable.length - i][0] + currentTable[i] < min_time) {
-                min_time = pubTable[pubTable.length - i][0] + currentTable[i];
-                min_target = cap - (pubTable.length - i) * query.step
-            }
-        }
-        pubTable.push([min_time, min_target]);
-    }
-    collectorCache.currentCollector = noopCollector;
-    return {
-        cap: cap,
-        start: rho,
-        step: query.step,
-        responseType: "pub_table",
-        pub_table: pubTable
-    }
-}
-
-async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
-    let rho = query.rho;
-    let cap = query.cap;
-    const stopStr = logToExp(rho);
-
-    let current = cap - query.step;
-    let lastLog = 0;
-    let lastStrat = "";
-    let pubTable: [number, number][] = [[0, 0]]; // Cap is reachable in 0 time.
-    while(current > rho - 0.00001) {
-        const ts = performance.now();
-        if (ts - lastLog > 250) {
-            lastLog = ts;
-            UI.outputs.log.textContent = `Simulating ${logToExp(current, 0)}/${stopStr}`;
-            await sleep();
-        }
-        let pubCollector = new StepPubTableCollector(current, query.step, cap);
-        collectorCache.currentCollector = pubCollector;
-        const res = (await singleSim({
-            queryType: "single",
-            theory: query.theory,
-            strat: query.strat,
+            theorySpecificInputs: {},
+            stratSpecificInputs: {},
+            strat: query.strat as FullStratType<theoryType>,
             rho: current,
             sigma: query.sigma,
             settings: query.settings,

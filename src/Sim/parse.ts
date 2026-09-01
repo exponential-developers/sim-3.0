@@ -1,19 +1,6 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { getTheories, getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
-import { getTheories, getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
 import UI from "../UI/elements";
-
-type ParsedSpecificInput<T extends theoryType> = {
-    theory: T,
-    id: SpecificInputOf[T],
-    value?: string
-}
-
-type ParsedStratSpecificInput<T extends theoryType, S extends stratType[T]> = {
-    theory: T,
-    id: StratSpecificInputOf[T][S],
-    value?: string
-}
 
 type ParsedSpecificInput<T extends theoryType> = {
     theory: T,
@@ -213,13 +200,13 @@ function parseStepSim<T extends theoryType>(): StepSimQuery<T> {
     }
 }
 
-function parsePubTableSim(): PubTableSimQuery {
-    const theory = UI.controls.theorySelector.value as theoryType;
+function parsePubTableSim<T extends theoryType>(): PubTableSimQuery {
+    const theory = UI.controls.theorySelector.value as T;
     const sigma = parseSigma(isMainTheory(theory));
 
     return {
         queryType: "pub_table",
-        theory: theory,
+        theory,
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
         rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
