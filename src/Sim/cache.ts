@@ -1,4 +1,5 @@
 import { getTheoryFromIndex, isMainTheory } from "../Utils/helpers";
+import jsonData from "../Data/data.json" with { type: "json" };
 
 // Updates the cache
 export function setCache(query: SimQuery, response: SimResponse) {
@@ -19,6 +20,21 @@ function didSettingsChange(settings1: Settings, settings2: Settings) {
     || settings1.totalPurchaseList !== settings2.totalPurchaseList
 }
 
+function didSpecificInputsChange<T extends theoryType>(
+    theory: T, 
+    inputs1: SpecificInputRecord<T>, 
+    inputs2: SpecificInputRecord<T>
+) {
+    for (let key of (
+        Object.keys(
+            (jsonData.theories as TheoryDataStructure)[theory].specificInputs ?? {}
+        ) as SpecificInputOf[T][])
+    ) {
+        if (inputs1[key] !== inputs2[key]) return true;
+    }
+    return false;
+}
+
 function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
     const cachedQueryJson = localStorage.getItem("cacheQuery");
     if (cachedQueryJson === null) {
@@ -32,9 +48,13 @@ function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
     }
     query.values = query.values.map((val, i) => {
         const theory = getTheoryFromIndex(i);
-        if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) { return val; }
-        if (theory === "EF" && query.settings.showA23 !== cachedQuery.settings.showA23) { return val; }
-        if (theory === "MF" && query.settings.mfResetDepth !== cachedQuery.settings.mfResetDepth) { return val; }
+        if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) return val;
+        if (theory === "EF" && query.settings.showA23 !== cachedQuery.settings.showA23) return val;
+        if (didSpecificInputsChange(
+            theory, 
+            query.theorySpecificInputs[theory], 
+            cachedQuery.theorySpecificInputs[theory])
+        ) return val;
         if (val == cachedQuery.values[i]) { return -5; }
         return val;
     })
