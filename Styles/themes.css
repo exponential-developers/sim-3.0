@@ -9,6 +9,7 @@
 
     --button-bg: white;
     --button-green-bg: #afa;
+    --button-red-bg: #faa;
     --button-f-clr: black;
     --btn-border-clr: rgb(161, 161, 161); /* button border */
 
@@ -51,6 +52,7 @@
 
     --button-bg: rgb(48, 48, 48);
     --button-green-bg: #363;
+    --button-red-bg: #633;
     --button-f-clr: rgb(244, 244, 255);
     --btn-border-clr: rgb(88, 88, 88); /* button border */
 

@@ -1,4 +1,5 @@
 import { ce, event } from "../Utils/DOMhelpers";
+import UI from "./elements";
 
 function generateSlider(theory: theoryType, id: string, input: SpecificInputSlider): HTMLSpanElement {
     const span = ce<HTMLSpanElement>("span");
@@ -18,7 +19,6 @@ function generateSlider(theory: theoryType, id: string, input: SpecificInputSlid
     span.appendChild(output);
 
     event(slider, "input", () => output.innerText = slider.value);
-
 
     return span;
 }
@@ -49,4 +49,25 @@ export function generateSpecificInputWidgetWrapper(
     div.appendChild(widget);
 
     return div;
+}
+
+export function setSpecificInput<T extends theoryType>(
+    theory: T, 
+    input: SpecificInputOf[T], 
+    value: string, 
+    allMode: boolean
+) {
+    const container = allMode ? UI.specificInputsDialog.contentWrapper : UI.controls.specificInputsWrapper;
+    const div = container.querySelector<HTMLDivElement>(`div[theory="${theory}"][inputid="${input}"]`);
+    if (div === null) return;
+    if (!div.hasAttribute("inputtype")) return;
+    switch (div.getAttribute("inputtype") as SpecificInputType["type"]) {
+        case "slider": {
+            const slider = div.querySelector<HTMLInputElement>(".specificInputSlider");
+            const output = div.querySelector<HTMLInputElement>(".specificInputSliderOutput");
+            if (slider === null || output === null) return;
+            slider.value = value;
+            output.innerText = value;
+        }
+    }
 }

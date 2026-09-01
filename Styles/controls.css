@@ -69,6 +69,12 @@
   font-size: 0.8rem;
   padding: 0.1em 0.2em;
 }
+.simulateBtn.green {
+  background-color: var(--button-green-bg);
+}
+.simulateBtn.red {
+  background-color: var(--button-red-bg);
+}
 
 /* Sim all inputs */
 

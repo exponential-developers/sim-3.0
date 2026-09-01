@@ -1,5 +1,6 @@
 import { round } from "../Utils/helpers";
 import UI from "./elements";
+import { setSpecificInput } from "./specificInputs";
 
 const defaultState = `{"settings":{"dt":"1.5","ddt":"1.0001","showA23":false,"showUnofficials":false}}`;
 const defaultTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "classic";
@@ -26,6 +27,25 @@ export function setSimState() {
     })
   );
 }
+
+export function setSavedSpecificInputs(inputs: SpecificInputFullRecord) {
+  localStorage.setItem("specificInputs", JSON.stringify(inputs));
+}
+
+function getSavedSpecificInputsForTheory<T extends theoryType>(theory: T, inputs: SpecificInputRecord<T>) {
+  for (let input of Object.keys(inputs) as SpecificInputOf[T][]) {
+    if (inputs[input]) {
+      setSpecificInput(theory, input, inputs[input], true);
+    }
+  }
+}
+
+function getSavedSpecificInputs(inputs: Partial<SpecificInputFullRecord>) {
+  for (let theory of Object.keys(inputs) as theoryType[]) {
+    if (inputs[theory]) getSavedSpecificInputsForTheory(theory, inputs[theory]);
+  }
+}
+
 export function getSimState() {
   //Sim All Settings
   const simAllSettings: [boolean, boolean] = JSON.parse(localStorage.getItem("simAllSettings") ?? "[true, false]");
@@ -53,4 +73,6 @@ export function getSimState() {
   //skipCompletedCTs.checked = state.settings.skipCompletedCTs ?? false;
   UI.settings.showA23.checked = state.settings.showA23;
   UI.settings.showUnofficials.checked = state.settings.showUnofficials ?? false;
+
+  getSavedSpecificInputs(JSON.parse(localStorage.getItem("specificInputs") ?? "{}"));
 }

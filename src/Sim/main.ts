@@ -1,7 +1,7 @@
 import { parseQuery } from "./parse";
 import { simulate } from "./simulate";
 import { writeSimResponse } from "./write";
-import { setSimState } from "../UI/simState";
+import { setSavedSpecificInputs, setSimState } from "../UI/simState";
 import { event } from "../Utils/DOMhelpers";
 import { cacheFilterQuery, cacheFilterResponse, setCache } from "./cache";
 import { refreshDOMEventLoop } from "../Utils/helpers";
@@ -22,6 +22,9 @@ async function simCall() {
   global.simulating = true;
   UI.outputs.log.textContent = "";
   UI.controls.simulateBtn.textContent = "Stop simulating";
+  UI.controls.simulateBtn.classList.remove("green", "red");
+  UI.controls.simulateBtn.classList.add("red");
+  await refreshDOMEventLoop();
 
   // Auto-load save
   if (/^[A-Za-z0-9+\/=]{20,}$/.test(UI.controls.simAllInputArea.value.trim())) {
@@ -31,6 +34,9 @@ async function simCall() {
 
   try {
     const query = parseQuery();
+    if (query.queryType === "all") {
+      setSavedSpecificInputs(query.theorySpecificInputs);
+    }
     const filteredQuery = cacheFilterQuery(structuredClone(query));
     const response = await simulate(filteredQuery);
     const filteredResponse = cacheFilterResponse(filteredQuery, response);
@@ -45,6 +51,8 @@ async function simCall() {
   
   global.simulating = false;
   UI.controls.simulateBtn.textContent = "Simulate";
+  UI.controls.simulateBtn.classList.remove("green", "red");
+  UI.controls.simulateBtn.classList.add("green");
   setSimState();
 }
 
