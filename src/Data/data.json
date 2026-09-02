@@ -580,7 +580,7 @@
           "stratFilterCondition":"Semi-Idle && rho < 1499"
         },
         "FICoast":{
-          "stratFilterCondition":"(Semi-Idle && rho >= 1499) && (!Idle && rho <= 30)"
+          "stratFilterCondition":"(Semi-Idle && rho >= 1499) || (!Idle && rho <= 30)"
         },
         "FId": {
           "stratFilterCondition":"Active || Very-Active"
