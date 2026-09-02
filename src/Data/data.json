@@ -479,6 +479,9 @@
         "WSPPTStopC1Coast": {
           "stratFilterCondition": "Semi-Idle"
         },
+        "WSPPT2StopC1Coast": {
+          "stratFilterCondition": "false"
+        },
         "WSPdStopC1": {
           "stratFilterCondition": "false"
         },
@@ -487,6 +490,9 @@
         },
         "WSPdPTStopC1Coast": {
           "stratFilterCondition": "Active || Very-Active"
+        },
+        "WSPdPT2StopC1Coast": {
+          "stratFilterCondition": "false"
         },
         "WSPPostRecoveryStopC1Coast": {
           "stratFilterCondition": "false"
