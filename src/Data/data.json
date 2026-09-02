@@ -574,10 +574,13 @@
       "tauFactor":0.4,
       "strats":{
         "FI":{
-          "stratFilterCondition":"Idle || Semi-Idle || rho <= 30"
+          "stratFilterCondition":"(Idle || rho <= 30) && !Semi-Idle"
+        },
+        "FIPTCoast":{
+          "stratFilterCondition":"Semi-Idle && rho < 1499"
         },
         "FICoast":{
-          "stratFilterCondition":"Semi-Idle || (!Idle && rho <= 30)"
+          "stratFilterCondition":"(Semi-Idle && rho >= 1499) && (!Idle && rho <= 30)"
         },
         "FId": {
           "stratFilterCondition":"Active || Very-Active"
@@ -586,10 +589,13 @@
           "stratFilterCondition":"Active || Very-Active"
         },
         "FIPermaSwap":{
-          "stratFilterCondition":"(Idle || Semi-Idle) && rho >= 1000 && rho <= 1300"
+          "stratFilterCondition":"Idle && rho >= 1000 && rho <= 1300"
+        },
+        "FIPTPermaSwapCoast":{
+          "stratFilterCondition":"Semi-Idle && rho >= 1000 && rho <= 1300"
         },
         "FIPermaSwapCoast":{
-          "stratFilterCondition":"Semi-Idle && rho >= 1000 && rho <= 1300"
+          "stratFilterCondition":"false"
         },
         "FIdPermaSwap":{
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
@@ -598,10 +604,13 @@
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
         "FIMS":{
-          "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950"
+          "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950 && !Semi-Idle"
         },
         "FIMSCoast":{
-          "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950"
+          "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950 && !Semi-Idle"
+        },
+        "FIPTMSCoast":{
+          "stratFilterCondition":"rho <= 30 && Semi-Idle"
         },
         "FIMSd": {
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"

@@ -14,13 +14,21 @@ import {
   getFactorial
 } from "../../Utils/helpers";
 
+import passivePubTable from "./helpers/table_fi_0_1_passive_coast.json";
+import activePubTable from "./helpers/table_fi_0_1_passive_coast.json";
+
 type theory = "FI";
+
+type pubRecord = {
+  next: string;
+  time: number;
+}
 
 export default async function fi(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
-    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
+    data2.strat = data2.strat.replace("Coast", "").replace("PT", "") as stratType[theory];
     const sim1 = new fiSim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -75,14 +83,17 @@ class fiSim extends theoryClass<theory> {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       FI: idleStrat,
       FICoast: idleCoastStrat,
+      FIPTCoast: idleCoastStrat,
       FId: activeStrat2,
       FIdCoast: activeCoastStrat2,
       FIPermaSwap: idleStrat,
       FIPermaSwapCoast: idleCoastStrat,
+      FIPTPermaSwapCoast: idleCoastStrat,
       FIdPermaSwap: activeStrat2,
       FIdPermaSwapCoast: activeCoastStrat2,
       FIMS: idleStrat,
       FIMSCoast: idleCoastStrat,
+      FIPTMSCoast: idleCoastStrat,
       FIMSd: activeStrat2,
       FIMSdCoast: activeCoastStrat2,
       FIMSPermaSwap: idleStrat,
@@ -237,6 +248,18 @@ class fiSim extends theoryClass<theory> {
     this.maxLambda = 0;
     this.msstate = 0;
     this.msq = 0;
+
+    if(this.strat.includes("PT")) {
+      if (this.lastPub < 1499)
+      {
+        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let table: Record<string, pubRecord> =
+            this.strat.includes("FId") ? activePubTable : passivePubTable;
+        let nextRho = parseFloat(table[pubSeek].next);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
+    }
 
     this.updateMilestones();
   }
