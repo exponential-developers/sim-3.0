@@ -57,7 +57,7 @@ async function simulateOnce<T extends theoryType, S extends stratType[T]>(
     strat: S,
     stratSpecificInputs: StratSpecificInputRecord<T, S>,
     query: Omit<SingleSimQuery<T, stratType[T]>, "strat" | "stratSpecificInputs">
-): Promise<simResult> {
+): Promise<simResult<T>> {
     const data: theoryData<T, S> = {
         theory: query.theory,
         specificInputs: query.theorySpecificInputs,
@@ -73,7 +73,7 @@ async function simulateOnce<T extends theoryType, S extends stratType[T]>(
     return res;
 }
 
-async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promise<SingleSimResponse> {
+async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promise<SingleSimResponse<T>> {
     const converter = theoryInterface[query.theory].converter;
     const strats = query.strat == "Best Active" 
     || query.strat == "Best Overall" 
@@ -101,7 +101,7 @@ async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promis
 
     return {
         responseType: "single",
-        result: bestRes
+        result: bestRes as simResult<T>
     }
 }
 
@@ -112,9 +112,11 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
     let tau = start;
     let time = 0;
     let lastStrat = "";
-    const results: simResult[] = [];
+    const results: simResult<T>[] = [];
     const stopStr = logToExp(converter.supportsRho ? converter.convertTo(query.cap, "rho", query.sigma) : cap);
     let lastLog = 0;
+
+    let theorySpecificInputs: SpecificInputRecord<T> = query.theorySpecificInputs;
 
     while (tau < cap) {
         const ts = performance.now();
@@ -130,7 +132,7 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
         const res = (await singleSim({
             queryType: "single",
             theory: query.theory,
-            theorySpecificInputs: query.theorySpecificInputs,
+            theorySpecificInputs,
             stratSpecificInputs: query.stratSpecificInputs,
             strat: query.strat,
             input: { valueType: "tau", value: tau },
@@ -145,6 +147,9 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
         tau = res.pubPointTau;
         lastStrat = res.strat.split(" ")[0];
         time += res.time;
+        if (res.theorySpecificInputs) {
+            theorySpecificInputs = { ...theorySpecificInputs, ...res.theorySpecificInputs };
+        }
     }
 
     const deltaTau = tau - start;

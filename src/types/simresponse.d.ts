@@ -1,6 +1,6 @@
-type SingleSimResponse = {
+type SingleSimResponse<T extends theoryType = theoryType> = {
     responseType: "single";
-    result: simResult;
+    result: simResult<T>;
 }
 
 type ChainSimResponse = {

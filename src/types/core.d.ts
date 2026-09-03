@@ -61,8 +61,9 @@ declare global {
         settings: Settings;
     }
     
-    interface simResult {
-        theory: theoryType;
+    interface simResult<T extends theoryType = theoryType> {
+        theory: T;
+        theorySpecificInputs?: SpecificInputRecord<T>;
         sigma: number;
         lastPubTau: number;
         lastPubRho?: number;
@@ -76,7 +77,7 @@ declare global {
         boughtVars: varBuy[];
     }
 
-    type simResultRho = simResult & {
+    type simResultRho<T extends theoryType = theoryType> = simResult<T> & {
         lastPubRho: number;
         pubPointRho: number;
     }
@@ -110,7 +111,7 @@ declare global {
     }
 
     type TheoryInterface<T extends theoryType> = {
-        simulate: <S extends stratType[T]>(data: theoryData<T, S>) => Promise<simResult>;
+        simulate: <S extends stratType[T]>(data: theoryData<T, S>) => Promise<simResult<T>>;
         converter: ProgressValueConverter;
     }
 }
