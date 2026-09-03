@@ -15,8 +15,8 @@ type SingleSimQuery<T extends theoryType, S extends FullStratType<T> = FullStrat
     queryType: "single";
     strat: S;
     stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
-    rho: number;
-    cap?: number;
+    input: ProgressValue;
+    cap?: ProgressValue;
     lastStrat?: string;
 }
 
@@ -24,8 +24,8 @@ type ChainSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratT
     queryType: "chain";
     strat: S;
     stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
-    rho: number;
-    cap: number;
+    input: ProgressValue;
+    cap: ProgressValue;
     hardCap: boolean;
 }
 
@@ -33,8 +33,8 @@ type StepSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratTy
     queryType: "step";
     strat: S;
     stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
-    rho: number;
-    cap: number;
+    input: ProgressValue;
+    cap: ProgressValue;
     step: number;
 }
 
@@ -42,21 +42,21 @@ type PubTableSimQuery = BaseSimQuery & {
     queryType: "pub_table";
     theory: theoryType;
     strat: string;
-    rho: number;
-    cap: number;
+    input: ProgressValue;
+    cap: ProgressValue;
     step: number;
 }
 
 type ComparisonSimQuery<T extends theoryType> = BaseSingleTheoryQuery<T> & {
     queryType: "comparison";
-    rho: number;
+    input: ProgressValue;
 }
 
 type AmountSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratType<T>> = BaseSingleTheoryQuery<T> & {
     queryType: "amount";
     strat: S;
     stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
-    rho: number;
+    input: ProgressValue;
     amount: number;
 }
 
@@ -64,7 +64,7 @@ type TimeSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratTy
     queryType: "time";
     strat: S;
     stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
-    rho: number;
+    input: ProgressValue;
     time: number;
     hardCap: boolean;
 }
@@ -72,7 +72,7 @@ type TimeSimQuery<T extends theoryType, S extends FullStratType<T> = FullStratTy
 type SimAllQuery = BaseSimQuery & {
     queryType: "all";
     theorySpecificInputs: SpecificInputFullRecord
-    values: number[];
+    values: AllModeProgressValue[];
     veryActive: boolean;
     semiIdle: boolean;
     stratType: SettingsSimAllStratsMode;
@@ -82,8 +82,8 @@ type StepChainQuery<T extends theoryType, S extends FullStratType<T> = FullStrat
     queryType: "step_chain";
     strat: S;
     stratSpecificInputs: GeneralStratSpecificInputRecord<T, S>;
-    rho: number;
-    cap: number;
+    input: ProgressValue;
+    cap: ProgressValue;
     step: number;
     hardCap: boolean;
 }

@@ -1,19 +1,33 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/FPpubtable.json" with { type: "json" };
 import extended_pubtable from "./helpers/FPextendedPT.json" with { type: "json" };
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
-export default async function fp(data: theoryData<theory>): Promise<simResult> {
+type theory = "FP";
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.3,
+  multExponent: 0.331,
+  multFactor: l10(5)
+});
+
+const FP: TheoryInterface<theory> = {
+  simulate: fp,
+  converter
+};
+
+export default FP;
+
+async function fp(data: theoryData<theory>): Promise<simResult> {
   const sim = new fpSim(data);
   const res = await sim.simulate();
   return res;
 }
-
-type theory = "FP";
 
 class VariableSValue extends BaseValue {
   getS(level: number): number {
@@ -43,7 +57,7 @@ const stepwiseSum = (level: number, base: number, length: number) => {
 
 type pubTable = {[key: string]: number};
 
-class fpSim extends theoryClass<theory> {
+class fpSim extends traditionalTheoryClass<theory> {
   // growing variables
   q: number;
   r: number;
@@ -131,9 +145,6 @@ class fpSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.331 + l10(5));
-  }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
@@ -169,7 +180,7 @@ class fpSim extends theoryClass<theory> {
     this.S_n = this.S(Math.floor(Math.sqrt(this.n)));
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
@@ -178,31 +189,32 @@ class fpSim extends theoryClass<theory> {
     this.S_n = 0;
     this.n = 1;
     this.updateN_flag = true;
-    this.pubUnlock = 12;
+    this.pubUnlockRho = 12;
     this.milestoneUnlocks = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
     this.milestonesMax = [2, 2, 3, 1, 1, 1];
     this.variables = [
-      new Variable({ name: "tdot", cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
-      new Variable({ name: "c2", cost: new CompositeCost(15, new ExponentialCost(1e15, 40), new ExponentialCost(1e37, 16.42)), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(1e35, 12)), valueScaling: new StepwisePowerSumValue(10, 10)}),
-      new Variable({ name: "q2", cost: new ExponentialCost(1e76, 1e3), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "tdot", cost: new ExponentialCost(1e4, 1e4), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.4)), valueScaling: new StepwisePowerSumValue(150, 100)}),
+      new Variable({ currency: this.rho, name: "c2", cost: new CompositeCost(15, new ExponentialCost(1e15, 40), new ExponentialCost(1e37, 16.42)), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "q1", cost: new FirstFreeCost(new ExponentialCost(1e35, 12)), valueScaling: new StepwisePowerSumValue(10, 10)}),
+      new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(1e76, 1e3), valueScaling: new ExponentialValue(10) }),
       new Variable({
+        currency: this.rho,
         name: "r1",
         cost: new FirstFreeCost(new CompositeCost(285, new ExponentialCost(1e80, 25), new ExponentialCost("1e480", 150))),
         valueScaling: new StepwisePowerSumValue(2, 5)
       }),
-      new Variable({ name: "n", cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
+      new Variable({ currency: this.rho, name: "n", cost: new ExponentialCost(1e4, 3e6), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "s", cost: new ExponentialCost("1e730", 1e30), valueScaling: new VariableSValue()}),
     ];
 
     this.forcedPubRho = Infinity;
     this.coasting = new Array(this.variables.length).fill(false);
     this.bestRes = null;
     this.doContinuityFork = true;
-    if (this.lastPub >= 1200 && this.lastPub < 3490 && this.strat !== "FP") {
-      let newpubtable: pubTable = this.lastPub < 1990 ? pubtable.fpdata : extended_pubtable;
-      let pubseek = Math.round(this.lastPub * 8);
+    if (this.lastPubRho >= 1200 && this.lastPubRho < 3490 && this.strat !== "FP") {
+      let newpubtable: pubTable = this.lastPubRho < 1990 ? pubtable.fpdata : extended_pubtable;
+      let pubseek = Math.round(this.lastPubRho * 8);
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
@@ -248,7 +260,7 @@ class fpSim extends theoryClass<theory> {
         this.doContinuityFork = false;
         const fork = this.copy();
         const newpubtable: pubTable = extended_pubtable;
-        const pubseek = Math.round(this.lastPub * 8);
+        const pubseek = Math.round(this.lastPubRho * 8);
         fork.forcedPubRho = newpubtable[pubseek.toString()] / 8;
         if (fork.forcedPubRho === undefined) this.forcedPubRho = Infinity;
         if (fork.forcedPubRho > 2000) {
@@ -272,7 +284,7 @@ class fpSim extends theoryClass<theory> {
       this.updateN_flag = false;
     }
 
-    if (this.strat.includes("MS") && this.lastPub > 700 && this.variables[7].value < 2) {
+    if (this.strat.includes("MS") && this.lastPubRho > 700 && this.variables[7].value < 2) {
       this.milestones[4] = 1;
       if (this.ticks % 20 < 10 / this.variables[7].value) this.milestones[4] = 0;
     }

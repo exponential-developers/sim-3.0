@@ -4,7 +4,7 @@ import { BaseValue } from "./value";
 import Currency from "./currency";
 
 interface variableData {
-  currency?: Currency;
+  currency: Currency;
   name: string;
   level?: number;
   cost: BaseCost;
@@ -14,8 +14,8 @@ interface variableData {
 export default class Variable {
   /** Data used to initialize the variable */
   data: variableData;
-  /** Currency used to buy the variable - default rho */
-  currency?: Currency;
+  /** Currency used to buy the variable */
+  currency: Currency;
   /** Variable name */
   name: string;
   /** Variable level */

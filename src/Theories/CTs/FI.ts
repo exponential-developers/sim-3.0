@@ -1,5 +1,4 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -16,15 +15,29 @@ import {
 
 import passivePubTable from "./helpers/table_fi_0_1_passive_coast.json";
 import activePubTable from "./helpers/table_fi_0_1_passive_coast.json";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "FI";
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.4,
+  multExponent: 0.1625
+});
+
+const FI: TheoryInterface<theory> = {
+  simulate: fi,
+  converter
+};
+
+export default FI;
 
 type pubRecord = {
   next: string;
   time: number;
 }
 
-export default async function fi(data: theoryData<theory>): Promise<simResult> {
+async function fi(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -45,7 +58,7 @@ export default async function fi(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-class fiSim extends theoryClass<theory> {
+class fiSim extends traditionalTheoryClass<theory> {
   q: number;
   r: number;
   tval: number;
@@ -113,12 +126,8 @@ class fiSim extends theoryClass<theory> {
       () => this.milestones[4] > 0,
     ];
   }
-
-  getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.1625);
-  }
   getMilestonePriority(): number[] {
-    const rho = Math.max(this.maxRho, this.lastPub);
+    const rho = Math.max(this.maxRho, this.lastPubRho);
     const total_points = binaryInsertionSearch(this.milestoneUnlocks, rho);
 
     let available_fx = binaryInsertionSearch([100, 450, 1050], rho);
@@ -228,19 +237,19 @@ class fiSim extends theoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = 0;
     this.r = 0;
     this.tval = 0;
-    this.pubUnlock = 8;
+    this.pubUnlockRho = 8;
     this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.variables = [
-      new Variable({ name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "q1",   cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
-      new Variable({ name: "q2",   cost: new ExponentialCost(1e7, 5e3), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "K",    cost: new ExponentialCost(1e2, 10), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "m",    cost: new ExponentialCost(1e4, 4.44), valueScaling: new ExponentialValue(1.5) }),
-      new Variable({ name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
+      new Variable({ currency: this.rho, name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "q1",   cost: new FirstFreeCost(new ExponentialCost(5, 14.6)), valueScaling: new StepwisePowerSumValue(50, 23) }),
+      new Variable({ currency: this.rho, name: "q2",   cost: new ExponentialCost(1e7, 5e3), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "K",    cost: new ExponentialCost(1e2, 10), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "m",    cost: new ExponentialCost(1e4, 4.44), valueScaling: new ExponentialValue(1.5) }),
+      new Variable({ currency: this.rho, name: "n",    cost: new ExponentialCost(1e69, 11), valueScaling: new StepwisePowerSumValue(3, 11) }),
     ];
     this.variables[5].buy();
 
@@ -250,9 +259,9 @@ class fiSim extends theoryClass<theory> {
     this.msq = 0;
 
     if(this.strat.includes("PT")) {
-      if (this.lastPub < 1499)
+      if (this.lastPubRho < 1499)
       {
-        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
         let table: Record<string, pubRecord> =
             this.strat.includes("FId") ? activePubTable : passivePubTable;
         let nextRho = parseFloat(table[pubSeek].next);

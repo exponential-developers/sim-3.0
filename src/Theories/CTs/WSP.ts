@@ -1,5 +1,4 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -10,13 +9,29 @@ import passivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
 
 import activePubTable2 from "./helpers/table_wsp_0_1_active_coast_1497.json";
 import passivePubTable2 from "./helpers/table_wsp_0_1_passive_coast_1497.json";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type pubRecord = {
   next: string;
   time: number;
 }
 
-export default async function wsp(data: theoryData<theory>): Promise<simResult> {
+type theory = "WSP";
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.4,
+  multExponent: 0.375
+});
+
+const WSP: TheoryInterface<theory> = {
+  simulate: wsp,
+  converter
+};
+
+export default WSP;
+
+async function wsp(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = {
@@ -33,7 +48,7 @@ export default async function wsp(data: theoryData<theory>): Promise<simResult> 
       sim.variables[0].configureCap(2);
     }
     else {
-      if(data.rho >= 300) {
+      if(converter.convertTo(data.input, "rho") >= 300) {
         sim.variables[0].configureCap(10);
       }
       else {
@@ -50,26 +65,24 @@ export default async function wsp(data: theoryData<theory>): Promise<simResult> 
   return res;
 }
 
-type theory = "WSP";
-
-class wspSim extends theoryClass<theory> {
+class wspSim extends traditionalTheoryClass<theory> {
   q: number;
   S: number;
   updateS_flag: boolean;
 
   getBuyingConditions(): conditionFunction[] {
     let c1weight = 0;
-    if (this.lastPub >= 25) c1weight = l10(3);
-    if (this.lastPub >= 40) c1weight = 1;
-    if (this.lastPub >= 200) c1weight = l10(50);
-    if (this.lastPub >= 400) c1weight = 3;
-    if (this.lastPub >= 700) c1weight = 10000;
+    if (this.lastPubRho >= 25) c1weight = l10(3);
+    if (this.lastPubRho >= 40) c1weight = 1;
+    if (this.lastPubRho >= 200) c1weight = l10(50);
+    if (this.lastPubRho >= 400) c1weight = 3;
+    if (this.lastPubRho >= 700) c1weight = 10000;
 
     const WSPStopC1CoastQ1 = toCallables([
       () => this.variables[0].shouldBuy,
       true,
       true,
-      () => this.lastPub < 450 || this.t < 15,
+      () => this.lastPubRho < 450 || this.t < 15,
       true
     ]);
     const WSPdStopC1CoastQ1 = toCallables([
@@ -86,15 +99,15 @@ class wspSim extends theoryClass<theory> {
 
     let conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       WSP: [true, true, true, true, true],
-      WSPStopC1: [true, true, true, () => this.lastPub < 450 || this.t < 15, true],
+      WSPStopC1: [true, true, true, () => this.lastPubRho < 450 || this.t < 15, true],
       WSPStopC1Coast: WSPStopC1CoastQ1,
       WSPPTStopC1Coast: WSPStopC1CoastQ1,
       WSPPT2StopC1Coast: WSPStopC1CoastQ1,
       WSPPostRecoveryStopC1Coast: [
-        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
+        () => this.maxRho <= this.lastPubRho ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
         true,
         true,
-        () => this.maxRho <= this.lastPub ? WSPStopC1CoastQ1[3]() : WSPdStopC1CoastQ1[3](),
+        () => this.maxRho <= this.lastPubRho ? WSPStopC1CoastQ1[3]() : WSPdStopC1CoastQ1[3](),
         true,
       ],
       WSPdStopC1: [
@@ -120,9 +133,6 @@ class wspSim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [2, 1, 0];
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.375);
-  }
   srK_helper(x: number): number {
     const x2 = x * x;
     return Math.log(x2 + 1 / 6 + 1 / 120 / x2 + 1 / 810 / x2 / x2) / 2 - 1;
@@ -146,24 +156,24 @@ class wspSim extends theoryClass<theory> {
     this.S = this.sineRatioK(this.variables[2].value, chi / Math.PI);
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = 0;
-    this.pubUnlock = 8;
+    this.pubUnlockRho = 8;
     this.milestoneUnlocks = [10, 25, 40, 55, 70, 100, 140, 200];
     this.milestonesMax = [4, 1, 3];
     this.variables = [
-      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 3.38 / 4, true)), valueScaling: new StepwisePowerSumValue()}),
-      new Variable({ name: "q2", cost: new ExponentialCost(1000, 3.38 * 3, true), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "n",  cost: new ExponentialCost(20, 3.38, true), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "c1", cost: new ExponentialCost(50, 3.38 / 1.5, true), valueScaling: new StepwisePowerSumValue(2, 50, 1)}),
-      new Variable({ name: "c2", cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 3.38 / 4, true)), valueScaling: new StepwisePowerSumValue()}),
+      new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(1000, 3.38 * 3, true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "n",  cost: new ExponentialCost(20, 3.38, true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(50, 3.38 / 1.5, true), valueScaling: new StepwisePowerSumValue(2, 50, 1)}),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(1e10, 3.38 * 10, true), valueScaling: new ExponentialValue(2) }),
     ];
     this.S = 0;
     this.updateS_flag = false;
     if(this.strat == "WSPdPTStopC1Coast" || this.strat == "WSPPTStopC1Coast") {
-      if (this.lastPub < 1499)
+      if (this.lastPubRho < 1499)
       {
-        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
         let table: Record<string, pubRecord> =
             this.strat.includes("WSPd") ? activePubTable : passivePubTable;
         let nextRho = parseFloat(table[pubSeek].next);
@@ -172,9 +182,9 @@ class wspSim extends theoryClass<theory> {
       }
     }
     if(this.strat == "WSPdPT2StopC1Coast" || this.strat == "WSPPT2StopC1Coast") {
-      if (this.lastPub < 1495)
+      if (this.lastPubRho < 1495)
       {
-        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
         let table: Record<string, pubRecord> =
             this.strat.includes("WSPd") ? activePubTable2 : passivePubTable2;
         let nextRho = parseFloat(table[pubSeek].next);
@@ -191,7 +201,7 @@ class wspSim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 200) this.updateMilestones();
+      if (this.lastPubRho < 200) this.updateMilestones();
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
       this.pubTableCollector.collectData(this);

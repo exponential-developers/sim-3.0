@@ -47,18 +47,24 @@ function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
         return query;
     }
     if (!cachedQuery.theorySpecificInputs) return query;
-    query.values = query.values.map((val, i) => {
-        const theory = getTheoryFromIndex(i);
-        if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) return val;
-        if (theory === "EF" && query.settings.showA23 !== cachedQuery.settings.showA23) return val;
-        if (didSpecificInputsChange(
-            theory, 
-            query.theorySpecificInputs[theory], 
-            cachedQuery.theorySpecificInputs[theory])
-        ) return val;
-        if (val == cachedQuery.values[i]) { return -5; }
-        return val;
-    })
+    query.values = query.values
+        .filter((val) => !(val instanceof String))
+        .map((val, i) => {
+            const theory = getTheoryFromIndex(i);
+            if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) return val;
+            if (!isMainTheory(theory) && 
+                (query.settings.completedCTs === "no") 
+                !== (cachedQuery.settings.completedCTs === "no")
+            ) return val;
+            if (theory === "EF" && query.settings.showA23 !== cachedQuery.settings.showA23) return val;
+            if (didSpecificInputsChange(
+                theory, 
+                query.theorySpecificInputs[theory], 
+                cachedQuery.theorySpecificInputs[theory])
+            ) return val;
+            if (val == cachedQuery.values[i]) { return "cache"; }
+            return val;
+        })
 
     return query;
 }
@@ -107,7 +113,7 @@ function cacheFilterResponseAll(query: SimAllQuery, response: SimAllResponse): S
             && currentCachedResult.value !== undefined && currentCachedResult.value.theory === theory
         )
         {
-            if (query.values[i] === -5) {
+            if (query.values[i] === "cache") {
                 generatedResults.push(currentCachedResult.value);
             }
             currentCachedResult = cachedResultsIterator.next();

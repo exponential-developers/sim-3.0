@@ -1,24 +1,39 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, parseLog10String } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "BT";
 
-export default async function bt(data: theoryData<theory>): Promise<simResult> {
+const tauFactor = 0.4;
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor,
+  multExponent: 1.25
+});
+
+const BT: TheoryInterface<theory> = {
+  simulate: bt,
+  converter
+};
+
+export default BT;
+
+async function bt(data: theoryData<theory>): Promise<simResult> {
   const sim = new btSim(data);
   const res = await sim.simulate();
   return res;
 }
 
-class btSim extends theoryClass<theory> {
+class btSim extends traditionalTheoryClass<theory> {
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       BT: [true, true, true],
       BTd: [
-        () => this.variables[0].cost + l10(this.lastPub < 275 ? 12 + (this.variables[0].level % 10) : 10 + (this.variables[0].level % 10)) < this.variables[1].cost,
+        () => this.variables[0].cost + l10(this.lastPubRho < 275 ? 12 + (this.variables[0].level % 10) : 10 + (this.variables[0].level % 10)) < this.variables[1].cost,
         true,
         true
       ],
@@ -33,22 +48,18 @@ class btSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 1.25);
-  }
   getMilestonePriority(): number[] {
     return [1, 0, 2, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data);
-    this.pubUnlock = 7;
+    super(data, converter);
+    this.pubUnlockRho = 7;
     this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
     this.milestonesMax = [3, 3, 6, 1];
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.variables = [
-      new Variable({ name: "tai", cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
+      new Variable({ currency: this.rho, name: "tai", cost: new FirstFreeCost(new ExponentialCost(15, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "rao", cost: new ExponentialCost(5, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "tay", cost: new ExponentialCost(1e10, 10, true), valueScaling: new ExponentialValue(10) })
     ];
     this.updateMilestones();
   }
@@ -72,7 +83,7 @@ class btSim extends theoryClass<theory> {
     const rhodot = this.totMult + vtai + vrao + vtay;
 
     this.rho.add(rhodot + l10(this.dt));
-    if (this.milestones[3] == 1 && Math.max(this.maxRho, this.lastPub) * this.tauFactor < parseLog10String("9e599")) {
+    if (this.milestones[3] == 1 && Math.max(this.maxRho, this.lastPubRho) * tauFactor < parseLog10String("9e599")) {
       this.rho.value = parseLog10String("1.05e1500");
     }
   }

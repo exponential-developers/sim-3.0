@@ -1,13 +1,27 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "TC";
 
-export default async function tc(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.45,
+  multExponent: 0.2 / 0.45,
+  multFactor: -l10(2)
+});
+
+const TC: TheoryInterface<theory> = {
+  simulate: tc,
+  converter
+};
+
+export default TC;
+
+async function tc(data: theoryData<theory>): Promise<simResult> {
   let res;
   if (data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -54,7 +68,7 @@ function lfsr16BitScrambled(seed: number): number {
     return state / 65535;
 }
 
-class tcSim extends theoryClass<theory> {
+class tcSim extends traditionalTheoryClass<theory> {
   // growing variables
   r: number;
   P: number;
@@ -121,10 +135,6 @@ class tcSim extends theoryClass<theory> {
     ];
   }
 
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.2 - l10(2));
-  }
-
   recomputeC1Base() {
     if (this.variables[0].valueScaling instanceof ExponentialValue) {
       this.variables[0].valueScaling.power = this.variables[10].value;
@@ -160,8 +170,7 @@ class tcSim extends theoryClass<theory> {
     return [0, 1, 2, 3, 4, 5];
   }
   constructor(data: theoryData<theory>) {
-    super(data);
-    this.totMult = this.getTotMult(data.rho);
+    super(data, converter);
     // System parameters
     this.systemDt = 0.1;
     this.curMult = 0;
@@ -179,33 +188,33 @@ class tcSim extends theoryClass<theory> {
     this.kd = pidSettings[2];
     this.T = 30;
 
-    const seed = Math.round(this.lastPub * this.tauFactor);
+    const seed = Math.round(converter.convertTo(this.lastPub, "tau", this.sigma));
     const rng = lfsr16BitScrambled(seed);
 
     this.targetT = Math.round(rng * (120 - 60) + 60);
     this.setPoint = pidSettings[3];
 
-    this.achievementMulti = this.lastPub >= 750 ? 30 : this.lastPub >= 600 ? 10 : 1;
-    this.pubUnlock = 8;
+    this.achievementMulti = this.lastPubRho >= 750 ? 30 : this.lastPubRho >= 600 ? 10 : 1;
+    this.pubUnlockRho = 8;
     this.variables = [
-      new Variable({ name: "c1", cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
-      new Variable({ name: "r1", cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1
-      new Variable({ name: "r2", cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
-      new Variable({ name: "c2", cost: new ExponentialCost("1e420", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
-      new Variable({ name: "dTexp", cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
-      new Variable({ name: "p1", cost: new ExponentialCost("1e800", 1e4), valueScaling: new StepwisePowerSumValue(2, 10, 1) }), // p1
-      new Variable({ name: "p2", cost: new ExponentialCost("1e830", 1e10), valueScaling: new ExponentialValue(2.2) }), // p2
-      new Variable({ name: "c1exp", cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
-      new Variable({ name: "r1exp", cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
-      new Variable({ name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
-      new Variable({ name: "c1base", cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
+      new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
+      new Variable({ currency: this.rho, name: "r1", cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1
+      new Variable({ currency: this.rho, name: "r2", cost: new ExponentialCost(1000, 8), valueScaling: new ExponentialValue(2) }), // r2
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost("1e420", 10**4.5), valueScaling: new ExponentialValue(Math.E) }), // c2
+      new Variable({ currency: this.rho, name: "dTexp", cost: new ExponentialCost(1e15, 1000), valueScaling: new LinearValue(1) }), // dTExponent
+      new Variable({ currency: this.rho, name: "p1", cost: new ExponentialCost("1e800", 1e4), valueScaling: new StepwisePowerSumValue(2, 10, 1) }), // p1
+      new Variable({ currency: this.rho, name: "p2", cost: new ExponentialCost("1e830", 1e10), valueScaling: new ExponentialValue(2.2) }), // p2
+      new Variable({ currency: this.rho, name: "c1exp", cost: new ExponentialCost(1e30, 1e30), valueScaling: new LinearValue(0.05, 1)}), // c1 exp perma
+      new Variable({ currency: this.rho, name: "r1exp", cost: new ExponentialCost(1e40, 1e40), valueScaling: new LinearValue(0.05, 1)}), // r1 exp perma
+      new Variable({ currency: this.rho, name: "r2exp", cost: new ExponentialCost(1e150, 1e175), valueScaling: new LinearValue(0.03, 1)}), // r2 exp perma
+      new Variable({ currency: this.rho, name: "c1base", cost: new ExponentialCost(1e200, 1e175), valueScaling: new LinearValue(0.125, 2.75)}) // c1 base perma
     ];
     this.milestoneUnlocks = [10, 50, 100, 400, 420, 440, 1000, 1200];
     this.milestonesMax = [1, 1, 1, 2, 1, 2];
-    this.forcedPubConditions.push(() => this.pubRho >= this.lastPub);
+    this.forcedPubConditions.push(() => this.pubRho >= this.lastPubRho);
     this.simEndConditions.push(() => this.curMult > 15);
     for (let i=7; i<11; i++) {
-      while (this.variables[i].cost <= this.lastPub && this.variableAvailability[i]()) {
+      while (this.variables[i].cost <= this.lastPubRho && this.variableAvailability[i]()) {
         this.variables[i].buy();
       }
     }
@@ -227,8 +236,9 @@ class tcSim extends theoryClass<theory> {
     this.trimBoughtVars();
     let stratExtra= '';
     if(this.strat.includes("Coast")) {
-      stratExtra = this.variables[1].prepareExtraForCap(getLastLevel("r1", this.boughtVars)) +
-          this.variables[5].prepareExtraForCap(getLastLevel("p1", this.boughtVars));
+      stratExtra = this.variables[1].prepareExtraForCap(getLastLevel("r1", this.boughtVars));
+      const lastP1 = getLastLevel("p1", this.boughtVars);
+      if (lastP1 > 0) stratExtra += this.variables[5].prepareExtraForCap(lastP1);
     }
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }

@@ -1,6 +1,5 @@
 import { global } from "../../Sim/main";
 import { trueFunc } from "../../Utils/functions";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -12,10 +11,24 @@ import {
   getLastLevel,
   getBestResult
 } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T5";
 
-export default async function t5(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.159
+});
+
+const T5: TheoryInterface<theory> = {
+  simulate: t5,
+  converter
+};
+
+export default T5;
+
+async function t5(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -51,7 +64,7 @@ const L10_2 = l10(2);
 const L10_1_5 = l10(1.5);
 const L10_E = l10(Math.E);
 
-class t5Sim extends theoryClass<theory> {
+class t5Sim extends traditionalTheoryClass<theory> {
   q: number;
   c2worth: boolean;
   c2Counter: number;
@@ -63,14 +76,14 @@ class t5Sim extends theoryClass<theory> {
       T5Idle: [
         trueFunc,
         trueFunc,
-        () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
+        () => this.maxRho + (this.lastPubRho - 200) / 165 < this.lastPubRho,
         () => this.c2worth,
         trueFunc
       ],
       T5IdleCoast: [
         () => this.variables[0].shouldBuy,
         trueFunc,
-        () => this.maxRho + (this.lastPub - 200) / 165 < this.lastPub,
+        () => this.maxRho + (this.lastPubRho - 200) / 165 < this.lastPubRho,
         () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc
       ],
@@ -112,9 +125,6 @@ class t5Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [1, 0, 2];
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.159) + getR9multiplier(this.sigma);
-  }
   /** Solves q using the differential equation result */
   calculateQ(ic1: number, ic2: number, ic3: number): number{
     const qcap = ic2 + ic3
@@ -133,18 +143,18 @@ class t5Sim extends theoryClass<theory> {
     return Math.min(newq, qcap)
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = 0;
-    this.pubUnlock = 7;
+    this.pubUnlockRho = 7;
     this.milestoneUnlockSteps = 25;
     //milestones  [q1exp,c3term,c3exp]
     this.milestonesMax = [3, 1, 2];
     this.variables = [
-      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "q2", cost: new ExponentialCost(15, 64), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c1", cost: new ExponentialCost(1e6, 1.18099), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ name: "c2", cost: new ExponentialCost(75, 4.53725), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(1e3, 8.85507e7), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 1.61328)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(15, 64), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(1e6, 1.18099), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(75, 4.53725), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c3", cost: new ExponentialCost(1e3, 8.85507e7), valueScaling: new ExponentialValue(2) }),
     ];
     this.c2worth = true;
     this.c2Counter = 0;
@@ -156,7 +166,7 @@ class t5Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 150) this.updateMilestones();
+      if (this.lastPubRho < 150) this.updateMilestones();
       this.c2Counter = 0;
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);

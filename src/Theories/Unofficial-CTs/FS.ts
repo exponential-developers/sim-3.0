@@ -1,13 +1,28 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
-import { add, getBestResult, binaryInsertionSearch, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
+
+type theory = "FS";
 
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 1 / PHI_VALUE,
+  multExponent: 1 / SQRT5_VALUE
+});
+
+const FS: TheoryInterface<theory> = {
+  simulate: fs,
+  converter
+};
+
+export default FS;
 
 const PHI_LOG_VALUE = l10(PHI_VALUE);
 const SQRT5_LOG_VALUE = l10(SQRT5_VALUE);
@@ -95,9 +110,7 @@ class SequenceCost extends BaseCost {
   }
 }
 
-type theory = "FS";
-
-export default async function fs(data: theoryData<theory>): Promise<simResult> {
+async function fs(data: theoryData<theory>): Promise<simResult> {
   let res;
   if (data.strat.includes("Coast")) {
     let initialSim = new fsSim(data);
@@ -160,7 +173,7 @@ export default async function fs(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-class fsSim extends theoryClass<theory> {
+class fsSim extends traditionalTheoryClass<theory> {
   rhodot: number;
   fdot: number;
   ldot: number;
@@ -252,12 +265,8 @@ class fsSim extends theoryClass<theory> {
     return [0, 1, 2, 3, 4, 5];
   }
 
-  getTotMult(val: number): number {
-    return Math.max(0, (val * this.tauFactor) / SQRT5_VALUE);
-  }
-
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.rhodot = 0;
     this.fdot = 0;
     this.ldot = 0;
@@ -265,10 +274,9 @@ class fsSim extends theoryClass<theory> {
     this.L = new Currency("L");
     this.tVar = 1;
     this.targetPubRho = Infinity;
-    this.pubUnlock = 5;
+    this.pubUnlockRho = 5;
     this.milestoneUnlocks = [8, 13, 21, 34, 55, 89, 144, 233, 377, 610];
     this.milestonesMax = [1, 1, 2, 2, 3, 1];
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.variables = [
       new Variable({
         name: "c1",
@@ -362,7 +370,7 @@ class fsSim extends theoryClass<theory> {
   }
 
   async simulate(): Promise<simResult> {
-    if (this.lastPub < 13) this.simEndConditions = [() => this.t > this.pubT * 4];
+    if (this.lastPubRho < 13) this.simEndConditions = [() => this.t > this.pubT * 4];
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

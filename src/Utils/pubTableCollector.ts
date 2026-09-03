@@ -1,4 +1,5 @@
 import theoryClass from "../Theories/theory";
+import traditionalTheoryClass from "../Theories/traditionalTheory";
 
 export abstract class BasePubTableCollector {
     // This hook is to be called in simulate method.
@@ -23,13 +24,13 @@ export class StepPubTableCollector implements BasePubTableCollector {
         this.timings = [0];
         this.cap = cap;
     }
-    collectData(theory: theoryClass<any>): void {
+    collectData(theory: traditionalTheoryClass<any>): void {
         if (theory.maxRho > this.cap + this.step) {
             // We are not interested if we are over cap.
             return;
         }
         // 0.000001 is precision boundary
-        if((theory.maxRho + 0.0000001) < theory.pubUnlock || theory.maxRho < this.lastPub) {
+        if((theory.maxRho + 0.0000001) < theory.pubUnlockRho || theory.maxRho < this.lastPub) {
             // We are not interested if pubs are not yet available.
             return;
         }

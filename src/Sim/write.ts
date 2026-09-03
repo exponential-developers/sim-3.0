@@ -158,8 +158,8 @@ function writeSingleSimResponse(response: SingleSimResponse) {
     const row = ce<HTMLTableRowElement>("tr");
     addTableCell(row, res.theory);
     addTableCell(row, res.sigma.toString());
-    addTableCell(row, logToExp(res.lastPub, 2));
-    addTableCell(row, logToExp(res.pubRho, 2));
+    addTableCell(row, logToExp(res.lastPubRho ?? res.lastPubTau, 2));
+    addTableCell(row, logToExp(res.pubPointRho ?? res.pubPointTau, 2));
     addTableCell(row, logToExp(res.deltaTau, 2));
     addTableCell(row, formatNumber(res.pubMulti));
     addTableCell(row, res.strat);
@@ -225,7 +225,7 @@ function writeSimAllResponse(response: SimAllResponse) {
         addTableCell(row, res.strat);
         addTableCell(row, convertTime(res.time));
         addTableCell(row, logToExp(res.deltaTau, 2));
-        addTableCell(row, logToExp(res.pubRho, 2));
+        addTableCell(row, logToExp(res.pubPointRho ?? res.pubPointTau, 2));
         addVarBuyCell(row, res.boughtVars);
     }
 
@@ -235,7 +235,7 @@ function writeSimAllResponse(response: SimAllResponse) {
             sets[0].push(res);
         }
         else {
-            if (response.completedCTs === "end" && res.lastPub * jsonData.theories[res.theory].tauFactor >= 600) {
+            if (response.completedCTs === "end" && res.lastPubTau >= 600) {
                 sets[2].push(res);
             }
             else sets[1].push(res);
@@ -250,7 +250,7 @@ function writeSimAllResponse(response: SimAllResponse) {
                 const rowPassive = ce<HTMLTableRowElement>("tr");
 
                 addTableCell(rowActive, res.theory, 2);
-                addTableCell(rowActive, logToExp(res.lastPub, 2), 2);
+                addTableCell(rowActive, logToExp(res.lastPubRho ?? res.lastPubTau, 2), 2);
                 addTableCell(rowActive, formatNumber(res.ratio, 4), 2);
 
                 completeSimAllLine(rowActive, res.active);
@@ -264,7 +264,7 @@ function writeSimAllResponse(response: SimAllResponse) {
                 const row = ce<HTMLTableRowElement>("tr");
 
                 addTableCell(row, res.theory);
-                addTableCell(row, logToExp(res.lastPub, 2));
+                addTableCell(row, logToExp(res.lastPubRho ?? res.lastPubTau, 2));
                 completeSimAllLine(row, uniqueRes);
 
                 UI.outputs.tableBody.appendChild(row);

@@ -1,18 +1,35 @@
 import { global } from "../../Sim/main";
 import activePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
 import passivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast.json";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, toCallables, parseLog10String, add, getLastLevel, getBestResult, getFactorial } from "../../Utils/helpers";
+import { l10, toCallables, add, getLastLevel, getBestResult, getFactorial } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
+
+type theory = "BD";
 
 type pubRecord = {
   next: string;
   time: number;
 }
 
-export default async function bd(data: theoryData<theory>): Promise<simResult> {
+const tauFactor = 0.4;
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor,
+  multExponent: 0.375
+});
+
+const BD: TheoryInterface<theory> = {
+  simulate: bd,
+  converter
+};
+
+export default BD;
+
+async function bd(data: theoryData<theory>): Promise<simResult> {
   if(!data.strat.includes("Coast")) {
     const sim = new bdSim(data);
     const res = await sim.simulate();
@@ -41,10 +58,8 @@ export default async function bd(data: theoryData<theory>): Promise<simResult> {
   }
 }
 
-type theory = "BD";
-
-class bdSim extends theoryClass<theory> {
-  static  SYMMETRY_STEP = 0.25;
+class bdSim extends traditionalTheoryClass<theory> {
+  static SYMMETRY_STEP = 0.25;
   static LATE_BOOST_STEP = 0.05;
   static K_TIME_DIVISOR = 60;
 
@@ -130,35 +145,31 @@ class bdSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.375);
-  }
   getMilestonePriority(): number[] {
     return [1, 2, 0, 3, 4, 5, 6];
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = 0;
     this.k = -Infinity;
     this.cachedRowTerm = 0;
     this.rowTermIsDirty = true;
-    this.pubUnlock = 8;
-    this.milestoneUnlocks = [4, 10, 25, 45, 65, 90, 130, 190, 250, 310, 340, 370, 400, 425, 445, 455, 465, 475, 485, 510, 535, 560, 585].map(value => value / this.tauFactor);
+    this.pubUnlockRho = 8;
+    this.milestoneUnlocks = [4, 10, 25, 45, 65, 90, 130, 190, 250, 310, 340, 370, 400, 425, 445, 455, 465, 475, 485, 510, 535, 560, 585].map(value => value / tauFactor);
     this.milestonesMax = [3, 1, 1, 4, 6, 4, 4];
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.variables = [
-      new Variable({ name: "a1", cost: new FirstFreeCost(new ExponentialCost(10, 0.82, true)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "a2", cost: new ExponentialCost(1e3, 9, true), valueScaling: new ExponentialValue() }),
-      new Variable({ name: "b1", cost: new ExponentialCost(1e4, 0.95, true), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "b2", cost: new ExponentialCost(1e15, 11, true), valueScaling: new ExponentialValue() }),
-      new Variable({ name: "c1", cost: new ExponentialCost(50, 1.015, true), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ name: "c2", cost: new ExponentialCost(1e25, 10.15, true), valueScaling: new ExponentialValue() }),
-      new Variable({ name: "n", cost: new ExponentialCost(20, 2.5615, true), valueScaling: new LinearValue(1, 1) })
+      new Variable({ currency: this.rho, name: "a1", cost: new FirstFreeCost(new ExponentialCost(10, 0.82, true)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "a2", cost: new ExponentialCost(1e3, 9, true), valueScaling: new ExponentialValue() }),
+      new Variable({ currency: this.rho, name: "b1", cost: new ExponentialCost(1e4, 0.95, true), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "b2", cost: new ExponentialCost(1e15, 11, true), valueScaling: new ExponentialValue() }),
+      new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(50, 1.015, true), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(1e25, 10.15, true), valueScaling: new ExponentialValue() }),
+      new Variable({ currency: this.rho, name: "n", cost: new ExponentialCost(20, 2.5615, true), valueScaling: new LinearValue(1, 1) })
     ];
     if(this.strat.includes("PT")) {
-      if (this.lastPub < 1499)
+      if (this.lastPubRho < 1499)
       {
-        let pubSeek = (Math.round(this.lastPub * 10) / 10).toFixed(4);
+        let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
         let table: Record<string, pubRecord> =
             this.strat.includes("BDd") ? activePubTable : passivePubTable;
         let nextRho = parseFloat(table[pubSeek].next);

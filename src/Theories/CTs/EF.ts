@@ -1,15 +1,28 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/EFpubtable.json" with { type: "json" };
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "EF";
 
-export default async function ef(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 1.6,
+  multExponent: 0.09675
+});
+
+const EF: TheoryInterface<theory> = {
+  simulate: ef,
+  converter
+};
+
+export default EF;
+
+async function ef(data: theoryData<theory>): Promise<simResult> {
   if (data.strat !== "EFPlay") {
     const sim = new efSim(data);
     const res = await sim.simulate();
@@ -31,7 +44,7 @@ export default async function ef(data: theoryData<theory>): Promise<simResult> {
 
 type pubTable = {[key: string]: number};
 
-class efSim extends theoryClass<theory> {
+class efSim extends traditionalTheoryClass<theory> {
   R: Currency;
   I: Currency;
   q: number;
@@ -61,7 +74,7 @@ class efSim extends theoryClass<theory> {
         () => this.curMult < 1,
         () => this.curMult < 1,
         () => this.curMult < 1,
-        () => this.curMult < 1 || this.lastPub > 150,
+        () => this.curMult < 1 || this.lastPubRho > 150,
         true,
         true,
       ],
@@ -152,14 +165,11 @@ class efSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number) {
-    return Math.max(0, val * this.tauFactor * 0.09675);
-  }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4];
   }
   updateMilestones(): void {
-    const rho = Math.max(this.lastPub, this.maxRho);
+    const rho = Math.max(this.lastPubRho, this.maxRho);
     const stage = binaryInsertionSearch(this.milestoneUnlocks, rho);
     this.nextMilestoneCost = this.milestoneUnlocks[stage] || Infinity;
     super.updateMilestones();
@@ -177,12 +187,12 @@ class efSim extends theoryClass<theory> {
     }
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.R = new Currency("R");
     this.I = new Currency("I");
     this.q = 0;
     this.t_var = 0;
-    this.pubUnlock = 10;
+    this.pubUnlockRho = 10;
     this.milestoneUnlocks = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
     this.milestonesMax = [2, 3, 5, 2, 2];
     this.nextMilestoneCost = Infinity;
@@ -200,9 +210,9 @@ class efSim extends theoryClass<theory> {
     ];
 
     this.forcedPubRho = Infinity;
-    if (this.lastPub < 374 && this.strat !== "EF") {
+    if (this.lastPubRho < 374 && this.strat !== "EF") {
       let newpubtable: pubTable = pubtable.efdata;
-      let pubseek = Math.round(this.lastPub * 32);
+      let pubseek = Math.round(this.lastPubRho * 32);
       this.forcedPubRho = newpubtable[pubseek.toString()] / 32;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
@@ -249,7 +259,7 @@ class efSim extends theoryClass<theory> {
       this.tick();
       this.updateSimStatus();
       let prev_nextMilestoneCost = this.nextMilestoneCost;
-      if (this.lastPub <= 325) this.updateMilestones();
+      if (this.lastPubRho <= 325) this.updateMilestones();
       if (this.nextMilestoneCost > prev_nextMilestoneCost) {
         this.coasting.fill(false);
       }
@@ -259,7 +269,7 @@ class efSim extends theoryClass<theory> {
         const fork = this.copy();
         fork.forcedPubRho = Infinity;
         const res = await fork.simulate();
-        if (res.pubRho > 375) {
+        if ((res.pubPointRho ?? 0) > 375) {
           this.bestRes = getBestResult(this.bestRes, res);
         }
       }

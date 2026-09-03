@@ -1,59 +1,56 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { collectorCache, noopCollector, StepPubTableCollector } from "../Utils/pubTableCollector";
 import { global } from "./main";
-import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, sleep } from "../Utils/helpers";
+import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, refreshDOMEventLoop, sleep } from "../Utils/helpers";
 import { getStrats } from "./strats";
-import t1 from "../Theories/T1-T8/T1";
-import t2 from "../Theories/T1-T8/T2";
-import t3 from "../Theories/T1-T8/T3";
-import t4 from "../Theories/T1-T8/T4";
-import t5 from "../Theories/T1-T8/T5";
-import t6 from "../Theories/T1-T8/T6";
-import t7 from "../Theories/T1-T8/T7";
-import t8 from "../Theories/T1-T8/T8";
-import wsp from "../Theories/CTs/WSP";
-import sl from "../Theories/CTs/SL";
-import ef from "../Theories/CTs/EF";
-import csr2 from "../Theories/CTs/CSR2";
-import fi from "../Theories/CTs/FI";
-import fp from "../Theories/CTs/FP";
-import rz from "../Theories/CTs/RZ";
-import mf from "../Theories/CTs/MF";
-import bap from "../Theories/CTs/BaP";
-import bt from "../Theories/Unofficial-CTs/BT";
-import tc from "../Theories/Unofficial-CTs/TC";
-import fs from "../Theories/Unofficial-CTs/FS";
-import bd from "../Theories/Unofficial-CTs/BD";
-import ilc from "../Theories/Unofficial-CTs/ILC";
+import T1 from "../Theories/T1-T8/T1";
+import T2 from "../Theories/T1-T8/T2";
+import T3 from "../Theories/T1-T8/T3";
+import T4 from "../Theories/T1-T8/T4";
+import T5 from "../Theories/T1-T8/T5";
+import T6 from "../Theories/T1-T8/T6";
+import T7 from "../Theories/T1-T8/T7";
+import T8 from "../Theories/T1-T8/T8";
+import WSP from "../Theories/CTs/WSP";
+import SL from "../Theories/CTs/SL";
+import EF from "../Theories/CTs/EF";
+import CSR2 from "../Theories/CTs/CSR2";
+import FI from "../Theories/CTs/FI";
+import FP from "../Theories/CTs/FP";
+import RZ from "../Theories/CTs/RZ";
+import MF from "../Theories/CTs/MF";
+import BaP from "../Theories/CTs/BaP";
+import BT from "../Theories/Unofficial-CTs/BT";
+import TC from "../Theories/Unofficial-CTs/TC";
+import FS from "../Theories/Unofficial-CTs/FS";
+import BD from "../Theories/Unofficial-CTs/BD";
+import ILC from "../Theories/Unofficial-CTs/ILC";
 import UI from "../UI/elements";
 
 
-const simFunction: { 
-    [theory in theoryType]: 
-        (<strat extends stratType[theory]>(data: theoryData<theory, strat>) => Promise<simResult>) 
-    } = {
-    T1: t1,
-    T2: t2,
-    T3: t3,
-    T4: t4,
-    T5: t5,
-    T6: t6,
-    T7: t7,
-    T8: t8,
-    WSP: wsp,
-    SL: sl,
-    EF: ef,
-    CSR2: csr2,
-    FI: fi,
-    FP: fp,
-    RZ: rz,
-    MF: mf,
-    BaP: bap,
-    BT: bt,
-    TC: tc,
-    FS: fs,
-    BD: bd,
-    ILC: ilc,
+const theoryInterface: { [theory in theoryType]: TheoryInterface<theory> } = {
+    T1,
+    T2,
+    T3,
+    T4,
+    T5,
+    T6,
+    T7,
+    T8,
+    WSP,
+    SL,
+    EF,
+    CSR2,
+    FI,
+    FP,
+    RZ,
+    MF,
+    BaP,
+    BT,
+    TC,
+    FS,
+    BD,
+    ILC,
 }
 
 async function simulateOnce<T extends theoryType, S extends stratType[T]>(
@@ -66,23 +63,29 @@ async function simulateOnce<T extends theoryType, S extends stratType[T]>(
         specificInputs: query.theorySpecificInputs,
         stratSpecificInputs,
         sigma: query.sigma,
-        rho: query.rho,
+        input: query.input,
         strat,
-        recovery: null,
-        cap: query.cap ?? null,
+        cap: query.cap,
         recursionValue: null,
         settings: query.settings
     }
-    const res = await simFunction[query.theory](data);
+    const res = await theoryInterface[query.theory].simulate(data);
     return res;
 }
 
 async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promise<SingleSimResponse> {
+    const converter = theoryInterface[query.theory].converter;
     const strats = query.strat == "Best Active" 
     || query.strat == "Best Overall" 
     || query.strat == "Best Semi-Idle" 
     || query.strat == "Best Idle"
-        ? getStrats(query.theory, query.rho, query.strat, query.lastStrat ?? "")
+        ? getStrats(
+            query.theory, 
+            converter.convertTo(query.input, "tau", query.sigma),
+            converter.supportsRho ? converter.convertTo(query.input, "rho", query.sigma) : 0, 
+            query.strat, 
+            query.lastStrat ?? ""
+        )
         : [query.strat];
 
     let bestRes = defaultResult();
@@ -103,19 +106,25 @@ async function singleSim<T extends theoryType>(query: SingleSimQuery<T>): Promis
 }
 
 async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = true): Promise<ChainSimResponse> {
-    let rho = query.rho;
+    const converter = theoryInterface[query.theory].converter;
+    const start = converter.convertTo(query.input, "tau", query.sigma);
+    const cap = converter.convertTo(query.cap, "tau", query.sigma);
+    let tau = start;
     let time = 0;
     let lastStrat = "";
     const results: simResult[] = [];
-    const stopStr = logToExp(query.cap);
+    const stopStr = logToExp(converter.supportsRho ? converter.convertTo(query.cap, "rho", query.sigma) : cap);
     let lastLog = 0;
 
-    while (rho < query.cap) {
+    while (tau < cap) {
         const ts = performance.now();
         if (ts - lastLog > 250 && doLog) {
             lastLog = ts;
-            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
-            await sleep();
+            UI.outputs.log.textContent = `Simulating ${logToExp(converter.supportsRho ? converter.convertTo({
+                valueType: "tau",
+                value: tau
+            }, "rho") : tau, 0)}/${stopStr}`;
+            await refreshDOMEventLoop();
         }
 
         const res = (await singleSim({
@@ -124,7 +133,7 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
             theorySpecificInputs: query.theorySpecificInputs,
             stratSpecificInputs: query.stratSpecificInputs,
             strat: query.strat,
-            rho: rho,
+            input: { valueType: "tau", value: tau },
             sigma: query.sigma,
             settings: query.settings,
             cap: query.hardCap ? query.cap : undefined,
@@ -133,12 +142,12 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
         if (!global.simulating) break;
 
         results.push(res);
-        rho = res.pubRho;
+        tau = res.pubPointTau;
         lastStrat = res.strat.split(" ")[0];
         time += res.time;
     }
 
-    const deltaTau = (rho - query.rho) * jsonData.theories[query.theory].tauFactor;
+    const deltaTau = tau - start;
 
     return {
         responseType: "chain",
@@ -150,7 +159,10 @@ async function chainSim<T extends theoryType>(query: ChainSimQuery<T>, doLog = t
 }
 
 async function amountSim<T extends theoryType>(query: AmountSimQuery<T>, doLog = true): Promise<ChainSimResponse> {
-    let rho = query.rho;
+    const converter = theoryInterface[query.theory].converter;
+    const start = converter.convertTo(query.input, "tau", query.sigma);
+
+    let tau = start;
     let time = 0;
     let lastStrat = "";
     const results: simResult[] = [];
@@ -170,7 +182,7 @@ async function amountSim<T extends theoryType>(query: AmountSimQuery<T>, doLog =
             theorySpecificInputs: query.theorySpecificInputs,
             stratSpecificInputs: query.stratSpecificInputs,
             strat: query.strat,
-            rho: rho,
+            input: { valueType: "tau", value: tau },
             sigma: query.sigma,
             settings: query.settings,
             lastStrat: lastStrat
@@ -178,12 +190,12 @@ async function amountSim<T extends theoryType>(query: AmountSimQuery<T>, doLog =
         if (!global.simulating) break;
 
         results.push(res);
-        rho = res.pubRho;
+        tau = res.pubPointTau;
         lastStrat = res.strat.split(" ")[0];
         time += res.time;
     }
 
-    const deltaTau = (rho - query.rho) * jsonData.theories[query.theory].tauFactor;
+    const deltaTau = tau - start;
 
     return {
         responseType: "chain",
@@ -195,7 +207,10 @@ async function amountSim<T extends theoryType>(query: AmountSimQuery<T>, doLog =
 }
 
 async function timeSim<T extends theoryType>(query: TimeSimQuery<T>): Promise<ChainSimResponse> {
-    let rho = query.rho;
+    const converter = theoryInterface[query.theory].converter;
+    const start = converter.convertTo(query.input, "tau", query.sigma);
+
+    let tau = start;
     let time = 0;
     let lastStrat = "";
     const results: simResult[] = [];
@@ -216,7 +231,7 @@ async function timeSim<T extends theoryType>(query: TimeSimQuery<T>): Promise<Ch
             theorySpecificInputs: query.theorySpecificInputs,
             stratSpecificInputs: query.stratSpecificInputs,
             strat: query.strat,
-            rho: rho,
+            input: { valueType: "tau", value: tau },
             sigma: query.sigma,
             settings: query.settings,
             lastStrat: lastStrat
@@ -224,12 +239,12 @@ async function timeSim<T extends theoryType>(query: TimeSimQuery<T>): Promise<Ch
         if (!global.simulating) break;
 
         results.push(res);
-        rho = res.pubRho;
+        tau = res.pubPointTau;
         lastStrat = res.strat.split(" ")[0];
         time += res.time;
     }
 
-    const deltaTau = (rho - query.rho) * jsonData.theories[query.theory].tauFactor;
+    const deltaTau = tau - start;
 
     return {
         responseType: "chain",
@@ -241,17 +256,34 @@ async function timeSim<T extends theoryType>(query: TimeSimQuery<T>): Promise<Ch
 }
 
 async function stepSim<T extends theoryType>(query: StepSimQuery<T>): Promise<StepSimResponse> {
-    let rho = query.rho;
+    const converter = theoryInterface[query.theory].converter;
+    const start = converter.convertTo(query.input, "tau", query.sigma);
+    const cap = converter.convertTo(query.cap, "tau", query.sigma);
+
+    //! TEMPORARY SOLUTION
+    let calculateNextStep = (val: number) => converter.supportsRho
+        ? converter.convertTo(
+            {
+                valueType: "rho",
+                value: converter.convertTo({ valueType: "tau", value: val }, "rho", query.sigma) + query.step
+            }
+            , "tau", query.sigma)
+        : val + query.step;
+
+    let tau = start;
     let lastStrat = "";
     const results: simResult[] = [];
-    const stopStr = logToExp(query.cap);
+    const stopStr = logToExp(converter.supportsRho ? converter.convertTo(query.cap, "rho", query.sigma) : cap);
     let lastLog = 0;
 
-    while (rho < query.cap + 0.00001) {
+    while (tau < cap + 0.00001) {
         const ts = performance.now();
         if (ts - lastLog > 250) {
             lastLog = ts;
-            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${logToExp(converter.supportsRho ? converter.convertTo({
+                valueType: "tau",
+                value: tau
+            }, "rho") : tau, 0)}/${stopStr}`;
             await sleep();
         }
 
@@ -261,7 +293,7 @@ async function stepSim<T extends theoryType>(query: StepSimQuery<T>): Promise<St
             theorySpecificInputs: query.theorySpecificInputs,
             stratSpecificInputs: query.stratSpecificInputs,
             strat: query.strat,
-            rho: rho,
+            input: { valueType: "tau", value: tau },
             sigma: query.sigma,
             settings: query.settings,
             lastStrat: lastStrat
@@ -269,7 +301,7 @@ async function stepSim<T extends theoryType>(query: StepSimQuery<T>): Promise<St
         if (!global.simulating) break;
 
         results.push(res);
-        rho += query.step;
+        tau = calculateNextStep(tau);
         lastStrat = res.strat.split(" ")[0];
     }
 
@@ -280,8 +312,10 @@ async function stepSim<T extends theoryType>(query: StepSimQuery<T>): Promise<St
 }
 
 async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
-    let rho = query.rho;
-    let cap = query.cap;
+    const converter = theoryInterface[query.theory].converter;
+    if (!converter.supportsRho) throw "This mode is not supported for this theory";
+    let rho = converter.convertTo(query.input, "rho", query.sigma);
+    let cap = converter.convertTo(query.cap, "rho", query.sigma);
     const stopStr = logToExp(rho);
 
     let current = cap - query.step;
@@ -303,7 +337,7 @@ async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
             theorySpecificInputs: {},
             stratSpecificInputs: {},
             strat: query.strat as FullStratType<theoryType>,
-            rho: current,
+            input: { valueType: "rho", value: current},
             sigma: query.sigma,
             settings: query.settings,
             lastStrat: lastStrat
@@ -338,7 +372,15 @@ async function pubTableSim(query: PubTableSimQuery): Promise<PubTableResponse> {
 }
 
 async function comparisonSim<T extends theoryType>(query: ComparisonSimQuery<T>): Promise<StepSimResponse> {
-    const strats = getStrats(query.theory, query.rho, "", "", false);
+    const converter = theoryInterface[query.theory].converter;
+    const strats = getStrats(
+        query.theory, 
+        converter.convertTo(query.input, "tau", query.sigma), 
+        converter.convertTo(query.input, "rho", query.sigma),
+        "", 
+        "", 
+        false
+    );
     const results: simResult[] = [];
 
     for (let strat of strats) {
@@ -358,12 +400,13 @@ async function comparisonSim<T extends theoryType>(query: ComparisonSimQuery<T>)
 
 async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     const results: simAllResult[] = [];
-    const lastTheory = getTheoryFromIndex(query.values.length - 1 - query.values.slice().reverse().findIndex(v => v > 0));
+    const lastTheory = getTheoryFromIndex(query.values.length - 1 - query.values.slice().reverse().findIndex(v => !(v instanceof String)));
 
     for (let i = 0; i < query.values.length; i++) {
         const theory = getTheoryFromIndex(i);
-        const rho = query.values[i];
-        if (rho <= 0) continue;
+        const converter = theoryInterface[theory].converter;
+        const value = query.values[i];
+        if (value == "cache" || value == "ignore") continue;
         if (!global.simulating) break;
 
         UI.outputs.log.innerText = `Simulating ${theory}/${lastTheory}`;
@@ -374,7 +417,7 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
             theory: theory,
             theorySpecificInputs: query.theorySpecificInputs[theory],
             stratSpecificInputs: {},
-            rho: rho,
+            input: value,
             sigma: query.sigma,
             settings: query.settings
         }
@@ -394,7 +437,8 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
         results.push({
             theory: theory,
             ratio: query.stratType == "all" ? activeRes.tauH / idleRes.tauH : 1,
-            lastPub: rho,
+            lastPubTau: converter.convertTo(value, "tau", query.sigma),
+            lastPubRho: converter.supportsRho ? converter.convertTo(value, "rho", query.sigma) : undefined,
             active: activeRes,
             idle: idleRes
         })
@@ -410,16 +454,33 @@ async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
 }
 
 async function stepChainSim<T extends theoryType>(query: StepChainQuery<T>): Promise<StepSimResponse> {
-    let rho = query.rho;
+    const converter = theoryInterface[query.theory].converter;
+    const start = converter.convertTo(query.input, "tau", query.sigma);
+    const cap = converter.convertTo(query.cap, "tau", query.sigma);
+
+    //! TEMPORARY SOLUTION
+    let calculateNextStep = (val: number, mult: number = 1) => converter.supportsRho
+        ? converter.convertTo(
+            {
+                valueType: "rho",
+                value: converter.convertTo({ valueType: "tau", value: val }, "rho", query.sigma) + query.step * mult
+            }
+            , "tau", query.sigma)
+        : val + query.step * mult;
+
+    let tau = start;
     const results: simResult[] = [];
-    const stopStr = logToExp(query.cap);
+    const stopStr = logToExp(converter.supportsRho ? converter.convertTo(query.cap, "rho", query.sigma) : cap);
     let lastLog = 0;
 
-    while (rho < query.cap - query.step + 0.000001) {
+    while (tau < calculateNextStep(cap, -1) + 0.000001) {
         const ts = performance.now();
         if (ts - lastLog > 250) {
             lastLog = ts;
-            UI.outputs.log.textContent = `Simulating ${logToExp(rho, 0)}/${stopStr}`;
+            UI.outputs.log.textContent = `Simulating ${logToExp(converter.supportsRho ? converter.convertTo({
+                valueType: "tau",
+                value: tau
+            }, "rho") : tau, 0)}/${stopStr}`;
             await sleep();
         }
 
@@ -427,7 +488,7 @@ async function stepChainSim<T extends theoryType>(query: StepChainQuery<T>): Pro
             queryType: "chain",
             settings: query.settings,
             sigma: query.sigma,
-            rho,
+            input: { valueType: "tau", value: tau },
             theory: query.theory,
             theorySpecificInputs: query.theorySpecificInputs,
             stratSpecificInputs: query.stratSpecificInputs,
@@ -449,8 +510,8 @@ async function stepChainSim<T extends theoryType>(query: StepChainQuery<T>): Pro
             let cur_res: simResult = {
                 theory: query.theory,
                 sigma: query.sigma,
-                lastPub: rho,
-                pubRho: result.pubRho,
+                lastPubTau: tau,
+                pubPointTau: result.pubPointTau,
                 deltaTau: tau_acc,
                 pubMulti: 1,
                 strat: pub_count + " pub" + (pub_count > 1 ? "s": ""),
@@ -461,7 +522,7 @@ async function stepChainSim<T extends theoryType>(query: StepChainQuery<T>): Pro
             bestRes = getBestResult(bestRes, cur_res);
         }
         results.push(bestRes);
-        rho += query.step;
+        tau += query.step;
     }
 
     return {
