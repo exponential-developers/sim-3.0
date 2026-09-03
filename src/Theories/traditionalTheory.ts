@@ -197,7 +197,7 @@ export default abstract class
    * Creates a sim result from the sim class
    * @param stratExtra Extra string to append to the "strat" column
    */
-  createResult(stratExtra: string = ""): simResultRho {
+  createResult(stratExtra: string = ""): simResultRho<theory> {
     const startTau = this.converter.convertTo(
       this.lastPub,
       "tau",

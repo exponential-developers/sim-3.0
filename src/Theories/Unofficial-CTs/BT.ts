@@ -22,7 +22,7 @@ const BT: TheoryInterface<theory> = {
 
 export default BT;
 
-async function bt(data: theoryData<theory>): Promise<simResult> {
+async function bt(data: theoryData<theory>): Promise<simResult<theory>> {
   const sim = new btSim(data);
   const res = await sim.simulate();
   return res;
@@ -63,7 +63,7 @@ class btSim extends traditionalTheoryClass<theory> {
     ];
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

@@ -29,7 +29,7 @@ const BD: TheoryInterface<theory> = {
 
 export default BD;
 
-async function bd(data: theoryData<theory>): Promise<simResult> {
+async function bd(data: theoryData<theory>): Promise<simResult<theory>> {
   if(!data.strat.includes("Coast")) {
     const sim = new bdSim(data);
     const res = await sim.simulate();
@@ -205,7 +205,7 @@ class bdSim extends traditionalTheoryClass<theory> {
     }
     return changed
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

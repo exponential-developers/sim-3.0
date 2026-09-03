@@ -29,8 +29,8 @@ const T4: TheoryInterface<theory> = {
 
 export default T4;
 
-async function t4(data: theoryData<theory>): Promise<simResult> {
-  let res;
+async function t4(data: theoryData<theory>): Promise<simResult<theory>> {
+  let res: simResult<theory>;
   if(!data.strat.includes("Coast")) {
     const sim = new t4Sim(data);
     res = await sim.simulate();
@@ -208,7 +208,7 @@ class t4Sim extends traditionalTheoryClass<theory> {
     ];
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

@@ -22,7 +22,7 @@ const EF: TheoryInterface<theory> = {
 
 export default EF;
 
-async function ef(data: theoryData<theory>): Promise<simResult> {
+async function ef(data: theoryData<theory>): Promise<simResult<theory>> {
   if (data.strat !== "EFPlay") {
     const sim = new efSim(data);
     const res = await sim.simulate();
@@ -250,7 +250,7 @@ class efSim extends traditionalTheoryClass<theory> {
     newsim.updateMilestones();
     return newsim;
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }

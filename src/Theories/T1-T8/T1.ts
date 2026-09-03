@@ -22,7 +22,7 @@ const T1: TheoryInterface<theory> = {
 
 export default T1;
 
-async function t1(data: theoryData<theory>): Promise<simResult> {
+async function t1(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(data.strat)) {
     const initialData: theoryData<theory> = {...data};
@@ -180,7 +180,7 @@ class t1Sim extends traditionalTheoryClass<theory> {
 
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     const nextc4 = Math.ceil((this.lastPubRho - 10) / 8) * 8 + 10;
     // Old pub cycle
     if (this.strat.includes("Old")) {

@@ -23,7 +23,7 @@ const FP: TheoryInterface<theory> = {
 
 export default FP;
 
-async function fp(data: theoryData<theory>): Promise<simResult> {
+async function fp(data: theoryData<theory>): Promise<simResult<theory>> {
   const sim = new fpSim(data);
   const res = await sim.simulate();
   return res;
@@ -243,7 +243,7 @@ class fpSim extends traditionalTheoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }

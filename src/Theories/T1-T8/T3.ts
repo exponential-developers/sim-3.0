@@ -22,7 +22,7 @@ const T3: TheoryInterface<theory> = {
 
 export default T3;
 
-async function t3(data: theoryData<theory>): Promise<simResult> {
+async function t3(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new t3Sim(data);
@@ -312,7 +312,7 @@ class t3Sim extends traditionalTheoryClass<theory> {
 
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

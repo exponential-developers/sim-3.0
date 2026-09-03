@@ -37,13 +37,13 @@ const depthConvert = [
 ]
 
 // Reset
-async function mf(data: theoryData<theory>): Promise<simResult> {
+async function mf(data: theoryData<theory>): Promise<simResult<theory>> {
   let resetBundles: resetBundle[] = [
     [0, 1, 0, 0],
     [0, 1, 0, 1],
     [0, 2, 0, 0]
   ];
-  let bestRes: simResult = defaultResult();
+  let bestRes: simResult<theory> = defaultResult();
   for (const resetBundle of resetBundles) {
     if (converter.convertTo(data.input, "rho") <= 100 && resetBundle[3] > 0) {
       continue;
@@ -612,7 +612,7 @@ class mfSim extends traditionalTheoryClass<theory> {
     this.forkOnC1 = false;
   }
 
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

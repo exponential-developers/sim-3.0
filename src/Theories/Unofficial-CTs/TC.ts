@@ -21,7 +21,7 @@ const TC: TheoryInterface<theory> = {
 
 export default TC;
 
-async function tc(data: theoryData<theory>): Promise<simResult> {
+async function tc(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if (data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -222,7 +222,7 @@ class tcSim extends traditionalTheoryClass<theory> {
     this.updateMilestones();
   }
 
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

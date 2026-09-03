@@ -69,7 +69,7 @@ function mergeSortedLists(list1: number[], list2: number[]): number[] {
 let rzZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzSpecificZeros);
 let rzdZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzdSpecificZeros);
 
-async function rz(data: theoryData<theory>) {
+async function rz(data: theoryData<theory>): Promise<simResult<theory>> {
     const rho = converter.convertTo(data.input, "rho");
     // Normal BH
     if(data.strat.includes("BH") && !data.strat.includes("Rewind") && rho >= 600) {
@@ -80,7 +80,7 @@ async function rz(data: theoryData<theory>) {
         let startZeroIndex = 0;
         let sim: rzSim | null = new rzSim(data);
         sim.bhAtRecovery = true;
-        let bestSimRes: simResult | null = await sim.simulate();
+        let bestSimRes: simResult<theory> | null = await sim.simulate();
         let boundaryCondition = null;
         if(!data.strat.startsWith("RZd")) {
             for(let x of goodzeros.rzIdleBHBoundaries) {
@@ -149,8 +149,8 @@ async function rz(data: theoryData<theory>) {
         let sim: rzSim | null = new rzSim(data);
 
         sim.bhAtRecovery = true;
-        let bestSimRes: simResult | null = await sim.simulate();
-        let bestSimRes2: simResult | null = null;
+        let bestSimRes: simResult<theory> | null = await sim.simulate();
+        let bestSimRes2: simResult<theory> | null = null;
         let boundaryCondition = null;
         for(let x of goodzeros.rzIdleBHBoundaries) {
             if(rho <= x.toRho) {
@@ -266,7 +266,7 @@ async function rz(data: theoryData<theory>) {
         internalSim2.maxC1Level = internalSim.variables[0].level - 14;
         internalSim2.maxC1LevelActual = internalSim.variables[0].level;
         let ret2 = await internalSim2.simulate();
-        let bestRet = getBestResult(ret, ret2);
+        let bestRet = getBestResult<theory>(ret, ret2);
 
         let internalSim3 = new rzSim(data);
         internalSim3.normalPubRho = internalSim.pubRho;
@@ -588,7 +588,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
     }
-    async simulate(): Promise<simResult> {
+    async simulate(): Promise<simResult<theory>> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
         try {
             while (!this.endSimulation()) {
@@ -610,7 +610,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         }
         catch (error) {
             if (error instanceof BlackHoleError) {
-                const res = defaultResult();
+                const res = defaultResult<theory>();
                 res.strat = error.message;
                 console.error(error.message);
                 return res;

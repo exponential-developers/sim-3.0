@@ -21,7 +21,7 @@ const T7: TheoryInterface<theory> = {
 
 export default T7;
 
-async function t7(data: theoryData<theory>): Promise<simResult> {
+async function t7(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -137,7 +137,7 @@ class t7Sim extends traditionalTheoryClass<theory> {
     if (this.lastPubRho >= 300) this.c2ratio = Infinity;
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

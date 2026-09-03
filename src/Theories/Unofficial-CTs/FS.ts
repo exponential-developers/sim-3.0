@@ -110,7 +110,7 @@ class SequenceCost extends BaseCost {
   }
 }
 
-async function fs(data: theoryData<theory>): Promise<simResult> {
+async function fs(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if (data.strat.includes("Coast")) {
     let initialSim = new fsSim(data);
@@ -369,7 +369,7 @@ class fsSim extends traditionalTheoryClass<theory> {
     return res;
   }
 
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     if (this.lastPubRho < 13) this.simEndConditions = [() => this.t > this.pubT * 4];
     while (!this.endSimulation()) {
       if (!global.simulating) break;

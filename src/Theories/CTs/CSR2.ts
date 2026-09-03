@@ -22,7 +22,7 @@ const CSR2: TheoryInterface<theory> = {
 
 export default CSR2;
 
-async function csr2(data: theoryData<theory>): Promise<simResult> {
+async function csr2(data: theoryData<theory>): Promise<simResult<theory>> {
   const sim = new csr2Sim(data);
   const res = await sim.simulate(data);
   return res;
@@ -222,7 +222,7 @@ class csr2Sim extends traditionalTheoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate(data: theoryData<theory>): Promise<simResult> {
+  async simulate(data: theoryData<theory>): Promise<simResult<theory>> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }

@@ -29,11 +29,11 @@ const T8: TheoryInterface<theory> = {
 
 export default T8;
 
-async function t8(data: theoryData<theory>): Promise<simResult> {
+async function t8(data: theoryData<theory>): Promise<simResult<theory>> {
   async function getResult (
     data: theoryData<theory>,
     singleMSPoint: number = 0
-  ): Promise<simResult> {
+  ): Promise<simResult<theory>> {
     let res;
     if (!data.strat.includes("Coast")) {
       const sim = new t8Sim(data, singleMSPoint);
@@ -59,7 +59,7 @@ async function t8(data: theoryData<theory>): Promise<simResult> {
     return res;
   }
 
-  let result: simResult = defaultResult();
+  let result: simResult<theory> = defaultResult();
   // T8noC3dSingleMS
   if (data.strat.includes("T8noC3dSingleMS")) {
     const singleMSVariant = Number(data.strat.slice(data.strat.indexOf("SingleMS")+8).slice(0, 1));
@@ -311,7 +311,7 @@ class t8Sim extends traditionalTheoryClass<theory> {
     this.singleMSPoint = singleMSPoint;
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

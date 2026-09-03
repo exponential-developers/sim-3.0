@@ -345,7 +345,7 @@ export default abstract class
    * Creates a sim result from the sim class
    * @param stratExtra Extra string to append to the "strat" column
    */
-  abstract createResult(stratExtra: string): simResult;
+  abstract createResult(stratExtra: string): simResult<theory>;
 
   copy(): any {
     throw new Error("Please implement `copy` method");

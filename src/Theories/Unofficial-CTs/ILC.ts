@@ -29,7 +29,7 @@ const ILC: TheoryInterface<theory> = {
 
 export default ILC;
 
-async function ilc(data: theoryData<theory>): Promise<simResult> {
+async function ilc(data: theoryData<theory>): Promise<simResult<theory>> {
   // const sim = new ilcSim(data);
   if(!data.strat.includes("Coast")) {
     const sim = new ilcSim(data);
@@ -186,7 +186,7 @@ class ilcSim extends traditionalTheoryClass<theory> {
     return res;
   }
 
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();

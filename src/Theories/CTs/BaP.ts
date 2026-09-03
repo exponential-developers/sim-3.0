@@ -22,7 +22,7 @@ const BaP: TheoryInterface<theory> = {
 
 export default BaP;
 
-async function bap(data: theoryData<theory>): Promise<simResult> {
+async function bap(data: theoryData<theory>): Promise<simResult<theory>> {
   const sim = new bapSim(data);
   const res = await sim.simulate();
   return res;
@@ -219,7 +219,7 @@ class bapSim extends traditionalTheoryClass<theory> {
     newsim.copyFrom(this);
     return newsim;
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     if (this.forcedPubRho != Infinity) {
       this.pubConditions.push(() => this.maxRho >= this.forcedPubRho);
     }

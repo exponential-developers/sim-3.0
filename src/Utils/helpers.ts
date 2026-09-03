@@ -148,7 +148,7 @@ export function binaryInsertionSearch(arr: number[], target: number): number {
 }
 
 /** Returns a default simResult */
-export function defaultResult(): simResult {
+export function defaultResult<T extends theoryType>(): simResult<T> {
   return {
       theory: "T1",
       sigma: 0,
@@ -160,7 +160,7 @@ export function defaultResult(): simResult {
       tauH: 0,
       time: 0,
       boughtVars: []
-    };
+    } as unknown as simResult<T>; // I don't like this but else I'd have to change too much code
 }
 
 /**
@@ -170,10 +170,10 @@ export function defaultResult(): simResult {
  *
  * If tau/hr are identical, the first result is returned.
  */
-export function getBestResult(res1: simResult | null, res2: simResult | null): simResult {
+export function getBestResult<T extends theoryType>(res1: simResult | null, res2: simResult | null): simResult<T> {
   if (res1 == null) res1 = defaultResult();
   if (res2 == null) res2 = defaultResult();
-  return res1.tauH >= res2.tauH ? res1 : res2;
+  return (res1.tauH >= res2.tauH ? res1 : res2) as simResult<T>;
 }
 
 /**

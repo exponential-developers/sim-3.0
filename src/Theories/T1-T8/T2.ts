@@ -21,9 +21,9 @@ const T2: TheoryInterface<theory> = {
 
 export default T2;
 
-async function t2(data: theoryData<theory>): Promise<simResult> {
+async function t2(data: theoryData<theory>): Promise<simResult<theory>> {
   let bestSim: t2Sim;
-  let bestSimRes: simResult;
+  let bestSimRes: simResult<theory>;
   if(data.strat == "T2Haxolotl") {
     const savedStrat = data.strat;
     data.strat = "T2MC";
@@ -40,7 +40,7 @@ async function t2(data: theoryData<theory>): Promise<simResult> {
     let c1ToTry = [
       1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5
     ]
-    let bestRes = defaultResult();
+    let bestRes = defaultResult<theory>();
     for(let c1 of c1ToTry) {
       for(let c2 of cToTry) {
         for(let c3 of cToTry) {
@@ -244,7 +244,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
     this.doSimEndConditions = () => this.targetRho == -1;
     this.updateMilestones();
   }
-  async simulate(): Promise<simResult> {
+  async simulate(): Promise<simResult<theory>> {
     if (this.targetRho != -1) {
       this.pubConditions.push(() => this.maxRho >= this.targetRho);
     }

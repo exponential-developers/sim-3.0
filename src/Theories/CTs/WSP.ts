@@ -31,8 +31,8 @@ const WSP: TheoryInterface<theory> = {
 
 export default WSP;
 
-async function wsp(data: theoryData<theory>): Promise<simResult> {
-  let res;
+async function wsp(data: theoryData<theory>): Promise<simResult<theory>> {
+  let res: simResult<theory>;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = {
       ...data,
@@ -196,7 +196,7 @@ class wspSim extends traditionalTheoryClass<theory> {
     this.simEndConditions.push(() => this.curMult > 15);
     this.updateMilestones();
   }
-  async simulate() {
+  async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {
       if (!global.simulating) break;
       this.tick();
