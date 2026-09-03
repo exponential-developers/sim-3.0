@@ -62,7 +62,8 @@ function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
                 query.theorySpecificInputs[theory], 
                 cachedQuery.theorySpecificInputs[theory])
             ) return val;
-            if (val == cachedQuery.values[i]) { return "cache"; }
+            if (val == "cache" || val == "ignore" || cachedQuery.values[i] == "cache" || cachedQuery.values[i] == "ignore") return val; // TS is happy now
+            if (val.valueType == cachedQuery.values[i].valueType && val.value == cachedQuery.values[i].value) { return "cache"; }
             return val;
         })
 

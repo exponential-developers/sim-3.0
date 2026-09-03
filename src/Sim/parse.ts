@@ -341,17 +341,18 @@ function parseSimAll(): SimAllQuery {
 
     let new_values: AllModeProgressValue[] = values.map((val, i) => {
         const theory = getTheoryFromIndex(i);
+        if (val.value <= 0) return "ignore";
         if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[theory].UI_visible === false) return "ignore";
         return val;
     })
 
-    if (values.length - values.filter(val => val.value <= 0).length < 1) throw "Student count and at least one theory value that is not 0 is required.";
+    if (new_values.length - new_values.filter(val => typeof val === "string").length < 1) throw "Student count and at least one theory value is required.";
 
     return {
         queryType: "all",
         theorySpecificInputs: parseAllModeSpecificInputs(),
         sigma: sigma,
-        values: values,
+        values: new_values,
         veryActive: UI.controls.veryActiveToggle.checked,
         semiIdle: UI.controls.semiIdleToggle.checked,
         stratType: settings.simAllStrats,

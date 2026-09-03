@@ -1,7 +1,7 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 import { collectorCache, noopCollector, StepPubTableCollector } from "../Utils/pubTableCollector";
 import { global } from "./main";
-import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, logToExp, refreshDOMEventLoop, sleep } from "../Utils/helpers";
+import { convertTime, defaultResult, getBestResult, getTheoryFromIndex, isMainTheory, logToExp, refreshDOMEventLoop, sleep } from "../Utils/helpers";
 import { getStrats } from "./strats";
 import T1 from "../Theories/T1-T8/T1";
 import T2 from "../Theories/T1-T8/T2";
@@ -400,13 +400,23 @@ async function comparisonSim<T extends theoryType>(query: ComparisonSimQuery<T>)
 
 async function simAll(query: SimAllQuery): Promise<SimAllResponse> {
     const results: simAllResult[] = [];
-    const lastTheory = getTheoryFromIndex(query.values.length - 1 - query.values.slice().reverse().findIndex(v => !(v instanceof String)));
+    const lastTheory = getTheoryFromIndex(
+        query.values.length - 1 - query.values.slice().reverse().findIndex(
+            (v, i) => {
+                const theory = getTheoryFromIndex(query.values.length - 1 - i);
+                const converter = theoryInterface[theory].converter;
+                return !(v == "cache" || v == "ignore") && 
+                    (isMainTheory(theory) || query.settings.completedCTs !== "no" || converter.convertTo(v, "tau", query.sigma) < 600);
+            }
+        )
+    );
 
     for (let i = 0; i < query.values.length; i++) {
         const theory = getTheoryFromIndex(i);
         const converter = theoryInterface[theory].converter;
         const value = query.values[i];
         if (value == "cache" || value == "ignore") continue;
+        if (query.settings.completedCTs === "no" && !isMainTheory(theory) && converter.convertTo(value, "tau", query.sigma) >= 600) continue;
         if (!global.simulating) break;
 
         UI.outputs.log.innerText = `Simulating ${theory}/${lastTheory}`;
