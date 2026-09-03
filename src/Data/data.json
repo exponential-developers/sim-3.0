@@ -903,16 +903,16 @@
           "stratFilterCondition": "false"
         },
         "ILCCoast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "tau >= 600"
         },
         "ILCdCoast": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "tau >= 600"
         },
         "ILCPTCoast": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "tau < 600"
         },
         "ILCdPTCoast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && tau < 600"
         }
       }
     }
