@@ -1,19 +1,31 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
 
 import passivePubTable from "./helpers/table_mf_0_05_mfrccoast.json";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type pubRecord = {
   next: string;
   time: number;
 }
 
-// Bruteforce strength
 type theory = "MF";
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  multExponent: 0.17
+});
+
+const MF: TheoryInterface<theory> = {
+  simulate: mf,
+  converter
+};
+
+export default MF;
+
 type resetBundle = [number, number, number, number];
 const depthConvert = [
     -99999,
@@ -23,10 +35,9 @@ const depthConvert = [
     35, // depth == 4
     45, // depth == 5
 ]
-// Bruteforce strength END
 
 // Reset
-export default async function mf(data: theoryData<theory>): Promise<simResult> {
+async function mf(data: theoryData<theory>): Promise<simResult> {
   let resetBundles: resetBundle[] = [
     [0, 1, 0, 0],
     [0, 1, 0, 1],
@@ -34,7 +45,7 @@ export default async function mf(data: theoryData<theory>): Promise<simResult> {
   ];
   let bestRes: simResult = defaultResult();
   for (const resetBundle of resetBundles) {
-    if (data.rho <= 100 && resetBundle[3] > 0) {
+    if (converter.convertTo(data.input, "rho") <= 100 && resetBundle[3] > 0) {
       continue;
     }
     let isCoastStrat = data.strat.includes("Coast");
@@ -63,7 +74,7 @@ const q0_m0_mu0 = (q0/m0) * mu0
 const l10_q0_m0_mu0 = l10(q0_m0_mu0);
 // Shit Constant END
 
-class mfSim extends theoryClass<theory> {
+class mfSim extends traditionalTheoryClass<theory> {
   lastC1: number;
   forkOnC1: boolean;
   c: number;
@@ -429,10 +440,6 @@ class mfSim extends theoryClass<theory> {
     ];
   }
 
-  getTotMult(val: number): number {
-    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.17);
-  }
-
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3, 4, 5];
   }
@@ -501,7 +508,7 @@ class mfSim extends theoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>, resetBundle: resetBundle) {
-    super(data);
+    super(data, converter);
     this.mfResetDepth = parseInt(data.specificInputs["depth"] ?? "0");
     this.c = 0;
     this.x = 0;
@@ -510,22 +517,22 @@ class mfSim extends theoryClass<theory> {
     this.vz = 0;
     this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
-    this.pubUnlock = 8;
+    this.pubUnlockRho = 8;
     this.lastC1 = Infinity;
     this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];
     this.milestonesMax = [1, 1, 2, 2, 2, 1];
     this.variables =
     [
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
-      new Variable({ name: "c2", cost: new ExponentialCost(1e3, 50), valueScaling: new ExponentialValue(2) }), // c2
-      new Variable({ name: "a1", cost: new ExponentialCost(1e3, 25), valueScaling: new StepwisePowerSumValue(2, 5, 3)}), // a1
-      new Variable({ name: "a2", cost: new ExponentialCost(1e4, 100), valueScaling: new ExponentialValue(1.25) }), // a2
-      new Variable({ name: "δ",  cost: new ExponentialCost(1e50, 300), valueScaling: new ExponentialValue(1.1) }), // delta
-      new Variable({ name: "v1", cost: new ExponentialCost(80, 80), valueScaling: new StepwisePowerSumValue(2, 10, 1)}), // v1
-      new Variable({ name: "v2", cost: new ExponentialCost(1e4, 10**4.5), valueScaling: new ExponentialValue(1.3) }), // v2
-      new Variable({ name: "v3", cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
-      new Variable({ name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
+      new Variable({ currency: this.rho, name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue(2, 7) }), // c1
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(1e3, 50), valueScaling: new ExponentialValue(2) }), // c2
+      new Variable({ currency: this.rho, name: "a1", cost: new ExponentialCost(1e3, 25), valueScaling: new StepwisePowerSumValue(2, 5, 3)}), // a1
+      new Variable({ currency: this.rho, name: "a2", cost: new ExponentialCost(1e4, 100), valueScaling: new ExponentialValue(1.25) }), // a2
+      new Variable({ currency: this.rho, name: "δ",  cost: new ExponentialCost(1e50, 300), valueScaling: new ExponentialValue(1.1) }), // delta
+      new Variable({ currency: this.rho, name: "v1", cost: new ExponentialCost(80, 80), valueScaling: new StepwisePowerSumValue(2, 10, 1)}), // v1
+      new Variable({ currency: this.rho, name: "v2", cost: new ExponentialCost(1e4, 10**4.5), valueScaling: new ExponentialValue(1.3) }), // v2
+      new Variable({ currency: this.rho, name: "v3", cost: new ExponentialCost(1e50, 70), valueScaling: new StepwisePowerSumValue() }), // v3
+      new Variable({ currency: this.rho, name: "v4", cost: new ExponentialCost(1e52, 1e6), valueScaling: new ExponentialValue(1.5) }), // v4
     ];
     this.normalVariables = [
       this.variables[0],  // c1
@@ -549,7 +556,7 @@ class mfSim extends theoryClass<theory> {
     this.precomp_va1 = -1;
     this.precomp_va2 = 10 ** this.variables[3].value;
     if(data.strat.includes("PT")) {
-      let pubSeek = (Math.round(this.lastPub * 20) / 20).toFixed(4);
+      let pubSeek = (Math.round(this.lastPubRho * 20) / 20).toFixed(4);
       let table: Record<string, pubRecord> = passivePubTable
       if(pubSeek in table) {
         let nextRho = parseFloat(table[pubSeek].next);
@@ -574,7 +581,7 @@ class mfSim extends theoryClass<theory> {
     ]
     this.mfResetDepth = other.mfResetDepth;
     this.milestones = [...other.milestones];
-    this.pubUnlock = other.pubUnlock;
+    this.pubUnlockRho = other.pubUnlockRho;
     this.c = other.c;
     this.x = other.x;
     this.i = other.i;
@@ -636,7 +643,7 @@ class mfSim extends theoryClass<theory> {
     if(id === 3) {
       this.precomp_va2 = 10 ** this.variables[3].value;
     }
-    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === Infinity && (this.maxRho > this.lastPub + 6)) {
+    if(this.mfResetDepth === 0 && this.isCoast && id === 0 && this.lastC1 === Infinity && (this.maxRho > this.lastPubRho + 6)) {
       this.forkOnC1 = true;
     }
   }
@@ -705,15 +712,15 @@ class mfSim extends theoryClass<theory> {
     const depth = depthConvert[this.mfResetDepth];
     this.buyVVariables();
     this.resetParticle();
-    if (this.maxRho >= this.lastPub - 10) {
+    if (this.maxRho >= this.lastPubRho - 10) {
        await this.testFinalReset();
     }
-    if (depth > 0 && this.lastPub - this.maxRho <= depth) {
+    if (depth > 0 && this.lastPubRho - this.maxRho <= depth) {
       let fork: mfSim;
       let forkres: simResult;
 
       // extra v1 test
-      if (this.lastPub - this.maxRho <= depth) {
+      if (this.lastPubRho - this.maxRho <= depth) {
         fork = this.copy();
         fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]]);
         fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
@@ -722,7 +729,7 @@ class mfSim extends theoryClass<theory> {
       }
 
       // extra v2 test
-      if (this.lastPub - this.maxRho <= depth) {
+      if (this.lastPubRho - this.maxRho <= depth) {
         fork = this.copy();
         fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]]);
         fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
@@ -740,15 +747,7 @@ class mfSim extends theoryClass<theory> {
       let currency = this.normalVariables[i].currency ?? this.rho;
       while (true) {
         if (currency.value > this.normalVariables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]()) {
-          if (this.maxRho + boughtVarsDelta > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.normalVariables[i].name,
-              level: this.normalVariables[i].level + 1,
-              cost: this.normalVariables[i].cost,
-              timeStamp: this.t,
-              symbol: currency.symbol
-            });
-          }
+          this.recordPurchase(this.normalVariables[i]);
           currency.subtract(this.normalVariables[i].cost);
           this.normalVariables[i].buy();
           // There is no buy any hook for mf:
@@ -771,15 +770,7 @@ class mfSim extends theoryClass<theory> {
       let currency = this.variables[i].currency ?? this.rho;
       while (true) {
         if (currency.value > this.variables[i].cost && this.variableAvailability[i]()) {
-          if (this.maxRho + boughtVarsDelta > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.variables[i].name,
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-              symbol: currency.symbol
-            });
-          }
+          this.recordPurchase(this.variables[i]);
           currency.subtract(this.variables[i].cost);
           this.variables[i].buy();
           // There is no buy any hook for mf:

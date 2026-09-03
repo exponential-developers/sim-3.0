@@ -1,14 +1,27 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add_old, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T7";
 
-export default async function t7(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.152
+});
+
+const T7: TheoryInterface<theory> = {
+  simulate: t7,
+  converter
+};
+
+export default T7;
+
+async function t7(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -29,9 +42,7 @@ export default async function t7(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-const add = add_old;
-
-class t7Sim extends theoryClass<theory> {
+class t7Sim extends traditionalTheoryClass<theory> {
   rho2: Currency;
   drho13: number;
   drho23: number;
@@ -101,32 +112,29 @@ class t7Sim extends theoryClass<theory> {
       case "T7PlaySpqcey": case "T7PlaySpqceyCoast": return [1, 0, 2, 3, 4];
     }
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.152) + getR9multiplier(this.sigma);
-  }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.rho2 = new Currency;
-    this.pubUnlock = 10;
+    this.pubUnlockRho = 10;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [1, 1, 1, 1, 3];
     //initialize variables
     this.variables = [
-      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(500, 1.51572)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "c1", cost: new ExponentialCost(10, 1.275), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ name: "c2", cost: new ExponentialCost(40, 8), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(1e5, 63), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c4", cost: new ExponentialCost(10, 2.82), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c5", cost: new ExponentialCost(1e8, 60), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c6", cost: new ExponentialCost(1e2, 2.81), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "q1", cost: new FirstFreeCost(new ExponentialCost(500, 1.51572)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(10, 1.275), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(40, 8), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c3", cost: new ExponentialCost(1e5, 63), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c4", cost: new ExponentialCost(10, 2.82), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c5", cost: new ExponentialCost(1e8, 60), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c6", cost: new ExponentialCost(1e2, 2.81), valueScaling: new ExponentialValue(2) }),
     ];
     this.drho13 = 0;
     this.drho23 = 0;
-    if (this.lastPub >= 100) this.c2ratio = 100;
-    if (this.lastPub >= 175) this.c2ratio = 10;
-    if (this.lastPub >= 250) this.c2ratio = 20;
-    if (this.lastPub >= 275) this.c2ratio = 50;
-    if (this.lastPub >= 300) this.c2ratio = Infinity;
+    if (this.lastPubRho >= 100) this.c2ratio = 100;
+    if (this.lastPubRho >= 175) this.c2ratio = 10;
+    if (this.lastPubRho >= 250) this.c2ratio = 20;
+    if (this.lastPubRho >= 275) this.c2ratio = 50;
+    if (this.lastPubRho >= 300) this.c2ratio = Infinity;
     this.updateMilestones();
   }
   async simulate(): Promise<simResult> {
@@ -134,7 +142,7 @@ class t7Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 175) this.updateMilestones();
+      if (this.lastPubRho < 175) this.updateMilestones();
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0);
       this.pubTableCollector.collectData(this);

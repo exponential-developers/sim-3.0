@@ -1,5 +1,5 @@
 import jsonData from "../Data/data.json" with { type: "json" };
-import { getTheories, getTheoryFromIndex, isMainTheory, parseLog10String, reverseMulti } from "../Utils/helpers";
+import { getTheories, getTheoryFromIndex, isMainTheory, parseLog10String } from "../Utils/helpers";
 import UI from "../UI/elements";
 
 type ParsedSpecificInput<T extends theoryType> = {
@@ -41,25 +41,40 @@ function parseExponentialValue(str: string): number {
     }
 }
 
-function parseCurrency(str: string, theory: theoryType, sigma: number, defaultType = "r") {
+function parseProgressValueType(letter: string): ProgressValueType {
+    switch (letter) {
+        case "r": return "rho";
+        case "t": return "tau";
+        case "m": return "multiplier";
+    }
+    return "tau";
+}
+
+function parseCurrency(
+    str: string, 
+    theory: theoryType,
+    defaultType: ProgressValueType = "rho"
+): ProgressValue {
     str = str.replace(" ", "");
 
     const inputType = str.match(/[rtm]$/g);
     let type = defaultType;
     if (inputType) {
-        type = inputType[0];
+        type = parseProgressValueType(inputType[0]);
         str = str.slice(0, str.length - 1);
     };
 
+    if ((jsonData.theories as TheoryDataStructure)[theory].supportsRho === false
+        && type == "rho") {
+        throw "Cannot use rho mode for theory " + theory
+    }
+
     let value = parseExponentialValue(str);
 
-    if (type == 't') {
-        return value / jsonData.theories[theory].tauFactor;
-    }
-    else if (type == 'm') {
-        return reverseMulti(theory, value, sigma);
-    }
-    return value;
+    return {
+        value,
+        valueType: type
+    };
 }
 
 function parseSpecificInputSlider(div: Element): string | undefined {
@@ -70,7 +85,6 @@ function parseSpecificInputSlider(div: Element): string | undefined {
 
 function parseSpecificInputValue(div: Element): string | undefined {
     const inputType = div.getAttribute("inputtype") as SpecificInputType["type"];
-    let value: string | undefined;
     switch (inputType) {
         case "slider": return parseSpecificInputSlider(div);
     }
@@ -157,7 +171,7 @@ function parseSingleSim<T extends theoryType>(): SingleSimQuery<T> {
         stratSpecificInputs: parseStratSpecificInputs(strat),
         strat,
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
         settings: parseSettings()
     }
 }
@@ -174,8 +188,8 @@ function parseChainSim<T extends theoryType>(): ChainSimQuery<T> {
         stratSpecificInputs: parseStratSpecificInputs(strat),
         strat,
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
-        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
+        cap: parseCurrency(UI.controls.capInput.value, theory),
         hardCap: UI.controls.hardCap.checked,
         settings: parseSettings()
     }
@@ -193,8 +207,8 @@ function parseStepSim<T extends theoryType>(): StepSimQuery<T> {
         stratSpecificInputs: parseStratSpecificInputs(strat),
         strat,
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
-        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
+        cap: parseCurrency(UI.controls.capInput.value, theory),
         step: parseExponentialValue(UI.controls.extraInput.value),
         settings: parseSettings()
     }
@@ -209,8 +223,8 @@ function parsePubTableSim<T extends theoryType>(): PubTableSimQuery {
         theory,
         strat: UI.controls.stratSelector.value as FullStratType<T>,
         sigma: sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
-        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
+        cap: parseCurrency(UI.controls.capInput.value, theory),
         step: parseExponentialValue(UI.controls.extraInput.value),
         settings: parseSettings()
     }
@@ -225,7 +239,7 @@ function parseComparisonSim<T extends theoryType>(): ComparisonSimQuery<T> {
         theory,
         theorySpecificInputs: parseTheorySpecificInputs(),
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
         settings: parseSettings()
     }
 }
@@ -242,7 +256,7 @@ function parseAmountSim<T extends theoryType>(): AmountSimQuery<T> {
         stratSpecificInputs: parseStratSpecificInputs(strat),
         strat,
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
         amount: parseInt(UI.controls.extraInput.value),
         settings: parseSettings()
     }
@@ -281,7 +295,7 @@ function parseTimeSim<T extends theoryType>(): TimeSimQuery<T> {
         stratSpecificInputs: parseStratSpecificInputs(strat),
         strat,
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
         time,
         hardCap: UI.controls.hardCap.checked,
         settings: parseSettings()
@@ -300,8 +314,8 @@ function parseStepChainSim<T extends theoryType>(): StepChainQuery<T> {
         stratSpecificInputs: parseStratSpecificInputs(strat),
         strat,
         sigma,
-        rho: parseCurrency(UI.controls.currencyInput.value, theory, sigma),
-        cap: parseCurrency(UI.controls.capInput.value, theory, sigma),
+        input: parseCurrency(UI.controls.currencyInput.value, theory),
+        cap: parseCurrency(UI.controls.capInput.value, theory),
         step: parseExponentialValue(UI.controls.extraInput.value),
         hardCap: UI.controls.hardCap.checked,
         settings: parseSettings()
@@ -323,16 +337,15 @@ function parseSimAll(): SimAllQuery {
     if (!sigmaMatch) throw "Invalid sigma value. Sigma must be an integer that's >= 0";
     const sigma = parseInt(sigmaMatch[0]);
 
-    let values = split.map((val, i) => parseCurrency(val, getTheoryFromIndex(i), sigma, 't'));
+    let values = split.map((val, i) => parseCurrency(val, getTheoryFromIndex(i), 'tau'));
 
-    values = values.map((val, i) => {
+    let new_values: AllModeProgressValue[] = values.map((val, i) => {
         const theory = getTheoryFromIndex(i);
-        if (settings.completedCTs === "no" && i >= 8 && val * jsonData.theories[theory].tauFactor >= 600) return 0;
-        if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[theory].UI_visible === false) return 0;
+        if (!settings.showUnofficials && (jsonData.theories as TheoryDataStructure)[theory].UI_visible === false) return "ignore";
         return val;
     })
 
-    if (values.length - values.filter(val => val <= 0).length < 1) throw "Student count and at least one theory value that is not 0 is required.";
+    if (values.length - values.filter(val => val.value <= 0).length < 1) throw "Student count and at least one theory value that is not 0 is required.";
 
     return {
         queryType: "all",

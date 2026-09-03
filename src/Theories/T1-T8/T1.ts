@@ -4,10 +4,25 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, logToExp, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T1";
 
-export default async function t1(data: theoryData<theory>): Promise<simResult> {
+const converter = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.164,
+  multFactor: -l10(3)
+})
+
+const T1: TheoryInterface<theory> = {
+  simulate: t1,
+  converter
+}
+
+export default T1;
+
+async function t1(data: theoryData<theory>): Promise<simResult> {
   let res;
   if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(data.strat)) {
     const initialData: theoryData<theory> = {...data};
@@ -62,7 +77,7 @@ export default async function t1(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-class t1Sim extends theoryClass<theory> {
+class t1Sim extends traditionalTheoryClass<theory> {
   term1: number;
   term2: number;
   term3: number;
@@ -140,22 +155,19 @@ class t1Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [2, 3, 0, 1];
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.164 - l10(3)) + getR9multiplier(this.sigma);
-  }
   constructor(data: theoryData<theory>) {
-    super(data);
-    this.pubUnlock = 10;
+    super(data, converter);
+    this.pubUnlockRho = 10;
     this.milestoneUnlockSteps = 25;
     //milestones  [logterm, c1exp, c3term, c4term]
     this.milestonesMax = [1, 3, 1, 1];
     this.variables = [
-      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "q2", cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c1", cost: new ExponentialCost(15, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
-      new Variable({ name: "c2", cost: new ExponentialCost(3000, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "c4", cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "q1", cost: new FirstFreeCost(new ExponentialCost(5, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(100, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(15, 2), valueScaling: new StepwisePowerSumValue(2, 10, 1) }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(3000, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c3", cost: new ExponentialCost(1e4, 4.5 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "c4", cost: new ExponentialCost(1e10, 8 * Math.log2(10), true), valueScaling: new ExponentialValue(10) }),
     ];
     this.coast = Infinity;
     this.doCoasting = this.strat.includes("Coast");
@@ -164,19 +176,19 @@ class t1Sim extends theoryClass<theory> {
     this.term2 = 0;
     this.term3 = 0;
     this.termRatio = 0;
-    this.c3Ratio = this.lastPub < 300 ? 1 : this.lastPub < 450 ? 1.1 : this.lastPub < 550 ? 2 : this.lastPub < 655 ? 5 : 10;
+    this.c3Ratio = this.lastPubRho < 300 ? 1 : this.lastPubRho < 450 ? 1.1 : this.lastPubRho < 550 ? 2 : this.lastPubRho < 655 ? 5 : 10;
 
     this.updateMilestones();
   }
   async simulate(): Promise<simResult> {
-    const nextc4 = Math.ceil((this.lastPub - 10) / 8) * 8 + 10;
+    const nextc4 = Math.ceil((this.lastPubRho - 10) / 8) * 8 + 10;
     // Old pub cycle
     if (this.strat.includes("Old")) {
       const pub =
-          nextc4 - this.lastPub < 3 ? nextc4 + 2
-        : nextc4 - this.lastPub < 5 ? nextc4 - 2 + l10(1.5)
+          nextc4 - this.lastPubRho < 3 ? nextc4 + 2
+        : nextc4 - this.lastPubRho < 5 ? nextc4 - 2 + l10(1.5)
         : nextc4 - 4 + l10(1.4);
-      this.coast = (nextc4 - this.lastPub < 3 ? nextc4 : Math.floor(this.lastPub)) + l10(30);
+      this.coast = (nextc4 - this.lastPubRho < 3 ? nextc4 : Math.floor(this.lastPubRho)) + l10(30);
       this.coast = Math.max(8 + l10(30), this.coast + Math.floor(pub - this.coast));
       this.doSimEndConditions = () => false;
       this.pubConditions.push(() => this.maxRho >= pub);
@@ -184,7 +196,7 @@ class t1Sim extends theoryClass<theory> {
     // New pub cycle
     if (["T1SolarXLII", "T1C34Coast", "T1C4Coast"].includes(this.strat))
     {
-      const c4dist = nextc4 - this.lastPub;
+      const c4dist = nextc4 - this.lastPubRho;
       let prevPoint = 0;
       let nextPoint = 0;
       if (this.strat === "T1SolarXLII") {
@@ -223,7 +235,7 @@ class t1Sim extends theoryClass<theory> {
           nextPoint = nextc4 + 2;
         }
       }
-      let misalignment = this.lastPub - prevPoint;
+      let misalignment = this.lastPubRho - prevPoint;
       if (Math.abs(misalignment) < l10(2)) misalignment = 0;
       const pub = nextPoint + misalignment * 0.5;
       this.doSimEndConditions = () => false;
@@ -233,7 +245,7 @@ class t1Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 176) this.updateMilestones();
+      if (this.lastPubRho < 176) this.updateMilestones();
       if (!(this.strat.includes("Old")) || this.rho.value < this.coast) this.buyVariables();
       if (this.variables[0].shouldFork) await this.doForkVariable(0);
       if (this.variables[1].shouldFork) await this.doForkVariable(1);
@@ -243,7 +255,7 @@ class t1Sim extends theoryClass<theory> {
     this.trimBoughtVars();
     let stratExtra = "";
     if (this.strat.includes("Old")) {
-      stratExtra += ` ${this.lastPub < 50 ? "" : logToExp(Math.min(this.pubRho, this.coast), 2)}`;
+      stratExtra += ` ${this.lastPubRho < 50 ? "" : logToExp(Math.min(this.pubRho, this.coast), 2)}`;
     }
     if(this.doCoasting) {
       stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars));
@@ -265,7 +277,7 @@ class t1Sim extends theoryClass<theory> {
     this.rho.add(rhodot);
   }
   onAnyVariablePurchased(): void {
-    this.termRatio = this.lastPub < 350 ? Math.max(l10(5), (this.term2 - this.term1) * Number(this.milestones[3] > 0)) : Infinity;
+    this.termRatio = this.lastPubRho < 350 ? Math.max(l10(5), (this.term2 - this.term1) * Number(this.milestones[3] > 0)) : Infinity;
   }
 
   copyFrom(other: this) {

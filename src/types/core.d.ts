@@ -22,7 +22,7 @@ declare global {
 
     type TheoryDataStructure = {
         [theory in theoryType]: {
-            tauFactor: number;
+            supportsRho?: boolean;
             specificInputs?: {
                 [key in SpecificInputOf[theory]]: SpecificInputType
             };
@@ -54,10 +54,9 @@ declare global {
         specificInputs: SpecificInputRecord<T>;
         stratSpecificInputs: StratSpecificInputRecord<T, S>;
         sigma: number;
-        rho: number;
+        input: ProgressValue;
         strat: S;
-        recovery: null | { value: number; time: number; recoveryTime: boolean };
-        cap: null | number;
+        cap?: ProgressValue;
         recursionValue: null | number | number[];
         settings: Settings;
     }
@@ -65,8 +64,10 @@ declare global {
     interface simResult {
         theory: theoryType;
         sigma: number;
-        lastPub: number;
-        pubRho: number;
+        lastPubTau: number;
+        lastPubRho?: number;
+        pubPointTau: number;
+        pubPointRho?: number;
         deltaTau: number;
         pubMulti: number;
         strat: string;
@@ -74,13 +75,43 @@ declare global {
         time: number;
         boughtVars: varBuy[];
     }
+
+    type simResultRho = simResult & {
+        lastPubRho: number;
+        pubPointRho: number;
+    }
     
     interface simAllResult {
         theory: theoryType;
         ratio: number;
-        lastPub: number;
+        lastPubTau: number;
+        lastPubRho?: number;
         active: simResult;
         idle: simResult;
+    }
+
+    type ProgressValueType = "tau" | "rho" | "multiplier";
+
+    type ProgressValue = {
+        valueType: ProgressValueType;
+        value: number;
+    }
+
+    type AllModeProgressValue = ProgressValue | "ignore" | "cache";
+
+    type ProgressValueConverter = {
+        supportsRho: boolean;
+        convertTo: (input: ProgressValue, inputType: ProgressValueType, sigma: number = 20) => number;
+    }
+
+    type ProgressValueConverterRho = {
+        supportsRho: true;
+        convertTo: (input: ProgressValue, inputType: ProgressValueType, sigma: number = 20) => number;
+    }
+
+    type TheoryInterface<T extends theoryType> = {
+        simulate: <S extends stratType[T]>(data: theoryData<T, S>) => Promise<simResult>;
+        converter: ProgressValueConverter;
     }
 }
 

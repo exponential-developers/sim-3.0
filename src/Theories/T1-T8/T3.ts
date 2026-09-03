@@ -1,14 +1,28 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T3";
 
-export default async function t3(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.147,
+  multFactor: l10(3)
+})
+
+const T3: TheoryInterface<theory> = {
+  simulate: t3,
+  converter
+}
+
+export default T3;
+
+async function t3(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new t3Sim(data);
@@ -31,14 +45,14 @@ export default async function t3(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-class t3Sim extends theoryClass<theory> {
+class t3Sim extends traditionalTheoryClass<theory> {
   rho2: Currency;
   rho3: Currency;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       T3Play2: [
-        () => (this.lastPub - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
+        () => (this.lastPubRho - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
         () => (this.curMult < 1.2 ? this.variables[1].cost + l10(5) < this.variables[10].cost : this.variables[1].cost + l10(8) < this.variables[4].cost) || this.curMult > 2.4,
         () => (this.curMult < 2.4 ? this.variables[2].cost + l10(8) < this.variables[8].cost : true),
         false,
@@ -47,7 +61,7 @@ class t3Sim extends theoryClass<theory> {
         false,
         () => (this.curMult < 1.2 ? this.variables[7].cost + l10(1 / (2 / 5)) < this.variables[10].cost : this.variables[7].cost + l10(8) < this.variables[4].cost),
         true,
-        () => this.lastPub - this.maxRho > 1,
+        () => this.lastPubRho - this.maxRho > 1,
         () => (this.curMult < 1.2 ? true : this.curMult < 2.4 ? this.variables[10].cost + l10(8) < this.variables[4].cost : false),
         () => (this.curMult < 1.2 ? this.variables[11].cost + l10(10) < this.variables[8].cost : false),
       ],
@@ -272,15 +286,12 @@ class t3Sim extends theoryClass<theory> {
   getMilestonePriority(): number[] {
     return [1, 2, 0, 3];
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.147 + l10(3)) + getR9multiplier(this.sigma);
-  }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
-    this.pubUnlock = 9;
+    this.pubUnlockRho = 9;
     this.milestoneUnlockSteps = 25;
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestonesMax = [1, 2, 2, 2];
@@ -306,7 +317,7 @@ class t3Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 175) this.updateMilestones();
+      if (this.lastPubRho < 175) this.updateMilestones();
       this.buyVariables();
       if(this.variables[1].shouldFork) await this.doForkVariable(1);
       if(this.variables[2].shouldFork) await this.doForkVariable(2);

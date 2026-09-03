@@ -1,9 +1,10 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
-import { ExponentialCost, FirstFreeCost, parseValue } from '../../Utils/cost';
+import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult, logToExp, defaultResult } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 // c4 and c5 costs between e45-e86 for SingleMS0 and SingleMS2
 const singleMSPoints = [
@@ -16,7 +17,19 @@ const singleMSPoints = [
 
 type theory = "T8";
 
-export default async function t8(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.15
+});
+
+const T8: TheoryInterface<theory> = {
+  simulate: t8,
+  converter
+};
+
+export default T8;
+
+async function t8(data: theoryData<theory>): Promise<simResult> {
   async function getResult (
     data: theoryData<theory>,
     singleMSPoint: number = 0
@@ -50,18 +63,19 @@ export default async function t8(data: theoryData<theory>): Promise<simResult> {
   // T8noC3dSingleMS
   if (data.strat.includes("T8noC3dSingleMS")) {
     const singleMSVariant = Number(data.strat.slice(data.strat.indexOf("SingleMS")+8).slice(0, 1));
+    const rho = converter.convertTo(data.input, "rho", data.sigma);
     // Only Swap points within e5 of recovery (except M2 before e57)
     for (const singleMSPoint of singleMSPoints[singleMSVariant/2].filter(
       (num) => {
-        return (num > data.rho - 5)
+        return (num > rho - 5)
           && (
-            (num <= data.rho)
-            || ((data.rho <= 57) && (singleMSVariant === 2))
+            (num <= rho)
+            || ((rho <= 57) && (singleMSVariant === 2))
           );
       }
     )) {
       result = getBestResult(result, await getResult(data, singleMSPoint));
-      if (result.pubRho < singleMSPoint) break;
+      if ((result.pubPointRho ?? 0) < singleMSPoint) break;
     }
   }
   else {
@@ -70,7 +84,7 @@ export default async function t8(data: theoryData<theory>): Promise<simResult> {
   return result;
 }
 
-class t8Sim extends theoryClass<theory> {
+class t8Sim extends traditionalTheoryClass<theory> {
   bounds: number[][][];
   defaultStates: number[][];
   dts: number[];
@@ -194,12 +208,12 @@ class t8Sim extends theoryClass<theory> {
     return conditions;
   }
   getMilestonePriority(): number[] {
-    const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPub, this.maxRho) / 20));
+    const milestoneCount = Math.min(11, Math.floor(Math.max(this.lastPubRho, this.maxRho) / 20));
     switch (this.strat) {
       case "T8noC3":
       case "T8noC3Coast":
       case "T8noC3dCoast":
-      case "T8noC3d": return Math.max(this.maxRho, this.lastPub) < 50 ? [0] : [3, 0, 2];
+      case "T8noC3d": return Math.max(this.maxRho, this.lastPubRho) < 50 ? [0] : [3, 0, 2];
       case "T8noC3dSingleMS0Coast":
       case "T8noC3dSingleMS0": return this.maxRho < this.singleMSPoint ? [0, 3, 2] : [3, 0, 2];
       case "T8noC3dSingleMS2Coast":
@@ -230,9 +244,6 @@ class t8Sim extends theoryClass<theory> {
       this.z = this.defaultStates[this.milestones[0]][2];
     }
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.15) + getR9multiplier(this.sigma);
-  }
   dn(ix = this.x, iy = this.y, iz = this.z) {
     if (this.milestones[0] === 0) {
       this.dx = 10 * (iy - ix);
@@ -254,7 +265,7 @@ class t8Sim extends theoryClass<theory> {
     data: theoryData<theory>,
     singleMSPoint: number = 0
   ) {
-    super(data);
+    super(data, converter);
     //attractor stuff
     this.bounds = [
       [
@@ -285,16 +296,16 @@ class t8Sim extends theoryClass<theory> {
     this.dx = 0;
     this.dy = 0;
     this.dz = 0;
-    this.pubUnlock = 8;
+    this.pubUnlockRho = 8;
     this.milestoneUnlockSteps = 20;
     this.milestonesMax = [2, 3, 3, 3];
     //initialize variables
     this.variables = [
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.5172)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "c2", cost: new ExponentialCost(20, 64), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(1e2, 1.15 * Math.log2(3), true), valueScaling: new ExponentialValue(3) }),
-      new Variable({ name: "c4", cost: new ExponentialCost(1e2, 1.15 * Math.log2(5), true), valueScaling: new ExponentialValue(5) }),
-      new Variable({ name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
+      new Variable({ currency: this.rho, name: "c1", cost: new FirstFreeCost(new ExponentialCost(10, 1.5172)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(20, 64), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c3", cost: new ExponentialCost(1e2, 1.15 * Math.log2(3), true), valueScaling: new ExponentialValue(3) }),
+      new Variable({ currency: this.rho, name: "c4", cost: new ExponentialCost(1e2, 1.15 * Math.log2(5), true), valueScaling: new ExponentialValue(5) }),
+      new Variable({ currency: this.rho, name: "c5", cost: new ExponentialCost(1e2, 1.15 * Math.log2(7), true), valueScaling: new ExponentialValue(7) }),
     ];
     this.msTimer = 0;
     this.singleMSPoint = singleMSPoint;
@@ -305,7 +316,7 @@ class t8Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 220) this.updateMilestones();
+      if (this.lastPubRho < 220) this.updateMilestones();
       this.buyVariables();
       if(this.variables[0].shouldFork) await this.doForkVariable(0)
       if(this.variables[2].shouldFork) await this.doForkVariable(2)

@@ -1,14 +1,28 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
 import pubtable from "./helpers/BaPpubtable.json" with { type: "json" };
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "BaP";
 
-export default async function bap(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.4,
+  multExponent: 0.132075,
+  multFactor: l10(5)
+});
+
+const BaP: TheoryInterface<theory> = {
+  simulate: bap,
+  converter
+};
+
+export default BaP;
+
+async function bap(data: theoryData<theory>): Promise<simResult> {
   const sim = new bapSim(data);
   const res = await sim.simulate();
   return res;
@@ -21,7 +35,7 @@ interface pubTable {
   };
 }
 
-class bapSim extends theoryClass<theory> {
+class bapSim extends traditionalTheoryClass<theory> {
   q: number[];
   r: number;
   t_var: number;
@@ -69,12 +83,8 @@ class bapSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-
-  getTotMult(val: number): number {
-    return val < this.pubUnlock ? 0 : Math.max(0, val * this.tauFactor * 0.132075 + l10(5));
-  }
   getMilestonePriority(): number[] {
-    const rho = Math.max(this.lastPub, this.maxRho);
+    const rho = Math.max(this.lastPubRho, this.maxRho);
 
     const a_points = [20, 30, 50, 80, 140, 240, 400, 600, 800];
     const q_points = [25, 40, 60, 100, 180, 300, 500, 700];
@@ -148,7 +158,7 @@ class bapSim extends theoryClass<theory> {
 
   getNextCoast(): number {
     let nextCoast = this.forcedPubRho;
-    const rho = Math.max(this.maxRho, this.lastPub);
+    const rho = Math.max(this.maxRho, this.lastPubRho);
     const coastPoints = [10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 140, 150, 180, 200, 240, 300, 400, 500, 600, 700, 1000];
     for (const point of coastPoints){
       if (nextCoast > point && rho < point)
@@ -160,34 +170,34 @@ class bapSim extends theoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = new Array(9).fill(-1e60);
     this.r = -1e60;
     this.t_var = 0;
-    this.pubUnlock = 7;
+    this.pubUnlockRho = 7;
     this.milestoneUnlocks = [10, 15, 20, 25, 30, 40, 50, 70, 90, 120, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000];
     this.variables = [
-      new Variable({ name: "tdot", cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot
-      new Variable({ name: "c1",   cost: new FirstFreeCost(new ExponentialCost(0.0625, 0.25, true)), valueScaling: new StepwisePowerSumValue(65536, 64) }), //c1
-      new Variable({ name: "c2",   cost: new ExponentialCost(16, 4, true), valueScaling: new ExponentialValue(2) }), // c2
-      new Variable({ name: "c3",   cost: new ExponentialCost(19683, 19683), valueScaling: new ExponentialValue(3) }), // c3
-      new Variable({ name: "c4",   cost: new ExponentialCost(4**16, 32, true), valueScaling: new ExponentialValue(4) }), // c4
-      new Variable({ name: "c5",   cost: new ExponentialCost(5**25, 25*Math.log2(5), true), valueScaling: new ExponentialValue(5) }), // c5
-      new Variable({ name: "c6",   cost: new ExponentialCost(6**36, 36*Math.log2(6), true), valueScaling: new ExponentialValue(6) }), // c6
-      new Variable({ name: "c7",   cost: new ExponentialCost(7**49, 49*Math.log2(7), true), valueScaling: new ExponentialValue(7) }), // c7
-      new Variable({ name: "c8",   cost: new ExponentialCost(8**64, 64*Math.log2(8), true), valueScaling: new ExponentialValue(8) }), // c8
-      new Variable({ name: "c9",   cost: new ExponentialCost(9**81, 81*Math.log2(9), true), valueScaling: new ExponentialValue(9) }), // c9
-      new Variable({ name: "c10",  cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
-      new Variable({ name: "n",    cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
+      new Variable({ currency: this.rho, name: "tdot", cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot
+      new Variable({ currency: this.rho, name: "c1",   cost: new FirstFreeCost(new ExponentialCost(0.0625, 0.25, true)), valueScaling: new StepwisePowerSumValue(65536, 64) }), //c1
+      new Variable({ currency: this.rho, name: "c2",   cost: new ExponentialCost(16, 4, true), valueScaling: new ExponentialValue(2) }), // c2
+      new Variable({ currency: this.rho, name: "c3",   cost: new ExponentialCost(19683, 19683), valueScaling: new ExponentialValue(3) }), // c3
+      new Variable({ currency: this.rho, name: "c4",   cost: new ExponentialCost(4**16, 32, true), valueScaling: new ExponentialValue(4) }), // c4
+      new Variable({ currency: this.rho, name: "c5",   cost: new ExponentialCost(5**25, 25*Math.log2(5), true), valueScaling: new ExponentialValue(5) }), // c5
+      new Variable({ currency: this.rho, name: "c6",   cost: new ExponentialCost(6**36, 36*Math.log2(6), true), valueScaling: new ExponentialValue(6) }), // c6
+      new Variable({ currency: this.rho, name: "c7",   cost: new ExponentialCost(7**49, 49*Math.log2(7), true), valueScaling: new ExponentialValue(7) }), // c7
+      new Variable({ currency: this.rho, name: "c8",   cost: new ExponentialCost(8**64, 64*Math.log2(8), true), valueScaling: new ExponentialValue(8) }), // c8
+      new Variable({ currency: this.rho, name: "c9",   cost: new ExponentialCost(9**81, 81*Math.log2(9), true), valueScaling: new ExponentialValue(9) }), // c9
+      new Variable({ currency: this.rho, name: "c10",  cost: new ExponentialCost(10**100, 100*Math.log2(10), true), valueScaling: new ExponentialValue(10) }), // c10
+      new Variable({ currency: this.rho, name: "n",    cost: new ExponentialCost(10**40, 60*Math.log2(10), true), valueScaling: new StepwisePowerSumValue(6, 16, 1)}), // n
     ];
 
     this.forcedPubRho = Infinity;
     this.doContinuityFork = true;
     this.bestRes = null;
-    if (this.lastPub < 1480)
+    if (this.lastPubRho < 1480)
     {
       let newpubtable: pubTable = pubtable.bapdata;
-      let pubseek = this.lastPub < 100 ? Math.round(this.lastPub * 4) / 4 : Math.round(this.lastPub);
+      let pubseek = this.lastPubRho < 100 ? Math.round(this.lastPubRho * 4) / 4 : Math.round(this.lastPubRho);
       this.forcedPubRho = newpubtable[pubseek.toString()].next;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
@@ -224,7 +234,7 @@ class bapSim extends theoryClass<theory> {
         const fork = this.copy();
         fork.forcedPubRho = Infinity;
         const res = await fork.simulate();
-        if(res.pubRho >=1500)this.bestRes = getBestResult(this.bestRes, res);
+        if((res.pubPointRho ?? 0) >= 1500) this.bestRes = getBestResult(this.bestRes, res);
       }
       this.pubTableCollector.collectData(this);
     }

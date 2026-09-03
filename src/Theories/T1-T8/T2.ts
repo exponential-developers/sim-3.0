@@ -1,13 +1,27 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getR9multiplier, toCallables, getBestResult, defaultResult } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T2";
 
-export default async function t2(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.198,
+  multFactor: -l10(100)
+})
+
+const T2: TheoryInterface<theory> = {
+  simulate: t2,
+  converter
+}
+
+export default T2;
+
+async function t2(data: theoryData<theory>): Promise<simResult> {
   let bestSim: t2Sim;
   let bestSimRes: simResult;
   if(data.strat == "T2Haxolotl") {
@@ -39,7 +53,7 @@ export default async function t2(data: theoryData<theory>): Promise<simResult> {
             sim.stop3 = stopPoints[2]
             sim.stop2 = stopPoints[1]
             sim.stop1 = stopPoints[0]
-            sim.targetRho = t2mcRes.pubRho;
+            sim.targetRho = t2mcRes.pubPointRho ?? 0;
             bestRes = getBestResult(await sim.simulate(), bestRes);
           }
         }
@@ -55,7 +69,7 @@ export default async function t2(data: theoryData<theory>): Promise<simResult> {
     data.strat = savedStrat;
     if(savedStrat == "T2MCAlt2") {
       bestSim = new t2Sim(data);
-      bestSim.targetRho = res.pubRho;
+      bestSim.targetRho = res.pubPointRho ?? 0;
       bestSimRes = await bestSim.simulate();
     }
     else {
@@ -64,7 +78,7 @@ export default async function t2(data: theoryData<theory>): Promise<simResult> {
       bestSim.stop3 = 1700;
       bestSim.stop2 = 2650;
       bestSim.stop1 = 3700;
-      bestSim.targetRho = res.pubRho;
+      bestSim.targetRho = res.pubPointRho ?? 0;
       bestSimRes = await bestSim.simulate();
     }
   }
@@ -75,7 +89,7 @@ export default async function t2(data: theoryData<theory>): Promise<simResult> {
   return bestSimRes;
 }
 
-class t2Sim extends theoryClass<theory> {
+class t2Sim extends traditionalTheoryClass<theory> {
   q1: number;
   q2: number;
   q3: number;
@@ -172,9 +186,6 @@ class t2Sim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.198 - l10(100)) + getR9multiplier(this.sigma);
-  }
   getMilestonePriority(): number[] {
     if (this.strat === "T2MS") {
       const tm100 = this.t % 100;
@@ -185,20 +196,20 @@ class t2Sim extends theoryClass<theory> {
     }
     if (this.strat === "T2QS") {
       let coastMulti = Infinity;
-      if (this.lastPub > 0) coastMulti = 10;
-      if (this.lastPub > 75) coastMulti = 200;
-      if (this.lastPub > 100) coastMulti = 200;
-      if (this.lastPub > 125) coastMulti = 200;
-      if (this.lastPub > 150) coastMulti = 600;
-      if (this.lastPub > 200) coastMulti = 100;
-      if (this.lastPub > 225) coastMulti = 25;
+      if (this.lastPubRho > 0) coastMulti = 10;
+      if (this.lastPubRho > 75) coastMulti = 200;
+      if (this.lastPubRho > 100) coastMulti = 200;
+      if (this.lastPubRho > 125) coastMulti = 200;
+      if (this.lastPubRho > 150) coastMulti = 600;
+      if (this.lastPubRho > 200) coastMulti = 100;
+      if (this.lastPubRho > 225) coastMulti = 25;
       if (this.curMult < coastMulti) return [0, 1, 2, 3];
       else return [2, 3, 0, 1];
     }
     return [0, 1, 2, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q1 = -Infinity;
     this.q2 = 0;
     this.q3 = 0;
@@ -210,18 +221,18 @@ class t2Sim extends theoryClass<theory> {
     this.haxolotlC1 = 1.0;
     this.haxolotlC2 = 1.0;
     this.haxolotlC3 = 1.0;
-    this.pubUnlock = 15;
+    this.pubUnlockRho = 15;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [2, 2, 3, 3];
     this.variables = [
-      new Variable({ name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "q2", cost: new ExponentialCost(5000, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "q3", cost: new ExponentialCost(3e25, 3), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "q4", cost: new ExponentialCost(8e50, 4), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "r1", cost: new ExponentialCost(2e6, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "r2", cost: new ExponentialCost(3e9, 2), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "r3", cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "r4", cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q1", cost: new FirstFreeCost(new ExponentialCost(10, 2)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(5000, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q3", cost: new ExponentialCost(3e25, 3), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q4", cost: new ExponentialCost(8e50, 4), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "r1", cost: new ExponentialCost(2e6, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "r2", cost: new ExponentialCost(3e9, 2), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "r3", cost: new ExponentialCost(4e25, 3), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "r4", cost: new ExponentialCost(5e50, 4), valueScaling: new StepwisePowerSumValue() }),
     ];
 
     this.targetRho = -1;
@@ -241,7 +252,7 @@ class t2Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 250) this.updateMilestones();
+      if (this.lastPubRho < 250) this.updateMilestones();
       this.buyVariables();
       this.pubTableCollector.collectData(this);
     }

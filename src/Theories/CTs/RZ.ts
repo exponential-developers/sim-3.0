@@ -1,5 +1,4 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
@@ -7,8 +6,23 @@ import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Ut
 import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp, defaultResult } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" with { type: "json" };
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "RZ";
+
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.4,
+  multExponent: 21.02 / 40,
+  multFactor: l10(2)
+});
+
+const RZ: TheoryInterface<theory> = {
+  simulate: rz,
+  converter
+};
+
+export default RZ;
 
 class VariableBcost extends BaseCost {
     getCost(level: number): number {
@@ -55,9 +69,10 @@ function mergeSortedLists(list1: number[], list2: number[]): number[] {
 let rzZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzSpecificZeros);
 let rzdZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzdSpecificZeros);
 
-export default async function rz(data: theoryData<theory>) {
+async function rz(data: theoryData<theory>) {
+    const rho = converter.convertTo(data.input, "rho");
     // Normal BH
-    if(data.strat.includes("BH") && !data.strat.includes("Rewind") && data.rho >= 600) {
+    if(data.strat.includes("BH") && !data.strat.includes("Rewind") && rho >= 600) {
         let zeroList = data.strat.startsWith("RZd") ? rzdZeros : rzZeros;
         if(data.strat.includes("Long")) {
             zeroList = goodzeros.longZeros;
@@ -69,7 +84,7 @@ export default async function rz(data: theoryData<theory>) {
         let boundaryCondition = null;
         if(!data.strat.startsWith("RZd")) {
             for(let x of goodzeros.rzIdleBHBoundaries) {
-                if(data.rho <= x.toRho) {
+                if(rho <= x.toRho) {
                     boundaryCondition = x;
                     break;
                 }
@@ -77,7 +92,7 @@ export default async function rz(data: theoryData<theory>) {
         }
         else {
             for(let x of goodzeros.rzdIdleBoundaries) {
-                if(data.rho <= x.toRho) {
+                if(rho <= x.toRho) {
                     boundaryCondition = x;
                     break;
                 }
@@ -127,7 +142,7 @@ export default async function rz(data: theoryData<theory>) {
         }
         return bestSimRes;
     }
-    else if(data.strat.includes("BHRewind") && data.rho >= 600){
+    else if(data.strat.includes("BHRewind") && rho >= 600){
         let zeroList = rzdZeros;
         let zeroRewindList = goodzeros.rzRewind;
         let startZeroIndex = 0;
@@ -138,7 +153,7 @@ export default async function rz(data: theoryData<theory>) {
         let bestSimRes2: simResult | null = null;
         let boundaryCondition = null;
         for(let x of goodzeros.rzIdleBHBoundaries) {
-            if(data.rho <= x.toRho) {
+            if(rho <= x.toRho) {
                 boundaryCondition = x;
                 break;
             }
@@ -177,7 +192,7 @@ export default async function rz(data: theoryData<theory>) {
 
         let rewindBoundaryCondition = null;
         for(let x of goodzeros.rzRewindBoundaries) {
-            if(data.rho <= x.toRho) {
+            if(rho <= x.toRho) {
                 rewindBoundaryCondition = x;
                 break;
             }
@@ -215,7 +230,7 @@ export default async function rz(data: theoryData<theory>) {
         }
         return bestSimRes2;
     }
-    else if(data.strat.includes("MS") && data.rho <= 400 && data.rho >= 10) {
+    else if(data.strat.includes("MS") && rho <= 400 && rho >= 10) {
         const swapPointDeltas = [0, -1, -2, -3, -4, -5, -6];
         let normalRets = [];
         for(let i = 0; i < swapPointDeltas.length; i++) {
@@ -226,7 +241,7 @@ export default async function rz(data: theoryData<theory>) {
         let coastRets = [];
         for(let i = 0; i < normalRets.length; i++) {
             let ss = new rzSim(data);
-            ss.normalPubRho = normalRets[i].pubRho;
+            ss.normalPubRho = normalRets[i].pubPointRho ?? 0;
             ss.swapPointDelta = swapPointDeltas[i];
             coastRets.push(await ss.simulate());
         }
@@ -262,7 +277,7 @@ export default async function rz(data: theoryData<theory>) {
     }
 }
 
-class rzSim extends theoryClass<theory> {
+class rzSim extends traditionalTheoryClass<theory> {
     delta: Currency;
     t_var: number;
     // Zeta parameters
@@ -372,11 +387,8 @@ class rzSim extends theoryClass<theory> {
             () => this.milestones[2] === 1,
         ];
     }
-    getTotMult(val: number): number {
-        return Math.max(0, val * 0.2102 + l10(2));
-    }
     getMilestonePriority(): number[] {
-        const stage = binaryInsertionSearch(this.milestoneUnlocks, Math.max(this.lastPub, this.maxRho));
+        const stage = binaryInsertionSearch(this.milestoneUnlocks, Math.max(this.lastPubRho, this.maxRho));
         const originPriority = [1, 0, 2, 3];
         const peripheryPriority = [1, 2, 0, 3];
 
@@ -386,7 +398,7 @@ class rzSim extends theoryClass<theory> {
         }
         else if ((this.strat === "RZMS" || this.strat === "RZdMS") && stage >= 2 && stage <= 4)
         {
-            return this.maxRho > this.lastPub + this.swapPointDelta ? originPriority : peripheryPriority;
+            return this.maxRho > this.lastPubRho + this.swapPointDelta ? originPriority : peripheryPriority;
         }
 
         return peripheryPriority;
@@ -399,7 +411,7 @@ class rzSim extends theoryClass<theory> {
                 // Black hole coasting
                 if (
                     (!this.bhAtRecovery && (this.t_var > this.targetZero)) ||
-                    (this.bhAtRecovery && (this.maxRho >= this.lastPub))
+                    (this.bhAtRecovery && (this.maxRho >= this.lastPubRho))
                 ) {
                     if (!this.bhAtRecovery)
                         this.t_var = this.targetZero + 0.01;
@@ -508,7 +520,7 @@ class rzSim extends theoryClass<theory> {
     }
 
     constructor(data: theoryData<theory>) {
-        super(data);
+        super(data, converter);
         this.delta = new Currency("delta");
         this.t_var = 0;
         this.zTerm = 0;
@@ -519,7 +531,7 @@ class rzSim extends theoryClass<theory> {
         this.blackhole = false;
         this.bhSearchingRewind = true;
         this.bhFoundZero = false;
-        this.pubUnlock = 9;
+        this.pubUnlockRho = 9;
         this.milestoneUnlocks = [25, 50, 125, 250, 400, 600];
         this.milestonesMax = [3, 1, 1, 1];
         this.variables = [
@@ -590,7 +602,7 @@ class rzSim extends theoryClass<theory> {
                 }
                 this.tick();
                 this.updateSimStatus();
-                if (this.lastPub < 600) this.updateMilestones();
+                if (this.lastPubRho < 600) this.updateMilestones();
                 if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
                 this.buyVariables();
                 this.pubTableCollector.collectData(this);
@@ -610,7 +622,7 @@ class rzSim extends theoryClass<theory> {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
         if (this.strat.includes("MS")) {
-            stratExtra += ` ${logToExp(this.lastPub + this.swapPointDelta, 2)}`
+            stratExtra += ` ${logToExp(this.lastPubRho + this.swapPointDelta, 2)}`
         }
         if (this.normalPubRho != -1) {
             // if(this.maxC1LevelActual == -1)

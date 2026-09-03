@@ -1,10 +1,13 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { l10, toCallables, parseLog10String, getLastLevel, getBestResult, getLastLevelCost } from "../../Utils/helpers";
+import { l10, toCallables, getLastLevel, getBestResult, getLastLevelCost } from "../../Utils/helpers";
 import ilcTable from "../CTs/helpers/table_ilc_0_01_ilccoast.json";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
+
+type theory = "ILC";
 
 const LAST_COAST_VAR = 5;
 
@@ -13,9 +16,20 @@ type pubRecord = {
   time: number;
 }
 
-type theory = "ILC";
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 2,
+  multExponent: 0.39,
+  multFactor: -7 * l10(Math.E)
+});
 
-export default async function ilc(data: theoryData<theory>): Promise<simResult> {
+const ILC: TheoryInterface<theory> = {
+  simulate: ilc,
+  converter
+};
+
+export default ILC;
+
+async function ilc(data: theoryData<theory>): Promise<simResult> {
   // const sim = new ilcSim(data);
   if(!data.strat.includes("Coast")) {
     const sim = new ilcSim(data);
@@ -36,7 +50,7 @@ export default async function ilc(data: theoryData<theory>): Promise<simResult> 
       if(lastVal !== 0) {
         let lastCost =  getLastLevelCost(vars[i], res1.boughtVars);
         sim2.variables[i].setOriginalCap(lastVal);
-        if(lastCost < data2.rho - 2) {
+        if(lastCost < converter.convertTo(data2.input, "rho") - 2) {
           sim2.variables[i].configureCap(0);
         }
         else {
@@ -53,7 +67,7 @@ export default async function ilc(data: theoryData<theory>): Promise<simResult> 
   }
 }
 
-class ilcSim extends theoryClass<theory> {
+class ilcSim extends traditionalTheoryClass<theory> {
   rhodot: number;
   logAttractorPointsConstants = [ // -ln(q), ln(C)
     [0.55958025121547164703, -1.3567399465875839466],
@@ -126,29 +140,25 @@ class ilcSim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.39 - 7 * l10(Math.E));
-  }
   getMilestonePriority(): number[] {
     return [0, 1, 2, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.rhodot = 0;
-    this.pubUnlock = 6;
+    this.pubUnlockRho = 6;
     this.milestoneUnlocks = [25, 50, 75, 100, 120, 140, 160, 180, 200, 220];
     this.milestonesMax = [2, 2, 3, 3];
-    this.totMult = data.rho < this.pubUnlock ? 0 : this.getTotMult(data.rho);
     this.variables = [
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(1, 2.37)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "c2", cost: new ExponentialCost(2, 2560), valueScaling: new ExponentialValue() }),
-      new Variable({ name: "e1", cost: new ExponentialCost(10, 50), valueScaling: new StepwisePowerSumValue(2, 6, 1) }),
-      new Variable({ name: "e2", cost: new ExponentialCost(25, 150000), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "e3", cost: new ExponentialCost(1e10, 4000000000), valueScaling: new ExponentialValue(3) }),
-      new Variable({ name: "e4", cost: new ExponentialCost(1e20, 190000000000000), valueScaling: new ExponentialValue(4) })
+      new Variable({ currency: this.rho, name: "c1", cost: new FirstFreeCost(new ExponentialCost(1, 2.37)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(2, 2560), valueScaling: new ExponentialValue() }),
+      new Variable({ currency: this.rho, name: "e1", cost: new ExponentialCost(10, 50), valueScaling: new StepwisePowerSumValue(2, 6, 1) }),
+      new Variable({ currency: this.rho, name: "e2", cost: new ExponentialCost(25, 150000), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "e3", cost: new ExponentialCost(1e10, 4000000000), valueScaling: new ExponentialValue(3) }),
+      new Variable({ currency: this.rho, name: "e4", cost: new ExponentialCost(1e20, 190000000000000), valueScaling: new ExponentialValue(4) })
     ];
     if(data.strat.includes("PT")) {
-      let pubSeek = (Math.round(this.lastPub * 100) / 100).toFixed(4);
+      let pubSeek = (Math.round(this.lastPubRho * 100) / 100).toFixed(4);
       let table: Record<string, pubRecord> = ilcTable
       if(pubSeek in table) {
         let nextRho = parseFloat(table[pubSeek].next);

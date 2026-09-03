@@ -1,13 +1,26 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, l2, toCallables, getBestResult, getLastLevel } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "SL";
 
-export default async function sl(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  tauFactor: 0.4,
+  multExponent: 0.375
+});
+
+const SL: TheoryInterface<theory> = {
+  simulate: sl,
+  converter
+};
+
+export default SL;
+
+async function sl(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new slSim(data);
@@ -34,13 +47,15 @@ export default async function sl(data: theoryData<theory>): Promise<simResult> {
     sim2.variables[2].setOriginalCap(lastB1);
     sim2.variables[3].setOriginalCap(lastB2);
 
+    const rho = converter.convertTo(data.input, "rho");
+
     if(data.strat == "SLCoast") {
       // These are based on sim results:
-      if (data.rho <= 10) {
+      if (rho <= 10) {
         sim2.variables[0].configureCap(5);
-      } else if (data.rho <= 110) {
+      } else if (rho <= 110) {
         sim2.variables[0].configureCap(4);
-      } else if (data.rho <= 200) {
+      } else if (rho <= 200) {
         sim2.variables[0].configureCap(3);
       } else {
         sim2.variables[0].configureCap(2);
@@ -48,39 +63,39 @@ export default async function sl(data: theoryData<theory>): Promise<simResult> {
 
       sim2.variables[1].configureCap(1);
 
-      if (data.rho <= 50) {
+      if (rho <= 50) {
         sim2.variables[2].configureCap(3);
-      } else if (data.rho <= 100) {
+      } else if (rho <= 100) {
         sim2.variables[2].configureCap(2);
       } else {
         sim2.variables[2].configureCap(1);
       }
 
-      if (data.rho <= 150 || data.rho >= 1400) {
+      if (rho <= 150 || rho >= 1400) {
         sim2.variables[3].configureCap(1);
       } else {
         sim2.variables[3].configureCap(0);
       }
     }
     else if(data.strat == "SLdCoast") {
-      if (data.rho <= 110) {
+      if (rho <= 110) {
         sim2.variables[0].configureCap(4);
-      } else if (data.rho <= 220) {
+      } else if (rho <= 220) {
         sim2.variables[0].configureCap(3);
       } else {
         sim2.variables[0].configureCap(2);
       }
       sim2.variables[1].configureCap(1);
 
-      if (data.rho <= 50) {
+      if (rho <= 50) {
         sim2.variables[2].configureCap(3);
-      } else if (data.rho <= 120) {
+      } else if (rho <= 120) {
         sim2.variables[2].configureCap(2);
       } else {
         sim2.variables[2].configureCap(1);
       }
 
-      if (data.rho <= 120 || data.rho >= 1450) {
+      if (rho <= 120 || rho >= 1450) {
         sim2.variables[3].configureCap(1);
       } else {
         sim2.variables[3].configureCap(0);
@@ -91,7 +106,7 @@ export default async function sl(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-class slSim extends theoryClass<theory> {
+class slSim extends traditionalTheoryClass<theory> {
   rho2: number;
   rho3: number;
   inverseE_Gamma: number;
@@ -142,11 +157,8 @@ class slSim extends theoryClass<theory> {
     const conditions: conditionFunction[] = [() => true, () => true, () => true, () => true];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * this.tauFactor * 0.375);
-  }
   getMilestonePriority(): number[] {
-    const maxVal = Math.max(this.lastPub, this.maxRho);
+    const maxVal = Math.max(this.lastPubRho, this.maxRho);
     if ((this.strat.includes("MS")) && maxVal >= 25 && maxVal <= 300) {
       //when to swap to a3exp (increasing rho2dot) before b1b2
       let emg_Before_b1b2 = 5;
@@ -196,17 +208,17 @@ class slSim extends theoryClass<theory> {
     this.inverseE_Gamma = 0 - Math.LOG10E - add(subtract(y, y + y - l10(2)), y + y + y + l10(6));
   };
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.rho2 = 0;
     this.rho3 = 0;
-    this.pubUnlock = 10;
+    this.pubUnlockRho = 10;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [3, 5, 2, 2];
     this.variables = [
-      new Variable({ name: "a1", cost: new FirstFreeCost(new ExponentialCost(1, 0.369 * l2(10), true)), valueScaling: new StepwisePowerSumValue(3.5, 3)}),
-      new Variable({ name: "a2", cost: new ExponentialCost(175, 10), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "b1", cost: new ExponentialCost(500, 0.649 * l2(10), true), valueScaling: new StepwisePowerSumValue(6.5, 4) }),
-      new Variable({ name: "b2", cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "a1", cost: new FirstFreeCost(new ExponentialCost(1, 0.369 * l2(10), true)), valueScaling: new StepwisePowerSumValue(3.5, 3)}),
+      new Variable({ currency: this.rho, name: "a2", cost: new ExponentialCost(175, 10), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "b1", cost: new ExponentialCost(500, 0.649 * l2(10), true), valueScaling: new StepwisePowerSumValue(6.5, 4) }),
+      new Variable({ currency: this.rho, name: "b2", cost: new ExponentialCost(1000, 0.926 * l2(10), true), valueScaling: new ExponentialValue(2) }),
     ];
     this.inverseE_Gamma = 0;
     this.simEndConditions.push(() => this.curMult > 15);
@@ -217,7 +229,7 @@ class slSim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 300) this.updateMilestones();
+      if (this.lastPubRho < 300) this.updateMilestones();
       this.buyVariables();
       for(let varIndex = 0; varIndex < this.variables.length; varIndex++) {
         if(this.variables[varIndex].shouldFork) await this.doForkVariable(varIndex);

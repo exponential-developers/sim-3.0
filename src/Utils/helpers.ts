@@ -152,8 +152,8 @@ export function defaultResult(): simResult {
   return {
       theory: "T1",
       sigma: 0,
-      lastPub: 0,
-      pubRho: 0,
+      lastPubTau: 0,
+      pubPointTau: 0,
       deltaTau: 0,
       pubMulti: 0,
       strat: "Result undefined",
@@ -233,56 +233,6 @@ export function getdtFromSlider(val: number): number {
  */
 export function getddtFromSlider(val: number): number {
   return val == 0 ? 1 : val == 10 ? 1.3 : round(1 + (3 ** val) * (0.3 / 3 ** 10), 7)
-}
-
-/**
- * Returns rho from the multiplier.
- * @param theory The theory to return rho for
- * @param value The multiplier as a log10 value
- * @param sigma Number of students
- * @returns
- */
-export function reverseMulti(theory: string, value: number, sigma: number) {
-  const R9 = getR9multiplier(sigma);
-  const divSigmaMulti = (exp: number, div: number) => (value - R9 + l10(div)) * (1 / exp);
-  const multSigmaMulti = (exp: number, mult: number) => (value - R9 - l10(mult)) * (1 / exp);
-  const sigmaMulti = (exp: number) => (value - R9) * (1 / exp);
-  switch (theory) {
-    case "T1":
-      return divSigmaMulti(0.164, 3);
-    case "T2":
-      return divSigmaMulti(0.198, 100);
-    case "T3":
-      return multSigmaMulti(0.147, 3);
-    case "T4":
-      return divSigmaMulti(0.165, 4);
-    case "T5":
-      return sigmaMulti(0.159);
-    case "T6":
-      return divSigmaMulti(0.196, 50);
-    case "T7":
-      return sigmaMulti(0.152);
-    case "T8":
-      return sigmaMulti(0.15);
-    case "WSP":
-    case "SL":
-      return value / 0.15;
-    case "EF":
-      return value * (1 / 0.387) * 2.5;
-    case "CSR2":
-      return (value + l10(200)) * (1 / 2.203) * 10;
-    case "FI":
-      return value * (1 / 0.1625) * 2.5;
-    case "FP":
-      return (value - l10(5)) * (1 / 0.331) * (10 / 3);
-    case "RZ":
-      return (value - l10(2)) / 0.2102;
-    case "MF":
-      return value / 0.17;
-    case "BaP":
-      return (value - l10(5)) / 0.132075 * 2.5;
-  }
-  throw `Failed parsing multiplier. Please contact the author of the sim.`;
 }
 
 /** Checks if a string corresponds to a main theory */

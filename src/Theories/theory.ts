@@ -1,21 +1,17 @@
-import Currency from "../Utils/currency";
-import { BasePubTableCollector, collectorCache } from "../Utils/pubTableCollector";
 import Variable from "../Utils/variable";
 import {
-  binaryInsertionSearch,
   defaultResult,
   getBestResult
 } from "../Utils/helpers";
-import jsonData from "../Data/data.json";
 
 /** Base class for a theory */
-export default abstract class theoryClass<theory extends theoryType, strat extends stratType[theory] = stratType[theory]> {
+export default abstract class 
+  theoryClass<theory extends theoryType, strat extends stratType[theory] = stratType[theory]> 
+  {
   /** Theory */
   readonly theory: theory;
   /** Current strategy */
   readonly strat: strat;
-  /** tau/rho conversion rate */
-  readonly tauFactor: number;
   /** Sim settings used in the simulation */
   readonly settings: Settings;
   /** Specific inputs */
@@ -24,14 +20,10 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
   readonly stratSpecificInputs: StratSpecificInputRecord<theory, strat>;
 
   // Theory
-  /** rho at which publications are unlocked */
-  pubUnlock: number;
   /** cap at which simulation will stop */
-  cap: number;
-  /** recovery data */
-  recovery: { value: number; time: number; recoveryTime: boolean };
-  /** rho of the last publication */
-  lastPub: number;
+  cap: ProgressValue;
+  /** Value of the last publication */
+  lastPub: ProgressValue;
   /** number of students */
   sigma: number;
   /** current total multiplier */
@@ -48,12 +40,6 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
   ticks: number;
   /** previous milestone count */
   prevMilestoneCount: number;
-
-  // Currencies
-  /** Main currency of the theory */
-  rho: Currency;
-  /** max value of rho for this publication */
-  maxRho: number;
 
   // Variables
   /** List of variables */
@@ -74,10 +60,6 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
   maxTauH: number;
   /** final publication time */
   pubT: number;
-  /** final rho of the publication */
-  pubRho: number;
-  /** pub table collector, will be overridden in relevant methods */
-  pubTableCollector: BasePubTableCollector;
 
   // Publication conditions
   /**
@@ -103,18 +85,11 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
   milestones: number[];
   /** Maximum level for each milestone */
   milestonesMax: number[];
+
   /**
-   * Milestone unlock points
-   *
-   * This is overwritten if `milestoneUnlockSteps` is set
-   * */
-  milestoneUnlocks: number[];
-  /**
-   * Steps of rho at which milestones are unlocked
-   *
-   * Takes priority over `milestoneUnlocks`
+   * Best result (tracked for sims that fork)
    */
-  milestoneUnlockSteps: number;
+  bestForkRes: simResult;
 
   /**
    * Returns the buying conditions for each variable.
@@ -129,42 +104,29 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
    */
   abstract getVariableAvailability(): conditionFunction[];
   /**
-   * Returns the total multiplier for a given rho value
+   * Returns the total multiplier
    */
-  abstract getTotMult(val: number): number;
+  abstract getTotMult(val: ProgressValue): number
 
-  /**
-   * Best result (tracked for sims that fork)
-   */
-  bestForkRes: simResult;
-
-  constructor(readonly data: theoryData<theory>) {
+  constructor(readonly data: theoryData<theory>, readonly converter: ProgressValueConverter) {
     this.bestForkRes = defaultResult();
-    this.pubTableCollector = collectorCache.currentCollector;
     this.theory = data.theory;
     this.strat = data.strat as strat;
-    this.tauFactor = jsonData.theories[data.theory].tauFactor;
     this.settings = data.settings;
     this.specificInputs = data.specificInputs;
     this.stratSpecificInputs = data.stratSpecificInputs;
     this.prevMilestoneCount = -1;
 
     //theory
-    this.pubUnlock = 1;
-    this.cap = typeof data.cap === "number" && data.cap > 0 ? data.cap : Infinity;
-    this.recovery = data.recovery ?? { value: 0, time: 0, recoveryTime: false };
-    this.lastPub = data.rho;
+    this.cap = data.cap ?? { valueType: "tau", value: Infinity };
+    this.lastPub = data.input;
     this.sigma = data.sigma;
-    this.totMult = this.getTotMult(data.rho);
+    this.totMult = this.getTotMult(data.input);
     this.curMult = 0;
     this.dt = this.settings.dt;
     this.ddt = this.settings.ddt;
     this.t = 0;
     this.ticks = 0;
-
-    //currencies
-    this.rho = new Currency;
-    this.maxRho = 0;
 
     //initialize variables
     this.variables = [];
@@ -174,18 +136,15 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
     this.tauH = 0;
     this.maxTauH = 0;
     this.pubT = 0;
-    this.pubRho = 0;
 
     // pub conditions
-    this.forcedPubConditions = [() => this.pubRho >= this.pubUnlock];
-    this.pubConditions = [() => this.maxRho >= this.cap];
+    this.forcedPubConditions = [];
+    this.pubConditions = [];
     this.simEndConditions = [() => this.t > this.pubT * 2];
     this.doSimEndConditions = () => true;
 
     this.milestones = [];
     this.milestonesMax = [];
-    this.milestoneUnlocks = [];
-    this.milestoneUnlockSteps = -1;
 
     this.buyingConditions = this.getBuyingConditions();
     this.variableAvailability = this.getVariableAvailability();
@@ -195,7 +154,6 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
    * Copies the base attributes from `other`
    */
   copyFrom(other: this): void {
-    this.pubTableCollector = other.pubTableCollector;
     this.cap = other.cap;
     this.totMult = other.totMult;
     this.dt = other.dt;
@@ -203,15 +161,12 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
     this.t = other.t;
     this.ticks = other.ticks;
 
-    this.rho.value = other.rho.value;
-    this.maxRho = other.maxRho;
     this.variables = other.variables.map((v, i) => v.copy(this.variables[i].currency));
     this.boughtVars = [...other.boughtVars];
 
     this.tauH = other.tauH;
     this.maxTauH = other.maxTauH;
     this.pubT = other.pubT;
-    this.pubRho = other.pubRho;
     this.bestForkRes = other.bestForkRes;
   }
 
@@ -222,9 +177,8 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
       specificInputs: this.specificInputs,
       stratSpecificInputs: this.stratSpecificInputs,
       sigma: this.sigma,
-      rho: this.lastPub,
+      input: this.lastPub,
       strat: this.strat,
-      recovery: { ...this.recovery },
       cap: this.cap,
       recursionValue: null,
       settings: this.settings
@@ -237,50 +191,17 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
    *
    * This is called each time `updateMilestones` is called.
    */
-  abstract getMilestonePriority(): number[];
+  abstract getMilestonePriority(): number[]; // dunno if we'll keep this here
 
   /**
    * Updates milestones
    */
-  updateMilestones(): void {
-    const rho = Math.max(this.maxRho, this.lastPub);
-    const priority = this.getMilestonePriority();
-    let milestoneCount = this.milestoneUnlockSteps > 0
-      ? Math.floor(rho / this.milestoneUnlockSteps)
-      : binaryInsertionSearch(this.milestoneUnlocks, rho);
-    this.milestones = new Array(this.milestonesMax.length).fill(0);
-    for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
-            this.milestones[priority[i]]++;
-            milestoneCount--;
-        }
-    }
-  }
+  abstract updateMilestones(): void; // dunno if we'll keep this here
 
   /**
    * Update milestones, no MS
    */
-  updateMilestonesNoMS(): boolean {
-    const rho = Math.max(this.maxRho, this.lastPub);
-    let milestoneCount = this.milestoneUnlockSteps > 0
-        ? Math.floor(rho / this.milestoneUnlockSteps)
-        : binaryInsertionSearch(this.milestoneUnlocks, rho);
-    if(milestoneCount != this.prevMilestoneCount) {
-      this.prevMilestoneCount = milestoneCount;
-      const priority = this.getMilestonePriority();
-      this.milestones = new Array(this.milestonesMax.length).fill(0);
-      for (let i = 0; i < priority.length; i++) {
-        while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
-          this.milestones[priority[i]]++;
-          milestoneCount--;
-        }
-      }
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
+  abstract updateMilestonesNoMS(): boolean; // dunno if we'll keep this here
 
   evaluateForcedPubConditions(): boolean {
     return this.forcedPubConditions.every((cond) => cond())
@@ -311,25 +232,6 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
   }
 
   /**
-   * Updates several sim status parameters
-   */
-  updateSimStatus() {
-    if (this.rho.value > this.maxRho) this.maxRho = this.rho.value;
-    this.updateT();
-    if (this.maxRho < this.recovery.value) this.recovery.time = this.t;
-
-    this.tauH = this.tauFactor * (this.maxRho - this.lastPub) / (this.t / 3600);
-    if (this.maxTauH < this.tauH || !this.evaluateForcedPubConditions() || this.evaluatePubConditions()) {
-      this.maxTauH = this.tauH;
-      this.pubT = this.t;
-      this.pubRho = this.maxRho;
-    }
-
-    this.curMult = 10 ** (this.getTotMult(this.maxRho) - this.totMult);
-    this.ticks++;
-  }
-
-  /**
    * Runs each time a variable is purchased
    * @param id id of the purchased variable
    */
@@ -346,6 +248,8 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
    */
   extraBuyingCondition(id: number): boolean {return true;};
 
+  abstract recordPurchase(variable: Variable): void;
+
   /**
    * Buys variables.
    *
@@ -354,18 +258,10 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
   buyVariables() {
     let bought = false;
     for (let i = this.variables.length - 1; i >= 0; i--) {
-      let currency = this.variables[i].currency ?? this.rho;
+      let currency = this.variables[i].currency;
       while (true) {
         if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
-          if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.variables[i].name,
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-              symbol: currency.symbol
-            });
-          }
+          this.recordPurchase(this.variables[i]);
           currency.subtract(this.variables[i].cost);
           this.variables[i].buy();
           bought = true;
@@ -399,17 +295,9 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
         if (rawCost[i] + weights[i] < minCost[0] && this.variableAvailability[i]()) {
           minCost = [rawCost[i] + weights[i], i];
         }
-      if (minCost[1] !== -1 && rawCost[minCost[1]] < (this.variables[minCost[1]].currency ?? this.rho).value) {
-        (this.variables[minCost[1]].currency ?? this.rho).subtract(this.variables[minCost[1]].cost);
-        if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
-          this.boughtVars.push({
-            variable: this.variables[minCost[1]].name,
-            level: this.variables[minCost[1]].level + 1,
-            cost: this.variables[minCost[1]].cost,
-            timeStamp: this.t,
-            symbol: (this.variables[minCost[1]].currency ?? this.rho).symbol
-          });
-        }
+      if (minCost[1] !== -1 && rawCost[minCost[1]] < this.variables[minCost[1]].currency.value) {
+        this.variables[minCost[1]].currency.subtract(this.variables[minCost[1]].cost);
+        this.recordPurchase(this.variables[minCost[1]]);
         this.variables[minCost[1]].buy();
         bought = true;
         this.onVariablePurchased(minCost[1]);
@@ -430,20 +318,12 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
     if (!this.confirmPurchase) throw "Cannot use buyVariablesFork if confirmPurchase is undefined";
     let bought = false;
     for (let i = this.variables.length - 1; i >= 0; i--) {
-      let currency = this.variables[i].currency ?? this.rho;
+      const currency = this.variables[i].currency;
       while (true) {
         if (currency.value > this.variables[i].cost && this.buyingConditions[i]() && this.variableAvailability[i]() && this.extraBuyingCondition(i)) {
           let confirmPurchase = await this.confirmPurchase(i);
           if (!confirmPurchase) break;
-          if (this.maxRho + this.settings.boughtVarsDelta > this.lastPub) {
-            this.boughtVars.push({
-              variable: this.variables[i].name,
-              level: this.variables[i].level + 1,
-              cost: this.variables[i].cost,
-              timeStamp: this.t,
-              symbol: currency.symbol
-            });
-          }
+          this.recordPurchase(this.variables[i]);
           currency.subtract(this.variables[i].cost);
           this.variables[i].buy();
           bought = true;
@@ -465,20 +345,7 @@ export default abstract class theoryClass<theory extends theoryType, strat exten
    * Creates a sim result from the sim class
    * @param stratExtra Extra string to append to the "strat" column
    */
-  createResult(stratExtra: string = ""): simResult {
-    return {
-      theory: this.theory,
-      sigma: this.sigma,
-      lastPub: this.lastPub,
-      pubRho: this.pubRho,
-      deltaTau: (this.pubRho - this.lastPub) * this.tauFactor,
-      pubMulti: 10 ** (this.getTotMult(this.pubRho) - this.totMult),
-      strat: this.strat as String + stratExtra,
-      tauH: this.maxTauH,
-      time: Math.max(0, this.pubT - this.recovery.time),
-      boughtVars: this.boughtVars
-    }
-  }
+  abstract createResult(stratExtra: string): simResult;
 
   copy(): any {
     throw new Error("Please implement `copy` method");

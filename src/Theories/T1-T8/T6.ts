@@ -1,5 +1,4 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -13,10 +12,25 @@ import {
     getLastLevel,
     getBestResult
 } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T6";
 
-export default async function t6(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.196,
+  multFactor: -l10(50)
+});
+
+const T6: TheoryInterface<theory> = {
+  simulate: t6,
+  converter
+};
+
+export default T6;
+
+async function t6(data: theoryData<theory>): Promise<simResult> {
     let res;
     if (data.strat.includes("Coast")) {
         let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
@@ -44,7 +58,7 @@ export default async function t6(data: theoryData<theory>): Promise<simResult> {
     return res;
 }
 
-class t6Sim extends theoryClass<theory> {
+class t6Sim extends traditionalTheoryClass<theory> {
     q: number;
     r: number;
     k: number;
@@ -84,13 +98,13 @@ class t6Sim extends theoryClass<theory> {
             ],
             T6SnaxIdleRecovery: [
                 () => {
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
                 },
                 true,
                 () => {
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[2].cost + l10(5)
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
                 },
@@ -104,14 +118,14 @@ class t6Sim extends theoryClass<theory> {
             T6SnaxIdleRecoveryCoast: [
                 () => {
                     if (!this.variables[0].shouldBuy) return false;
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
                 },
                 true,
                 () => {
                     if (!this.variables[2].shouldBuy) return false;
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[2].cost + l10(5)
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
                 },
@@ -197,13 +211,13 @@ class t6Sim extends theoryClass<theory> {
             ],
             T6C5dIdleRecovery: [
                 () => {
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
                 },
                 true,
                 () => {
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[2].cost + l10(5)
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
                 },
@@ -217,14 +231,14 @@ class t6Sim extends theoryClass<theory> {
             T6C5dIdleRecoveryCoast: [
                 () => {
                     if (!this.variables[0].shouldBuy) return false;
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity);
                 },
                 true,
                 () => {
                     if (!this.variables[2].shouldBuy) return false;
-                    if (this.maxRho <= this.lastPub - this.idleRecoveryStop) return true;
+                    if (this.maxRho <= this.lastPubRho - this.idleRecoveryStop) return true;
                     return this.variables[2].cost + l10(5)
                         < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)
                 },
@@ -257,7 +271,7 @@ class t6Sim extends theoryClass<theory> {
     }
 
     getMilestonePriority(): number[] {
-        const milestoneCount = Math.min(6, Math.floor(Math.max(this.lastPub, this.maxRho) / 25));
+        const milestoneCount = Math.min(6, Math.floor(Math.max(this.lastPubRho, this.maxRho) / 25));
         switch (this.strat) {
             case "T6":
                 return milestoneCount >= 4 ? [0, 3, 1, 2] : [1, 0, 3, 2];
@@ -304,10 +318,6 @@ class t6Sim extends theoryClass<theory> {
         }
     }
 
-    getTotMult(val: number): number {
-        return Math.max(0, val * 0.196 - l10(50)) + getR9multiplier(this.sigma);
-    }
-
     calculateIntegral(vc1: number, vc2: number, vc3: number, vc4: number, vc5: number): number {
         const term1 = vc1 + vc2 + this.q + this.r;
         const term2 = vc3 + this.q * 2 + this.r - l10(2);
@@ -318,35 +328,38 @@ class t6Sim extends theoryClass<theory> {
     }
 
     constructor(data: theoryData<theory>) {
-        super(data);
+        super(data, converter);
         this.q = -Infinity;
         this.r = 0;
         this.idleRecoveryStop = this.strat.includes("IdleRecovery") ? parseInt(this.stratSpecificInputs.idleRcvStop ?? "0") : 0;
-        this.pubUnlock = 12;
+        this.pubUnlockRho = 12;
         this.milestoneUnlockSteps = 25;
         this.milestonesMax = [1, 1, 1, 3];
         this.variables = [
             new Variable({
+                currency: this.rho,
                 name: "q1",
                 cost: new FirstFreeCost(new ExponentialCost(15, 3)),
                 valueScaling: new StepwisePowerSumValue()
             }),
-            new Variable({name: "q2", cost: new ExponentialCost(500, 100), valueScaling: new ExponentialValue(2)}),
-            new Variable({name: "r1", cost: new ExponentialCost(1e25, 1e5), valueScaling: new StepwisePowerSumValue()}),
-            new Variable({name: "r2", cost: new ExponentialCost(1e30, 1e10), valueScaling: new ExponentialValue(2)}),
+            new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(500, 100), valueScaling: new ExponentialValue(2) }),
+            new Variable({ currency: this.rho, name: "r1", cost: new ExponentialCost(1e25, 1e5), valueScaling: new StepwisePowerSumValue() }),
+            new Variable({ currency: this.rho, name: "r2", cost: new ExponentialCost(1e30, 1e10), valueScaling: new ExponentialValue(2) }),
             new Variable({
+                currency: this.rho,
                 name: "c1",
                 cost: new ExponentialCost(10, 2),
                 valueScaling: new StepwisePowerSumValue(2, 10, 1)
             }),
-            new Variable({name: "c2", cost: new ExponentialCost(100, 5), valueScaling: new ExponentialValue(2)}),
+            new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(100, 5), valueScaling: new ExponentialValue(2) }),
             new Variable({
+                currency: this.rho,
                 name: "c3",
                 cost: new ExponentialCost(1e7, 1.255),
                 valueScaling: new StepwisePowerSumValue()
             }),
-            new Variable({name: "c4", cost: new ExponentialCost(1e25, 5e5), valueScaling: new ExponentialValue(2)}),
-            new Variable({name: "c5", cost: new ExponentialCost(15, 3.9), valueScaling: new ExponentialValue(2)}),
+            new Variable({ currency: this.rho, name: "c4", cost: new ExponentialCost(1e25, 5e5), valueScaling: new ExponentialValue(2) }),
+            new Variable({ currency: this.rho, name: "c5", cost: new ExponentialCost(15, 3.9), valueScaling: new ExponentialValue(2) }),
         ];
         this.k = 0;
         this.stopC12 = [0, 0, true];
@@ -358,7 +371,7 @@ class t6Sim extends theoryClass<theory> {
             if (!global.simulating) break;
             this.tick();
             this.updateSimStatus();
-            if (this.lastPub < 150) this.updateMilestones();
+            if (this.lastPubRho < 150) this.updateMilestones();
             this.buyVariables();
             this.ticks++;
             if (this.variables[0].shouldFork) await this.doForkVariable(0);

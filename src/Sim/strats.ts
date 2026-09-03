@@ -1,12 +1,13 @@
 import jsonData from "../Data/data.json" with { type: "json" };
 
-const stratConditionArgs = ["very_active", "active", "semi_idle", "idle", "rho", "laststrat"];
+const stratConditionArgs = ["very_active", "active", "semi_idle", "idle", "tau", "rho", "laststrat"];
 
 type stratConditionFunction = (
   very_active: boolean,
   active: boolean,
   semi_idle: boolean,
   idle: boolean,
+  tau: number,
   rho: number,
   laststrat: string
 ) => boolean;
@@ -54,9 +55,9 @@ function parseExpression(expression: string) {
   return `return ${expression}`;
 }
 
-export function getStrats<T extends theoryType>(theory: T, rho: number, type: string, lastStrat: string, stratFilter = true): stratType[T][] {
+export function getStrats<T extends theoryType>(theory: T, tau: number, rho: number, type: string, lastStrat: string, stratFilter = true): stratType[T][] {
   const strats: stratType[T][] = [];
-  const args = [...jsonData.stratCategories.map((v) => v === type), rho, lastStrat] as [boolean, boolean, boolean, boolean, number, string];
+  const args = [...jsonData.stratCategories.map((v) => v === type), tau, rho, lastStrat] as [boolean, boolean, boolean, boolean, number, number, string];
   for (const strat of (Object.keys(stratData[theory].strats) as stratType[T][])) {
     if (
       (stratData[theory].strats[strat].stratFilterCondition(...args) || !stratFilter) 

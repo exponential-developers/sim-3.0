@@ -1,5 +1,4 @@
 import { global } from "../../Sim/main";
-import theoryClass from "../theory";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -12,10 +11,25 @@ import {
   toCallables,
   getBestResult,
 } from "../../Utils/helpers";
+import { traditionalConverter } from "../../Utils/progressConversion";
+import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T4";
 
-export default async function t4(data: theoryData<theory>): Promise<simResult> {
+const converter: ProgressValueConverterRho = traditionalConverter({
+  r9Affected: true,
+  multExponent: 0.165,
+  multFactor: -l10(4)
+});
+
+const T4: TheoryInterface<theory> = {
+  simulate: t4,
+  converter
+};
+
+export default T4;
+
+async function t4(data: theoryData<theory>): Promise<simResult> {
   let res;
   if(!data.strat.includes("Coast")) {
     const sim = new t4Sim(data);
@@ -49,7 +63,7 @@ export default async function t4(data: theoryData<theory>): Promise<simResult> {
   return res;
 }
 
-class t4Sim extends theoryClass<theory> {
+class t4Sim extends traditionalTheoryClass<theory> {
   q: number;
 
   getBuyingConditions(): conditionFunction[] {
@@ -82,16 +96,16 @@ class t4Sim extends theoryClass<theory> {
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
       T4C3dC12rcv: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub,
-        () => this.maxRho < this.lastPub,
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPubRho,
+        () => this.maxRho < this.lastPubRho,
         true,
         ...new Array(3).fill(false),
         () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
       T4C356dC12rcv: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub,
-        () => this.maxRho < this.lastPub,
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPubRho,
+        () => this.maxRho < this.lastPubRho,
         true,
         false,
         true,
@@ -100,8 +114,8 @@ class t4Sim extends theoryClass<theory> {
         true
       ],
       T4C456dC12rcvMS: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPub,
-        () => this.maxRho < this.lastPub,
+        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPubRho,
+        () => this.maxRho < this.lastPubRho,
         false,
         true,
         true,
@@ -142,9 +156,6 @@ class t4Sim extends theoryClass<theory> {
     ];
     return conditions;
   }
-  getTotMult(val: number): number {
-    return Math.max(0, val * 0.165 - l10(4)) + getR9multiplier(this.sigma);
-  }
   getMilestonePriority(): number[] {
     switch (this.strat) {
       case "T4C3d": return [2];
@@ -154,7 +165,7 @@ class t4Sim extends theoryClass<theory> {
       case "T4C3dC12rcv": return [1, 2];
       case "T4C356dC12rcv": return [1, 2, 0];
       case "T4C456dC12rcvMS": {
-        if (this.maxRho < this.lastPub) return [1, 2, 0]
+        if (this.maxRho < this.lastPubRho) return [1, 2, 0]
         else if (this.t % 100 < 50) return [2, 0, 1]
         else return [0, 2, 1];
       }
@@ -179,21 +190,21 @@ class t4Sim extends theoryClass<theory> {
     }
   }
   constructor(data: theoryData<theory>) {
-    super(data);
+    super(data, converter);
     this.q = 0;
-    this.pubUnlock = 9;
+    this.pubUnlockRho = 9;
     this.milestoneUnlockSteps = 25;
     //milestones  [terms, c1exp, multQdot]
     this.milestonesMax = [3, 1, 3];
     this.variables = [
-      new Variable({ name: "c1", cost: new FirstFreeCost(new ExponentialCost(5, 1.305)), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "c2", cost: new ExponentialCost(20, 3.75), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c3", cost: new ExponentialCost(2000, 2.468), valueScaling: new ExponentialValue(2) }),
-      new Variable({ name: "c4", cost: new ExponentialCost(1e4, 4.85), valueScaling: new ExponentialValue(3) }),
-      new Variable({ name: "c5", cost: new ExponentialCost(1e8, 12.5), valueScaling: new ExponentialValue(5) }),
-      new Variable({ name: "c6", cost: new ExponentialCost(1e10, 58), valueScaling: new ExponentialValue(10) }),
-      new Variable({ name: "q1", cost: new ExponentialCost(1e3, 100), valueScaling: new StepwisePowerSumValue() }),
-      new Variable({ name: "q2", cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c1", cost: new FirstFreeCost(new ExponentialCost(5, 1.305)), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "c2", cost: new ExponentialCost(20, 3.75), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c3", cost: new ExponentialCost(2000, 2.468), valueScaling: new ExponentialValue(2) }),
+      new Variable({ currency: this.rho, name: "c4", cost: new ExponentialCost(1e4, 4.85), valueScaling: new ExponentialValue(3) }),
+      new Variable({ currency: this.rho, name: "c5", cost: new ExponentialCost(1e8, 12.5), valueScaling: new ExponentialValue(5) }),
+      new Variable({ currency: this.rho, name: "c6", cost: new ExponentialCost(1e10, 58), valueScaling: new ExponentialValue(10) }),
+      new Variable({ currency: this.rho, name: "q1", cost: new ExponentialCost(1e3, 100), valueScaling: new StepwisePowerSumValue() }),
+      new Variable({ currency: this.rho, name: "q2", cost: new ExponentialCost(1e4, 1000), valueScaling: new ExponentialValue(2) }),
     ];
     this.updateMilestones();
   }
@@ -202,7 +213,7 @@ class t4Sim extends theoryClass<theory> {
       if (!global.simulating) break;
       this.tick();
       this.updateSimStatus();
-      if (this.lastPub < 176) this.updateMilestones();
+      if (this.lastPubRho < 176) this.updateMilestones();
       this.buyVariables();
       if(this.variables[6].shouldFork) await this.doForkVariable(6);
       if(this.variables[7].shouldFork) await this.doForkVariable(7);
