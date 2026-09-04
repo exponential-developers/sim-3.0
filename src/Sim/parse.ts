@@ -37,7 +37,7 @@ function parseExponentialValue(str: string): number {
         return parseLog10String(str);
     }
     else {
-        throw `Invalid currency value ${str}. Currency value must be in formats <number>, <exxxx> or <xexxxx>.`;
+        throw `Invalid value ${str}. Value must be in formats <number>, <exxxx> or <xexxxx>.`;
     }
 }
 
@@ -79,14 +79,77 @@ function parseCurrency(
 
 function parseSpecificInputSlider(div: Element): string | undefined {
     const span = div.querySelector(".specificInputSliderOutput");
-    if (span == null) return undefined;
+    if (span === null) return undefined;
     return span.innerHTML;
+}
+
+function parseSpecificInputTextbox<T extends theoryType>(div: Element): string | undefined {
+    const textbox = div.querySelector<HTMLInputElement>(".specificInputTextbox");
+    if (textbox === null) return undefined;
+
+    const theory = div.getAttribute("theory") as T;
+    const id = div.getAttribute("inputid") as SpecificInputOf[T];
+    const theoryData = (jsonData.theories as TheoryDataStructure)[theory];
+    if (!theoryData.specificInputs) return undefined;
+
+    const input = theoryData.specificInputs[id];
+    if (input.type !== "textbox") return undefined;
+
+    const val = textbox.value.trim();
+    let error = (message?: string) => {
+        throw `Bad input for ${theory} - ${input.label}` + (
+            message ? ": " + message : ""
+        );
+    }
+
+    switch (input.validation.type) {
+        case "int": {
+            if (!/^\d+$/.test(val)) error("Expected an integer");
+            const parsedValue = parseInt(val);
+            const min = typeof input.validation.min == "string" ? parseInt(input.validation.min) : input.validation.min;
+            const max = typeof input.validation.min == "string" ? parseInt(input.validation.min) : input.validation.min;
+            if (parsedValue < min || parsedValue > max) error(
+                `Value should be between ${min} and ${max}`
+            );
+            return val;
+        }
+        case "float": {
+            if (!/^\d+(\.\d+)$/.test(val)) error("Expected a number");
+            const parsedValue = parseFloat(val);
+            const min = typeof input.validation.min == "string" ? parseFloat(input.validation.min) : input.validation.min;
+            const max = typeof input.validation.min == "string" ? parseFloat(input.validation.min) : input.validation.min;
+            if (parsedValue < min || parsedValue > max) error(
+                `Value should be between ${min} and ${max}`
+            );
+            return val;
+        }
+        case "exp": {
+            let parsedValue: number;
+            try {
+                parsedValue = parseExponentialValue(val);
+            }
+            catch (e) {
+                error(e as string);
+                throw "Unreachable";
+            }
+            const min = typeof input.validation.min == "string" ? parseExponentialValue(input.validation.min) : input.validation.min;
+            const max = typeof input.validation.min == "string" ? parseExponentialValue(input.validation.min) : input.validation.min;
+            if (parsedValue < min || parsedValue > max) error(
+                `Value should be between ${min} and ${max}`
+            );
+            return val;
+        }
+        case "string": {
+            return val;
+        }
+    }
 }
 
 function parseSpecificInputValue(div: Element): string | undefined {
     const inputType = div.getAttribute("inputtype") as SpecificInputType["type"];
     switch (inputType) {
         case "slider": return parseSpecificInputSlider(div);
+        case "textbox": return parseSpecificInputTextbox(div);
     }
 }
 

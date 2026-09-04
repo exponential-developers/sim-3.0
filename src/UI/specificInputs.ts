@@ -23,9 +23,24 @@ function generateSlider(theory: theoryType, id: string, input: SpecificInputSlid
     return span;
 }
 
+function generateTextbox(theory: theoryType, id: string, input: SpecificInputTextbox): HTMLSpanElement {
+    const span = ce<HTMLSpanElement>("span");
+
+    const textbox = ce<HTMLInputElement>("input");
+    textbox.type = "text";
+    textbox.placeholder = input.placeholder ?? "";
+    textbox.spellcheck = false;
+    textbox.classList.add("specificInputTextbox");
+    textbox.style.minWidth = "8ch";
+    span.appendChild(textbox);
+
+    return span;
+}
+
 function generateSpecificInputWidget(theory: theoryType, id: string, input: SpecificInputType): HTMLSpanElement {
     switch (input.type) {
-        case "slider": return generateSlider(theory, id, input)
+        case "slider": return generateSlider(theory, id, input);
+        case "textbox": return generateTextbox(theory, id, input);
     }
     return ce<HTMLSpanElement>("span");
 }
@@ -68,6 +83,11 @@ export function setSpecificInput<T extends theoryType>(
             if (slider === null || output === null) return;
             slider.value = value;
             output.innerText = value;
+        };
+        case "textbox": {
+            const textbox = div.querySelector<HTMLInputElement>(".specificInputTextbox");
+            if (textbox === null) return;
+            textbox.value = value;
         }
     }
 }

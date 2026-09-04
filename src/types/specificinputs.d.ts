@@ -1,7 +1,7 @@
 type SpecificInputNumberValidation = {
     type: "int" | "float" | "exp",
-    min: number,
-    max: number
+    min: number | string,
+    max: number | string
 }
 
 type SpecificInputValidationType = SpecificInputNumberValidation | {
