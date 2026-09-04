@@ -31,7 +31,6 @@ function generateTextbox(theory: theoryType, id: string, input: SpecificInputTex
     textbox.placeholder = input.placeholder ?? "";
     textbox.spellcheck = false;
     textbox.classList.add("specificInputTextbox");
-    textbox.style.minWidth = "8ch";
     span.appendChild(textbox);
 
     return span;

@@ -25,6 +25,7 @@ import TC from "../Theories/Unofficial-CTs/TC";
 import FS from "../Theories/Unofficial-CTs/FS";
 import BD from "../Theories/Unofficial-CTs/BD";
 import ILC from "../Theories/Unofficial-CTs/ILC";
+import NLI from "../Theories/Unofficial-CTs/NLI";
 import UI from "../UI/elements";
 
 
@@ -51,6 +52,7 @@ const theoryInterface: { [theory in theoryType]: TheoryInterface<theory> } = {
     FS,
     BD,
     ILC,
+    NLI
 }
 
 async function simulateOnce<T extends theoryType, S extends stratType[T]>(

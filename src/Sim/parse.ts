@@ -56,6 +56,8 @@ function parseCurrency(
     defaultType: ProgressValueType = "rho"
 ): ProgressValue {
     str = str.replace(" ", "");
+    const supportsRho = (jsonData.theories as TheoryDataStructure)[theory].supportsRho ?? true;
+    if (!supportsRho && defaultType === "rho") defaultType = "tau";
 
     const inputType = str.match(/[rtm]$/g);
     let type = defaultType;
@@ -64,8 +66,7 @@ function parseCurrency(
         str = str.slice(0, str.length - 1);
     };
 
-    if ((jsonData.theories as TheoryDataStructure)[theory].supportsRho === false
-        && type == "rho") {
+    if (!supportsRho && type === "rho") {
         throw "Cannot use rho mode for theory " + theory
     }
 
@@ -96,6 +97,8 @@ function parseSpecificInputTextbox<T extends theoryType>(div: Element): string |
     if (input.type !== "textbox") return undefined;
 
     const val = textbox.value.trim();
+    if (!val) return undefined;
+
     let error = (message?: string) => {
         throw `Bad input for ${theory} - ${input.label}` + (
             message ? ": " + message : ""
@@ -107,7 +110,7 @@ function parseSpecificInputTextbox<T extends theoryType>(div: Element): string |
             if (!/^\d+$/.test(val)) error("Expected an integer");
             const parsedValue = parseInt(val);
             const min = typeof input.validation.min == "string" ? parseInt(input.validation.min) : input.validation.min;
-            const max = typeof input.validation.min == "string" ? parseInt(input.validation.min) : input.validation.min;
+            const max = typeof input.validation.max == "string" ? parseInt(input.validation.max) : input.validation.max;
             if (parsedValue < min || parsedValue > max) error(
                 `Value should be between ${min} and ${max}`
             );
@@ -117,7 +120,7 @@ function parseSpecificInputTextbox<T extends theoryType>(div: Element): string |
             if (!/^\d+(\.\d+)$/.test(val)) error("Expected a number");
             const parsedValue = parseFloat(val);
             const min = typeof input.validation.min == "string" ? parseFloat(input.validation.min) : input.validation.min;
-            const max = typeof input.validation.min == "string" ? parseFloat(input.validation.min) : input.validation.min;
+            const max = typeof input.validation.max == "string" ? parseFloat(input.validation.max) : input.validation.max;
             if (parsedValue < min || parsedValue > max) error(
                 `Value should be between ${min} and ${max}`
             );
@@ -133,7 +136,7 @@ function parseSpecificInputTextbox<T extends theoryType>(div: Element): string |
                 throw "Unreachable";
             }
             const min = typeof input.validation.min == "string" ? parseExponentialValue(input.validation.min) : input.validation.min;
-            const max = typeof input.validation.min == "string" ? parseExponentialValue(input.validation.min) : input.validation.min;
+            const max = typeof input.validation.max == "string" ? parseExponentialValue(input.validation.max) : input.validation.max;
             if (parsedValue < min || parsedValue > max) error(
                 `Value should be between ${min} and ${max}`
             );

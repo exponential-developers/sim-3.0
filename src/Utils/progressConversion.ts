@@ -1,10 +1,14 @@
 import { getR9multiplier } from "./helpers";
 
-interface TraditionalProgressConverterInterface {
-    r9Affected?: boolean;
-    tauFactor?: number;
+interface ProgressConverterInterface {
     multExponent: number;
     multFactor?: number;
+}
+
+interface TraditionalProgressConverterInterface extends ProgressConverterInterface {
+    r9Affected?: boolean;
+    tauFactor?: number;
+    
 }
 
 export function traditionalConverter(data: TraditionalProgressConverterInterface): ProgressValueConverterRho {
@@ -24,6 +28,8 @@ export function traditionalConverter(data: TraditionalProgressConverterInterface
         supportsRho: true,
         convertTo(input, inputType, sigma = 20) {
             let val = input.value;
+            if (input.valueType === inputType) return val;
+
             if (input.valueType == "rho") val = rhoToTau(val);
             if (input.valueType == "multiplier") val = multToTau(val, sigma);
 
@@ -32,6 +38,23 @@ export function traditionalConverter(data: TraditionalProgressConverterInterface
                 case "rho": return tauToRho(val);
                 case "multiplier": return tauToMult(val, sigma);
             }
+        },
+    }
+}
+
+export function genericProgressConverter(data: ProgressConverterInterface): ProgressValueConverter {
+    const multExponent = data.multExponent;
+    const multFactor = data.multFactor ?? 0;
+
+    return {
+        supportsRho: false,
+        convertTo(input, inputType, sigma) {
+            if (input.valueType === "rho" || inputType === "rho") throw new Error("Impossible to convert a value to/from rho");
+            if (input.valueType === inputType) return input.value;
+            if (input.valueType === "tau" && inputType === "multiplier") {
+                return input.value * multExponent + multFactor;
+            }
+            return (input.value - multFactor) / multExponent;
         },
     }
 }
