@@ -920,8 +920,8 @@
       "UI_visible": false,
       "supportsRho": false,
       "specificInputs": {
-        "lifetime_h": {
-          "label": "Lifetime h(φ)",
+        "lifetime_alpha": {
+          "label": "Lifetime α",
           "type": "textbox",
           "validation": {
             "type": "exp",

@@ -39,6 +39,20 @@ export function parseLog10String(num: string): number {
   return result;
 }
 
+/** Parses an exponential value */
+export function parseExponentialValue(str: string): number {
+  if (/^e?\d+(\.\d+)?$/.test(str)) {
+      if (str.charAt(0) == 'e') str = str.slice(1);
+      return parseFloat(str);
+  }
+  else if (/^\d+(\.\d+)?e\d+$/.test(str)) {
+      return parseLog10String(str);
+  }
+  else {
+      throw `Invalid value ${str}. Value must be in formats <number>, <exxxx> or <xexxxx>.`;
+  }
+}
+
 /** Formats a log10 value as a string */
 export function logToExp(num: number, dec = 3): string {
   const wholePart = Math.floor(num);
@@ -126,6 +140,13 @@ export function subtract(value1: number, value2: number): number {
   const max = value1 > value2 ? value1 : value2;
   const min = value1 > value2 ? value2 : value1;
   return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
+}
+
+/**
+ * Regular sum
+ */
+export function regsum(...values: number[]): number {
+  return values.reduce((a, b) => a + b, 0);
 }
 
 /**

@@ -1,5 +1,5 @@
 import jsonData from "../Data/data.json" with { type: "json" };
-import { getTheories, getTheoryFromIndex, isMainTheory, parseLog10String } from "../Utils/helpers";
+import { getTheories, getTheoryFromIndex, isMainTheory, parseExponentialValue } from "../Utils/helpers";
 import UI from "../UI/elements";
 
 type ParsedSpecificInput<T extends theoryType> = {
@@ -25,19 +25,6 @@ export function parseSettings(): Settings {
         showA23: UI.settings.showA23.checked,
         showUnofficials: UI.settings.showUnofficials.checked,
         totalPurchaseList: UI.settings.totalPurchaseList.checked
-    }
-}
-
-function parseExponentialValue(str: string): number {
-    if (/^e?\d+(\.\d+)?$/.test(str)) {
-        if (str.charAt(0) == 'e') str = str.slice(1);
-        return parseFloat(str);
-    }
-    else if (/^\d+(\.\d+)?e\d+$/.test(str)) {
-        return parseLog10String(str);
-    }
-    else {
-        throw `Invalid value ${str}. Value must be in formats <number>, <exxxx> or <xexxxx>.`;
     }
 }
 
