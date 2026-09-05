@@ -3,12 +3,16 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
+import { prepareTable } from "./helpers/prepareTable";
 
-import activePubTable from "./helpers/table_wsp_0_1_active_coast.json";
-import passivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
+import rawActivePubTable from "./helpers/table_wsp_0_1_active_coast.json";
+import rawPassivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
 
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+let activePubTable = prepareTable(rawActivePubTable, "000");
+let passivePubTable = prepareTable(rawPassivePubTable, "000");
 
 type theory = "WSP";
 

@@ -1,12 +1,16 @@
 import { global } from "../../Sim/main";
-import activePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
-import passivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast.json";
+import { prepareTable } from "../CTs/helpers/prepareTable";
+import rawActivePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
+import rawPassivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast.json";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, add, getLastLevel, getBestResult, getFactorial } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+let activePubTable: Record<string, string> = prepareTable(rawActivePubTable, "000")
+let passivePubTable: Record<string, string> = prepareTable(rawPassivePubTable, "000")
 
 type theory = "BD";
 

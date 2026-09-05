@@ -12,11 +12,15 @@ import {
   toCallables,
   getFactorial
 } from "../../Utils/helpers";
+import { prepareTable } from "./helpers/prepareTable";
 
-import passivePubTable from "./helpers/table_fi_0_1_passive_coast.json";
-import activePubTable from "./helpers/table_fi_0_1_passive_coast.json";
+import rawPassivePubTable from "./helpers/table_fi_0_1_passive_coast.json";
+import rawActivePubTable from "./helpers/table_fi_0_1_passive_coast.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+let activePubTable = prepareTable(rawActivePubTable, "000")
+let passivePubTable = prepareTable(rawPassivePubTable, "000")
 
 type theory = "FI";
 

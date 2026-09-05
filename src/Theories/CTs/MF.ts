@@ -3,10 +3,14 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
+import { prepareTable } from "./helpers/prepareTable";
 
-import passivePubTable from "./helpers/table_mf_0_05_mfrccoast.json";
+import rawPassivePubTable from "./helpers/table_mf_0_05_mfrccoast.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+
+let passivePubTable = prepareTable(rawPassivePubTable, "00")
 
 type theory = "MF";
 

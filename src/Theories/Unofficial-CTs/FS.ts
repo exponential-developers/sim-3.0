@@ -5,9 +5,13 @@ import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Util
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
-import passivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast.json";
-import activePubTable from "../CTs/helpers/table_fs_0_02_active_coast.json";
+import { prepareTable } from "../CTs/helpers/prepareTable";
+import rawPassivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast.json";
+import rawActivePubTable from "../CTs/helpers/table_fs_0_02_active_coast.json";
 import traditionalTheoryClass from "../traditionalTheory";
+
+let activePubTable = prepareTable(rawActivePubTable, "04")
+let passivePubTable = prepareTable(rawPassivePubTable, "04")
 
 type theory = "FS";
 

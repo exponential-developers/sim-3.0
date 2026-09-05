@@ -3,9 +3,12 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, getLastLevel, getBestResult, getLastLevelCost } from "../../Utils/helpers";
-import ilcTable from "../CTs/helpers/table_ilc_0_01_ilccoast.json";
+import { prepareTable } from "../CTs/helpers/prepareTable";
+import rawILCTable from "../CTs/helpers/table_ilc_0_01_ilccoast.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+let ilcTable = prepareTable(rawILCTable, "00")
 
 type theory = "ILC";
 
