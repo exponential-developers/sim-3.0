@@ -29,9 +29,7 @@ async function bap(data: theoryData<theory>): Promise<simResult<theory>> {
 }
 
 interface pubTable {
-  [key: string]: {
-    next: number;
-  };
+  [key: string]: number;
 }
 
 class bapSim extends traditionalTheoryClass<theory> {
@@ -195,9 +193,9 @@ class bapSim extends traditionalTheoryClass<theory> {
     this.bestRes = null;
     if (this.lastPubRho < 1480)
     {
-      let newpubtable: pubTable = pubtable.bapdata;
+      let newpubtable: pubTable = pubtable;
       let pubseek = this.lastPubRho < 100 ? Math.round(this.lastPubRho * 4) / 4 : Math.round(this.lastPubRho);
-      this.forcedPubRho = newpubtable[pubseek.toString()].next;
+      this.forcedPubRho = newpubtable[pubseek.toString()];
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
 

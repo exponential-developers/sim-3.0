@@ -10,10 +10,6 @@ import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "BD";
 
-type pubRecord = {
-  next: string;
-}
-
 const tauFactor = 0.4;
 
 const converter: ProgressValueConverterRho = traditionalConverter({
@@ -169,9 +165,9 @@ class bdSim extends traditionalTheoryClass<theory> {
       if (this.lastPubRho < 1499)
       {
         let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
-        let table: Record<string, pubRecord> =
+        let table: Record<string, string> =
             this.strat.includes("BDd") ? activePubTable : passivePubTable;
-        let nextRho = parseFloat(table[pubSeek].next);
+        let nextRho = parseFloat(table[pubSeek]);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);
       }

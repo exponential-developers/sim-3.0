@@ -14,10 +14,6 @@ type theory = "FS";
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
 
-type pubRecord = {
-  next: string;
-}
-
 const converter: ProgressValueConverterRho = traditionalConverter({
   tauFactor: 1 / PHI_VALUE,
   multExponent: 1 / SQRT5_VALUE
@@ -388,8 +384,8 @@ class fsSim extends traditionalTheoryClass<theory> {
       if (this.lastPubRho < 970)
       {
         let pubSeek = (Math.round(this.lastPubRho * 50) / 50).toFixed(3) + "4";
-        let table: Record<string, pubRecord> = isActive? activePubTable : passivePubTable;
-        let nextRho = parseFloat(table[pubSeek].next);
+        let table: Record<string, string> = isActive? activePubTable : passivePubTable;
+        let nextRho = parseFloat(table[pubSeek]);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);
       }

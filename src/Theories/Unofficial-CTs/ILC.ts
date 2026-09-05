@@ -11,10 +11,6 @@ type theory = "ILC";
 
 const LAST_COAST_VAR = 5;
 
-type pubRecord = {
-  next: string;
-}
-
 const converter: ProgressValueConverterRho = traditionalConverter({
   tauFactor: 2,
   multExponent: 0.39,
@@ -158,9 +154,9 @@ class ilcSim extends traditionalTheoryClass<theory> {
     ];
     if(data.strat.includes("PT")) {
       let pubSeek = (Math.round(this.lastPubRho * 100) / 100).toFixed(4);
-      let table: Record<string, pubRecord> = ilcTable
+      let table: Record<string, string> = ilcTable
       if(pubSeek in table) {
-        let nextRho = parseFloat(table[pubSeek].next);
+        let nextRho = parseFloat(table[pubSeek]);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);
       }

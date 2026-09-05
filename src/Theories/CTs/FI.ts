@@ -32,10 +32,6 @@ const FI: TheoryInterface<theory> = {
 
 export default FI;
 
-type pubRecord = {
-  next: string;
-}
-
 async function fi(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if(data.strat.includes("Coast")) {
@@ -261,9 +257,9 @@ class fiSim extends traditionalTheoryClass<theory> {
       if (this.lastPubRho < 1499)
       {
         let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
-        let table: Record<string, pubRecord> =
+        let table: Record<string, string> =
             this.strat.includes("FId") ? activePubTable : passivePubTable;
-        let nextRho = parseFloat(table[pubSeek].next);
+        let nextRho = parseFloat(table[pubSeek]);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);
       }

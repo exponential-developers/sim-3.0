@@ -8,10 +8,6 @@ import passivePubTable from "./helpers/table_mf_0_05_mfrccoast.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
-type pubRecord = {
-  next: string;
-}
-
 type theory = "MF";
 
 const converter: ProgressValueConverterRho = traditionalConverter({
@@ -556,9 +552,9 @@ class mfSim extends traditionalTheoryClass<theory> {
     this.precomp_va2 = 10 ** this.variables[3].value;
     if(data.strat.includes("PT")) {
       let pubSeek = (Math.round(this.lastPubRho * 20) / 20).toFixed(4);
-      let table: Record<string, pubRecord> = passivePubTable
+      let table: Record<string, string> = passivePubTable
       if(pubSeek in table) {
-        let nextRho = parseFloat(table[pubSeek].next);
+        let nextRho = parseFloat(table[pubSeek]);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);
       }
