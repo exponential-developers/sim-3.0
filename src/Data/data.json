@@ -848,7 +848,7 @@
           "stratFilterCondition": "Idle"
         },
         "FSCoast": {
-          "stratFilterCondition": "!Idle && rho < 13"
+          "stratFilterCondition": "(!Idle && !Semi-Idle) && rho < 13"
         },
         "FSd": {
           "stratFilterCondition": "false"
@@ -860,7 +860,10 @@
           "stratFilterCondition": "false"
         },
         "FSStopNMCoast": {
-          "stratFilterCondition": "!Idle"
+          "stratFilterCondition": "(!Idle && rho > 970) || (!Idle && !Semi-Idle)"
+        },
+        "FSPTStopNMCoast": {
+          "stratFilterCondition": "Semi-Idle && rho <= 970"
         },
         "FSdStopNM": {
           "stratFilterCondition": "false"

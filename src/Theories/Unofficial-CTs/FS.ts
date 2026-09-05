@@ -5,12 +5,18 @@ import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Util
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
+import passivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast.json";
 import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "FS";
 
 const PHI_VALUE = (1 + Math.sqrt(5)) / 2;
 const SQRT5_VALUE = Math.sqrt(5);
+
+type pubRecord = {
+  next: string;
+  time: number;
+}
 
 const converter: ProgressValueConverterRho = traditionalConverter({
   tauFactor: 1 / PHI_VALUE,
@@ -113,6 +119,14 @@ class SequenceCost extends BaseCost {
 async function fs(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if (data.strat.includes("Coast")) {
+    let bkup = "";
+    let replacedPt = false;
+    if(data.strat.includes("PT")) {
+      bkup = data.strat;
+      // @ts-ignore
+      data.strat = data.strat.replace("PT", "");
+      replacedPt = true;
+    }
     let initialSim = new fsSim(data);
     let initialRes = await initialSim.simulate();
     let lastN = getLastLevel("n", initialRes.boughtVars.slice(0, getLastIndex("c3", initialRes.boughtVars)));
@@ -135,7 +149,10 @@ async function fs(data: theoryData<theory>): Promise<simResult<theory>> {
     }
 
     const lastC1 = getLastLevel("c1", initialRes.boughtVars);
-
+    if(replacedPt) {
+      // @ts-ignore
+      data.strat = bkup;
+    }
     let sim = new fsSim(data);
     sim.variables[0].setOriginalCap(lastC1);
     // Max is
@@ -220,6 +237,13 @@ class fsSim extends traditionalTheoryClass<theory> {
         ...new Array(6).fill(true)
       ],
       FSStopNMCoast: [
+        () => this.variables[0].shouldBuy,
+        true,
+        () => this.variables[2].underOriginalCap(),
+        () => this.variables[3].underOriginalCap(),
+        ...new Array(6).fill(true)
+      ],
+      FSPTStopNMCoast: [
         () => this.variables[0].shouldBuy,
         true,
         () => this.variables[2].underOriginalCap(),
@@ -339,6 +363,16 @@ class fsSim extends traditionalTheoryClass<theory> {
         valueScaling: new ExponentialValue(3),
       }),
     ];
+    if(this.strat == "FSPTStopNMCoast") {
+      if (this.lastPubRho < 970)
+      {
+        let pubSeek = (Math.round(this.lastPubRho * 50) / 50).toFixed(3) + "4";
+        let table: Record<string, pubRecord> = passivePubTable;
+        let nextRho = parseFloat(table[pubSeek].next);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
+    }
     this.updateMilestonesNoMS();
     this.updateRhoDot();
     this.updateFDot();
