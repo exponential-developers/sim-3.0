@@ -7,8 +7,6 @@ import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/
 import activePubTable from "./helpers/table_wsp_0_1_active_coast.json";
 import passivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
 
-import activePubTable2 from "./helpers/table_wsp_0_1_active_coast_1497.json";
-import passivePubTable2 from "./helpers/table_wsp_0_1_passive_coast_1497.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
@@ -36,7 +34,7 @@ async function wsp(data: theoryData<theory>): Promise<simResult<theory>> {
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = {
       ...data,
-      strat: data.strat.replace("PT2", "").replace("PT", "").replace("Coast", "").replace("PostRecovery", "") as stratType[theory]
+      strat: data.strat.replace("PT", "").replace("Coast", "").replace("PostRecovery", "") as stratType[theory]
     };
     const sim1 = new wspSim(data2);
     const res1 = await sim1.simulate();
@@ -102,7 +100,6 @@ class wspSim extends traditionalTheoryClass<theory> {
       WSPStopC1: [true, true, true, () => this.lastPubRho < 450 || this.t < 15, true],
       WSPStopC1Coast: WSPStopC1CoastQ1,
       WSPPTStopC1Coast: WSPStopC1CoastQ1,
-      WSPPT2StopC1Coast: WSPStopC1CoastQ1,
       WSPPostRecoveryStopC1Coast: [
         () => this.maxRho <= this.lastPubRho ? WSPStopC1CoastQ1[0]() : WSPdStopC1CoastQ1[0](),
         true,
@@ -123,7 +120,6 @@ class wspSim extends traditionalTheoryClass<theory> {
       ],
       WSPdStopC1Coast: WSPdStopC1CoastQ1,
       WSPdPTStopC1Coast: WSPdStopC1CoastQ1,
-      WSPdPT2StopC1Coast: WSPdStopC1CoastQ1
     };
     return toCallables(conditions[this.strat]);
   }
@@ -176,17 +172,6 @@ class wspSim extends traditionalTheoryClass<theory> {
         let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
         let table: Record<string, pubRecord> =
             this.strat.includes("WSPd") ? activePubTable : passivePubTable;
-        let nextRho = parseFloat(table[pubSeek].next);
-        this.doSimEndConditions = () => false;
-        this.pubConditions.push(() => this.maxRho >= nextRho);
-      }
-    }
-    if(this.strat == "WSPdPT2StopC1Coast" || this.strat == "WSPPT2StopC1Coast") {
-      if (this.lastPubRho < 1495)
-      {
-        let pubSeek = (Math.round(this.lastPubRho * 10) / 10).toFixed(4);
-        let table: Record<string, pubRecord> =
-            this.strat.includes("WSPd") ? activePubTable2 : passivePubTable2;
         let nextRho = parseFloat(table[pubSeek].next);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);
