@@ -12,7 +12,8 @@ if __name__ == '__main__':
 
     }
     for key in d:
-        compressed[key] = d[key]["next"]
+        if isinstance(d[key], dict)
+            compressed[key] = d[key]["next"]
 
     with open(item, "w", encoding="utf-8") as f:
         json.dump(compressed, f, indent=2)
