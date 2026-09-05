@@ -6,6 +6,7 @@ import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import passivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast.json";
+import activePubTable from "../CTs/helpers/table_fs_0_02_active_coast.json";
 import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "FS";
@@ -124,7 +125,7 @@ async function fs(data: theoryData<theory>): Promise<simResult<theory>> {
     if(data.strat.includes("PT")) {
       bkup = data.strat;
       // @ts-ignore
-      data.strat = data.strat.replace("PT", "");
+      data.strat = data.strat.replace("PTA", "").replace("PT", "");
       replacedPt = true;
     }
     let initialSim = new fsSim(data);
@@ -229,6 +230,11 @@ class fsSim extends traditionalTheoryClass<theory> {
         () => this.variables[0].shouldBuy && dStrat[0](),
         ...dStrat.slice(1)
       ],
+      FSdPTCoast: [
+        //c1 mod 13
+        () => this.variables[0].shouldBuy && dStrat[0](),
+        ...dStrat.slice(1)
+      ],
       FSStopNM: [
         true,
         true,
@@ -250,6 +256,13 @@ class fsSim extends traditionalTheoryClass<theory> {
         () => this.variables[3].underOriginalCap(),
         ...new Array(6).fill(true)
       ],
+      FSPTAStopNMCoast: [
+        () => this.variables[0].shouldBuy,
+        true,
+        () => this.variables[2].underOriginalCap(),
+        () => this.variables[3].underOriginalCap(),
+        ...new Array(6).fill(true)
+      ],
       FSdStopNM: [
         //c1 mod 13
         () => dStrat[0](), //c1
@@ -259,6 +272,14 @@ class fsSim extends traditionalTheoryClass<theory> {
         ...dStrat.slice(4)
       ],
       FSdStopNMCoast: [
+        //c1 mod 13
+        () => this.variables[0].shouldBuy && dStrat[0](), //c1
+        true, //c2
+        () => dStrat[2]() && this.variables[2].underOriginalCap(), //n
+        () => dStrat[3]() && this.variables[3].underOriginalCap(), //m
+        ...dStrat.slice(4)
+      ],
+      FSdPTStopNMCoast: [
         //c1 mod 13
         () => this.variables[0].shouldBuy && dStrat[0](), //c1
         true, //c2
@@ -363,11 +384,12 @@ class fsSim extends traditionalTheoryClass<theory> {
         valueScaling: new ExponentialValue(3),
       }),
     ];
-    if(this.strat == "FSPTStopNMCoast") {
+    if(this.strat.includes("PT")) {
+      let isActive = this.strat.includes("PTA") || this.strat.includes("FSd")
       if (this.lastPubRho < 970)
       {
         let pubSeek = (Math.round(this.lastPubRho * 50) / 50).toFixed(3) + "4";
-        let table: Record<string, pubRecord> = passivePubTable;
+        let table: Record<string, pubRecord> = isActive? activePubTable : passivePubTable;
         let nextRho = parseFloat(table[pubSeek].next);
         this.doSimEndConditions = () => false;
         this.pubConditions.push(() => this.maxRho >= nextRho);

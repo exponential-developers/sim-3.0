@@ -848,28 +848,37 @@
           "stratFilterCondition": "Idle"
         },
         "FSCoast": {
-          "stratFilterCondition": "(!Idle && !Semi-Idle) && rho < 13"
+          "stratFilterCondition": "false"
         },
         "FSd": {
           "stratFilterCondition": "false"
         },
         "FSdCoast": {
+          "stratFilterCondition": "false"
+        },
+        "FSdPTCoast": {
           "stratFilterCondition": "Very-Active && rho < 13"
         },
         "FSStopNM": {
           "stratFilterCondition": "false"
         },
         "FSStopNMCoast": {
-          "stratFilterCondition": "(!Idle && rho > 970) || (!Idle && !Semi-Idle)"
+          "stratFilterCondition": "!Idle && rho > 970"
         },
         "FSPTStopNMCoast": {
           "stratFilterCondition": "Semi-Idle && rho <= 970"
+        },
+        "FSPTAStopNMCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 970"
         },
         "FSdStopNM": {
           "stratFilterCondition": "false"
         },
         "FSdStopNMCoast": {
-          "stratFilterCondition": "Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 970"
+        },
+        "FSdPTStopNMCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 970"
         }
       }
     },
