@@ -12,7 +12,6 @@ import traditionalTheoryClass from "../traditionalTheory";
 
 type pubRecord = {
   next: string;
-  time: number;
 }
 
 type theory = "WSP";

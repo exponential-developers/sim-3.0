@@ -13,7 +13,6 @@ const LAST_COAST_VAR = 5;
 
 type pubRecord = {
   next: string;
-  time: number;
 }
 
 const converter: ProgressValueConverterRho = traditionalConverter({

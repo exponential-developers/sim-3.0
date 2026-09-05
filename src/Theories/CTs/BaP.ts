@@ -31,7 +31,6 @@ async function bap(data: theoryData<theory>): Promise<simResult<theory>> {
 interface pubTable {
   [key: string]: {
     next: number;
-    time: number;
   };
 }
 

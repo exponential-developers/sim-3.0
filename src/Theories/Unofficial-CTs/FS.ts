@@ -16,7 +16,6 @@ const SQRT5_VALUE = Math.sqrt(5);
 
 type pubRecord = {
   next: string;
-  time: number;
 }
 
 const converter: ProgressValueConverterRho = traditionalConverter({

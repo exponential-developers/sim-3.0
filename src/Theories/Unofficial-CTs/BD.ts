@@ -12,7 +12,6 @@ type theory = "BD";
 
 type pubRecord = {
   next: string;
-  time: number;
 }
 
 const tauFactor = 0.4;

@@ -34,7 +34,6 @@ export default FI;
 
 type pubRecord = {
   next: string;
-  time: number;
 }
 
 async function fi(data: theoryData<theory>): Promise<simResult<theory>> {
