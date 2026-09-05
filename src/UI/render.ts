@@ -104,7 +104,6 @@ function modeUpdate(): void {
   // Displays the hard cap input
   if (newMode === "Chain" || newMode == "StepChain" /*|| newMode == "Time"*/) show(UI.controls.hardCapWrapper);
 
-  console.log(newMode)
   // Extra Inputs
   if (newMode !== "Single sim" && newMode !== "Comparison" && newMode !== "Time diff." && newMode !== "Chain")
     show(UI.controls.extraInputWrapper)

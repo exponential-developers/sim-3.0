@@ -1,7 +1,7 @@
 import { ExponentialCost, FirstFreeCost } from "../../Utils/cost";
 import Currency from "../../Utils/currency";
 import { trueFunc } from "../../Utils/functions";
-import { add, binaryInsertionSearch, defaultResult, l10, parseExponentialValue, regsum, subtract, toCallables } from "../../Utils/helpers";
+import { add, binaryInsertionSearch, convertTime, defaultResult, getBestResult, l10, logToExp, parseExponentialValue, regsum, subtract, toCallables } from "../../Utils/helpers";
 import { genericProgressConverter } from "../../Utils/progressConversion";
 import { ExponentialValue } from "../../Utils/value";
 import Variable from "../../Utils/variable";
@@ -123,7 +123,7 @@ function deriveAlphaFromTau(tau: number): number {
  * @returns estimated max(h)
  */
 function alphaToH(tau: number, alpha: number): number {
-    const b0Levels = Math.min(1, 1 + Math.floor((alpha - l10(200)) / 2.54));
+    const b0Levels = Math.max(1, 1 + Math.floor((alpha - l10(200)) / l10(2.54)));
     const perma3Levels = binaryInsertionSearch(MS_INCREASE_PERMA_UNLOCKS, alpha);
 
     if (perma3Levels === 0) {
@@ -304,7 +304,7 @@ class NLIAlphaSim extends BaseNLISim {
                 valueScaling: new ExponentialValueM1(BASES[6][0])
             }), // b2
         ]
-
+        
         this.updateMilestones();
         this.buyingConditions = this.getBuyingConditions();
         this.variableAvailability = this.getVariableAvailability();
@@ -352,6 +352,7 @@ class NLIAlphaSim extends BaseNLISim {
     updateMilestones() {
         const priority = this.getMilestonePriority();
         let milestoneCount = this.msCount;
+        this.milestonesMax = MILESTONE_CAPS[this.permas[2]].concat([1]);
         this.milestones = new Array(this.milestonesMax.length).fill(0);
         for (let i = 0; i < priority.length; i++) {
             while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
@@ -404,6 +405,51 @@ class NLIAlphaSim extends BaseNLISim {
         }
     }
 
+    getStateTauH(state: NLIAlphaState): number {
+        return (state.tauPower - this.baseTau) / (state.t / 3600);
+    }
+
+    getBestAloneState(states: NLIAlphaState[]): NLIAlphaState {
+        return states.reduce((s1, s2) => {
+            const tauH1 = this.getStateTauH(s1);
+            const tauH2 = this.getStateTauH(s2);
+            return tauH1 >= tauH2 ? s1 : s2
+        });
+    }
+
+    getAlphaResultFromState(state: NLIAlphaState): simResult<theory> {
+        const strat = `${this.strat} α-only b0:${state.b0Level} α:${logToExp(state.maxAlpha)}`;
+        const deltaTau = state.tauPower - this.baseTau;
+        const tauH = this.getStateTauH(state);
+        return {
+            theory: "NLI",
+            sigma: this.sigma,
+            lastPubTau: this.baseTau,
+            pubPointTau: state.tauPower,
+            deltaTau,
+            pubMulti: 10 ** (this.getTotMult({
+                valueType: "tau",
+                value: state.tauPower
+            }) - this.totMult),
+            strat,
+            tauH,
+            time: state.t,
+            boughtVars: this.boughtVars.filter((buy) => {
+                if (buy.cost < state.maxAlpha - this.settings.boughtVarsDelta - 10) return false;
+                if (buy.variable === "b0" && buy.level <= state.b0Level) return true;
+                return buy.cost < state.maxAlpha;
+            }),
+            theorySpecificInputs: {
+                lifetime_alpha: logToExp(state.maxAlpha)
+            }
+        }
+    }
+
+    getBestAloneResult(states: NLIAlphaState[]): simResult<theory> {
+        const state = this.getBestAloneState(states);
+        return this.getAlphaResultFromState(state);
+    }
+
     onVariablePurchased(id: number): void {
         if (id === 5) this.stateDirtyFlag = true;
     }
@@ -413,6 +459,8 @@ class NLIRhoSim extends BaseNLISim {
     currency: Currency;
     maxRho: number;
     maxh: number;
+    pubTau: number = 0;
+    pubRho: number = 0;
 
     getBuyingConditions(): conditionFunction[] {
         const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
@@ -513,6 +561,7 @@ class NLIRhoSim extends BaseNLISim {
     updateMilestones() {
         const priority = this.getMilestonePriority();
         let milestoneCount = this.msCount;
+        this.milestonesMax = MILESTONE_CAPS[this.permas[2]].concat([1]);
         this.milestones = new Array(this.milestonesMax.length).fill(0);
         for (let i = 0; i < priority.length; i++) {
             while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
@@ -544,15 +593,236 @@ class NLIRhoSim extends BaseNLISim {
     updateSimStatus() {
         if (this.currency.value > this.maxRho) this.maxRho = this.currency.value;
         this.updateT();
+        this.updateMilestoneCount();
     }
 }
 
 class MainNLISim {
-    constructor (data: theoryData<theory>) {
+    baseTau: number;
+    baseAlpha: number;
+    readonly data: theoryData<theory>;
 
+    constructor (data: theoryData<theory>) {
+        this.data = data;
+        this.baseTau = converter.convertTo(data.input, "tau");
+        this.baseAlpha = data.specificInputs.lifetime_alpha 
+            ? parseExponentialValue(data.specificInputs.lifetime_alpha)
+            : deriveAlphaFromTau(this.baseTau);
+    }
+
+    simulateAlphaStates(sim: NLIAlphaSim, maxAlpha: number): NLIAlphaState[] {
+        const states: NLIAlphaState[] = [];
+        const realMaxAlpha = Math.max(maxAlpha, PUB_UNLOCK + 1);
+        while (sim.maxAlpha < realMaxAlpha) {
+            sim.tick();
+            sim.updateSimStatus();
+            sim.buyVariables();
+            if (sim.stateDirtyFlag && sim.maxAlpha > PUB_UNLOCK) {
+                states.push(sim.deriveState());
+                sim.stateDirtyFlag = false;
+            }
+        }
+        return states;
+    }
+
+    prepareAlphaStatesForRho(states: NLIAlphaState[]): NLIAlphaState[][] {
+        if (states.length === 0) return [];
+        states = states.filter((state) => state.maxAlpha > RHO_UNLOCK);
+        let preparedStates: NLIAlphaState[][] = [[]];
+
+        let currentPermaCount = states[0].permaPoints;
+        let currentMsCount = states[0].msPoints;
+        let stateIndex = 0;
+
+        for (let i = 0; i < states.length; i++) {
+            let state = states[i];
+
+            if (state.permaPoints > currentPermaCount || state.msPoints > currentMsCount) {
+                preparedStates.push([]);
+                stateIndex++;
+                currentPermaCount = state.permaPoints;
+                currentMsCount = state.msPoints;
+            }
+
+            preparedStates[stateIndex].push(state);
+        }
+
+        return preparedStates;
+    }
+
+    simulateRho(alphaStates: NLIAlphaState[], alphaSim: NLIAlphaSim): simResult<theory> {
+        const alpha = Math.max(this.baseAlpha, alphaStates[0].maxAlpha + 0.01);
+        const sim = new NLIRhoSim({
+            ...this.data,
+            specificInputs: {
+                lifetime_alpha: logToExp(alpha, 7)
+            }
+        }, alphaStates[0].maxh);
+        sim.permaCount = alphaStates[0].permaPoints;
+        sim.permas = alphaToPermas(alpha);
+        sim.msCount = alphaStates[0].msPoints;
+        sim.forcedPubConditions = [
+            () => sim.pubTau > sim.baseTau
+        ]
+        sim.simEndConditions = [
+            () => sim.t > sim.pubT * 2
+        ];
+        sim.updateMilestones();
+
+        let bestState: NLIAlphaState = alphaStates[0];
+        let overallBestState: NLIAlphaState = alphaStates[0];
+
+        while (!sim.endSimulation()) {
+            sim.tick();
+            sim.updateSimStatus();
+            sim.buyVariables();
+            // sim.updateMilestones();
+            bestState = alphaStates[0];
+            for (let i = 1; i < alphaStates.length; i++) {
+                const deltaTau1 = bestState.maxh * H_CONVERTION + sim.maxRho * RHO_CONVERTION - this.baseTau;
+                const deltaTau2 = alphaStates[i].maxh * H_CONVERTION + sim.maxRho * RHO_CONVERTION - this.baseTau;
+                const tauH1 = deltaTau1 / (bestState.t + sim.t) * 3600;
+                const tauH2 = deltaTau2 / (alphaStates[i].t + sim.t) * 3600;
+                if (tauH2 > tauH1) bestState = alphaStates[i];
+            }
+            const deltaTau = bestState.maxh * H_CONVERTION + sim.maxRho * RHO_CONVERTION - this.baseTau;
+            const tauH = deltaTau / (bestState.t + sim.t) * 3600;
+            if (tauH > sim.maxTauH) {
+                sim.pubTau = bestState.maxh * H_CONVERTION + sim.maxRho * RHO_CONVERTION;
+                sim.pubRho = sim.maxRho;
+                sim.pubT = sim.t;
+                sim.maxTauH = tauH;
+                overallBestState = bestState;
+            }
+        }
+
+        const deltaTau = sim.pubTau - this.baseTau;
+        const time = overallBestState.t + sim.pubT;
+
+        console.log({sim, overallBestState});
+
+        return {
+            theory: "NLI",
+            sigma: this.data.sigma,
+            lastPubTau: this.baseTau,
+            pubPointTau: sim.pubTau,
+            deltaTau,
+            pubMulti: 10 ** (sim.getTotMult({
+                valueType: "tau",
+                value: sim.pubTau
+            }) - sim.totMult),
+            strat: `${sim.strat} b0:${overallBestState.b0Level} α:${logToExp(overallBestState.maxAlpha)} ${convertTime(overallBestState.t)} ρ:${logToExp(sim.pubRho)} ${convertTime(sim.pubT)}`,
+            time,
+            tauH: deltaTau / (time / 3600),
+            boughtVars: alphaSim.getAlphaResultFromState(overallBestState).boughtVars.concat(
+                sim.boughtVars.filter((buy) => {
+                    if (buy.cost < sim.pubRho - sim.settings.boughtVarsDelta - 10) return false;
+                    return buy.timeStamp < sim.pubT
+                })
+            ),
+            theorySpecificInputs: {
+                lifetime_alpha: logToExp(overallBestState.maxAlpha, 7)
+            }
+        }
+    }
+
+    simulateParallel(): simResult<theory> {
+        const alphaSim = new NLIAlphaSim(this.data);
+        const rhoSim = new NLIRhoSim(this.data, 0);
+
+        let best_b0 = 0;
+        let bestAlpha = 0;
+
+        alphaSim.permas = [2, 1, 6];
+        rhoSim.permas = [2, 1, 6];
+        alphaSim.milestones = [4, 4, 4, 4, 4, 4, 4, 1];
+        rhoSim.milestones = [4, 4, 4, 4, 4, 4, 4, 1];
+        alphaSim.msCount = 29;
+        rhoSim.msCount = 29;
+        rhoSim.forcedPubConditions = [
+            () => rhoSim.pubTau > rhoSim.baseTau
+        ]
+        rhoSim.simEndConditions = [
+            () => rhoSim.t > rhoSim.pubT * 2
+        ];
+
+        while (!rhoSim.endSimulation()) {
+            alphaSim.tick();
+            rhoSim.tick();
+            alphaSim.updateSimStatus();
+            rhoSim.updateSimStatus();
+            alphaSim.buyVariables();
+            rhoSim.buyVariables();
+
+            const deltaTau = alphaSim.maxh * H_CONVERTION + rhoSim.maxRho * RHO_CONVERTION - this.baseTau;
+            const tauH = deltaTau / rhoSim.t * 3600;
+            if (tauH > rhoSim.maxTauH) {
+                rhoSim.pubTau = alphaSim.maxh * H_CONVERTION + rhoSim.maxRho * RHO_CONVERTION;
+                rhoSim.pubRho = rhoSim.maxRho;
+                rhoSim.pubT = rhoSim.t;
+                rhoSim.maxTauH = tauH;
+                best_b0 = alphaSim.variables[5].level;
+                bestAlpha = alphaSim.maxAlpha;
+            }
+        }
+
+        return {
+            theory: "NLI",
+            sigma: this.data.sigma,
+            lastPubTau: this.baseTau,
+            pubPointTau: rhoSim.pubTau,
+            deltaTau: rhoSim.pubTau - this.baseTau,
+            pubMulti: 10 ** (rhoSim.getTotMult({
+                valueType: "tau",
+                value: rhoSim.pubTau
+            }) - rhoSim.totMult),
+            strat: `${rhoSim.strat} parallel b0:${best_b0} α:${logToExp(bestAlpha)} ρ:${logToExp(rhoSim.pubRho)}`,
+            time: rhoSim.pubT,
+            tauH: (rhoSim.pubTau - this.baseTau) / (rhoSim.pubT / 3600),
+            boughtVars: (() => {
+                const alphaPurchasesFiltered = alphaSim.boughtVars.filter((buy) => {
+                    if (buy.cost < bestAlpha - rhoSim.settings.boughtVarsDelta - 10) return false;
+                    return buy.cost < bestAlpha;
+                });
+                const rhoPurchasesFiltered = rhoSim.boughtVars.filter((buy) => {
+                    if (buy.cost < rhoSim.pubRho - rhoSim.settings.boughtVarsDelta - 10) return false;
+                    return buy.cost < rhoSim.pubRho;
+                });
+                const timeThreshold = Math.max(alphaPurchasesFiltered[0].timeStamp, rhoPurchasesFiltered[0].timeStamp) - 0.001;
+                return alphaPurchasesFiltered
+                    .concat(rhoPurchasesFiltered)
+                    .filter((buy) => buy.timeStamp > timeThreshold)
+                    .sort((b1, b2) => b1.timeStamp - b2.timeStamp);
+            })(),
+            theorySpecificInputs: {
+                lifetime_alpha: logToExp(bestAlpha, 7)
+            }
+        }
     }
 
     async simulate(): Promise<simResult<theory>> {
-        return defaultResult();
+        if (alphaToMilestoneCount(this.baseTau, this.baseAlpha) >= MILESTONE_COSTS.length) {
+            return this.simulateParallel();
+        }
+
+        const alphaSim = new NLIAlphaSim(this.data);
+        const alphaStates = this.simulateAlphaStates(alphaSim, this.baseTau * 2 + 25); // TODO change this
+        const alphaAloneResult = alphaSim.getBestAloneResult(alphaStates);
+        //console.log({milestones: alphaSim.milestones});
+
+        const preparedStates = this.prepareAlphaStatesForRho(alphaStates);
+        console.log(preparedStates.length);
+        let rhoResults: simResult<theory>[] = [];
+        for (let cluster of preparedStates) {
+            rhoResults.push(this.simulateRho(cluster, alphaSim));
+        }
+
+        let bestRhoRes = defaultResult<theory>();
+        for (let result of rhoResults) {
+            bestRhoRes = getBestResult(bestRhoRes, result);
+        }
+
+
+        return getBestResult(alphaAloneResult, bestRhoRes);
     }
 }
