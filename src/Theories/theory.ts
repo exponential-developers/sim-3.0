@@ -185,24 +185,6 @@ export default abstract class
     };
   }
 
-  /**
-   * Returns the order at which milestones must be distributed. Order must be a 0-indexed list.
-   * It does not need to feature all milestones.
-   *
-   * This is called each time `updateMilestones` is called.
-   */
-  abstract getMilestonePriority(): number[]; // dunno if we'll keep this here
-
-  /**
-   * Updates milestones
-   */
-  abstract updateMilestones(): void; // dunno if we'll keep this here
-
-  /**
-   * Update milestones, no MS
-   */
-  abstract updateMilestonesNoMS(): boolean; // dunno if we'll keep this here
-
   evaluateForcedPubConditions(): boolean {
     return this.forcedPubConditions.every((cond) => cond())
   }
@@ -340,12 +322,6 @@ export default abstract class
   trimBoughtVars() {
     while (this.boughtVars.length && this.boughtVars[this.boughtVars.length - 1].timeStamp > this.pubT) this.boughtVars.pop();
   }
-
-  /**
-   * Creates a sim result from the sim class
-   * @param stratExtra Extra string to append to the "strat" column
-   */
-  abstract createResult(stratExtra: string): simResult<theory>;
 
   copy(): any {
     throw new Error("Please implement `copy` method");

@@ -927,6 +927,26 @@
           "stratFilterCondition": "(Active || Very-Active) && tau < 600"
         }
       }
+    },
+    "NLI": {
+      "UI_visible": false,
+      "supportsRho": false,
+      "specificInputs": {
+        "lifetime_alpha": {
+          "label": "Lifetime α",
+          "type": "textbox",
+          "validation": {
+            "type": "exp",
+            "min": 0,
+            "max": "1e10000"
+          }
+        }
+      },
+      "strats": {
+        "NLI": {
+          "stratFilterCondition": "true"
+        }
+      }
     }
   },
   "stratCategories": ["Best Overall", "Best Active", "Best Semi-Idle", "Best Idle"],

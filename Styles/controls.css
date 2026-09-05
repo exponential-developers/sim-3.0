@@ -8,14 +8,16 @@
   margin-top: 1.5rem;
 }
 .controlsWrapper input,
-.controlsWrapper select {
+.controlsWrapper select,
+.specificInputTextbox {
   font-size: 0.75rem;
   background-color: var(--input-bg);
   color: var(--input-f-clr);
   border-color: var(--btn-border-clr);
 }
 
-.controlsWrapper input[type="text"] {
+.controlsWrapper input[type="text"],
+.specificInputTextbox {
   border: none;
   outline: 1px solid var(--btn-border-clr);
 }
@@ -149,4 +151,9 @@ textarea::placeholder {
 
 .specificInputSliderOutput {
   margin-left: 0.3rem;
+}
+
+.specificInputTextbox {
+  margin-left: 0.3rem;
+  width: 12ch;
 }
