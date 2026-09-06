@@ -20,7 +20,7 @@ async function decompress(b64str: string): Promise<ArrayBuffer> {
 
     const stream = new Response(uint8Array).body;
     if (!stream) throw new Error('Failed to read binary stream');
-    const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
+    const decompressedStream = stream.pipeThrough(new DecompressionStream('deflate'));
     const response = new Response(decompressedStream);
     return await response.arrayBuffer();
 }

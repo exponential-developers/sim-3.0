@@ -1,8 +1,8 @@
 from typing import TypedDict
 import base64
 import json
-import zopfli.gzip
-import gzip
+import zopfli.zlib
+import zlib
 
 targets = [
     "EFpubtable.json",
@@ -41,12 +41,14 @@ def _encode_one(data: Table) -> ResTable:
     prev_item = data[keys[0]]
     max_delta = 0
     min_delta = 0
+    offsets_set = set()
     for k in keys:
         item = data[k]
         if item - prev_item > max_delta:
             max_delta = item - prev_item
         if item - prev_item < min_delta:
             min_delta = item - prev_item
+        offsets_set.add(item - prev_item)
         prev_item = item
 
     sz = 1
@@ -58,10 +60,13 @@ def _encode_one(data: Table) -> ResTable:
         packed += (data[k] - prev_item - min_delta).to_bytes(sz, byteorder="big")
         prev_item = data[k]
 
-    best_candidate = gzip.compress(packed, compresslevel=9)
-    second = zopfli.gzip.compress(packed)
+    best_candidate = zlib.compress(packed, level=9)
+    second = zopfli.zlib.compress(packed)
     if len(second) < len(best_candidate):
         best_candidate = second
+
+    print(len(packed), len(best_candidate), len(offsets_set), max_delta - min_delta)
+    print(sorted(offsets_set))
 
     return {
         "t": base64.b64encode(best_candidate).decode('utf-8'),
@@ -78,7 +83,7 @@ def _decode_one(res: ResTable) -> Table:
     initial = res["i"]
     offset = res["s"]
     min_delta = res["d"]
-    raw = gzip.decompress(coded)
+    raw = zlib.decompress(coded)
     table: Table = {}
     ctr = 0
     prev_value = initial
@@ -93,10 +98,13 @@ def _decode_one(res: ResTable) -> Table:
     return table
 
 for item in targets:
+    print(item)
     table = _load_one(item)
     encoded = _encode_one(table)
     with open(item.replace('.json', '_coded.json'), "w", encoding="utf-8") as f:
         json.dump(encoded, f)
+    with open(item.replace('.json', '_coded.gz'), "wb") as f:
+        f.write(base64.b64decode(encoded["t"]))
     decoded = _decode_one(encoded)
     # print(table, decoded)
     assert table == decoded

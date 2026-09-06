@@ -1,8 +1,9 @@
 from typing import NotRequired, TypedDict
 import base64
 import json
-import zopfli.gzip
+import zopfli.zlib
 import gzip
+import zlib
 
 targets = [
     "BaPpubtable.json",
@@ -53,7 +54,6 @@ def _encode_one(data: Table) -> ResTable:
     boundary: str = keys[0]
     step2_set = False
     for i in range(0, len(keys)):
-        print(keys[i])
         rev_keys[keys[i]] = i
         if i > 1 and abs(float(keys[i]) - float(keys[i - 1]) - step) > 0.00001:
             if not step2_set:
@@ -70,14 +70,15 @@ def _encode_one(data: Table) -> ResTable:
     min_delta = 0
     # The last one targets literally itself:
     pre_encoding[-1] = pre_encoding[-2]
+    offsets_set = set()
     for item in pre_encoding:
         if item - prev_item > max_delta:
             max_delta = item - prev_item
         if item - prev_item < min_delta:
+            print(keys[prev_item], keys[item])
             min_delta = item - prev_item
+        offsets_set.add(item - prev_item)
         prev_item = item
-
-    print(max_delta - min_delta)
 
     sz = 1
     while (max_delta - min_delta) > 2 ** (sz*8) - 1:
@@ -88,11 +89,14 @@ def _encode_one(data: Table) -> ResTable:
         packed += (item - prev_item - min_delta).to_bytes(sz, byteorder="big")
         prev_item = item
 
-    best_candidate = gzip.compress(packed, compresslevel=9)
-    second = zopfli.gzip.compress(packed)
+
+    best_candidate = zlib.compress(packed, level=9)
+    second = zopfli.zlib.compress(packed)
     if len(second) < len(best_candidate):
         best_candidate = second
 
+    print(len(packed), len(best_candidate), len(offsets_set), max_delta - min_delta)
+    print(sorted(offsets_set))
     res: ResTable = {
         "t": base64.b64encode(best_candidate).decode('utf-8'),
         "sz": sz,
@@ -116,7 +120,7 @@ def _decode_one(res: ResTable) -> Table:
     boundary = res.get("b", None)
     s2 = res.get("s2", None)
 
-    raw = gzip.decompress(base64.b64decode(coded))
+    raw = zlib.decompress(base64.b64decode(coded))
     nums_per_item = 2
     if step >= 0.1 and step != 0.25:
         nums_per_item = 1
@@ -154,7 +158,9 @@ for item in targets:
     encoded = _encode_one(table)
     with open(item.replace('.json', '_coded.json'), "w", encoding="utf-8") as f:
         json.dump(encoded, f)
+    with open(item.replace('.json', '_coded.gz'), "wb") as f:
+        f.write(base64.b64decode(encoded["t"]))
     decoded = _decode_one(encoded)
-    print(table)
-    print(decoded)
+    # print(table)
+    # print(decoded)
     assert table == decoded
