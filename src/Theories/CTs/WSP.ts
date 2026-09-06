@@ -1,18 +1,19 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 import { prepareTable } from "./helpers/prepareTable";
 
-import rawActivePubTable from "./helpers/table_wsp_0_1_active_coast.json";
-import rawPassivePubTable from "./helpers/table_wsp_0_1_passive_coast.json";
+import rawActivePubTable from "./helpers/table_wsp_0_1_active_coast_coded.json";
+import rawPassivePubTable from "./helpers/table_wsp_0_1_active_coast_coded.json";
 
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
-let activePubTable = prepareTable(rawActivePubTable, "000");
-let passivePubTable = prepareTable(rawPassivePubTable, "000");
+let activePubTable: Record<string, string> = {}
+let passivePubTable: Record<string, string> = {}
 
 type theory = "WSP";
 
@@ -29,6 +30,13 @@ const WSP: TheoryInterface<theory> = {
 export default WSP;
 
 async function wsp(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(activePubTable).length === 0) {
+    activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "000");
+  }
+  if(Object.keys(passivePubTable).length === 0) {
+    passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "000");
+  }
+  await ptDecodeFormat1(rawActivePubTable);
   let res: simResult<theory>;
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = {

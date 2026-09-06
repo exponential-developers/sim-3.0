@@ -1,16 +1,17 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
 import { prepareTable } from "./helpers/prepareTable";
 
-import rawPassivePubTable from "./helpers/table_mf_0_05_mfrccoast.json";
+import rawPassivePubTable from "./helpers/table_mf_0_05_mfrccoast_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
 
-let passivePubTable = prepareTable(rawPassivePubTable, "00")
+let passivePubTable: Record<string, string> = {}
 
 type theory = "MF";
 
@@ -37,6 +38,9 @@ const depthConvert = [
 
 // Reset
 async function mf(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(passivePubTable).length === 0) {
+    passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "00");
+  }
   let resetBundles: resetBundle[] = [
     [0, 1, 0, 0],
     [0, 1, 0, 1],

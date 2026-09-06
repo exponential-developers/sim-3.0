@@ -1,14 +1,15 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { l10, toCallables, getLastLevel, getBestResult, getLastLevelCost } from "../../Utils/helpers";
 import { prepareTable } from "../CTs/helpers/prepareTable";
-import rawILCTable from "../CTs/helpers/table_ilc_0_01_ilccoast.json";
+import rawILCTable from "../CTs/helpers/table_ilc_0_01_ilccoast_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
-let ilcTable = prepareTable(rawILCTable, "00")
+let ilcTable: Record<string, string> = {};
 
 type theory = "ILC";
 
@@ -29,6 +30,9 @@ export default ILC;
 
 async function ilc(data: theoryData<theory>): Promise<simResult<theory>> {
   // const sim = new ilcSim(data);
+  if(Object.keys(ilcTable).length === 0) {
+    ilcTable = prepareTable(await ptDecodeFormat1(rawILCTable), "00");
+  }
   if(!data.strat.includes("Coast")) {
     const sim = new ilcSim(data);
     const res = await sim.simulate();
