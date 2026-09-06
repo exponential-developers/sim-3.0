@@ -4,6 +4,9 @@ type codedTable = {
     sz: number;  // Number size
     d: number;  // Delta floor
     i: number;  // Initial value of the table
+    // Optional values for format 1:
+    b?: string;
+    s2?: number;
 };
 
 async function decompress(b64str: string): Promise<ArrayBuffer> {
@@ -37,10 +40,12 @@ export async function ptDecodeFormat1(table: codedTable): Promise<Record<string,
     let delta_floor = table.d;
     let initial = table.i;
     let decompressed = await decompress(raw);
+    let boundary = table.b;
+    let step2 = table.s2;
 
     // Align the results to step:
     let nums_per_item = 2
-    if(step >= 0.1)
+    if(step >= 0.1 && parseFloat(step.toFixed(1)) === parseFloat(step.toFixed(2)))
         nums_per_item = 1
 
     let rev_keys: Record<number, string> = {};
@@ -64,6 +69,9 @@ export async function ptDecodeFormat1(table: codedTable): Promise<Record<string,
         let key = cur_key.toFixed(nums_per_item);
         rev_keys[i] = key
         pre_table[key] = data
+        if (key === boundary && step2) {
+            step = step2;
+        }
         if (i === codedPt.length - 1) // We want this value set to 0 to match OG tables!
             pre_table[key] = 0;
         cur_key += step;

@@ -1,10 +1,11 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 import base64
 import json
 import zopfli.gzip
 import gzip
 
 targets = [
+    "BaPpubtable.json",
     "table_bd_0_1_bdcoast.json",
     "table_bd_0_1_bdcoast.json",
     "table_bd_0_1_bddcoast.json",
@@ -28,6 +29,8 @@ class ResTable(TypedDict):
     t: str  # compressed table
     s: float  # step of the table
     d: int  # delta offset
+    s2: NotRequired[float]  # secondary step of the table, if exists (used only for BaP)
+    b: NotRequired[str]  # flip point of when to switch to it
 
 
 def _load_one(name: str) -> Table:
@@ -45,8 +48,18 @@ def _encode_one(data: Table) -> ResTable:
         keys.append(item)
 
     keys.sort(key=lambda x: float(x))
+    step = float(keys[1]) - float(keys[0])
+    step2: float = step
+    boundary: str = keys[0]
+    step2_set = False
     for i in range(0, len(keys)):
+        print(keys[i])
         rev_keys[keys[i]] = i
+        if i > 1 and abs(float(keys[i]) - float(keys[i - 1]) - step) > 0.00001:
+            if not step2_set:
+                step2_set = True
+                step2 = float(keys[i]) - float(keys[i - 1])
+                boundary = keys[i - 1]
 
     for k in keys:
         pre_encoding.append(rev_keys[data[k]])
@@ -64,7 +77,7 @@ def _encode_one(data: Table) -> ResTable:
             min_delta = item - prev_item
         prev_item = item
 
-    print(max_delta, min_delta)
+    print(max_delta - min_delta)
 
     sz = 1
     while (max_delta - min_delta) > 2 ** (sz*8) - 1:
@@ -80,13 +93,18 @@ def _encode_one(data: Table) -> ResTable:
     if len(second) < len(best_candidate):
         best_candidate = second
 
-    return {
+    res: ResTable = {
         "t": base64.b64encode(best_candidate).decode('utf-8'),
         "sz": sz,
         "i": pre_encoding[0],
-        "s": float(keys[1]) - float(keys[0]),
+        "s": step,
         "d": min_delta
     }
+    if boundary != keys[0]:
+        res["b"] = boundary
+        res["s2"] = step2
+
+    return res
 
 
 def _decode_one(res: ResTable) -> Table:
@@ -95,9 +113,12 @@ def _decode_one(res: ResTable) -> Table:
     num_size = res["sz"]
     initial = res["i"]
     d = res["d"]
+    boundary = res.get("b", None)
+    s2 = res.get("s2", None)
+
     raw = gzip.decompress(base64.b64decode(coded))
     nums_per_item = 2
-    if step >= 0.1:
+    if step >= 0.1 and step != 0.25:
         nums_per_item = 1
 
     keys: list[str] = []
@@ -111,6 +132,8 @@ def _decode_one(res: ResTable) -> Table:
         data = int.from_bytes(cur_byte, byteorder="big") + prev_value + d
         prev_value = data
         key = f"{cur_key:.{nums_per_item}f}"
+        if key == boundary:
+            step = s2 # future steps are longer
 
         # Compute key:
         rev_keys[len(keys)] = key
@@ -132,4 +155,6 @@ for item in targets:
     with open(item.replace('.json', '_coded.json'), "w", encoding="utf-8") as f:
         json.dump(encoded, f)
     decoded = _decode_one(encoded)
+    print(table)
+    print(decoded)
     assert table == decoded

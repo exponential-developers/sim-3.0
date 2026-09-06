@@ -1,11 +1,14 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/BaPpubtable.json" with { type: "json" };
+import raw_pubtable from "./helpers/BaPpubtable_coded.json" with { type: "json" };
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+let pubtable: Record<string, string> = {}
 
 type theory = "BaP";
 
@@ -23,13 +26,12 @@ const BaP: TheoryInterface<theory> = {
 export default BaP;
 
 async function bap(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(pubtable).length === 0) {
+    pubtable = await ptDecodeFormat1(raw_pubtable);
+  }
   const sim = new bapSim(data);
   const res = await sim.simulate();
   return res;
-}
-
-interface pubTable {
-  [key: string]: number;
 }
 
 class bapSim extends traditionalTheoryClass<theory> {
@@ -193,9 +195,9 @@ class bapSim extends traditionalTheoryClass<theory> {
     this.bestRes = null;
     if (this.lastPubRho < 1480)
     {
-      let newpubtable: pubTable = pubtable;
+      let newpubtable = pubtable;
       let pubseek = this.lastPubRho < 100 ? Math.round(this.lastPubRho * 4) / 4 : Math.round(this.lastPubRho);
-      this.forcedPubRho = newpubtable[pubseek.toString()];
+      this.forcedPubRho = parseFloat(newpubtable[pubseek.toFixed(2)]);
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
     }
 
