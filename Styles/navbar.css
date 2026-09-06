@@ -9,7 +9,7 @@ nav {
 }
 
 nav div {
-  margin-top: auto; 
+  margin-top: auto;
   margin-bottom: 0.2rem;
 
   display: flex;
@@ -76,8 +76,8 @@ nav div {
 }
 
 .nav-title {
-  font-family: Computer Modern Concrete; 
-  font-weight: 600;
+  font-family: Rockwell, "Rockwell Nova", Georgia, serif;
+  font-weight: 50;
   transition: color 100ms ease-in-out;
   color: var(--title-clr);
 }
