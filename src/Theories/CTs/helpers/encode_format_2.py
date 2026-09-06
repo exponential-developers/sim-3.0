@@ -102,7 +102,7 @@ for item in targets:
     table = _load_one(item)
     encoded = _encode_one(table)
     with open(item.replace('.json', '_coded.json'), "w", encoding="utf-8") as f:
-        json.dump(encoded, f)
+        json.dump(encoded, f, separators=(',', ':'))
     with open(item.replace('.json', '_coded.gz'), "wb") as f:
         f.write(base64.b64decode(encoded["t"]))
     decoded = _decode_one(encoded)
