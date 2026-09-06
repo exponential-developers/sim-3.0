@@ -241,8 +241,23 @@ class NLIAlphaSim extends BaseNLISim {
     stateDirtyFlag: boolean;
 
     getBuyingConditions(): conditionFunction[] {
+        const baseConditions = [true, false, true, true, true, true, true, true];
+        const noB2           = [true, false, true, true, true, true, true, false];
+        const noA2B2         = [true, false, true, false, true, true, true, false];
+        const noA23B2        = [true, false, true, false, false, true, true, false];
+        const noA3B2         = [true, false, true, true, false, true, true, false];
+        const noA3           = [true, false, true, true, false, true, true, true];
+        const noA12          = [true, false, false, false, true, true, true, true];
+
         const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-            NLI: [true, false, true, true, true, true, true, true]
+            NLI: baseConditions,
+            NLInoA2RB2H: noB2,
+            NLInoB2H: noB2,
+            NLInoA2A3RB2: noA2B2,
+            NLInoA2A3B2: noA23B2,
+            NLInoA3B2: noA3B2,
+            NLInoA3: noA3,
+            NLInoA1HA2H: noA12
         };
         return toCallables(conditions[this.strat]);
     }
@@ -463,8 +478,21 @@ class NLIRhoSim extends BaseNLISim {
     pubRho: number = 0;
 
     getBuyingConditions(): conditionFunction[] {
+        const baseConditions = [true, true, true, true, true, false, true, true];
+        const noA2           = [true, true, true, false, true, false, true, true];
+        const noA23B2        = [true, true, true, false, false, false, true, false];
+        const noA3B2         = [true, true, true, true, false, false, true, false];
+        const noA3           = [true, true, true, true, false, false, true, true];
+
         const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-            NLI: [true, true, true, true, true, false, true, true]
+            NLI: baseConditions,
+            NLInoA2RB2H: noA2,
+            NLInoB2H: baseConditions,
+            NLInoA2A3RB2: noA23B2,
+            NLInoA2A3B2: noA23B2,
+            NLInoA3B2: noA3B2,
+            NLInoA3: noA3,
+            NLInoA1HA2H: baseConditions
         };
         return toCallables(conditions[this.strat]);
     }
@@ -805,10 +833,16 @@ class MainNLISim {
             return this.simulateParallel();
         }
 
+        const maxAlphaSimulated = 
+            this.baseTau < 20 
+            ? this.baseTau * 1.6 + 25
+            : this.baseTau < 120
+            ? this.baseTau * 1.6 + 10 
+            : this.baseTau * 1.55 + 5;
+
         const alphaSim = new NLIAlphaSim(this.data);
-        const alphaStates = this.simulateAlphaStates(alphaSim, this.baseTau * 2 + 25); // TODO change this
+        const alphaStates = this.simulateAlphaStates(alphaSim, maxAlphaSimulated);
         const alphaAloneResult = alphaSim.getBestAloneResult(alphaStates);
-        //console.log({milestones: alphaSim.milestones});
 
         const preparedStates = this.prepareAlphaStatesForRho(alphaStates);
         console.log(preparedStates.length);

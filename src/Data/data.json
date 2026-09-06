@@ -938,7 +938,28 @@
       },
       "strats": {
         "NLI": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "tau < 525"
+        },
+        "NLInoA2RB2H": {
+          "stratFilterCondition": "tau > 40 && tau < 120"
+        },
+        "NLInoB2H": {
+          "stratFilterCondition": "tau > 30 && tau < 450"
+        },
+        "NLInoA2A3RB2": {
+          "stratFilterCondition": "tau > 70 && tau < 115"
+        },
+        "NLInoA2A3B2": {
+          "stratFilterCondition": "tau > 70 && tau < 350"
+        },
+        "NLInoA3B2": {
+          "stratFilterCondition": "tau > 290 && tau < 450"
+        },
+        "NLInoA3": {
+          "stratFilterCondition": "tau > 390 && tau < 530"
+        },
+        "NLInoA1HA2H": {
+          "stratFilterCondition": "tau > 470"
         }
       }
     }
