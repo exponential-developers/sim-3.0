@@ -1,4 +1,3 @@
-import html2canvas from "html2canvas";
 import { qsa, ce, event, removeAllChilds, downloadString, getTableHeaders, animateButton, hide, show } from "../Utils/DOMhelpers";
 import UI from "./elements";
 import { refreshDOMEventLoop } from "../Utils/helpers";
@@ -40,8 +39,9 @@ async function createImage(mode: "download" | "copy") {
   hide(lastHeader);
   varBuyCells.forEach((elem) => hide(elem));
   await refreshDOMEventLoop();
-
-  html2canvas(UI.outputs.table).then((canvas) =>
+  import('html2canvas').then((module) => {
+    return module.default(UI.outputs.table)
+  }).then((canvas) =>
     canvas.toBlob((blob) => {
       if (mode === "download") {
         const a = ce<HTMLAnchorElement>("a");
