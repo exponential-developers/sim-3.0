@@ -4,8 +4,6 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
-import raw_pubtable from "./helpers/FPpubtable_coded.json";
-import raw_extended_pubtable from "./helpers/FPextendedPT_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
@@ -30,9 +28,11 @@ export default FP;
 
 async function fp(data: theoryData<theory>): Promise<simResult<theory>> {
   if(Object.keys(pubtable).length === 0) {
+    const {default: raw_pubtable } = await import("./helpers/FPpubtable_coded.json");
     pubtable = await ptDecodeFormat2(raw_pubtable);
   }
   if(Object.keys(extended_pubtable).length === 0) {
+    const {default: raw_extended_pubtable } = await import("./helpers/FPextendedPT_coded.json");
     extended_pubtable = await ptDecodeFormat2(raw_extended_pubtable);
   }
   const sim = new fpSim(data);

@@ -7,8 +7,6 @@ import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import { prepareTable } from "../CTs/helpers/prepareTable";
-import rawPassivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast_coded.json";
-import rawActivePubTable from "../CTs/helpers/table_fs_0_02_active_coast_coded.json";
 import traditionalTheoryClass from "../traditionalTheory";
 
 let activePubTable: Record<string, string> = {}
@@ -120,9 +118,11 @@ class SequenceCost extends BaseCost {
 async function fs(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
   if(Object.keys(activePubTable).length === 0) {
+    const {default: rawActivePubTable} = await import("../CTs/helpers/table_fs_0_02_active_coast_coded.json");
     activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "04");
   }
   if(Object.keys(passivePubTable).length === 0) {
+    const {default: rawPassivePubTable} = await import("../CTs/helpers/table_fs_0_02_passive_coast_coded.json");
     passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "04");
   }
   if (data.strat.includes("Coast")) {

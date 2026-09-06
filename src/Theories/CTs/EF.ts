@@ -5,7 +5,6 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
-import raw_pubtable from "./helpers/EFpubtable_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
@@ -29,6 +28,7 @@ export default EF;
 
 async function ef(data: theoryData<theory>): Promise<simResult<theory>> {
   if(Object.keys(pubtable).length === 0) {
+    const { default: raw_pubtable } = await import("./helpers/EFpubtable_coded.json");
     pubtable = await ptDecodeFormat2(raw_pubtable);
   }
   if (data.strat !== "EFPlay") {

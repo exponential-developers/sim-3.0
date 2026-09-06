@@ -15,8 +15,6 @@ import {
 } from "../../Utils/helpers";
 import { prepareTable } from "./helpers/prepareTable";
 
-import rawPassivePubTable from "./helpers/table_fi_0_1_passive_coast_coded.json";
-import rawActivePubTable from "./helpers/table_fi_0_1_passive_coast_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
@@ -39,9 +37,11 @@ export default FI;
 
 async function fi(data: theoryData<theory>): Promise<simResult<theory>> {
   if(Object.keys(activePubTable).length === 0) {
+    const {default: rawActivePubTable } = await import("./helpers/table_fi_0_1_passive_coast_coded.json");
     activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "000");
   }
   if(Object.keys(passivePubTable).length === 0) {
+    const {default: rawPassivePubTable } = await import("./helpers/table_fi_0_1_passive_coast_coded.json");
     passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "000");
   }
   let res;

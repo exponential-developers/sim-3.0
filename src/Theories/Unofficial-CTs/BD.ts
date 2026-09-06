@@ -1,8 +1,6 @@
 import { global } from "../../Sim/main";
 import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import { prepareTable } from "../CTs/helpers/prepareTable";
-import rawActivePubTable from "../CTs/helpers/table_bd_0_1_bddcoast_coded.json";
-import rawPassivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast_coded.json";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -31,9 +29,11 @@ export default BD;
 
 async function bd(data: theoryData<theory>): Promise<simResult<theory>> {
   if(Object.keys(activePubTable).length === 0) {
+    const {default: rawActivePubTable} = await import("../CTs/helpers/table_bd_0_1_bddcoast_coded.json");
     activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "000");
   }
   if(Object.keys(passivePubTable).length === 0) {
+    const {default: rawPassivePubTable} = await import("../CTs/helpers/table_bd_0_1_bdcoast_coded.json");
     passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "000");
   }
   if(!data.strat.includes("Coast")) {
