@@ -1,6 +1,9 @@
 type codedTable = {
-    t: string;
-    s: number;
+    t: string;  // Compressed table
+    s: number;  // Table step
+    sz: number;  // Number size
+    d: number;  // Delta floor
+    i: number;  // Initial value of the table
 };
 
 async function decompress(b64str: string): Promise<ArrayBuffer> {
@@ -27,9 +30,12 @@ function decodeAtOffset(buf: DataView, offset: number, num_length: number): numb
     return res;
 }
 
-export async function ptDecodeFormat1(table: codedTable, num_length: number = 2): Promise<Record<string, string>> {
+export async function ptDecodeFormat1(table: codedTable): Promise<Record<string, string>> {
     let raw = table.t;
     let step = table.s;
+    let num_length = table.sz;
+    let delta_floor = table.d;
+    let initial = table.i;
     let decompressed = await decompress(raw);
 
     // Align the results to step:
@@ -51,11 +57,15 @@ export async function ptDecodeFormat1(table: codedTable, num_length: number = 2)
     }
 
     // Convert PT to standard view:
+    let prev_value = initial;
     for(let i = 0; i < codedPt.length; i += 1) {
-        let data = codedPt[i];
+        let data = codedPt[i] + prev_value + delta_floor;
+        prev_value = data;
         let key = cur_key.toFixed(nums_per_item);
         rev_keys[i] = key
         pre_table[key] = data
+        if (i === codedPt.length - 1) // We want this value set to 0 to match OG tables!
+            pre_table[key] = 0;
         cur_key += step;
     }
 
@@ -67,17 +77,23 @@ export async function ptDecodeFormat1(table: codedTable, num_length: number = 2)
     return res_table;
 }
 
-export async function ptDecodeFormat2(table: codedTable, num_length: number = 2): Promise<Record<string, number>> {
+export async function ptDecodeFormat2(table: codedTable): Promise<Record<string, number>> {
     let raw = table.t;
     let offset = table.s;
+    let num_length = table.sz;
+    let initial = table.i;
+    let delta_floor = table.d;
+
     let decompressed = await decompress(raw);
 
     const view = new DataView(decompressed);
 
     let ctr = offset;
     let res: Record<string, number> = {}
+    let prev_value = initial;
     for (let i = 0; i < decompressed.byteLength; i += num_length) {
-        res[ctr] = decodeAtOffset(view, i, num_length);
+        res[ctr] = decodeAtOffset(view, i, num_length) + prev_value + delta_floor;
+        prev_value = res[ctr]
         ctr++;
     }
     return res;

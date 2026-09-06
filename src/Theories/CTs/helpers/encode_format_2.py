@@ -1,3 +1,4 @@
+from typing import TypedDict
 import base64
 import json
 import zopfli.gzip
@@ -13,13 +14,21 @@ targets = [
 Table = dict[str, int]
 
 
+class ResTable(TypedDict):
+    sz: int  # size of the value in the table in bytes
+    i: int  # Initial value for the delta encoding (it is an outlier in most cases)
+    t: str  # compressed table
+    s: int  # starting value offset of the table
+    d: int  # delta offset
+
+
 def _load_one(name: str) -> Table:
     with open(name, "rb") as f:
         raw_table = json.load(f)
     return raw_table
 
 
-def _encode_one(data: Table, num_size: int = 2) -> tuple[bytes, int]:
+def _encode_one(data: Table) -> ResTable:
     keys: list[str] = []
 
     for item in data:
@@ -29,25 +38,55 @@ def _encode_one(data: Table, num_size: int = 2) -> tuple[bytes, int]:
 
     packed = b''
 
+    prev_item = data[keys[0]]
+    max_delta = 0
+    min_delta = 0
     for k in keys:
-        packed += data[k].to_bytes(num_size, byteorder="big")
+        item = data[k]
+        if item - prev_item > max_delta:
+            max_delta = item - prev_item
+        if item - prev_item < min_delta:
+            min_delta = item - prev_item
+        prev_item = item
+
+    sz = 1
+    while (max_delta - min_delta) > 2 ** (sz*8) - 1:
+        sz += 1
+
+    prev_item = data[keys[0]]
+    for k in keys:
+        packed += (data[k] - prev_item - min_delta).to_bytes(sz, byteorder="big")
+        prev_item = data[k]
 
     best_candidate = gzip.compress(packed, compresslevel=9)
     second = zopfli.gzip.compress(packed)
     if len(second) < len(best_candidate):
         best_candidate = second
 
-    return best_candidate, int(keys[0])
+    return {
+        "t": base64.b64encode(best_candidate).decode('utf-8'),
+        "i": data[keys[0]],
+        "d": min_delta,
+        "sz": sz,
+        "s": int(keys[0])
+    }
 
 
-def _decode_one(coded: bytes, offset: int, num_size: int = 2) -> Table:
+def _decode_one(res: ResTable) -> Table:
+    coded = base64.b64decode(res["t"])
+    num_size = res["sz"]
+    initial = res["i"]
+    offset = res["s"]
+    min_delta = res["d"]
     raw = gzip.decompress(coded)
     table: Table = {}
     ctr = 0
+    prev_value = initial
     for i in range(0, len(raw), num_size):
         cur_byte = raw[i:i+num_size]
         # Compute table:
-        data = int.from_bytes(cur_byte, byteorder="big")
+        data = int.from_bytes(cur_byte, byteorder="big") + prev_value + min_delta
+        prev_value = data
         key = str(ctr+offset)
         table[key] = data
         ctr += 1
@@ -57,9 +96,7 @@ for item in targets:
     table = _load_one(item)
     encoded = _encode_one(table)
     with open(item.replace('.json', '_coded.json'), "w", encoding="utf-8") as f:
-        json.dump({
-            "t": base64.b64encode(encoded[0]).decode('utf-8'),
-            "s": encoded[1]
-        }, f)
-    decoded = _decode_one(encoded[0], encoded[1])
+        json.dump(encoded, f)
+    decoded = _decode_one(encoded)
+    # print(table, decoded)
     assert table == decoded
