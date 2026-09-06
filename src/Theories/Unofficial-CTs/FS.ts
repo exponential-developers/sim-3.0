@@ -1,17 +1,18 @@
 import { global } from "../../Sim/main";
 import Currency from "../../Utils/currency";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { BaseCost, ExponentialCost, FirstFreeCost } from "../../Utils/cost";
 import { add, getBestResult, getLastLevel, l10, toCallables } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import { prepareTable } from "../CTs/helpers/prepareTable";
-import rawPassivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast.json";
-import rawActivePubTable from "../CTs/helpers/table_fs_0_02_active_coast.json";
+import rawPassivePubTable from "../CTs/helpers/table_fs_0_02_passive_coast_coded.json";
+import rawActivePubTable from "../CTs/helpers/table_fs_0_02_active_coast_coded.json";
 import traditionalTheoryClass from "../traditionalTheory";
 
-let activePubTable = prepareTable(rawActivePubTable, "04")
-let passivePubTable = prepareTable(rawPassivePubTable, "04")
+let activePubTable: Record<string, string> = {}
+let passivePubTable: Record<string, string> = {};
 
 type theory = "FS";
 
@@ -118,6 +119,12 @@ class SequenceCost extends BaseCost {
 
 async function fs(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
+  if(Object.keys(activePubTable).length === 0) {
+    activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "04");
+  }
+  if(Object.keys(passivePubTable).length === 0) {
+    passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "04");
+  }
   if (data.strat.includes("Coast")) {
     let bkup = "";
     let replacedPt = false;

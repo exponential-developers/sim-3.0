@@ -1,7 +1,8 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import { prepareTable } from "../CTs/helpers/prepareTable";
-import rawActivePubTable from "../CTs/helpers/table_bd_0_1_bddcoast.json";
-import rawPassivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast.json";
+import rawActivePubTable from "../CTs/helpers/table_bd_0_1_bddcoast_coded.json";
+import rawPassivePubTable from "../CTs/helpers/table_bd_0_1_bdcoast_coded.json";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -9,8 +10,8 @@ import { l10, toCallables, add, getLastLevel, getBestResult, getFactorial } from
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
-let activePubTable: Record<string, string> = prepareTable(rawActivePubTable, "000")
-let passivePubTable: Record<string, string> = prepareTable(rawPassivePubTable, "000")
+let activePubTable: Record<string, string> = {}
+let passivePubTable: Record<string, string> = {};
 
 type theory = "BD";
 
@@ -29,6 +30,12 @@ const BD: TheoryInterface<theory> = {
 export default BD;
 
 async function bd(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(activePubTable).length === 0) {
+    activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "000");
+  }
+  if(Object.keys(passivePubTable).length === 0) {
+    passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "000");
+  }
   if(!data.strat.includes("Coast")) {
     const sim = new bdSim(data);
     const res = await sim.simulate();
