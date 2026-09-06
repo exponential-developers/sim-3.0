@@ -19,6 +19,14 @@ async function decompress(b64str: string): Promise<ArrayBuffer> {
     return await response.arrayBuffer();
 }
 
+function decodeAtOffset(buf: DataView, offset: number, num_length: number): number {
+    let res = 0;
+    for (let i = 0; i < num_length; i++) {
+        res = (res << 8) | buf.getUint8(offset + i);
+    }
+    return res;
+}
+
 export async function ptDecodeFormat1(table: codedTable, num_length: number = 2): Promise<Record<string, string>> {
     let raw = table.t;
     let step = table.s;
@@ -39,12 +47,7 @@ export async function ptDecodeFormat1(table: codedTable, num_length: number = 2)
 
     for (let offset = 0; offset < decompressed.byteLength; offset += num_length) {
         // Pass false for big-endian (or leave the second argument empty)
-        if(num_length == 2) {
-            codedPt.push(view.getUint16(offset, false));
-        }
-        else {
-            codedPt.push(view.getUint32(offset, false));
-        }
+        codedPt.push(decodeAtOffset(view, offset, num_length));
     }
 
     // Convert PT to standard view:
@@ -69,19 +72,12 @@ export async function ptDecodeFormat2(table: codedTable, num_length: number = 2)
     let offset = table.s;
     let decompressed = await decompress(raw);
 
-    // Decode pt:
     const view = new DataView(decompressed);
-    // const codedPt: number[] = [];
 
     let ctr = offset;
     let res: Record<string, number> = {}
     for (let i = 0; i < decompressed.byteLength; i += num_length) {
-        if(num_length == 2) {
-            res[ctr] = view.getUint16(i, false);
-        }
-        else {
-            res[ctr] = view.getUint32(i, false);
-        }
+        res[ctr] = decodeAtOffset(view, i, num_length);
         ctr++;
     }
     return res;
