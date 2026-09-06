@@ -3,10 +3,8 @@ type codedTable = {
     s: number;
 };
 
-export async function ptDecodeFormat1(table: codedTable, num_length: number = 2): Promise<Record<string, string>> {
-    let raw = table.t;
-    let step = table.s;
-    const binaryString = atob(raw);
+async function decompress(b64str: string): Promise<ArrayBuffer> {
+    const binaryString = atob(b64str);
 
     // Prepare uint8 array to then decompress:
     const uint8Array = new Uint8Array(binaryString.length);
@@ -18,8 +16,13 @@ export async function ptDecodeFormat1(table: codedTable, num_length: number = 2)
     if (!stream) throw new Error('Failed to read binary stream');
     const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
     const response = new Response(decompressedStream);
-    let decompressed = await response.arrayBuffer();
-    // Actual decoding:
+    return await response.arrayBuffer();
+}
+
+export async function ptDecodeFormat1(table: codedTable, num_length: number = 2): Promise<Record<string, string>> {
+    let raw = table.t;
+    let step = table.s;
+    let decompressed = await decompress(raw);
 
     // Align the results to step:
     let nums_per_item = 2
@@ -59,4 +62,27 @@ export async function ptDecodeFormat1(table: codedTable, num_length: number = 2)
     }
 
     return res_table;
+}
+
+export async function ptDecodeFormat2(table: codedTable, num_length: number = 2): Promise<Record<string, number>> {
+    let raw = table.t;
+    let offset = table.s;
+    let decompressed = await decompress(raw);
+
+    // Decode pt:
+    const view = new DataView(decompressed);
+    // const codedPt: number[] = [];
+
+    let ctr = offset;
+    let res: Record<string, number> = {}
+    for (let i = 0; i < decompressed.byteLength; i += num_length) {
+        if(num_length == 2) {
+            res[ctr] = view.getUint16(i, false);
+        }
+        else {
+            res[ctr] = view.getUint32(i, false);
+        }
+        ctr++;
+    }
+    return res;
 }

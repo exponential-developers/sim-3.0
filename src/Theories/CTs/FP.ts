@@ -1,14 +1,19 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat2 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, BaseValue } from "../../Utils/value";
 import { CompositeCost, ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/FPpubtable.json" with { type: "json" };
-import extended_pubtable from "./helpers/FPextendedPT.json" with { type: "json" };
+import raw_pubtable from "./helpers/FPpubtable_coded.json";
+import raw_extended_pubtable from "./helpers/FPextendedPT_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "FP";
+type pubTable = Record<string, number>;
+
+let pubtable: pubTable = {}
+let extended_pubtable: pubTable = {}
 
 const converter: ProgressValueConverterRho = traditionalConverter({
   tauFactor: 0.3,
@@ -24,6 +29,12 @@ const FP: TheoryInterface<theory> = {
 export default FP;
 
 async function fp(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(pubtable).length === 0) {
+    pubtable = await ptDecodeFormat2(raw_pubtable);
+  }
+  if(Object.keys(extended_pubtable).length === 0) {
+    extended_pubtable = await ptDecodeFormat2(raw_extended_pubtable);
+  }
   const sim = new fpSim(data);
   const res = await sim.simulate();
   return res;
@@ -54,8 +65,6 @@ const stepwiseSum = (level: number, base: number, length: number) => {
   const mod = level - cycles * length;
   return base * (cycles + 1) * ((length * cycles) / 2 + mod) + length + level;
 };
-
-type pubTable = {[key: string]: number};
 
 class fpSim extends traditionalTheoryClass<theory> {
   // growing variables
@@ -213,7 +222,7 @@ class fpSim extends traditionalTheoryClass<theory> {
     this.bestRes = null;
     this.doContinuityFork = true;
     if (this.lastPubRho >= 1200 && this.lastPubRho < 3490 && this.strat !== "FP") {
-      let newpubtable: pubTable = this.lastPubRho < 1990 ? pubtable.fpdata : extended_pubtable;
+      let newpubtable: pubTable = this.lastPubRho < 1990 ? pubtable : extended_pubtable;
       let pubseek = Math.round(this.lastPubRho * 8);
       this.forcedPubRho = newpubtable[pubseek.toString()] / 8;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;

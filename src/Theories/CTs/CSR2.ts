@@ -1,13 +1,17 @@
 import { global } from "../../Sim/main";
+import { ptDecodeFormat2 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { LinearValue, ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, subtract, getBestResult, getLastLevel, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/CSR2pubtable.json" with { type: "json" };
+import raw_pubtable from "./helpers/CSR2pubtable_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "CSR2";
+type pubTable = Record<string, number>;
+
+let pubtable: pubTable = {}
 
 const converter: ProgressValueConverterRho = traditionalConverter({
   tauFactor: 0.4,
@@ -23,12 +27,14 @@ const CSR2: TheoryInterface<theory> = {
 export default CSR2;
 
 async function csr2(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(pubtable).length === 0) {
+    pubtable = await ptDecodeFormat2(raw_pubtable);
+  }
   const sim = new csr2Sim(data);
   const res = await sim.simulate(data);
   return res;
 }
 
-type pubTable = {[key: string]: number};
 const lowboundsActive = [0.65, 0.15, 0.85, 0, 0];
 const highboundsActive = [1.45, 0.5, 1.8, 1.2, 1.2];
 
@@ -194,7 +200,7 @@ class csr2Sim extends traditionalTheoryClass<theory> {
         this.highbounds = highboundsPassive;
     }
     if (this.strat.includes("PT") && this.lastPubRho >= 500 && this.lastPubRho < 1499.5) {
-      let newpubtable: pubTable = pubtable.csr2data;
+      let newpubtable: pubTable = pubtable;
       let pubseek = Math.round(this.lastPubRho * 16);
       this.forcedPubRho = newpubtable[pubseek.toString()] / 16;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;

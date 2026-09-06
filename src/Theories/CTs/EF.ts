@@ -1,12 +1,17 @@
 import { global } from "../../Sim/main";
 import Currency from "../../Utils/currency";
+import { ptDecodeFormat2 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
 import { add, l10, getLastLevel, getBestResult, binaryInsertionSearch, toCallables } from "../../Utils/helpers";
-import pubtable from "./helpers/EFpubtable.json" with { type: "json" };
+import raw_pubtable from "./helpers/EFpubtable_coded.json";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
+
+type pubTable = Record<string, number>
+
+let pubtable: pubTable = {}
 
 type theory = "EF";
 
@@ -23,6 +28,9 @@ const EF: TheoryInterface<theory> = {
 export default EF;
 
 async function ef(data: theoryData<theory>): Promise<simResult<theory>> {
+  if(Object.keys(pubtable).length === 0) {
+    pubtable = await ptDecodeFormat2(raw_pubtable);
+  }
   if (data.strat !== "EFPlay") {
     const sim = new efSim(data);
     const res = await sim.simulate();
@@ -41,8 +49,6 @@ async function ef(data: theoryData<theory>): Promise<simResult<theory>> {
   const res = await sim.simulate();
   return res;
 }
-
-type pubTable = {[key: string]: number};
 
 class efSim extends traditionalTheoryClass<theory> {
   R: Currency;
@@ -211,7 +217,7 @@ class efSim extends traditionalTheoryClass<theory> {
 
     this.forcedPubRho = Infinity;
     if (this.lastPubRho < 374 && this.strat !== "EF") {
-      let newpubtable: pubTable = pubtable.efdata;
+      let newpubtable: pubTable = pubtable;
       let pubseek = Math.round(this.lastPubRho * 32);
       this.forcedPubRho = newpubtable[pubseek.toString()] / 32;
       if (this.forcedPubRho === undefined) this.forcedPubRho = Infinity;
