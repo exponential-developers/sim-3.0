@@ -1,5 +1,6 @@
 import base64
 import json
+import zopfli.gzip
 import gzip
 
 targets = [
@@ -45,7 +46,12 @@ def _encode_one(data: Table, num_size: int = 2) -> tuple[bytes, float]:
     for item in pre_encoding:
         packed += item.to_bytes(num_size, byteorder="big")
 
-    return gzip.compress(packed, compresslevel=9), float(keys[1]) - float(keys[0])
+    best_candidate = gzip.compress(packed, compresslevel=9)
+    second = zopfli.gzip.compress(packed)
+    if len(second) < len(best_candidate):
+        best_candidate = second
+
+    return best_candidate, float(keys[1]) - float(keys[0])
 
 
 def _decode_one(coded: bytes, step: float, num_size: int = 2) -> Table:

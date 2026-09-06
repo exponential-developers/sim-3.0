@@ -1,5 +1,6 @@
 import base64
 import json
+import zopfli.gzip
 import gzip
 
 targets = [
@@ -31,7 +32,12 @@ def _encode_one(data: Table, num_size: int = 2) -> tuple[bytes, int]:
     for k in keys:
         packed += data[k].to_bytes(num_size, byteorder="big")
 
-    return gzip.compress(packed, compresslevel=9), int(keys[0])
+    best_candidate = gzip.compress(packed, compresslevel=9)
+    second = zopfli.gzip.compress(packed)
+    if len(second) < len(best_candidate):
+        best_candidate = second
+
+    return best_candidate, int(keys[0])
 
 
 def _decode_one(coded: bytes, offset: int, num_size: int = 2) -> Table:
@@ -56,5 +62,4 @@ for item in targets:
             "s": encoded[1]
         }, f)
     decoded = _decode_one(encoded[0], encoded[1])
-    # print(table, decoded)
     assert table == decoded
