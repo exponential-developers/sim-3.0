@@ -8,23 +8,25 @@ type SpecificInputValidationType = SpecificInputNumberValidation | {
     type: "string"
 }
 
-type SpecificInputTextbox = {
-    label: string,
+type BaseSpecificInput = {
+    label: string;
+    hint?: string;
+}
+
+type SpecificInputTextbox = BaseSpecificInput & {
     type: "textbox",
     validation: SpecificInputValidationType,
     placeholder?: string
 }
 
-type SpecificInputSlider = {
-    label: string,
+type SpecificInputSlider = BaseSpecificInput & {
     type: "slider",
     validation: SpecificInputNumberValidation,
     step: number,
     default?: number
 }
 
-type SpecificInputDropdown = {
-    label: string,
+type SpecificInputDropdown = BaseSpecificInput & {
     type: "dropdown",
     choices: string[]
 }

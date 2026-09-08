@@ -119,6 +119,28 @@ textarea::placeholder {
 
 /* Specific inputs */
 
+.specificInputLabel {
+  cursor: help;
+}
+
+.specificInputHint {
+  display: none;
+  width: fit-content;
+  max-width: min(30rem, 90vw);
+  margin-top: 0.25rem;
+  padding: 0.1rem 0.3rem;
+  background-color: var(--input-bg);
+  color: var(--input-f-clr);
+  outline: 1px solid var(--btn-border-clr);
+  font-size: 0.75rem;
+}
+
+.specificInputLabel:hover ~ .specificInputHint,
+.specificInputLabel:focus-visible ~ .specificInputHint,
+.specificInputHint.is-visible {
+  display: block;
+}
+
 .specificInputsMenuButtonWrapper {
   margin: 0.3rem 0;
 }
@@ -142,7 +164,7 @@ textarea::placeholder {
   min-height: 0;
   overflow: auto;
   overscroll-behavior: none;
-  padding-right: 1rem;
+  padding: 1rem;
 }
 
 .specificInputSlider {

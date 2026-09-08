@@ -235,7 +235,8 @@
             "min": 0,
             "max": 10
           },
-          "step": 1
+          "step": 1,
+          "hint": "start the active strategy eXρ before recovery"
         }
       },
       "strats": {
@@ -679,7 +680,8 @@
             "min": 0,
             "max": 5
           },
-          "step": 1
+          "step": 1,
+          "hint": "higher values can give better reset points but slow down the sim significantly"
         }
       },
       "strats": {
@@ -933,7 +935,9 @@
             "type": "exp",
             "min": 0,
             "max": "1e10000"
-          }
+          },
+          "placeholder": "",
+          "hint": "used to determine available milestones and permanent upgrades"
         }
       },
       "strats": {

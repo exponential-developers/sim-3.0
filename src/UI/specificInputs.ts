@@ -62,6 +62,26 @@ export function generateSpecificInputWidgetWrapper(
     const widget = generateSpecificInputWidget(theory, id, input);
     div.appendChild(widget);
 
+    if (input.hint) {
+        label.classList.add("specificInputLabel");
+        label.tabIndex = 0;
+        label.setAttribute("role", "button");
+
+        const hint = ce<HTMLSpanElement>("span");
+        hint.innerText = input.hint;
+        hint.classList.add("specificInputHint");
+        div.appendChild(hint);
+
+        const toggleHint = () => hint.classList.toggle("is-visible");
+        event(label, "click", toggleHint);
+        event(label, "keydown", (e) => {
+            if (e instanceof KeyboardEvent && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                toggleHint();
+            }
+        });
+    }
+
     return div;
 }
 
