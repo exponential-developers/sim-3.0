@@ -11,6 +11,7 @@ import traditionalTheoryClass from "../traditionalTheory";
 
 
 let passivePubTable: Record<string, string> = {}
+let activePubTable: Record<string, string> = {}
 
 type theory = "MF";
 
@@ -40,6 +41,10 @@ async function mf(data: theoryData<theory>): Promise<simResult<theory>> {
   if(Object.keys(passivePubTable).length === 0) {
     const {default: rawPassivePubTable} = await import("./helpers/table_mf_0_05_mfrccoast_coded.json");
     passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "00");
+  }
+  if(Object.keys(activePubTable).length === 0) {
+    const {default: rawActivePubTable} = await import("./helpers/table_mf_0_05_mf_overall_coded.json");
+    activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "00");
   }
   let resetBundles: resetBundle[] = [
     [0, 1, 0, 0],
@@ -405,18 +410,25 @@ class mfSim extends traditionalTheoryClass<theory> {
       MFdCoast: activeStrat,
       MFd2Coast: activeStrat2,
       MFd3Coast: activeStrat3,
+      MFdPTCoast: activeStrat,
+      MFd2PTCoast: activeStrat2,
+      MFd3PTCoast: activeStrat3,
       MFdRCCoast: activeStratRC,
       MFd2RCCoast: activeStrat2RC,
       MFd3RCCoast: activeStrat3RC,
       MFVariantd1d1d2Coast: activeStrat112,
+      MFVariantd1d1d2PTCoast: activeStrat112,
       MFVariantd1d1d3Coast: activeStrat113,
       MFVariantd1d2d1Coast: activeStrat121,
+      MFVariantd1d2d1PTCoast: activeStrat121,
       MFVariantd1d2d2Coast: activeStrat122,
+      MFVariantd1d2d2PTCoast: activeStrat122,
       MFVariantd2d1d1Coast: activeStrat211,
       MFVariantd2d1d2Coast: activeStrat212,
       MFVariantd2d1d3Coast: activeStrat213,
       MFVariantd2d2d1Coast: activeStrat221,
       MFVariantd2d2d3Coast: activeStrat223,
+      MFVariantd2d2d3PTCoast: activeStrat223,
       MFVariantd1d1d2RCCoast: activeStrat112RC,
       MFVariantd1d1d3RCCoast: activeStrat113RC,
       MFVariantd1d2d1RCCoast: activeStrat121RC,
@@ -560,7 +572,7 @@ class mfSim extends traditionalTheoryClass<theory> {
     this.precomp_va2 = 10 ** this.variables[3].value;
     if(data.strat.includes("PT")) {
       let pubSeek = (Math.round(this.lastPubRho * 20) / 20).toFixed(4);
-      let table: Record<string, string> = passivePubTable
+      let table: Record<string, string> = this.strat.includes("MFRCPT") ? passivePubTable : activePubTable;
       if(pubSeek in table) {
         let nextRho = parseFloat(table[pubSeek]);
         this.doSimEndConditions = () => false;

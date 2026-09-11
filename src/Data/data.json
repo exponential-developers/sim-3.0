@@ -708,13 +708,22 @@
           "stratFilterCondition": "false"
         },
         "MFdCoast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFdPTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFd2Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFd2PTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFd3Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFd3PTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFdRCCoast": {
           "stratFilterCondition": "false"
@@ -726,16 +735,25 @@
           "stratFilterCondition": "false"
         },
         "MFVariantd1d1d2Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFVariantd1d1d2PTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFVariantd1d1d3Coast": {
           "stratFilterCondition": "false"
         },
         "MFVariantd1d2d1Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFVariantd1d2d1PTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFVariantd1d2d2Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFVariantd1d2d2PTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFVariantd2d1d1Coast": {
           "stratFilterCondition": "false"
@@ -750,7 +768,10 @@
           "stratFilterCondition": "false"
         },
         "MFVariantd2d2d3Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "(Active || Very-Active) && rho > 599"
+        },
+        "MFVariantd2d2d3PTCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho <= 599"
         },
         "MFVariantd1d1d2RCCoast": {
           "stratFilterCondition": "false"
