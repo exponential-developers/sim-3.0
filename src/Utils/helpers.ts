@@ -260,3 +260,36 @@ export function getddtFromSlider(val: number): number {
 export function isMainTheory(theory: string): boolean {
   return /T[1-8]/.test(theory);
 }
+
+
+/** Merges two lists of numbers */
+export function mergeSortedLists(list1: number[], list2: number[]): number[] {
+    let mergedList: number[] = [];
+    let i = 0; // Pointer for list1
+    let j = 0; // Pointer for list2
+
+    // Merge lists while both have elements left
+    while (i < list1.length && j < list2.length) {
+        if (list1[i] <= list2[j]) {
+            mergedList.push(list1[i]);
+            i++;
+        } else {
+            mergedList.push(list2[j]);
+            j++;
+        }
+    }
+
+    // Add remaining elements from list1, if any
+    while (i < list1.length) {
+        mergedList.push(list1[i]);
+        i++;
+    }
+
+    // Add remaining elements from list2, if any
+    while (j < list2.length) {
+        mergedList.push(list2[j]);
+        j++;
+    }
+
+    return mergedList;
+}

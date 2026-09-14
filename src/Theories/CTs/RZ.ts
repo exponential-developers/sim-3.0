@@ -3,7 +3,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
-import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp, defaultResult } from "../../Utils/helpers";
+import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp, defaultResult, mergeSortedLists } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" with { type: "json" };
 import { traditionalConverter } from "../../Utils/progressConversion";
@@ -34,37 +34,6 @@ class VariableBcost extends BaseCost {
 }
 
 class BlackHoleError extends Error{}
-
-function mergeSortedLists(list1: number[], list2: number[]): number[] {
-    let mergedList: number[] = [];
-    let i = 0; // Pointer for list1
-    let j = 0; // Pointer for list2
-
-    // Merge lists while both have elements left
-    while (i < list1.length && j < list2.length) {
-        if (list1[i] <= list2[j]) {
-            mergedList.push(list1[i]);
-            i++;
-        } else {
-            mergedList.push(list2[j]);
-            j++;
-        }
-    }
-
-    // Add remaining elements from list1, if any
-    while (i < list1.length) {
-        mergedList.push(list1[i]);
-        i++;
-    }
-
-    // Add remaining elements from list2, if any
-    while (j < list2.length) {
-        mergedList.push(list2[j]);
-        j++;
-    }
-
-    return mergedList;
-}
 
 let rzZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzSpecificZeros);
 let rzdZeros = mergeSortedLists(goodzeros.genericZeros, goodzeros.rzdSpecificZeros);
