@@ -1,5 +1,6 @@
 import { global } from "../../Sim/main";
 import { trueFunc } from "../../Utils/functions";
+import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
@@ -12,9 +13,12 @@ import {
   getBestResult
 } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
+import { prepareTable } from "../CTs/helpers/prepareTable";
 import traditionalTheoryClass from "../traditionalTheory";
 
 type theory = "T5";
+
+let activePubTable: Record<string, string> = {}
 
 const converter: ProgressValueConverterRho = traditionalConverter({
   r9Affected: true,
@@ -30,12 +34,16 @@ export default T5;
 
 async function t5(data: theoryData<theory>): Promise<simResult<theory>> {
   let res;
+  if(data.strat.includes("PT") && (Object.keys(activePubTable).length === 0)) {
+    const {default: rawActivePubTable} = await import("./helpers/table_t5_0_01_overall_coded.json");
+    activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "00");
+  }
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
     if(data2.strat == "T5Idle2Coast") {
       data2.strat = "T5IdleCoast";
     }
-    data2.strat = data2.strat.replace("Coast", "") as stratType[theory];
+    data2.strat = data2.strat.replace("Coast", "").replace("PT", "") as stratType[theory];
     const sim1 = new t5Sim(data2);
     const res1 = await sim1.simulate();
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
@@ -110,6 +118,22 @@ class t5Sim extends traditionalTheoryClass<theory> {
         () => this.variables[3].shouldBuy && this.c2worth,
         trueFunc,
       ],
+      T5AI2PT: [
+        () => this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
+            <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000),
+        trueFunc,
+        () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
+        () => this.c2worth,
+        trueFunc,
+      ],
+      T5AI2PTCoast: [
+        () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(3 + (this.variables[0].level % 10))
+            <= Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[4].cost : 1000)),
+        trueFunc,
+        () => this.q + L10_1_5 < this.variables[3].value + this.variables[4].value * (1 + 0.05 * this.milestones[2]) || !this.c2worth,
+        () => this.variables[3].shouldBuy && this.c2worth,
+        trueFunc,
+      ],
     };
     return conditions[this.strat];
   }
@@ -160,6 +184,15 @@ class t5Sim extends traditionalTheoryClass<theory> {
     this.c2Counter = 0;
     this.nc3 = 0;
     this.updateMilestones();
+    if(this.strat.includes("PT")) {
+      if (this.lastPubRho <= 1999)
+      {
+        let pubSeek = (Math.round(this.lastPubRho * 100) / 100).toFixed(4);
+        let nextRho = parseFloat(activePubTable[pubSeek]);
+        this.doSimEndConditions = () => false;
+        this.pubConditions.push(() => this.maxRho >= nextRho);
+      }
+    }
   }
   async simulate(): Promise<simResult<theory>> {
     while (!this.endSimulation()) {

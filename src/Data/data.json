@@ -222,6 +222,12 @@
         },
         "T5AI2Coast": {
           "stratFilterCondition": "Active || Very-Active"
+        },
+        "T5AI2PT": {
+          "stratFilterCondition": "false"
+        },
+        "T5AI2PTCoast": {
+          "stratFilterCondition": "false"
         }
       }
     },
