@@ -199,34 +199,6 @@ async function rz(data: theoryData<theory>): Promise<simResult<theory>> {
         }
         return bestSimRes2;
     }
-    else if(data.strat.includes("MS") && rho <= 400 && rho >= 10) {
-        const swapPointDeltas = [0, -1, -2, -3, -4, -5, -6];
-        let normalRets = [];
-        for(let i = 0; i < swapPointDeltas.length; i++) {
-            let normalSim = new rzSim(data);
-            normalSim.swapPointDelta = swapPointDeltas[i];
-            normalRets.push(await normalSim.simulate());
-        }
-        let coastRets = [];
-        for(let i = 0; i < normalRets.length; i++) {
-            let ss = new rzSim(data);
-            ss.normalPubRho = normalRets[i].pubPointRho ?? 0;
-            ss.swapPointDelta = swapPointDeltas[i];
-            coastRets.push(await ss.simulate());
-        }
-        let retArr = [];
-        for(let ret of normalRets) {
-            retArr.push(ret);
-        }
-        for(let ret of coastRets) {
-            retArr.push(ret);
-        }
-        let bestRet = retArr[0];
-        for(let i = 1; i < retArr.length; i++) {
-            bestRet = getBestResult(bestRet, retArr[i]);
-        }
-        return bestRet;
-    }
     else {
         let internalSim = new rzSim(data);
         let ret = await internalSim.simulate();
@@ -249,6 +221,7 @@ async function rz(data: theoryData<theory>): Promise<simResult<theory>> {
 class rzSim extends traditionalTheoryClass<theory> {
     delta: Currency;
     t_var: number;
+    bestRes: simResult | null;
     // Zeta parameters
     zTerm: number;
     rCoord: number;
@@ -258,7 +231,8 @@ class rzSim extends traditionalTheoryClass<theory> {
     normalPubRho: number;
     maxC1Level: number;
     maxC1LevelActual: number;
-    swapPointDelta: number;
+    forkOnW1: boolean;
+    lastW1: number;
     // BH parameters
     targetZero: number;
     blackhole: boolean;
@@ -367,7 +341,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         }
         else if ((this.strat === "RZMS" || this.strat === "RZdMS") && stage >= 2 && stage <= 4)
         {
-            return this.maxRho > this.lastPubRho + this.swapPointDelta ? originPriority : peripheryPriority;
+            return this.lastW1 != Infinity ? originPriority : peripheryPriority;
         }
 
         return peripheryPriority;
@@ -541,13 +515,16 @@ class rzSim extends traditionalTheoryClass<theory> {
             }),
         ];
 
+        this.forkOnW1 = false;
+        this.lastW1 = Infinity;
+        this.bestRes = null;
+
         this.bhAtRecovery = false;
         this.bhzTerm = 0;
         this.bhdTerm = 0;
         this.normalPubRho = -1;
         this.maxC1Level = -1;
         this.maxC1LevelActual = -1;
-        this.swapPointDelta = 0;
         this.maxW1 = Infinity;
         this.bhRewindStatus = 0;
         this.bhRewindT = 0;
@@ -557,6 +534,49 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
     }
+
+    copy(): rzSim {
+        let newsim = new rzSim(super.getDataForCopy());
+        newsim.copyFrom(this);
+        return newsim;
+    }
+    copyFrom(other: this) {
+        super.copyFrom(other);
+        this.delta = other.delta;
+        this.t_var = other.t_var;
+        this.zTerm = other.zTerm;
+        this.rCoord = other.rCoord;
+        this.iCoord = other.iCoord;
+        this.targetZero = other.targetZero;
+        this.offGrid = other.offGrid;
+        this.blackhole = other.blackhole;
+        this.bhSearchingRewind = other.bhSearchingRewind;
+        this.bhFoundZero = other.bhFoundZero;
+        this.forkOnW1 = other.forkOnW1;
+        this.lastW1 = other.lastW1;
+        this.bestRes = other.bestRes;
+        this.bhAtRecovery = other.bhAtRecovery;
+        this.bhzTerm = other.bhzTerm;
+        this.bhdTerm = other.bhdTerm;
+        this.normalPubRho = other.normalPubRho;
+        this.maxC1Level = other.maxC1Level;
+        this.maxC1LevelActual = other.maxC1LevelActual;
+        this.maxW1 = other.maxW1;
+        this.bhRewindStatus = other.bhRewindStatus;
+        this.bhRewindT = other.bhRewindT;
+        this.bhRewindNorm = other.bhRewindNorm;
+        this.bhRewindDeriv = other.bhRewindDeriv;
+    }
+    async doForkW1() {
+        const fork = this.copy();
+        fork.lastW1 = this.variables[3].level;
+        fork.forkOnW1 = false;
+        const res = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, res);
+        this.lastW1 = Infinity;
+        this.forkOnW1 = false;
+    }
+
     async simulate(): Promise<simResult<theory>> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
         try {
@@ -574,6 +594,9 @@ class rzSim extends traditionalTheoryClass<theory> {
                 if (this.lastPubRho < 600) this.updateMilestones();
                 if (this.milestones[3] > 0 && BHStrats.has(this.strat)) this.updateBHstatus();
                 this.buyVariables();
+                if (this.forkOnW1) {
+                    await this.doForkW1();
+                }
                 this.pubTableCollector.collectData(this);
             }
         }
@@ -590,8 +613,8 @@ class rzSim extends traditionalTheoryClass<theory> {
         if (this.strat.includes("BH")) {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
-        if (this.strat.includes("MS")) {
-            stratExtra += ` ${logToExp(this.lastPubRho + this.swapPointDelta, 2)}`
+        if (this.lastW1 != Infinity) {
+            stratExtra += ` w1: ${this.lastW1}`;
         }
         if (this.normalPubRho != -1) {
             // if(this.maxC1LevelActual == -1)
@@ -604,7 +627,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         }
         this.trimBoughtVars();
         const result = this.createResult(stratExtra);
-        return result;
+        return getBestResult(result, this.bestRes);
     }
     tick() {
         let t_dot: number;
@@ -672,6 +695,8 @@ class rzSim extends traditionalTheoryClass<theory> {
             this.bhSearchingRewind = true;
             this.bhFoundZero = false;
             this.bhRewindStatus = 1;
+        } else if ((id == 3 && this.strat.includes("MS") && (Math.max(this.maxRho, this.lastPubRho) >= 50) && (Math.max(this.maxRho, this.lastPubRho) < 400) && (this.maxRho >= this.lastPubRho - 7) && (this.lastW1 == Infinity)) && ((this.lastPubRho <= 50) || this.maxRho < this.lastPubRho)) {
+            this.forkOnW1 = true;
         }
     }
 }
