@@ -160,6 +160,7 @@ export default abstract class
     this.ddt = other.ddt;
     this.t = other.t;
     this.ticks = other.ticks;
+    this.prevMilestoneCount = other.prevMilestoneCount;
 
     this.variables = other.variables.map((v, i) => v.copy(this.variables[i].currency));
     this.boughtVars = [...other.boughtVars];

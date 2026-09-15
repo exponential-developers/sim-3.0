@@ -665,6 +665,9 @@
         "RZSpiralswap": {
           "stratFilterCondition": "Very-Active && rho >= 45 && rho < 400"
         },
+        "RZSpiralswapSingleMS": {
+          "stratFilterCondition": "Very-Active && rho >= 45 && rho < 400"
+        },
         "RZMS": {
           "stratFilterCondition": "Semi-Idle && rho >= 45 && rho < 400"
         },

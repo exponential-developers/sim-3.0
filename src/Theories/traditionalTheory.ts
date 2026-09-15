@@ -20,6 +20,12 @@ export default abstract class
   pubUnlockRho: number;
   /** Rho of the last publication */
   lastPubRho: number;
+  /** Maximum rho achieved this publication and the last */
+  maxOverallRho: number;
+  /** Maximum tau achieved this publication */
+  maxTau: number;
+  /** Current milestone count */
+  milestoneCount: number;
 
   // Currencies
   /** Main currency of the theory */
@@ -72,6 +78,9 @@ export default abstract class
     this.lastPubRho = this.converter.convertTo(this.lastPub, "rho", this.sigma);
     this.pubUnlockRho = 1;
     this.totMult = this.getTotMult(data.input);
+    this.maxTau = this.converter.convertTo(this.lastPub, "tau", this.sigma);
+    this.maxOverallRho = this.lastPubRho;
+    this.milestoneCount = 0;
 
     //currencies
     this.rho = new Currency;
@@ -121,12 +130,12 @@ export default abstract class
    * Updates milestones
    */
   updateMilestones(): void {
-    const rho = Math.max(this.maxRho, this.lastPubRho);
     const priority = this.getMilestonePriority();
-    let milestoneCount = this.milestoneUnlockSteps > 0
-      ? Math.floor(rho / this.milestoneUnlockSteps)
-      : binaryInsertionSearch(this.milestoneUnlocks, rho);
+    this.milestoneCount = this.milestoneUnlockSteps > 0
+      ? Math.floor(this.maxOverallRho / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, this.maxOverallRho);
     this.milestones = new Array(this.milestonesMax.length).fill(0);
+    let milestoneCount = this.milestoneCount;
     for (let i = 0; i < priority.length; i++) {
         while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
             this.milestones[priority[i]]++;
@@ -139,14 +148,14 @@ export default abstract class
    * Update milestones, no MS
    */
   updateMilestonesNoMS(): boolean {
-    const rho = Math.max(this.maxRho, this.lastPubRho);
-    let milestoneCount = this.milestoneUnlockSteps > 0
-        ? Math.floor(rho / this.milestoneUnlockSteps)
-        : binaryInsertionSearch(this.milestoneUnlocks, rho);
-    if(milestoneCount != this.prevMilestoneCount) {
-      this.prevMilestoneCount = milestoneCount;
+    this.milestoneCount = this.milestoneUnlockSteps > 0
+        ? Math.floor(this.maxOverallRho / this.milestoneUnlockSteps)
+        : binaryInsertionSearch(this.milestoneUnlocks, this.maxOverallRho);
+    if(this.milestoneCount != this.prevMilestoneCount) {
+      this.prevMilestoneCount = this.milestoneCount;
       const priority = this.getMilestonePriority();
       this.milestones = new Array(this.milestonesMax.length).fill(0);
+      let milestoneCount = this.milestoneCount;
       for (let i = 0; i < priority.length; i++) {
         while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
           this.milestones[priority[i]]++;
@@ -164,9 +173,17 @@ export default abstract class
    * Updates several sim status parameters
    */
   updateSimStatus() {
-    if (this.rho.value > this.maxRho) this.maxRho = this.rho.value;
+    if (this.rho.value > this.maxRho) {
+      this.maxRho = this.rho.value;
+      if (this.maxRho > this.maxOverallRho ) {
+        this.maxOverallRho = this.maxRho;
+        this.maxTau = this.converter.convertTo({ valueType: "rho", value: this.maxOverallRho }, "tau");
+      }
+      
+    }
     this.updateT();
 
+    
     this.tauH = (
       this.converter.convertTo({ valueType: "rho", value: this.maxRho }, "tau") 
       - this.converter.convertTo(this.lastPub, "tau", this.sigma) 

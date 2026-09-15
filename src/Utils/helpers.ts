@@ -168,6 +168,44 @@ export function binaryInsertionSearch(arr: number[], target: number): number {
   return l + 1;
 }
 
+/**
+ * Returns the index of the first element in `arr` greater than or equal to `target`
+ *
+ * @param arr Number array sorted in increasing order with no repetitions
+ * @param target Target number
+ */
+export function binaryGteSearch(arr: number[], target: number): number {
+  if (target < arr[0]) return 0;
+  if (target > arr[arr.length - 1]) return -1;
+  let l = 0;
+  let r = arr.length - 1;
+  while (l < r) {
+    const m = Math.ceil((l + r) / 2);
+    if (arr[m] <= target) l = m;
+    else r = m - 1;
+  }
+  return l;
+}
+
+/**
+ * Returns the index of the first element in `arr` greater than `target`
+ *
+ * @param arr Number array sorted in increasing order with no repetitions
+ * @param target Target number
+ */
+export function binaryGtSearch(arr: number[], target: number): number {
+  if (target < arr[0]) return 0;
+  if (target >= arr[arr.length - 1]) return -1;
+  let l = 0;
+  let r = arr.length - 1;
+  while (l < r) {
+    const m = Math.ceil((l + r) / 2);
+    if (arr[m] < target) l = m;
+    else r = m - 1;
+  }
+  return l + 1;
+}
+
 /** Returns a default simResult */
 export function defaultResult<T extends theoryType>(): simResult<T> {
   return {

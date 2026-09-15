@@ -3,7 +3,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
-import { l10, binaryInsertionSearch, getBestResult, toCallables, logToExp, defaultResult, mergeSortedLists } from "../../Utils/helpers";
+import { l10, binaryInsertionSearch, getBestResult, toCallables, defaultResult, mergeSortedLists } from "../../Utils/helpers";
 import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" with { type: "json" };
 import { traditionalConverter } from "../../Utils/progressConversion";
@@ -313,6 +313,7 @@ class rzSim extends traditionalTheoryClass<theory> {
             RZdBHLong: activeStrat,
             RZdBHRewind: activeStrat,
             RZSpiralswap: activeStrat,
+            RZSpiralswapSingleMS: activeStrat,
             RZdMS: activeStrat,
             RZMS: semiPassiveStrat,
             // RZnoB: [true, true, false, true, true, false, false],
@@ -331,17 +332,20 @@ class rzSim extends traditionalTheoryClass<theory> {
         ];
     }
     getMilestonePriority(): number[] {
-        const stage = binaryInsertionSearch(this.milestoneUnlocks, Math.max(this.lastPubRho, this.maxRho));
         const originPriority = [1, 0, 2, 3];
         const peripheryPriority = [1, 2, 0, 3];
 
-        if (this.strat === "RZSpiralswap" && stage >= 2 && stage <= 4)
-        {
-            return this.zTerm > 1 ? peripheryPriority : originPriority;
-        }
-        else if ((this.strat === "RZMS" || this.strat === "RZdMS") && stage >= 2 && stage <= 4)
-        {
-            return this.lastW1 != Infinity ? originPriority : peripheryPriority;
+        if (this.milestoneCount >= 2 && this.milestoneCount <= 4) {
+            switch (this.strat) {
+                case "RZSpiralswapSingleMS":
+                    return (this.zTerm > 1 && this.lastW1 == Infinity) ? peripheryPriority : originPriority;
+                case "RZSpiralswap":
+                    return this.zTerm > 1 ? peripheryPriority : originPriority;
+                case "RZMS":
+                case "RZdMS":
+                    return this.lastW1 != Infinity ? originPriority : peripheryPriority;
+                default: peripheryPriority;
+            }
         }
 
         return peripheryPriority;
@@ -519,6 +523,10 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.lastW1 = Infinity;
         this.bestRes = null;
 
+        this.prevMilestoneCount = this.milestoneUnlockSteps > 0
+            ? Math.floor(this.lastPubRho / this.milestoneUnlockSteps)
+            : binaryInsertionSearch(this.milestoneUnlocks, this.lastPubRho);
+
         this.bhAtRecovery = false;
         this.bhzTerm = 0;
         this.bhdTerm = 0;
@@ -542,30 +550,39 @@ class rzSim extends traditionalTheoryClass<theory> {
     }
     copyFrom(other: this) {
         super.copyFrom(other);
-        this.delta = other.delta;
+
+        this.delta.value = other.delta.value;
         this.t_var = other.t_var;
+        this.bestRes = other.bestRes;
+        this.milestoneCount = other.milestoneCount;
+        this.prevMilestoneCount = other.prevMilestoneCount;
+
         this.zTerm = other.zTerm;
         this.rCoord = other.rCoord;
         this.iCoord = other.iCoord;
-        this.targetZero = other.targetZero;
         this.offGrid = other.offGrid;
-        this.blackhole = other.blackhole;
-        this.bhSearchingRewind = other.bhSearchingRewind;
-        this.bhFoundZero = other.bhFoundZero;
-        this.forkOnW1 = other.forkOnW1;
-        this.lastW1 = other.lastW1;
-        this.bestRes = other.bestRes;
-        this.bhAtRecovery = other.bhAtRecovery;
-        this.bhzTerm = other.bhzTerm;
-        this.bhdTerm = other.bhdTerm;
+
         this.normalPubRho = other.normalPubRho;
         this.maxC1Level = other.maxC1Level;
         this.maxC1LevelActual = other.maxC1LevelActual;
+        this.forkOnW1 = other.forkOnW1;
+        this.lastW1 = other.lastW1;
+
+        this.targetZero = other.targetZero;
+        this.blackhole = other.blackhole;
+        this.bhSearchingRewind = other.bhSearchingRewind;
+        this.bhFoundZero = other.bhFoundZero;
+        this.bhAtRecovery = other.bhAtRecovery;
+        this.bhzTerm = other.bhzTerm;
+        this.bhdTerm = other.bhdTerm;
+
         this.maxW1 = other.maxW1;
         this.bhRewindStatus = other.bhRewindStatus;
         this.bhRewindT = other.bhRewindT;
         this.bhRewindNorm = other.bhRewindNorm;
         this.bhRewindDeriv = other.bhRewindDeriv;
+
+        this.bhProcessCounter = other.bhProcessCounter;
     }
     async doForkW1() {
         const fork = this.copy();
@@ -573,7 +590,6 @@ class rzSim extends traditionalTheoryClass<theory> {
         fork.forkOnW1 = false;
         const res = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, res);
-        this.lastW1 = Infinity;
         this.forkOnW1 = false;
     }
 
@@ -695,7 +711,7 @@ class rzSim extends traditionalTheoryClass<theory> {
             this.bhSearchingRewind = true;
             this.bhFoundZero = false;
             this.bhRewindStatus = 1;
-        } else if ((id == 3 && this.strat.includes("MS") && (Math.max(this.maxRho, this.lastPubRho) >= 50) && (Math.max(this.maxRho, this.lastPubRho) < 400) && (this.maxRho >= this.lastPubRho - 7) && (this.lastW1 == Infinity)) && ((this.lastPubRho <= 50) || this.maxRho < this.lastPubRho)) {
+        }  else if (id == 3 && (this.maxOverallRho >= 50) && (this.maxOverallRho < 400) && (this.maxRho >= this.lastPubRho - 7) && (this.lastW1 == Infinity) && (this.strat == "RZSpiralswapSingleMS" || (this.strat.includes("MS") && ((this.lastPubRho <= 50) || (this.maxRho < this.lastPubRho))))) {
             this.forkOnW1 = true;
         }
     }
