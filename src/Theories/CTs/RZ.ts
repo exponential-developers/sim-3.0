@@ -226,6 +226,7 @@ class rzSim extends traditionalTheoryClass<theory> {
     zTerm: number;
     rCoord: number;
     iCoord: number;
+    derivTerm: number;
     offGrid: boolean;
     // Pub parameters
     normalPubRho: number;
@@ -233,6 +234,13 @@ class rzSim extends traditionalTheoryClass<theory> {
     maxC1LevelActual: number;
     forkOnW1: boolean;
     lastW1: number;
+    progress: ProgressValue;
+    // Spiralswap parameters
+    spiralThreshold: number;
+    spiralThresholdBase: number = 1;
+    spiralProgressExponent: number;
+    spiralProgressExponentBase: number = 200;
+    spiralProgressExponentMin: number = 40;
     // BH parameters
     targetZero: number;
     blackhole: boolean;
@@ -313,7 +321,6 @@ class rzSim extends traditionalTheoryClass<theory> {
             RZdBHLong: activeStrat,
             RZdBHRewind: activeStrat,
             RZSpiralswap: activeStrat,
-            RZSpiralswapSingleMS: activeStrat,
             RZdMS: activeStrat,
             RZMS: semiPassiveStrat,
             // RZnoB: [true, true, false, true, true, false, false],
@@ -337,10 +344,8 @@ class rzSim extends traditionalTheoryClass<theory> {
 
         if (this.milestoneCount >= 2 && this.milestoneCount <= 4) {
             switch (this.strat) {
-                case "RZSpiralswapSingleMS":
-                    return (this.zTerm > 1 && this.lastW1 == Infinity) ? peripheryPriority : originPriority;
                 case "RZSpiralswap":
-                    return this.zTerm > 1 ? peripheryPriority : originPriority;
+                    return this.zTerm > this.spiralThreshold * (this.progress.value ** this.spiralProgressExponent) ? peripheryPriority : originPriority;
                 case "RZMS":
                 case "RZdMS":
                     return this.lastW1 != Infinity ? originPriority : peripheryPriority;
@@ -473,6 +478,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.zTerm = 0;
         this.rCoord = -1.4603545088095868;
         this.iCoord = 0;
+        this.derivTerm = 0;
         this.targetZero = 999999999;
         this.offGrid = false;
         this.blackhole = false;
@@ -522,6 +528,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.forkOnW1 = false;
         this.lastW1 = Infinity;
         this.bestRes = null;
+        this.progress = {valueType: "rho", value: this.lastPubRho};
 
         this.prevMilestoneCount = this.milestoneUnlockSteps > 0
             ? Math.floor(this.lastPubRho / this.milestoneUnlockSteps)
@@ -539,8 +546,16 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.bhRewindNorm = 0;
         this.bhRewindDeriv = 0;
 
+        this.spiralThreshold = this.strat.includes("Spiralswap") ? this.spiralThresholdBase : 0;
+        this.spiralProgressExponent = this.strat.includes("Spiralswap") ? this.spiralProgressExponentBase : 0;
+
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
+    }
+
+    updateSimStatus(): void {
+        super.updateSimStatus();
+        this.progress.value = this.lastPubRho > 0 ? this.maxOverallRho / this.lastPubRho : Infinity;
     }
 
     copy(): rzSim {
@@ -560,6 +575,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.zTerm = other.zTerm;
         this.rCoord = other.rCoord;
         this.iCoord = other.iCoord;
+        this.derivTerm = other.derivTerm;
         this.offGrid = other.offGrid;
 
         this.normalPubRho = other.normalPubRho;
@@ -567,6 +583,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.maxC1LevelActual = other.maxC1LevelActual;
         this.forkOnW1 = other.forkOnW1;
         this.lastW1 = other.lastW1;
+        this.progress.value = other.progress.value;
 
         this.targetZero = other.targetZero;
         this.blackhole = other.blackhole;
@@ -583,6 +600,11 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.bhRewindDeriv = other.bhRewindDeriv;
 
         this.bhProcessCounter = other.bhProcessCounter;
+        this.spiralThreshold = other.spiralThreshold;
+        this.spiralThresholdBase = other.spiralThresholdBase;
+        this.spiralProgressExponent = other.spiralProgressExponent;
+        this.spiralProgressExponentBase = other.spiralProgressExponentBase;
+        this.spiralProgressExponentMin = other.spiralProgressExponentMin;
     }
     async doForkW1() {
         const fork = this.copy();
@@ -593,8 +615,40 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.forkOnW1 = false;
     }
 
+    async doForkSpiralThreshold(thresh: number){
+        const fork = this.copy();
+        fork.spiralThreshold = thresh;
+        const res = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, res);
+    }
+
+    async doForkSpiralThresholds(){
+        const dec = 0.1;
+        for (let thresh = this.spiralThreshold - dec; thresh > 0; thresh = thresh - dec) {
+            this.doForkSpiralThreshold(thresh);
+        }
+    }
+
+    async doForkSpiralProgressExponent(thresh: number) {
+        const fork = this.copy();
+        fork.spiralProgressExponent = thresh;
+        const res = await fork.simulate();
+        this.bestRes = getBestResult(this.bestRes, res);
+    }
+
+    async doForkSpiralProgressExponents(){
+        const dec = 5;
+        let th = 0;
+        for (let thresh = this.spiralProgressExponent - dec; thresh > this.spiralProgressExponentMin; thresh = thresh - dec) {
+            this.doForkSpiralProgressExponent(thresh);
+        }
+    }
+
     async simulate(): Promise<simResult<theory>> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
+        // No clue why this has to be await, but necessary to function.
+        if(this.spiralThreshold == this.spiralThresholdBase && this.spiralProgressExponent == this.spiralProgressExponentBase) await this.doForkSpiralThresholds();
+        if(this.spiralProgressExponent == this.spiralProgressExponentBase) await this.doForkSpiralProgressExponents();
         try {
             while (!this.endSimulation()) {
                 if (!global.simulating) break;
@@ -628,6 +682,9 @@ class rzSim extends traditionalTheoryClass<theory> {
         let stratExtra = "";
         if (this.strat.includes("BH")) {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
+        }
+        if (this.spiralThreshold || this.spiralProgressExponent) {
+            stratExtra += ` t=${Math.round(this.spiralThreshold*10)/10} e=${Math.round(this.spiralProgressExponent*10)/10}`;
         }
         if (this.lastW1 != Infinity) {
             stratExtra += ` w1: ${this.lastW1}`;
@@ -672,8 +729,8 @@ class rzSim extends traditionalTheoryClass<theory> {
                 const tmpZ = zeta(this.t_var + 1 / 100000, this.ticks, this.offGrid, lookups.zetaDerivLookup);
                 const dr = tmpZ[0] - z[0];
                 const di = tmpZ[1] - z[1];
-                const derivTerm = l10(Math.sqrt(dr * dr + di * di) * 100000);
-                this.delta.add(derivTerm * bTerm + w1Term + w2Term + w3Term + bonus);
+                this.derivTerm = l10(Math.sqrt(dr * dr + di * di) * 100000);
+                this.delta.add(this.derivTerm * bTerm + w1Term + w2Term + w3Term + bonus);
                 if (this.bhRewindStatus == 1) {
                     this.bhRewindDeriv += this.dt * (Math.sqrt(dr * dr + di * di) * 100000) ** bTerm;
                 }
@@ -711,7 +768,7 @@ class rzSim extends traditionalTheoryClass<theory> {
             this.bhSearchingRewind = true;
             this.bhFoundZero = false;
             this.bhRewindStatus = 1;
-        }  else if (id == 3 && (this.maxOverallRho >= 50) && (this.maxOverallRho < 400) && (this.maxRho >= this.lastPubRho - 7) && (this.lastW1 == Infinity) && (this.strat == "RZSpiralswapSingleMS" || (this.strat.includes("MS") && ((this.lastPubRho <= 50) || (this.maxRho < this.lastPubRho))))) {
+        }  else if (id == 3 && (this.maxOverallRho >= 50) && (this.maxOverallRho < 400) && (this.maxRho >= this.lastPubRho - 7) && (this.lastW1 == Infinity) && this.strat.includes("MS") && ((this.lastPubRho <= 50) || (this.maxRho < this.lastPubRho))) {
             this.forkOnW1 = true;
         }
     }

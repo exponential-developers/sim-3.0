@@ -663,16 +663,13 @@
           "stratFilterCondition": "(Active || Very-Active) && rho >= 600"
         },
         "RZSpiralswap": {
-          "stratFilterCondition": "Very-Active && rho >= 45 && rho < 400"
-        },
-        "RZSpiralswapSingleMS": {
-          "stratFilterCondition": "Very-Active && rho >= 45 && rho < 400"
+          "stratFilterCondition": "Very-Active && rho >= 50 && rho < 400"
         },
         "RZMS": {
           "stratFilterCondition": "Semi-Idle && rho >= 45 && rho < 400"
         },
         "RZdMS": {
-          "stratFilterCondition": "(Active || Very-Active) && rho >= 45 && rho < 400"
+          "stratFilterCondition": "((Active && rho < 400) || (Very-Active && rho < 50)) && rho >=45"
         },
         "RZdBHRewind" : {
           "stratFilterCondition": "Very-Active && rho >= 860 && rho <= 2000"
