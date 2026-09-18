@@ -396,7 +396,7 @@ class rzSim extends traditionalTheoryClass<theory> {
 
     bhProcess(zResult: ComplexValue | null = null, tmpZ: ComplexValue | null = null) {
         this.offGrid = true;
-        if (this.strat != "RZdBHRewind") this.bhProcessCounter++;
+        this.bhProcessCounter++;
         if (this.bhProcessCounter > 500) {
             throw new BlackHoleError("Black Hole algorithm did not converge.\nThis is likely due to precision issues at large t.");
         }
