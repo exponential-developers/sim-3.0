@@ -4,7 +4,7 @@ import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue, LinearValue } from "../../Utils/value";
 import { ExponentialCost, StepwiseCost, FirstFreeCost, BaseCost } from '../../Utils/cost';
 import { l10, binaryInsertionSearch, getBestResult, toCallables, defaultResult, mergeSortedLists } from "../../Utils/helpers";
-import { c1Exp, lookups, resolution, zeta, ComplexValue } from "./helpers/RZ";
+import { c1Exp, lookups, resolution, zeta, ComplexValue, getSpiralLookups } from "./helpers/RZ";
 import goodzeros from "./helpers/RZgoodzeros.json" with { type: "json" };
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
@@ -234,13 +234,15 @@ class rzSim extends traditionalTheoryClass<theory> {
     maxC1LevelActual: number;
     forkOnW1: boolean;
     lastW1: number;
-    progress: ProgressValue;
+    progress: number;
     // Spiralswap parameters
-    spiralThreshold: number;
-    spiralThresholdBase: number = 1;
-    spiralProgressExponent: number;
-    spiralProgressExponentBase: number = 200;
-    spiralProgressExponentMin: number = 40;
+    spiralThresh: number = 0;
+    spiralThreshMax: number = 0;
+    spiralThreshBase: number = 0.2;
+    spiralProgExp: number = 0;
+    spiralProgExpMax: number = 0;
+    spiralProgExpBase: number = 40;
+    spiralProgExpInc: number = 5;
     // BH parameters
     targetZero: number;
     blackhole: boolean;
@@ -345,7 +347,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         if (this.milestoneCount >= 2 && this.milestoneCount <= 4) {
             switch (this.strat) {
                 case "RZSpiralswap":
-                    return this.zTerm > this.spiralThreshold * (this.progress.value ** this.spiralProgressExponent) ? peripheryPriority : originPriority;
+                    return this.zTerm > this.spiralThresh * (this.progress ** this.spiralProgExp) ? peripheryPriority : originPriority;
                 case "RZMS":
                 case "RZdMS":
                     return this.lastW1 != Infinity ? originPriority : peripheryPriority;
@@ -528,7 +530,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.forkOnW1 = false;
         this.lastW1 = Infinity;
         this.bestRes = null;
-        this.progress = {valueType: "rho", value: this.lastPubRho};
+        this.progress = 0;
 
         this.prevMilestoneCount = this.milestoneUnlockSteps > 0
             ? Math.floor(this.lastPubRho / this.milestoneUnlockSteps)
@@ -546,16 +548,13 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.bhRewindNorm = 0;
         this.bhRewindDeriv = 0;
 
-        this.spiralThreshold = this.strat.includes("Spiralswap") ? this.spiralThresholdBase : 0;
-        this.spiralProgressExponent = this.strat.includes("Spiralswap") ? this.spiralProgressExponentBase : 0;
-
         this.pubConditions.push(() => this.curMult > 30);
         this.updateMilestones();
     }
 
     updateSimStatus(): void {
         super.updateSimStatus();
-        this.progress.value = this.lastPubRho > 0 ? this.maxOverallRho / this.lastPubRho : Infinity;
+        this.progress = this.lastPubRho > 0 ? this.maxOverallRho / this.lastPubRho : Infinity;
     }
 
     copy(): rzSim {
@@ -583,7 +582,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.maxC1LevelActual = other.maxC1LevelActual;
         this.forkOnW1 = other.forkOnW1;
         this.lastW1 = other.lastW1;
-        this.progress.value = other.progress.value;
+        this.progress = other.progress;
 
         this.targetZero = other.targetZero;
         this.blackhole = other.blackhole;
@@ -600,11 +599,12 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.bhRewindDeriv = other.bhRewindDeriv;
 
         this.bhProcessCounter = other.bhProcessCounter;
-        this.spiralThreshold = other.spiralThreshold;
-        this.spiralThresholdBase = other.spiralThresholdBase;
-        this.spiralProgressExponent = other.spiralProgressExponent;
-        this.spiralProgressExponentBase = other.spiralProgressExponentBase;
-        this.spiralProgressExponentMin = other.spiralProgressExponentMin;
+        this.spiralThresh = other.spiralThresh;
+        this.spiralThreshMax = other.spiralThreshMax;
+        this.spiralProgExp = other.spiralProgExp;
+        this.spiralProgExpMax = other.spiralProgExpMax;
+        this.spiralProgExpBase = other.spiralProgExpBase;
+        this.spiralProgExpInc = other.spiralProgExpInc;
     }
     async doForkW1() {
         const fork = this.copy();
@@ -615,40 +615,44 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.forkOnW1 = false;
     }
 
-    async doForkSpiralThreshold(thresh: number){
+    async doForkSpiralThresh(thresh: number){
         const fork = this.copy();
-        fork.spiralThreshold = thresh;
+        fork.spiralThresh = thresh;
         const res = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, res);
     }
 
-    async doForkSpiralThresholds(){
-        const dec = 0.1;
-        for (let thresh = this.spiralThreshold - dec; thresh > 0; thresh = thresh - dec) {
-            this.doForkSpiralThreshold(thresh);
+    async doForkSpiralThreshs(){
+        for (let thresh = this.spiralThresh + 0.1; thresh <= this.spiralThreshMax; thresh += 0.1) {
+            this.doForkSpiralThresh(thresh);
         }
     }
 
-    async doForkSpiralProgressExponent(thresh: number) {
+    async doForkSpiralProgExp(thresh: number) {
         const fork = this.copy();
-        fork.spiralProgressExponent = thresh;
+        fork.spiralProgExp = thresh;
         const res = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, res);
     }
 
-    async doForkSpiralProgressExponents(){
-        const dec = 5;
-        let th = 0;
-        for (let thresh = this.spiralProgressExponent - dec; thresh > this.spiralProgressExponentMin; thresh = thresh - dec) {
-            this.doForkSpiralProgressExponent(thresh);
+    async doForkSpiralProgExps(){
+        for (let thresh = this.spiralProgExp + this.spiralProgExpInc; thresh <= this.spiralProgExpMax; thresh += this.spiralProgExpInc) {
+            this.doForkSpiralProgExp(thresh);
         }
     }
 
     async simulate(): Promise<simResult<theory>> {
         const BHStrats = new Set(["RZBH", "RZdBH", "RZBHLong", "RZdBHLong", "RZdBHRewind"]);
-        // No clue why this has to be await, but necessary to function.
-        if(this.spiralThreshold == this.spiralThresholdBase && this.spiralProgressExponent == this.spiralProgressExponentBase) await this.doForkSpiralThresholds();
-        if(this.spiralProgressExponent == this.spiralProgressExponentBase) await this.doForkSpiralProgressExponents();
+        if (this.strat.includes("Spiralswap")) {
+            if (this.spiralThresh == 0) {
+                [this.spiralThreshMax, this.spiralThreshBase, this.spiralProgExpMax, this.spiralProgExpBase, this.spiralProgExpInc] = getSpiralLookups(this.lastPubRho);
+                this.spiralThresh = this.spiralThreshBase;
+                this.spiralProgExp = this.spiralProgExpBase;
+            }
+            // No clue why this has to be await, but necessary to function.
+            if(this.spiralThresh == this.spiralThreshBase && this.spiralProgExp == this.spiralProgExpBase) await this.doForkSpiralThreshs();
+            if(this.spiralProgExp == this.spiralProgExpBase) await this.doForkSpiralProgExps();
+        }
         try {
             while (!this.endSimulation()) {
                 if (!global.simulating) break;
@@ -683,8 +687,8 @@ class rzSim extends traditionalTheoryClass<theory> {
         if (this.strat.includes("BH")) {
             stratExtra += ` t=${this.bhAtRecovery ? this.t_var.toFixed(2) : this.targetZero.toFixed(2)}`
         }
-        if (this.spiralThreshold || this.spiralProgressExponent) {
-            stratExtra += ` t=${Math.round(this.spiralThreshold*10)/10} e=${Math.round(this.spiralProgressExponent*10)/10}`;
+        if (this.spiralThresh || this.spiralProgExp) {
+            stratExtra += ` t=${Math.round(this.spiralThresh*10)/10} e=${Math.round(this.spiralProgExp*10)/10}`;
         }
         if (this.lastW1 != Infinity) {
             stratExtra += ` w1: ${this.lastW1}`;
