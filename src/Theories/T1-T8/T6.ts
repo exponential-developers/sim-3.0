@@ -148,7 +148,7 @@ class t6Sim extends traditionalTheoryClass<theory> {
                 false,
             ],
             T6C4d: [
-                () => this.variables[0].cost + l10(5) < Math.min(this.variables[1].cost, this.milestones[0] > 0 ? this.variables[3].cost : Infinity, this.variables[7].cost),
+                () => this.variables[0].cost + l10(this.milestones[0] > 0 ? 5 : 10) < Math.min(this.variables[1].cost, this.milestones[0] > 0 ? this.variables[3].cost : Infinity, this.variables[7].cost),
                 true,
                 () => this.variables[2].cost + l10(5) < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[7].cost),
                 true,
