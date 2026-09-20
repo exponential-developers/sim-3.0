@@ -85,6 +85,32 @@ class t6Sim extends traditionalTheoryClass<theory> {
                 true
             ],
             T6Snax: [true, true, true, true, () => this.stopC12[2], () => this.stopC12[2], false, false, true],
+            T6SnaxActive: [
+                () => this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+                    < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity),
+                true,
+                () => this.variables[2].cost + l10(5)
+                    < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity),
+                true,
+                () => this.stopC12[2],
+                () => this.stopC12[2],
+                false,
+                false,
+                true,
+            ],
+            T6SnaxActiveCoast: [
+                () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
+                    < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
+                true,
+                () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(5)
+                    < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
+                true,
+                () => this.stopC12[2],
+                () => this.stopC12[2],
+                false,
+                false,
+                true
+            ],
             T6SnaxCoast: [
                 () => this.variables[0].shouldBuy,
                 true,
@@ -290,6 +316,10 @@ class t6Sim extends traditionalTheoryClass<theory> {
             case "T6Snax":
                 return [0, 3, 2];
             case "T6SnaxCoast":
+                return [0, 3, 2];
+            case "T6SnaxActive":
+                return [0, 3, 2];
+            case "T6SnaxActiveCoast":
                 return [0, 3, 2];
             case "T6SnaxIdleRecovery":
                 return [0, 3, 2];
