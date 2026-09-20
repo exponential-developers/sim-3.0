@@ -85,27 +85,27 @@ class t6Sim extends traditionalTheoryClass<theory> {
                 true
             ],
             T6Snax: [true, true, true, true, () => this.stopC12[2], () => this.stopC12[2], false, false, true],
-            T6SnaxActive: [
+            T6C125dStopC12: [
                 () => this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
                     < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity),
                 true,
                 () => this.variables[2].cost + l10(5)
                     < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity),
                 true,
-                () => this.stopC12[2],
+                () => this.stopC12[2] && (this.variables[4].cost + l10(5) < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
                 () => this.stopC12[2],
                 false,
                 false,
                 true,
             ],
-            T6SnaxActiveCoast: [
+            T6C125dStopC12Coast: [
                 () => this.variables[0].shouldBuy && (this.variables[0].cost + l10(7 + (this.variables[0].level % 10))
                     < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
                 true,
                 () => this.variables[2].shouldBuy && (this.variables[2].cost + l10(5)
                     < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
                 true,
-                () => this.stopC12[2],
+                () => this.stopC12[2] && (this.variables[4].cost + l10(5) < Math.min(this.variables[1].cost, this.variables[3].cost, this.milestones[2] > 0 ? this.variables[8].cost : Infinity)),
                 () => this.stopC12[2],
                 false,
                 false,
@@ -317,9 +317,9 @@ class t6Sim extends traditionalTheoryClass<theory> {
                 return [0, 3, 2];
             case "T6SnaxCoast":
                 return [0, 3, 2];
-            case "T6SnaxActive":
+            case "T6C125dStopC12":
                 return [0, 3, 2];
-            case "T6SnaxActiveCoast":
+            case "T6C125dStopC12Coast":
                 return [0, 3, 2];
             case "T6SnaxIdleRecovery":
                 return [0, 3, 2];
@@ -411,7 +411,7 @@ class t6Sim extends traditionalTheoryClass<theory> {
         this.trimBoughtVars();
         let stratExtra = "";
         if (this.strat.includes("IdleRecovery") && this.idleRecoveryStop > 0) stratExtra += "M" + this.idleRecoveryStop;
-        if (this.strat.includes("Snax")) stratExtra += " " + logToExp(this.stopC12[0], 1);
+        if (this.strat.includes("Snax") || this.strat.includes("StopC12")) stratExtra += " " + logToExp(this.stopC12[0], 1);
         if (this.strat.includes("Coast")) {
             stratExtra += this.variables[0].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
                 this.variables[2].prepareExtraForCap(getLastLevel("r1", this.boughtVars));

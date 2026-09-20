@@ -273,10 +273,10 @@
         "T6Snax": {
           "stratFilterCondition": "false"
         },
-        "T6SnaxActive": {
+        "T6C125dStopC12": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 400"
         },
-        "T6SnaxActiveCoast": {
+        "T6C125dStopC12Coast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 400"
         },
         "T6SnaxCoast": {
