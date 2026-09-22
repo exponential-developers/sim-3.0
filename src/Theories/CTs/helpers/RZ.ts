@@ -1,3 +1,33 @@
+import { binaryInsertionSearch } from "../../../Utils/helpers";
+
+// spiralThreshMaxLookup: {50:0.6, 120:0.7, 240:0.8, 395:0.9}
+const spiralThreshMaxRho: number[] = [120,240,395];
+const spiralThreshMaxValues: number[] = [0.6,0.7,0.8,0.9];
+// spiralProgExpMaxLookup: {50:0.2, 260:0.3, 310:0.4, 385:0.5}
+const spiralThreshBaseRho: number[] = [260,310,385];
+const spiralThreshBaseValues: number[] = [0.2,0.3,0.4,0.5];
+// spiralProgExpMaxLookup: {50:45, 55:55, 62:60, 60:70, 75:80, 95:90, 120:120, 135:125, 145:150, 160:160, 180:165, 200:175, 240:200}
+const spiralProgExpMaxRho: number[] = [55,62,60,75,95,120,135,145,160,180,200,240];
+const spiralProgExpMaxValues: number[] = [45,55,60,70,80,90,120,125,150,160,165,175,200];
+// spiralProgExpBaseLookup: {50:40, 125:50, 160:60, 200:65, 215:75, 255:100, 325:105, 340:115, 370:125, 390:145}
+const spiralProgExpBaseRho: number[] = [125,160,200,215,255,325,340,370,390];
+const spiralProgExpBaseValues: number[] = [40,50,60,65,75,100,105,115,125,145];
+// spiralProgExpIncLookup: {50: 0.2,55: 0.5,60: 1,75: 1,90: 1.25,100: 2,110: 3.2,120: 2.5,130: 3,145: 4,160: 3.6,165: 5,200: 5,215: 4,240: 5,250: 5,260: 5,265: 4,310: 2.5,320: 2.5,340: 2.5,370: 2.5,380: 1.5,390: 2.2}
+const spiralProgExpIncRho: number[] = [55, 63, 95, 120, 125, 135, 145, 180, 200, 215, 225, 240, 260, 325, 340, 390];
+const spiralProgExpIncValues: number[] = [0.2, 0.5, 1, 1.25, 3.2, 2.5, 3, 4, 3.5, 4.4, 4, 2, 5, 4, 3.8, 2.5, 2.2];
+
+export let getSpiralLookups = (rho: number): readonly [number, number, number, number, number] => {
+    return [
+        //spiralThreshMaxValues[binaryInsertionSearch(spiralThreshMaxRho, rho)],
+        spiralThreshMaxValues[rho < spiralThreshMaxRho[1] ? (rho < spiralThreshMaxRho[0] ? 0 : 1) : (rho < spiralThreshMaxRho[2] ? 2 : 3)],
+        //spiralThreshBaseValues[binaryInsertionSearch(spiralThreshBaseRho, rho)],
+        spiralThreshBaseValues[rho < spiralThreshBaseRho[1] ? (rho < spiralThreshBaseRho[0] ? 0 : 1) : (rho < spiralThreshBaseRho[2] ? 2 : 3)],
+        spiralProgExpMaxValues[binaryInsertionSearch(spiralProgExpMaxRho, rho)],
+        spiralProgExpBaseValues[binaryInsertionSearch(spiralProgExpBaseRho, rho)],
+        spiralProgExpIncValues[binaryInsertionSearch(spiralProgExpIncRho, rho)]
+    ];
+}
+
 // These functions are mostly ripped out from CT itself.
 
 let interpolate = (t: number): number => {
@@ -391,6 +421,8 @@ export let zeta = (T: number, ticks: number, offGrid: boolean, cache: ComplexVal
 // Mechanics to review:
 export const resolution = 4;
 export const c1Exp = [1, 1.14, 1.21, 1.25];
+
+
 
 // The lookup table only works before black hole is enabled in a pub, because then the time values would get misaligned.
 interface lookupsInterface {
