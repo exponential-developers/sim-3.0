@@ -166,7 +166,15 @@
           "stratFilterCondition": "(Active || Very-Active) && rho >= 175 && rho < 300",
           "forcedCondition": "rho >= 75"
         },
+        "T4C356dC12rcvCoast": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 175 && rho < 300",
+          "forcedCondition": "rho >= 75"
+        },
         "T4C456dC12rcvMS": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 75 && rho < 200",
+          "forcedCondition": "rho >= 25"
+        },
+        "T4C456dC12rcvMSCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 75 && rho < 200",
           "forcedCondition": "rho >= 25"
         },
@@ -183,6 +191,10 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && lastStrat !== \"T4C3\""
         },
         "T4C56": {
+          "stratFilterCondition": "(Idle || Semi-Idle) && rho < 275",
+          "forcedCondition": "rho >= 50"
+        },
+        "T4C56Coast": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 275",
           "forcedCondition": "rho >= 50"
         },

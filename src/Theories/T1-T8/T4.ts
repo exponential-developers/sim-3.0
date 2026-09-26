@@ -43,21 +43,34 @@ async function t4(data: theoryData<theory>): Promise<simResult<theory>> {
     const lastQ1 = getLastLevel("q1", res1.boughtVars);
     const lastQ2 = getLastLevel("q2", res1.boughtVars);
     const lastC3 = getLastLevel("c3", res1.boughtVars);
+    const lastC4 = getLastLevel("c4", res1.boughtVars);
+    const lastC5 = getLastLevel("c5", res1.boughtVars);
+    const lastC6 = getLastLevel("c6", res1.boughtVars);
     const sim2 = new t4Sim(data);
-    sim2.variables[2].setOriginalCap(lastC3);
-    sim2.variables[2].configureCap(3);
+    if (data2.strat === "T4C56" || data2.strat === "T4C356dC12rcv" || data2.strat === "T4C456dC12rcvMS") {
+      sim2.variables[4].setOriginalCap(lastC5);
+      sim2.variables[4].configureCap(1);
 
+      sim2.variables[5].setOriginalCap(lastC6);
+      sim2.variables[5].configureCap(1);
+    }
+    if (data2.strat === "T4C3d" || data2.strat === "T4C3Coast" || data2.strat === "T4C356dC12rcv") {
+      sim2.variables[2].setOriginalCap(lastC3);
+      sim2.variables[2].configureCap(3);
+    }
+    if (data2.strat === "T4C456dC12rcvMS") {
+      sim2.variables[3].setOriginalCap(lastC4);
+      sim2.variables[3].configureCap(1);
+    }
     sim2.variables[6].setOriginalCap(lastQ1);
     if(data2.strat.includes("T4C3d")) {
       sim2.variables[6].configureCap(1);
     }
     else {
-      sim2.variables[6].configureCap(3);
+      sim2.variables[6].configureCap(1);
     }
-
     sim2.variables[7].setOriginalCap(lastQ2);
     sim2.variables[7].configureCap(1);
-
     res = getBestResult(await sim2.simulate(), res1);
   }
   return res;
@@ -67,25 +80,106 @@ class t4Sim extends traditionalTheoryClass<theory> {
   q: number;
 
   getBuyingConditions(): conditionFunction[] {
+    const c3d: (boolean | conditionFunction)[] = [
+      false,
+      false,
+      true,
+      ...new Array(3).fill(false),
+      () => this.variables[6].cost + l10(10 + this.variables[6].level % 10) <= Math.min(this.variables[7].cost, this.variables[2].cost),
+      () => this.curMult < 1 || this.variables[7].cost + l10(3) <= this.variables[2].cost,
+    ];
+    const c3dCoast: (boolean | conditionFunction)[] = [
+      false,
+      false,
+      () => this.variables[2].shouldBuy,
+      ...new Array(3).fill(false),
+      () => this.variables[6].shouldBuy && (this.variables[6].cost + l10(10 + this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost),
+      () => this.variables[7].shouldBuy && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
+    ];
+
+    const c12d: (boolean | conditionFunction)[] = [
+      () => this.variables[0].cost + l10((1 - 1 / 2) / (1 - (10 + this.variables[0].level % 10) / (11 + this.variables[0].level % 10))) < this.variables[1].cost,
+      true,
+      ...new Array(6).fill(false)
+    ];
+
+    const c356dC12rcv: conditionFunction[] = [
+      () => {
+        if (this.maxRho >= this.lastPubRho) return false;
+
+        return this.variables[0].cost + l10((1 - 1 / 2) / (1 - (10 + this.variables[0].level % 10) / (11 + this.variables[0].level % 10))) < Math.min(this.variables[1].cost, this.variables[2].cost);
+      },
+      () => this.maxRho < this.lastPubRho,
+      () => true,
+      () => false,
+      () => {
+        if (this.maxRho < this.lastPubRho) return true;
+          
+        // Yes, c5 uses c6 cost instead of its own. No, I don't know why.
+        return this.variables[5].cost + l10((1 - 1 / 2) / (1 - 1 / 10)) < this.variables[2].cost;
+      },
+      () => true,
+      () => this.variables[6].cost + l10((1 - 1 / 2) / (1 - (10 + this.variables[6].level % 10) / (11 + this.variables[6].level % 10))) < this.variables[7].cost,
+      () => true
+    ];
+    const c356dC12rcvCoast: conditionFunction[] = [
+      c356dC12rcv[0],
+      c356dC12rcv[1],
+      () => this.variables[2].shouldBuy && c356dC12rcv[2](),
+      c356dC12rcv[3],
+      () => this.variables[4].shouldBuy && c356dC12rcv[4](),
+      () => this.variables[5].shouldBuy && c356dC12rcv[5](),
+      () => this.variables[6].shouldBuy && c356dC12rcv[6](),
+      () => this.variables[7].shouldBuy && c356dC12rcv[7](),
+    ];
+
+    const c456dC12rcvMS: conditionFunction[] = [
+      () => this.variables[0].cost + 1 < Math.min(this.variables[1].cost, this.variables[3].cost, this.variables[4].cost) && this.maxRho < this.lastPubRho,
+      () => this.maxRho < this.lastPubRho,
+      () => false,
+      () => true,
+      () => true,
+      () => true,
+      () => this.variables[6].cost + 1 < this.variables[7].cost,
+      () => true
+    ];
+    const c456dC12rcvMSCoast: conditionFunction[] = [
+      c456dC12rcvMS[0],
+      c456dC12rcvMS[1],
+      c456dC12rcvMS[2],
+      () => this.variables[3].shouldBuy && c456dC12rcvMS[3](),
+      () => this.variables[4].shouldBuy && c456dC12rcvMS[4](),
+      () => this.variables[5].shouldBuy && c456dC12rcvMS[5](),
+      () => this.variables[6].shouldBuy && c456dC12rcvMS[6](),
+      () => this.variables[7].shouldBuy && c456dC12rcvMS[7](),
+    ];
+
+    const c56: (boolean | conditionFunction)[] = [
+      ...new Array(4).fill(false),
+      true,
+      true,
+      true,
+      true
+    ];
+    const c56Coast: (boolean | conditionFunction)[] = [
+      ...new Array(4).fill(false),
+      () => this.variables[4].shouldBuy,
+      () => this.variables[5].shouldBuy,
+      () => this.variables[6].shouldBuy,
+      () => this.variables[7].shouldBuy
+    ];
+
+    const c5: (boolean | conditionFunction)[] = [
+      ...new Array(4).fill(false),
+      true,
+      false,
+      true,
+      true
+    ];
+
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
-      T4C3d: [
-        false,
-        false,
-        true,
-        ...new Array(3).fill(false),
-        () =>
-            this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost),
-        () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost,
-      ],
-      T4C3dCoast: [
-        false,
-        false,
-        () => this.variables[2].shouldBuy,
-        ...new Array(3).fill(false),
-        () => this.variables[6].shouldBuy &&
-            (this.variables[6].cost + l10(7 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[2].cost)),
-        () => this.variables[7].shouldBuy && (this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[2].cost),
-      ],
+      T4C3d: c3d,
+      T4C3dCoast: c3dCoast,
       T4C3Coast: [
         false,
         false,
@@ -96,49 +190,61 @@ class t4Sim extends traditionalTheoryClass<theory> {
       ],
       T4C3: [false, false, true, ...new Array(3).fill(false), true, true],
       T4C3dC12rcv: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPubRho,
+        () => this.variables[0].cost + l10((1 - 1 / 2) / (1 - (10 + this.variables[0].level % 10) / (11 + this.variables[0].level % 10))) < Math.min(this.variables[1].cost, this.variables[2].cost) && this.maxRho < this.lastPubRho,
         () => this.maxRho < this.lastPubRho,
         true,
         ...new Array(3).fill(false),
         () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
-      T4C356dC12rcv: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPubRho,
-        () => this.maxRho < this.lastPubRho,
+      T4C356dC12rcv: c356dC12rcv,
+      T4C356dC12rcvCoast: c356dC12rcvCoast,
+      T4C456dC12rcvMS: c456dC12rcvMS,
+      T4C456dC12rcvMSCoast: c456dC12rcvMSCoast,
+      T4C123d: [
+        () => this.variables[0].cost + l10((1 - 1 / 2) / (1 - (10 + this.variables[0].level % 10) / (11 + this.variables[0].level % 10))) < Math.min(this.variables[1].cost, this.variables[2].cost),
+        true,
         true,
         false,
-        true,
-        true,
+        false,
+        false,
         () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
-      T4C456dC12rcvMS: [
-        () => this.variables[0].cost + 1 < this.variables[1].cost && this.maxRho < this.lastPubRho,
-        () => this.maxRho < this.lastPubRho,
+      T4C123: [
+        true,
+        true,
+        true,
+        false,
+        false,
         false,
         true,
-        true,
-        true,
-        () => this.variables[6].cost + 1 < this.variables[7].cost,
         true
       ],
-      T4C123d: [() => this.variables[0].cost + 1 < this.variables[1].cost, true, true, false, false, false, () => this.variables[6].cost + 1 < this.variables[7].cost, true],
-      T4C123: [true, true, true, false, false, false, true, true],
-      T4C12d: [() => this.variables[0].cost + 1 < this.variables[1].cost, true, ...new Array(6).fill(false)],
-      T4C12: [true, true, ...new Array(6).fill(false)],
-      T4C56: [...new Array(4).fill(false), true, true, true, true],
-      T4C4: [...new Array(3).fill(false), true, false, false, true, true],
+      T4C12d: c12d,
+      T4C12: [
+        true,
+        true,
+        ...new Array(6).fill(false)
+      ],
+      T4C56: c56,
+      T4C56Coast: c56Coast,
+      T4C4: [
+        ...new Array(3).fill(false),
+        true,
+        false,
+        false,
+        true,
+        true],
       T4C4d: [
         ...new Array(3).fill(false),
         true,
         false,
         false,
-        () =>
-            this.variables[6].cost + l10(10 + (this.variables[6].level % 10)) <= Math.min(this.variables[7].cost, this.variables[3].cost),
+        () => this.variables[6].cost + l10((1 - 1 / 2) / (1 - (10 + this.variables[6].level % 10) / (11 + this.variables[6].level % 10))) <= Math.min(this.variables[7].cost, this.variables[3].cost),
         () => this.curMult < 1 || this.variables[7].cost + l10(1.5) <= this.variables[3].cost,
       ],
-      T4C5: [...new Array(4).fill(false), true, false, true, true],
+      T4C5: c5,
       T4: new Array(8).fill(true),
     };
     return toCallables(conditions[this.strat]);
@@ -163,17 +269,15 @@ class t4Sim extends traditionalTheoryClass<theory> {
       case "T4C3dCoast": return [2];
       case "T4C3": return [2];
       case "T4C3dC12rcv": return [1, 2];
-      case "T4C356dC12rcv": return [1, 2, 0];
-      case "T4C456dC12rcvMS": {
+      case "T4C356dC12rcv": case "T4C356dC12rcvCoast": return [1, 2, 0];
+      case "T4C456dC12rcvMS": case "T4C456dC12rcvMSCoast": {
         if (this.maxRho < this.lastPubRho) return [1, 2, 0]
         else if (this.t % 100 < 50) return [2, 0, 1]
         else return [0, 2, 1];
       }
-      case "T4C123d": return [1, 2];
-      case "T4C123": return [1, 2];
-      case "T4C12d": return [1];
-      case "T4C12": return [1];
-      case "T4C56": return [0, 2];
+      case "T4C123": case "T4C123d": return [1, 2];
+      case "T4C12": case "T4C12d": return [1];
+      case "T4C56": case "T4C56Coast": return [0, 2];
       case "T4C4": {
         this.milestonesMax = [1, 0, 3];
         return [0, 2];
@@ -222,7 +326,24 @@ class t4Sim extends traditionalTheoryClass<theory> {
     }
     this.trimBoughtVars();
     let stratExtra = '';
-    if(this.strat.includes("Coast")) {
+    if (this.strat === "T4C56Coast") {
+      stratExtra = this.variables[6].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
+          this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
+          this.variables[4].prepareExtraForCap(getLastLevel("c5", this.boughtVars)) +
+          this.variables[5].prepareExtraForCap(getLastLevel("c6", this.boughtVars));
+    } else if (this.strat === "T4C356dC12rcvCoast") {
+      stratExtra = this.variables[6].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
+          this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
+          this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars)) +
+          this.variables[4].prepareExtraForCap(getLastLevel("c5", this.boughtVars)) +
+          this.variables[5].prepareExtraForCap(getLastLevel("c6", this.boughtVars));
+    } else if (this.strat === "T4C456dC12rcvMSCoast") {
+      stratExtra = this.variables[6].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
+          this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
+          this.variables[3].prepareExtraForCap(getLastLevel("c4", this.boughtVars)) +
+          this.variables[4].prepareExtraForCap(getLastLevel("c5", this.boughtVars)) +
+          this.variables[5].prepareExtraForCap(getLastLevel("c6", this.boughtVars));
+    } else if (this.strat.includes("Coast")) {
       stratExtra = this.variables[6].prepareExtraForCap(getLastLevel("q1", this.boughtVars)) +
           this.variables[7].prepareExtraForCap(getLastLevel("q2", this.boughtVars)) +
           this.variables[2].prepareExtraForCap(getLastLevel("c3", this.boughtVars));
