@@ -3,7 +3,7 @@ import { ptDecodeFormat1 } from "../../Utils/ptDecode";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getBestResult, defaultResult } from "../../Utils/helpers";
+import { add, l10, getBestResult, defaultResult, subtract, binaryInsertionSearch } from "../../Utils/helpers";
 import { prepareTable } from "./helpers/prepareTable";
 
 import { traditionalConverter } from "../../Utils/progressConversion";
@@ -92,6 +92,7 @@ class mfSim extends traditionalTheoryClass<theory> {
   vz: number;
   vtot: number;
   resets: number;
+  ts: number;
   stopReset: boolean;
   resetBundle: resetBundle;
   goalBundle: resetBundle;
@@ -398,6 +399,87 @@ class mfSim extends traditionalTheoryClass<theory> {
     ];
     // MFVariantd2d2d3RCCoast END
 
+    const mfPerfect = (coast: boolean): conditionFunction[] => {
+      const iCapPrecision = 0.01;
+      const iCap = () => this.precomp_va2 * 10 ** (-15);
+
+      const approximateTimeToICap = (a1: number, i_cap: number) => {
+        const current_i = this.i;
+        const target_i = i_cap - iCapPrecision;
+
+        return current_i < target_i ? 400 * this.precomp_va2 / a1 * Math.log((i_cap - target_i) / (i_cap - current_i)) : 0
+      };
+      
+      const approximateTimeToITarget = (a1: number, i_cap: number, i_target: number) => {
+        const current_i = this.i;
+
+        return current_i < i_target ? 400 * this.precomp_va2 / a1 * Math.log((i_cap - i_target) / (i_cap - current_i)) : 0
+      };
+
+      return [
+        () => {
+          /*if (coast && this.variables[0].level >= this.lastC1) return false;
+          if (this.variables[0].level === 0) return true;
+          
+          const c1Time = approximateTimeToRho(this.rho.value, this.variables[0].cost);
+          const c1New = this.variables[0].valueScaling.computeNewValue(this.variables[0].value, this.variables[0].level + 1);
+          const c1Instant = 10 ** (c1New - this.variables[0].value);
+
+          const c2Time = approximateTimeToRho(this.rho.value, add(this.variables[0].cost, this.variables[1].cost), { vc1: c1New }), c2Instant = 2;
+          const a2Time = approximateTimeToRho(this.rho.value, add(this.variables[0].cost, this.variables[3].cost), { vc1: c1New }), a2Instant = 1.25 ** this.precomp_omegaexp;
+          const dTime = approximateTimeToRho(this.rho.value, add(this.variables[0].cost, this.variables[4].cost), { vc1: c1New }), dInstant = 1.1 ** this.precomp_omegaexp;
+
+          let minTime = Math.min(c2Time, a2Time, dTime), minInstant;
+          if (minTime === dInstant) { minInstant = dInstant; }
+          else if (minTime === c2Time) { minInstant = c2Instant; }
+          else { minInstant = a2Instant; }
+
+          console.log(`${c1Time} ${c2Time} ${a2Time} ${dTime}`)
+          return c1Time <= (1 - 1 / c1Instant) * minTime;*/
+          
+          /*const c1Time = approximateTimeToRho(this.rho.value, this.variables[0].cost);
+          const c1Instant = 10 ** (this.variables[0].valueScaling.computeNewValue(this.variables[0].value, this.variables[0].level + 1) - this.variables[0].value);
+          
+          const c2Time = approximateTimeToRho(this.rho.value, this.variables[1].cost), c2Instant = 2;
+          const a2Time = approximateTimeToRho(this.rho.value, this.variables[3].cost), a2Instant = 1.25 ** this.precomp_omegaexp;
+          const dTime = approximateTimeToRho(this.rho.value, this.variables[4].cost), dInstant = 1.1 ** this.precomp_omegaexp;
+
+          let minTime = Math.min(c2Time, a2Time, dTime), minInstant;
+          if (minTime === dInstant) { minInstant = dInstant; }
+          else if (minTime === c2Time) { minInstant = c2Instant; }
+          else { minInstant = a2Instant; }
+
+          return (1 - 1 / minInstant) * c1Time <= (1 - 1 / c1Instant) * minTime;*/
+        },
+        () => {
+          return true;
+        },
+        () => {
+          /*const new_va1 = 10 ** (this.variables[2].valueScaling.recomputeValue(this.variables[2].level + 1) * this.precomp_a1exp);
+          const a1Time = approximateTimeToRho(this.rho.value, this.variables[3].cost);
+          const rhoRecovTime = approximateTimeToRho(subtract(this.rho.value, this.variables[3].cost), this.rho.value, {
+            va1: new_va1,
+          });
+
+          return rhoRecovTime < a1Time;*/
+        },
+        () => true,
+        () => {
+          /*const dTime = approximateTimeToRho(this.rho.value, this.variables[4].cost), dInstant = 1.1 ** this.precomp_omegaexp;
+
+          const c2Time = approximateTimeToRho(this.rho.value, this.variables[1].cost), c2Instant = 2;
+          const a2Time = approximateTimeToRho(this.rho.value, this.variables[3].cost), a2Instant = 1.25 ** this.precomp_omegaexp;
+
+          let minTime = Math.min(c2Time, a2Time), minInstant;
+          if (minTime === c2Time) { minInstant = c2Instant; }
+          else { minInstant = a2Instant; }
+
+          return (1 - 1 / minInstant) * dTime <= (1 - 1 / dInstant) * minTime;*/
+        },
+        ...new Array(4).fill(() => true),
+      ];
+    };
+
     const conditions: Record<stratType[theory], conditionFunction[]> = {
       MF: idleStrat,
       MFd: activeStrat,
@@ -438,6 +520,8 @@ class mfSim extends traditionalTheoryClass<theory> {
       MFVariantd2d1d3RCCoast: activeStrat213RC,
       MFVariantd2d2d1RCCoast: activeStrat221RC,
       MFVariantd2d2d3RCCoast: activeStrat223RC,
+      MFPerfect: mfPerfect(false),
+      MFPerfectCoast: mfPerfect(true),
     };
     return conditions[this.strat];
   }
@@ -512,7 +596,7 @@ class mfSim extends traditionalTheoryClass<theory> {
     }
     this.goalBundle = this.getGoalBundle();
     this.goalBundleCost = this.calcBundleCost(this.goalBundle);
-
+    this.ts = 0;
   }
 
   updateC(): void {
@@ -561,6 +645,7 @@ class mfSim extends traditionalTheoryClass<theory> {
     this.stopReset = false;
     this.goalBundle = [0, 0, 0, 0];
     this.goalBundleCost = 0;
+    this.ts = 0;
     this.bestRes = null;
     //These will all precompute in precomputeExps or milestone update:
     this.precomp_vexp = -1;
@@ -633,7 +718,7 @@ class mfSim extends traditionalTheoryClass<theory> {
       this.tick();
       this.updateSimStatus();
       this.updateMilestonesNoMS();
-      this.buyNormalVariables();
+      this.buyVariables();
       // These checks are here for optimization:
       if (!this.stopReset && this.rho.value >= this.goalBundleCost + 0.0001) {
         await this.checkForReset();
@@ -675,6 +760,7 @@ class mfSim extends traditionalTheoryClass<theory> {
         this.i = Math.min(this.i, icap);
     }
 
+    this.ts += this.dt;
     this.x += this.dt * this.vx;
     const xterm = l10(this.x) * this.precomp_xexp
     const omegaterm = (l10_q0_m0_mu0 + l10(this.i) + this.variables[4].value) * this.precomp_omegaexp;
@@ -798,4 +884,79 @@ class mfSim extends traditionalTheoryClass<theory> {
     // We don't need this hook in MF:
     // if (bought) this.onAnyVariablePurchased();
   }
+
+  buyVariables(): void {
+    if (!this.strat.includes("Perfect")) this.buyNormalVariables();
+    else this.buyVariablesWeight();
+  }
+  getVariableWeights(): number[] {
+    const c1New = this.variables[0].valueScaling.computeNewValue(this.variables[0].value, this.variables[0].level + 1);
+    const c1Instant = 10 ** (c1New - this.variables[0].value);
+    const c2Instant = 2;
+    const a2Instant = 1.25 * this.precomp_omegaexp;
+    const deltaInstant = 1.1 ** this.precomp_omegaexp;
+
+    let weightC1 = Math.max((1 - 1 / c2Instant), (1 - 1 / a2Instant), (1 - 1 / deltaInstant)) / (1 - 1 / c1Instant);
+    let weightDelta = Math.max((1 - 1 / c2Instant), (1 - 1 / a2Instant)) / (1 - 1 / deltaInstant);
+    weightC1 = l10(weightC1);
+    weightDelta = l10(weightDelta);
+
+    return [
+      this.variables[0].level < this.lastC1 ? weightC1 : Infinity,
+      0,
+      (l10(this.i) + l10(1.2) < this.variables[3].value - 15 || (this.variables[2].cost + l10(20) < this.maxRho && l10(this.i) + l10(1.012) < this.variables[3].value - 15)) ? 0 : Infinity,
+      0,
+      weightDelta,
+      Infinity,
+      Infinity,
+      Infinity,
+      Infinity,
+    ];
+  }
+  approximateTimeToRho(currentRho: number, goalRho: number, params: any = {}): number {
+    if (currentRho >= goalRho) {
+      return 0;
+    }
+
+    params.vc1 ||= this.variables[0].value;
+    params.vc2 ||= this.variables[1].value;
+    params.va1 ||= this.precomp_va1;
+    params.va2 ||= this.precomp_va2;
+    params.vd ||= this.variables[4].value;
+
+    const i_cap = 10 ** (-15) * params.va2;
+    let constantFactors = this.totMult + this.c + l10_q0_m0_mu0 + params.vc1 + params.vc2;
+    constantFactors += params.vd * this.precomp_omegaexp; // omega term
+    constantFactors += this.vx * this.precomp_xexp; // x term
+    constantFactors += this.precomp_vterm; // v term
+    currentRho -= constantFactors; goalRho -= constantFactors;
+    goalRho -= currentRho;
+
+    const aTerm = params.va1 / (400 * params.va2);
+    const rhoEstimate = (time: number): number => {
+      /*const iTerm = l10(i_cap - (i_cap - this.i) / Math.exp(-aTerm * (this.t + time))) * this.precomp_omegaexp;
+      const xTerm = (l10(this.ts + time) - 1) * (1 + this.precomp_xexp);
+          
+      return (iTerm + xTerm) * time;*/
+
+      const iTerm = l10(this.i + (i_cap - this.i) * (1 - Math.exp(-time * aTerm))) * this.precomp_omegaexp;
+      const xTerm = l10(this.ts + time) * this.precomp_xexp;
+
+      return iTerm + xTerm + l10(time);
+    }
+
+    let low = 0, high = 1;
+    while (rhoEstimate(high) < goalRho) { low = high; high *= 2; }
+    const tolerance = 1e-9;
+    for (let i = 0; i < 100; i++) {
+      const mid = (low + high) / 2;
+      if (rhoEstimate(mid) < goalRho) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+      if (high - low < tolerance) break;
+    }
+    return (low + high) / 2;
+  };
 }

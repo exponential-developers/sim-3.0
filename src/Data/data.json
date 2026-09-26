@@ -813,6 +813,12 @@
         },
         "MFVariantd2d2d3RCCoast": {
           "stratFilterCondition": "false"
+        },
+        "MFPerfect": {
+          "stratFilterCondition": "false"
+        },
+        "MFPerfectCoast": {
+          "stratFilterCondition": "Active || Very-Active"
         }
       }
     },
