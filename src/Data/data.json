@@ -706,6 +706,17 @@
           },
           "step": 1,
           "hint": "higher values can give better reset points but slow down the sim significantly"
+        },
+        "sparse": {
+          "label": "Reset sparcity",
+          "type": "slider",
+          "validation": {
+            "type": "int",
+            "min": 0,
+            "max": 3
+          },
+          "step": 1,
+          "hint": "sparse resets"
         }
       },
       "strats": {

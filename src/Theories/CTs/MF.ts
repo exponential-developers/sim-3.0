@@ -34,10 +34,24 @@ const depthConvert = [
     25, // depth == 3
     35, // depth == 4
     45, // depth == 5
-]
+];
+
+const defaultBundles: resetBundle[] = [
+  [0, 1, 0, 0],
+  [0, 1, 0, 1],
+  [0, 2, 0, 0]
+];
+
+const sparseBundles: resetBundle[] = [
+  [0, 2, 0, 1],
+  [0, 2, 0, 2],
+  [0, 3, 0, 2]
+];
 
 // Reset
 async function mf(data: theoryData<theory>): Promise<simResult<theory>> {
+  const rho = converter.convertTo(data.input, "rho");
+  const resetSparcity = parseInt(data.specificInputs["sparse"] ?? "0");
   if(Object.keys(passivePubTable).length === 0) {
     const {default: rawPassivePubTable} = await import("./helpers/table_mf_0_05_mfrccoast_coded.json");
     passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "00");
@@ -46,14 +60,14 @@ async function mf(data: theoryData<theory>): Promise<simResult<theory>> {
     const {default: rawActivePubTable} = await import("./helpers/table_mf_0_05_mf_overall_coded.json");
     activePubTable = prepareTable(await ptDecodeFormat1(rawActivePubTable), "00");
   }
-  let resetBundles: resetBundle[] = [
+  let resetBundles: resetBundle[] = resetSparcity == 0 || rho <= 100 ? [
     [0, 1, 0, 0],
     [0, 1, 0, 1],
     [0, 2, 0, 0]
-  ];
+  ] : [sparseBundles[resetSparcity - 1]];
   let bestRes: simResult<theory> = defaultResult();
   for (const resetBundle of resetBundles) {
-    if (converter.convertTo(data.input, "rho") <= 100 && resetBundle[3] > 0) {
+    if (rho <= 100 && resetBundle[3] > 0) {
       continue;
     }
     let isCoastStrat = data.strat.includes("Coast");
@@ -98,6 +112,7 @@ class mfSim extends traditionalTheoryClass<theory> {
   goalBundle: resetBundle;
   goalBundleCost: number;
   mfResetDepth: number;
+  resetSparcity: number;
   isCoast: boolean;
   normalVariables: Variable[];
   // These are all precomputed values which only depend on things like variable levels and milestones.
@@ -609,6 +624,7 @@ class mfSim extends traditionalTheoryClass<theory> {
   constructor(data: theoryData<theory>, resetBundle: resetBundle) {
     super(data, converter);
     this.mfResetDepth = parseInt(data.specificInputs["depth"] ?? "0");
+    this.resetSparcity = parseInt(data.specificInputs["sparse"] ?? "0");
     this.c = 0;
     this.x = 0;
     this.i = 0;
@@ -730,6 +746,13 @@ class mfSim extends traditionalTheoryClass<theory> {
     }
     this.trimBoughtVars();
     let stratExtra = ` Depth: ${this.mfResetDepth}`;
+    if (this.resetSparcity > 0) {
+      switch (this.resetSparcity) {
+        case 1: stratExtra += ` Sparse algorithm e9`; break;
+        case 2: stratExtra += ` Sparse algorithm e12`; break;
+        case 3: stratExtra += ` Sparse algorithm e13.5`; break;
+      }
+    }
     if(this.lastC1 !== Infinity) {
       stratExtra += ` c1: ${this.lastC1}`
     }
@@ -777,11 +800,20 @@ class mfSim extends traditionalTheoryClass<theory> {
     }
     return cost
   }
-  getGoalBundle(bundle: resetBundle = this.resetBundle): resetBundle {
-    let goalBundle = <resetBundle>[...bundle];
+  getGoalBundle(bundle: resetBundle = this.resetBundle, decrementBundle = true): resetBundle {
+    const depth = depthConvert[this.mfResetDepth];
+    let goalBundle: resetBundle = [...bundle];
     if (this.maxRho <= 65) {
       goalBundle[2] = 0;
       goalBundle[3] = 0;
+    }
+    if (decrementBundle && this.lastPubRho > 100 && this.resetSparcity > 0 && depth > 0 && this.lastPubRho - this.maxRho <= depth) {
+      if (this.resetSparcity == 1) {
+        goalBundle = [...defaultBundles[1]];
+      }
+      if (this.resetSparcity > 1) {
+        goalBundle = [...sparseBundles[this.resetSparcity - 2]];
+      }
     }
 
     let bundleCost = this.calcBundleCost(goalBundle);
@@ -823,7 +855,7 @@ class mfSim extends traditionalTheoryClass<theory> {
       // extra v1 test
       if (this.lastPubRho - this.maxRho <= depth) {
         fork = this.copy();
-        fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]]);
+        fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0] + 1, fork.goalBundle[1], fork.goalBundle[2], fork.goalBundle[3]], false);
         fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
         forkres = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, forkres);
@@ -832,7 +864,7 @@ class mfSim extends traditionalTheoryClass<theory> {
       // extra v2 test
       if (this.lastPubRho - this.maxRho <= depth) {
         fork = this.copy();
-        fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]]);
+        fork.goalBundle = fork.getGoalBundle([fork.goalBundle[0], fork.goalBundle[1] + 1, fork.goalBundle[2], fork.goalBundle[3]], false);
         fork.goalBundleCost = fork.calcBundleCost(fork.goalBundle);
         forkres = await fork.simulate();
         this.bestRes = getBestResult(this.bestRes, forkres);
