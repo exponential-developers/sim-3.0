@@ -9,7 +9,11 @@ import {
 } from "../Utils/helpers";
 import theoryClass from "./theory";
 
-/** Base class for a theory */
+interface traditionalTheoryInterface {
+  pubUnlockRho?: number;
+}
+
+/** Base class for a traditional theory (i.e. a theory such that log(tau) is proportional to log(rho) */
 export default abstract class 
   traditionalTheoryClass<theory extends theoryType, strat extends stratType[theory] = stratType[theory]> 
   extends theoryClass<theory, strat> {
@@ -63,14 +67,14 @@ export default abstract class
     return this.getTotMultFromRho(this.converter.convertTo(val, "rho", this.sigma));
   };
 
-  constructor(readonly data: theoryData<theory>, readonly converter: ProgressValueConverterRho) {
+  constructor(readonly data: theoryData<theory>, readonly converter: ProgressValueConverterRho, int?: traditionalTheoryInterface) {
     super(data, converter);
     this.pubTableCollector = collectorCache.currentCollector;
 
     //theory
     this.rhoCap = this.converter.convertTo(this.cap, "rho", this.sigma);
     this.lastPubRho = this.converter.convertTo(this.lastPub, "rho", this.sigma);
-    this.pubUnlockRho = 1;
+    this.pubUnlockRho = int?.pubUnlockRho ?? 1;
     this.totMult = this.getTotMult(data.input);
 
     //currencies

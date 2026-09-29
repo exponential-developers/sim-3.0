@@ -169,11 +169,12 @@ class csr2Sim extends traditionalTheoryClass<theory> {
     }
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 10
+    });
     this.q = 0;
     this.updateError_flag = true;
     this.error = 0;
-    this.pubUnlockRho = 10;
     this.milestoneUnlocks = [10, 45, 80, 115, 220, 500];
     this.milestonesMax = [3, 1, 2];
     this.variables = [

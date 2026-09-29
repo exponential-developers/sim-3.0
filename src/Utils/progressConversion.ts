@@ -22,7 +22,7 @@ export function traditionalConverter(data: TraditionalProgressConverterInterface
     let rhoToTau = (value: number) => value * tauFactor;
     let multToTau = (value: number, sigma: number) => (value - multFactor - r9(sigma)) / multExponent;
     let tauToRho = (value: number) => value / tauFactor;
-    let tauToMult = (value: number, sigma: number) => value * multExponent + multFactor + r9(sigma);
+    let tauToMult = (value: number, sigma: number) => Math.max(0, value * multExponent + multFactor + r9(sigma));
 
     return {
         supportsRho: true,
