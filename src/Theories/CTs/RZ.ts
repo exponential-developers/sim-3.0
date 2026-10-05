@@ -542,7 +542,7 @@ class rzSim extends traditionalTheoryClass<theory> {
     }
     copyFrom(other: this) {
         super.copyFrom(other);
-        this.delta = other.delta;
+        this.delta = other.delta.copy();
         this.t_var = other.t_var;
         this.zTerm = other.zTerm;
         this.rCoord = other.rCoord;
@@ -695,7 +695,19 @@ class rzSim extends traditionalTheoryClass<theory> {
             this.bhSearchingRewind = true;
             this.bhFoundZero = false;
             this.bhRewindStatus = 1;
-        } else if ((id == 3 && this.strat.includes("MS") && (Math.max(this.maxRho, this.lastPubRho) >= 50) && (Math.max(this.maxRho, this.lastPubRho) < 400) && (this.maxRho >= this.lastPubRho - 7) && (this.lastW1 == Infinity)) && ((this.lastPubRho <= 50) || this.maxRho < this.lastPubRho)) {
+        } else if (
+            (
+                id == 3 
+                && this.strat.includes("MS") 
+                && Math.max(this.maxRho, this.lastPubRho) >= 50 
+                && Math.max(this.maxRho, this.lastPubRho) < 400 
+                && this.maxRho >= this.lastPubRho - 7 
+                && this.lastW1 == Infinity
+            ) && (
+                this.lastPubRho <= 50 || this.maxRho < this.lastPubRho
+            )
+        ) 
+        {
             this.forkOnW1 = true;
         }
     }
