@@ -580,13 +580,13 @@
     "FI":{
       "strats":{
         "FI":{
-          "stratFilterCondition":"(Idle || rho <= 30) && !Semi-Idle"
+          "stratFilterCondition":"Idle || rho <= 30"
         },
         "FIPTCoast":{
-          "stratFilterCondition":"Semi-Idle && rho < 1499"
+          "stratFilterCondition":"(Semi-Idle || (!Idle && rho <= 30)) && rho < 1499"
         },
         "FICoast":{
-          "stratFilterCondition":"(Semi-Idle && rho >= 1499) || (!Idle && !Semi-Idle && rho <= 30)"
+          "stratFilterCondition":"(Semi-Idle || (!Idle && rho <= 30)) && rho >= 1499"
         },
         "FId": {
           "stratFilterCondition":"Active || Very-Active"
@@ -610,13 +610,13 @@
           "stratFilterCondition":"(Active || Very-Active) && rho >= 1000 && rho <= 1300"
         },
         "FIMS":{
-          "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950 && !Semi-Idle"
+          "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
         "FIMSCoast":{
-          "stratFilterCondition":"(Active || Very-Active || rho <= 30) && rho < 950 && !Semi-Idle"
+          "stratFilterCondition":"(Active || Very-Active) && rho < 950"
         },
         "FIPTMSCoast":{
-          "stratFilterCondition":"rho <= 30 && Semi-Idle"
+          "stratFilterCondition":"rho <= 30 && (Active || Very-Active)"
         },
         "FIMSd": {
           "stratFilterCondition":"(Active || Very-Active) && rho < 950"
