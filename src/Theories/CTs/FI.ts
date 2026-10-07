@@ -243,11 +243,12 @@ class fiSim extends traditionalTheoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 8
+    });
     this.q = 0;
     this.r = 0;
     this.tval = 0;
-    this.pubUnlockRho = 8;
     this.milestoneUnlocks = [10, 20, 30, 70, 210, 300, 425, 530, 700, 800, 950, 1150];
     this.variables = [
       new Variable({ currency: this.rho, name: "tdot", cost: new ExponentialCost(1e25, 1e50), valueScaling: new ExponentialValue(10) }),

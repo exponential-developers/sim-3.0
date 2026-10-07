@@ -155,12 +155,13 @@ class bdSim extends traditionalTheoryClass<theory> {
     return [1, 2, 0, 3, 4, 5, 6];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 8
+    });
     this.q = 0;
     this.k = -Infinity;
     this.cachedRowTerm = 0;
     this.rowTermIsDirty = true;
-    this.pubUnlockRho = 8;
     this.milestoneUnlocks = [4, 10, 25, 45, 65, 90, 130, 190, 250, 310, 340, 370, 400, 425, 445, 455, 465, 475, 485, 510, 535, 560, 585].map(value => value / tauFactor);
     this.milestonesMax = [3, 1, 1, 4, 6, 4, 4];
     this.variables = [

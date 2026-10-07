@@ -170,7 +170,9 @@ class tcSim extends traditionalTheoryClass<theory> {
     return [0, 1, 2, 3, 4, 5];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 8
+    });
     // System parameters
     this.systemDt = 0.1;
     this.curMult = 0;
@@ -195,7 +197,6 @@ class tcSim extends traditionalTheoryClass<theory> {
     this.setPoint = pidSettings[3];
 
     this.achievementMulti = this.lastPubRho >= 750 ? 30 : this.lastPubRho >= 600 ? 10 : 1;
-    this.pubUnlockRho = 8;
     this.variables = [
       new Variable({ currency: this.rho, name: "c1", cost: new ExponentialCost(1e5, 18), valueScaling: new ExponentialValue(2.75) }), // c1
       new Variable({ currency: this.rho, name: "r1", cost: new ExponentialCost(10, 1.585), valueScaling: new StepwisePowerSumValue() }), // r1

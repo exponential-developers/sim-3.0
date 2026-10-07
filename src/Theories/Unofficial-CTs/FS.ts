@@ -317,7 +317,9 @@ class fsSim extends traditionalTheoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 5
+    });
     this.rhodot = 0;
     this.fdot = 0;
     this.ldot = 0;
@@ -325,7 +327,6 @@ class fsSim extends traditionalTheoryClass<theory> {
     this.L = new Currency("L");
     this.tVar = 1;
     this.targetPubRho = Infinity;
-    this.pubUnlockRho = 5;
     this.milestoneUnlocks = [8, 13, 21, 34, 55, 89, 144, 233, 377, 610];
     this.milestonesMax = [1, 1, 2, 2, 3, 1];
     this.variables = [

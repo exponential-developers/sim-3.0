@@ -156,8 +156,9 @@ class t1Sim extends traditionalTheoryClass<theory> {
     return [2, 3, 0, 1];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
-    this.pubUnlockRho = 10;
+    super(data, converter, {
+      pubUnlockRho: 10
+    });
     this.milestoneUnlockSteps = 25;
     //milestones  [logterm, c1exp, c3term, c4term]
     this.milestonesMax = [1, 3, 1, 1];

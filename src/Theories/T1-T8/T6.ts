@@ -358,11 +358,12 @@ class t6Sim extends traditionalTheoryClass<theory> {
     }
 
     constructor(data: theoryData<theory>) {
-        super(data, converter);
+        super(data, converter, {
+            pubUnlockRho: 12
+        });
         this.q = -Infinity;
         this.r = 0;
         this.idleRecoveryStop = this.strat.includes("IdleRecovery") ? parseInt(this.stratSpecificInputs.idleRcvStop ?? "0") : 0;
-        this.pubUnlockRho = 12;
         this.milestoneUnlockSteps = 25;
         this.milestonesMax = [1, 1, 1, 3];
         this.variables = [

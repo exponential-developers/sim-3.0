@@ -158,9 +158,10 @@ class wspSim extends traditionalTheoryClass<theory> {
     this.S = this.sineRatioK(this.variables[2].value, chi / Math.PI);
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 8
+    });
     this.q = 0;
-    this.pubUnlockRho = 8;
     this.milestoneUnlocks = [10, 25, 40, 55, 70, 100, 140, 200];
     this.milestonesMax = [4, 1, 3];
     this.variables = [

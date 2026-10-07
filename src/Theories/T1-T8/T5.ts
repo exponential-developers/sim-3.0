@@ -167,9 +167,10 @@ class t5Sim extends traditionalTheoryClass<theory> {
     return Math.min(newq, qcap)
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 7
+    });
     this.q = 0;
-    this.pubUnlockRho = 7;
     this.milestoneUnlockSteps = 25;
     //milestones  [q1exp,c3term,c3exp]
     this.milestonesMax = [3, 1, 2];

@@ -607,7 +607,9 @@ class mfSim extends traditionalTheoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>, resetBundle: resetBundle) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 8
+    });
     this.mfResetDepth = parseInt(data.specificInputs["depth"] ?? "0");
     this.c = 0;
     this.x = 0;
@@ -616,7 +618,6 @@ class mfSim extends traditionalTheoryClass<theory> {
     this.vz = 0;
     this.isCoast = this.strat.includes("Coast");
     this.vtot = 0;
-    this.pubUnlockRho = 8;
     this.lastC1 = Infinity;
     this.forkOnC1 = false;
     this.milestoneUnlocks = [20, 50, 175, 225, 275, 325, 425, 475, 525];

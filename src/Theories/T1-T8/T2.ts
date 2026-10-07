@@ -209,7 +209,9 @@ class t2Sim extends traditionalTheoryClass<theory> {
     return [0, 1, 2, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 15
+    });
     this.q1 = -Infinity;
     this.q2 = 0;
     this.q3 = 0;
@@ -221,7 +223,6 @@ class t2Sim extends traditionalTheoryClass<theory> {
     this.haxolotlC1 = 1.0;
     this.haxolotlC2 = 1.0;
     this.haxolotlC3 = 1.0;
-    this.pubUnlockRho = 15;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [2, 2, 3, 3];
     this.variables = [

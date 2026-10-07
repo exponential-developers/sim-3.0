@@ -52,8 +52,9 @@ class btSim extends traditionalTheoryClass<theory> {
     return [1, 0, 2, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
-    this.pubUnlockRho = 7;
+    super(data, converter, {
+      pubUnlockRho: 7
+    });
     this.milestoneUnlocks = [20, 40, 60, 100, 150, 250, 750, 850, 950, 1050, 1150, 1250, 1450];
     this.milestonesMax = [3, 3, 6, 1];
     this.variables = [

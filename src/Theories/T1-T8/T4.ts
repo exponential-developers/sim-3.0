@@ -294,9 +294,10 @@ class t4Sim extends traditionalTheoryClass<theory> {
     }
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 9
+    });
     this.q = 0;
-    this.pubUnlockRho = 9;
     this.milestoneUnlockSteps = 25;
     //milestones  [terms, c1exp, multQdot]
     this.milestonesMax = [3, 1, 3];

@@ -265,7 +265,9 @@ class t8Sim extends traditionalTheoryClass<theory> {
     data: theoryData<theory>,
     singleMSPoint: number = 0
   ) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 8
+    });
     //attractor stuff
     this.bounds = [
       [
@@ -296,7 +298,6 @@ class t8Sim extends traditionalTheoryClass<theory> {
     this.dx = 0;
     this.dy = 0;
     this.dz = 0;
-    this.pubUnlockRho = 8;
     this.milestoneUnlockSteps = 20;
     this.milestonesMax = [2, 3, 3, 3];
     //initialize variables

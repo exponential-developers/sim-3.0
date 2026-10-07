@@ -113,9 +113,10 @@ class t7Sim extends traditionalTheoryClass<theory> {
     }
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 10
+    });
     this.rho2 = new Currency;
-    this.pubUnlockRho = 10;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [1, 1, 1, 1, 3];
     //initialize variables

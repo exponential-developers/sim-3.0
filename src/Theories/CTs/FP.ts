@@ -189,7 +189,9 @@ class fpSim extends traditionalTheoryClass<theory> {
     this.S_n = this.S(Math.floor(Math.sqrt(this.n)));
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 12
+    });
     this.q = 0;
     this.r = 0;
     this.t_var = 0;
@@ -198,7 +200,6 @@ class fpSim extends traditionalTheoryClass<theory> {
     this.S_n = 0;
     this.n = 1;
     this.updateN_flag = true;
-    this.pubUnlockRho = 12;
     this.milestoneUnlocks = [l10(5e22), 95, 175, 300, 385, 420, 550, 600, 700, 1500];
     this.milestonesMax = [2, 2, 3, 1, 1, 1];
     this.variables = [

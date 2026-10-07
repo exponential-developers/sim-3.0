@@ -169,11 +169,12 @@ class bapSim extends traditionalTheoryClass<theory> {
   }
 
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 7
+    });
     this.q = new Array(9).fill(-1e60);
     this.r = -1e60;
     this.t_var = 0;
-    this.pubUnlockRho = 7;
     this.milestoneUnlocks = [10, 15, 20, 25, 30, 40, 50, 70, 90, 120, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000];
     this.variables = [
       new Variable({ currency: this.rho, name: "tdot", cost: new ExponentialCost(1e6, 1e6), valueScaling: new StepwisePowerSumValue()}), //tdot

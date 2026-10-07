@@ -463,7 +463,9 @@ class rzSim extends traditionalTheoryClass<theory> {
     }
 
     constructor(data: theoryData<theory>) {
-        super(data, converter);
+        super(data, converter, {
+            pubUnlockRho: 9
+        });
         this.delta = new Currency("delta");
         this.t_var = 0;
         this.zTerm = 0;
@@ -474,7 +476,6 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.blackhole = false;
         this.bhSearchingRewind = true;
         this.bhFoundZero = false;
-        this.pubUnlockRho = 9;
         this.milestoneUnlocks = [25, 50, 125, 250, 400, 600];
         this.milestonesMax = [3, 1, 1, 1];
         this.variables = [

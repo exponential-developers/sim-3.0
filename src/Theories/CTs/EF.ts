@@ -193,12 +193,13 @@ class efSim extends traditionalTheoryClass<theory> {
     }
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 10
+    });
     this.R = new Currency("R");
     this.I = new Currency("I");
     this.q = 0;
     this.t_var = 0;
-    this.pubUnlockRho = 10;
     this.milestoneUnlocks = [10, 20, 30, 40, 50, 70, 90, 110, 130, 150, 250, 275, 300, 325];
     this.milestonesMax = [2, 3, 5, 2, 2];
     this.nextMilestoneCost = Infinity;

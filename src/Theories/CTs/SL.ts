@@ -208,10 +208,11 @@ class slSim extends traditionalTheoryClass<theory> {
     this.inverseE_Gamma = 0 - Math.LOG10E - add(subtract(y, y + y - l10(2)), y + y + y + l10(6));
   };
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 10
+    });
     this.rho2 = 0;
     this.rho3 = 0;
-    this.pubUnlockRho = 10;
     this.milestoneUnlockSteps = 25;
     this.milestonesMax = [3, 5, 2, 2];
     this.variables = [

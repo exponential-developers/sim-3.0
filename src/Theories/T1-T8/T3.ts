@@ -287,11 +287,12 @@ class t3Sim extends traditionalTheoryClass<theory> {
     return [1, 2, 0, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 9
+    });
     this.rho.symbol = "rho_1";
     this.rho2 = new Currency("rho_2");
     this.rho3 = new Currency("rho_3");
-    this.pubUnlockRho = 9;
     this.milestoneUnlockSteps = 25;
     //milestones  [dimensions, b1exp, b2exp, b3exp]
     this.milestonesMax = [1, 2, 2, 2];

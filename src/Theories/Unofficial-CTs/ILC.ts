@@ -146,9 +146,10 @@ class ilcSim extends traditionalTheoryClass<theory> {
     return [0, 1, 2, 3];
   }
   constructor(data: theoryData<theory>) {
-    super(data, converter);
+    super(data, converter, {
+      pubUnlockRho: 6
+    });
     this.rhodot = 0;
-    this.pubUnlockRho = 6;
     this.milestoneUnlocks = [25, 50, 75, 100, 120, 140, 160, 180, 200, 220];
     this.milestonesMax = [2, 2, 3, 3];
     this.variables = [
