@@ -44,7 +44,25 @@ async function fi(data: theoryData<theory>): Promise<simResult<theory>> {
     const {default: rawPassivePubTable } = await import("./helpers/table_fi_0_1_passive_coast_coded.json");
     passivePubTable = prepareTable(await ptDecodeFormat1(rawPassivePubTable), "000");
   }
-  let res;
+  let res = null;
+  let ptContinuityRes = null;
+
+  const rho = converter.convertTo(data.input, "rho");
+
+  if (data.strat.includes("PT") && rho < 1499) {
+    let pubSeek = (Math.round(rho * 10) / 10).toFixed(4);
+    let table: Record<string, string> =
+        data.strat.includes("FId") ? activePubTable : passivePubTable;
+    const nextRho = parseFloat(table[pubSeek]);
+    if (nextRho == 1500) {
+      ptContinuityRes = await fi({
+        ...data,
+        strat: data.strat.replace("PT", "") as stratType[theory]
+      });
+      if ((ptContinuityRes.pubPointRho ?? 0) < 1500) ptContinuityRes = null;
+    }
+  }
+
   if(data.strat.includes("Coast")) {
     let data2: theoryData<theory> = JSON.parse(JSON.stringify(data));
     data2.strat = data2.strat.replace("Coast", "").replace("PT", "") as stratType[theory];
@@ -61,7 +79,7 @@ async function fi(data: theoryData<theory>): Promise<simResult<theory>> {
     const sim = new fiSim(data);
     res = await sim.simulate();
   }
-  return res;
+  return getBestResult(res, ptContinuityRes);
 }
 
 class fiSim extends traditionalTheoryClass<theory> {

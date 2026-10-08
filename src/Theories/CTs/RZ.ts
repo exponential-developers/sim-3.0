@@ -532,7 +532,7 @@ class rzSim extends traditionalTheoryClass<theory> {
         this.bhRewindNorm = 0;
         this.bhRewindDeriv = 0;
 
-        this.pubConditions.push(() => this.curMult > 30);
+        this.pubConditions.push(() => this.curMult > 1000);
         this.updateMilestones();
     }
 
