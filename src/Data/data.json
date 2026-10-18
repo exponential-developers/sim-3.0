@@ -146,6 +146,9 @@
     },
     "T4": {
       "strats": {
+        "T4ROI": {
+          "stratFilterCondition": "Active || Very-Active"
+        },
         "T4C3dCoast": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 240"
         },
