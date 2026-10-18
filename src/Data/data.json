@@ -71,8 +71,17 @@
     },
     "T3": {
       "strats": {
+        "T3Play3": {
+          "stratFilterCondition": "Very-Active && rho > 500",
+          "forcedCondition": "rho >= 125"
+        },
+        "T3Play3Alt": {
+          "UI_visible": false,
+          "stratFilterCondition": "false",
+          "forcedCondition": "false"
+        },
         "T3Play2": {
-          "stratFilterCondition": "Very-Active && rho > 250 ",
+          "stratFilterCondition": "Very-Active && rho > 250",
           "forcedCondition": "rho >= 125"
         },
         "T3Play": {

@@ -3,7 +3,7 @@ import Currency from "../../Utils/currency";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult } from "../../Utils/helpers";
+import { add, l10, getR9multiplier, toCallables, getLastLevel, getBestResult, defaultResult } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
@@ -23,8 +23,30 @@ const T3: TheoryInterface<theory> = {
 export default T3;
 
 async function t3(data: theoryData<theory>): Promise<simResult<theory>> {
-  let res;
-  if(!data.strat.includes("Coast")) {
+  let res: simResult<theory> = defaultResult();
+  if (data.strat === "T3Play3") {
+    const sim1 = new t3Sim({
+      ...data,
+      strat: "T3Play3Alt"
+    });
+    const res1 = await sim1.simulate();
+    const lastC12 = getLastLevel("c12", res1.boughtVars);
+    const lastC23 = getLastLevel("c23", res1.boughtVars);
+    const lastC32 = getLastLevel("c32", res1.boughtVars);
+
+    for (let c12Delta of [-1, 0, 1]) {
+      for (let c23Delta of [-1, 0, 1]) {
+        for (let c32Delta of [-1, 0, 1]) {
+          const sim2 = new t3Sim(data);
+          sim2.lastC12 = lastC12 + c12Delta;
+          sim2.lastC23 = lastC23 + c23Delta;
+          sim2.lastC32 = lastC32 + c32Delta;
+          res = getBestResult(res, await sim2.simulate());
+        }
+      }
+    }
+  }
+  else if(!data.strat.includes("Coast")) {
     const sim = new t3Sim(data);
     res = await sim.simulate();
   }
@@ -48,9 +70,70 @@ async function t3(data: theoryData<theory>): Promise<simResult<theory>> {
 class t3Sim extends traditionalTheoryClass<theory> {
   rho2: Currency;
   rho3: Currency;
+  lastC12: number = Infinity;
+  lastC23: number = Infinity;
+  lastC32: number = Infinity;
 
   getBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
+      T3Play3: [
+        () => false,
+        () => this.variables[10].level < this.lastC32 
+          ? this.variables[1].cost + l10(5) < this.variables[10].cost
+          : this.variables[4].level < this.lastC12
+          ? this.variables[1].cost + l10(8) < this.variables[4].cost
+          : true,
+        () => this.variables[2].cost + l10(8) < this.variables[8].cost 
+          || this.variables[8].level >= this.lastC23,
+
+        false,
+        () => this.variables[10].level >= this.lastC32,
+        false,
+
+        false,
+        () => this.variables[10].level < this.lastC32 
+          ? this.variables[7].cost + l10(2.5) < this.variables[10].cost 
+          : this.variables[7].cost + l10(8) < this.variables[4].cost,
+        true,
+
+        () => false,
+        () => this.variables[10].level < this.lastC32,
+        () => this.variables[10].level < this.lastC32 
+          && this.variables[11].cost + l10(10) < this.variables[8].cost,
+      ],
+      T3Play3Alt: [
+        () => false,
+        () => (this.curMult < 1.2 
+          ? this.variables[1].cost + l10(5) < this.variables[10].cost 
+          : this.variables[1].cost + l10(8) < this.variables[4].cost
+        ) 
+          || this.curMult > 2.4,
+        () => this.curMult < 2.4 
+          ? this.variables[2].cost + l10(8) < this.variables[8].cost 
+          : true,
+
+        false,
+        () => this.curMult < 1.2 
+          ? this.variables[4].cost + 2 < this.variables[10].cost 
+          : true,
+        false,
+
+        false,
+        () => this.curMult < 1.2 
+          ? this.variables[7].cost + l10(3) < this.variables[10].cost 
+          : this.variables[7].cost + l10(8) < this.variables[4].cost,
+        true,
+
+        () => false,
+        () => this.curMult < 1.2 
+          ? true 
+          : this.curMult < 2.4 
+          ? this.variables[10].cost + l10(8) < this.variables[4].cost 
+          : false,
+        () => this.curMult < 1.2 
+          ? this.variables[11].cost + l10(8) < this.variables[8].cost 
+          : false,
+      ],
       T3Play2: [
         () => (this.lastPubRho - this.maxRho > 1 ? this.variables[0].cost + l10(8) < this.variables[9].cost : false),
         () => (this.curMult < 1.2 ? this.variables[1].cost + l10(5) < this.variables[10].cost : this.variables[1].cost + l10(8) < this.variables[4].cost) || this.curMult > 2.4,
@@ -329,6 +412,11 @@ class t3Sim extends traditionalTheoryClass<theory> {
     if(this.strat.includes("Coast")) {
       stratExtra += this.variables[1].prepareExtraForCap(getLastLevel("b2", this.boughtVars)) +
           this.variables[2].prepareExtraForCap(getLastLevel("b3", this.boughtVars));
+    }
+    if (this.strat === "T3Play3") {
+      stratExtra += this.variables[10].prepareExtraForCap(this.lastC32)
+        + this.variables[4].prepareExtraForCap(this.lastC12)
+        + this.variables[8].prepareExtraForCap(this.lastC23)
     }
     return getBestResult(this.createResult(stratExtra), this.bestForkRes);
   }
