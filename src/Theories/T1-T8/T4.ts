@@ -54,7 +54,8 @@ async function t4(data: theoryData<theory>): Promise<simResult<theory>> {
       sim2.variables[5].setOriginalCap(lastC6);
       sim2.variables[5].configureCap(1);
     }
-    if (data2.strat === "T4C3d" || data2.strat === "T4C3Coast" || data2.strat === "T4C356dC12rcv") {
+    if (data2.strat === "T4C3d" || data2.strat === "T4C3" || data2.strat === "T4C356dC12rcv") {
+      console.log("Last C3 prev: "+lastC3);
       sim2.variables[2].setOriginalCap(lastC3);
       sim2.variables[2].configureCap(3);
     }
@@ -114,7 +115,7 @@ class t4Sim extends traditionalTheoryClass<theory> {
       () => false,
       () => {
         if (this.maxRho < this.lastPubRho) return true;
-          
+
         // Yes, c5 uses c6 cost instead of its own. No, I don't know why.
         return this.variables[5].cost + l10((1 - 1 / 2) / (1 - 1 / 10)) < this.variables[2].cost;
       },
