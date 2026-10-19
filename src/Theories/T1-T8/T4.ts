@@ -538,7 +538,7 @@ class t4Sim extends traditionalTheoryClass<theory> {
         const qdotnew = l10(2) * this.milestones[2] + add2(params.q1VarIncrease, this.variables[6].value) + (params.q2VarIncrease + this.variables[7].value);
 
         // TODO: figure out why this is worse than current version:
-        const q0 = add2(this.q, 0) * 2;
+        /*const q0 = add2(this.q, 0) * 2;
         const t0 = l10(this.t);
         let Qint1 = (qdot: number, t: number) => adds(add2(l10(2) + qdot + subtract(t, t0), q0) * (3 / 2) - (l10(3) + qdot), mulm1(t));
         let Qint2 = (qdot: number, t: number) => adds(muls(t, adds(muls(qdot, adds(t, mulm1(l10(2) + t0))), q0, l10(2) + q0, l10(2))), mulm1((l10(2) + add2(l10(2) + qdot + subtract(t, t0), q0) * (3 / 2)) - (l10(3) + qdot)));
@@ -556,9 +556,9 @@ class t4Sim extends traditionalTheoryClass<theory> {
             // - int_{t0}^{t1} {q(t) dt}
             mulm1(adds(fn(qdotold, l10timeToPub)))
           );
-        }
+        }*/
 
-        /* The current version:
+        // The current version:
         let Qint1 = (qdot: number, t: number) => adds(add2(l10(2) + qdot + t, 0) * (3 / 2) - (l10(3) + qdot), mulm1(t));
         let Qint2 = (qdot: number, t: number) => adds(t + add2(qdot + t, l10(2)), mulm1((l10(2) + add2(l10(2) + qdot + t, 0) * (3 / 2)) - (l10(3) + qdot)));
         let Qint3 = (qdot: number, t: number) => adds((l10(2) + add2(qdot + t, l10(3)) + add2(l10(2) + qdot + t, 0) * (3 / 2)) - (l10(5) + qdot), mulm1(t + add2(l10(3) + qdot + t, l10(4))));
@@ -577,7 +577,6 @@ class t4Sim extends traditionalTheoryClass<theory> {
             mulm1(adds(fn(qdotold, l10timeToPub), mulm1(this.q * k)))
           );
         }
-        */
 
         let qint = Qint(params.c3VarIncrease, 1);
         let qint2 = Qint(params.c4VarIncrease, 2);
