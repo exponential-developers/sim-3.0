@@ -55,7 +55,6 @@ async function t4(data: theoryData<theory>): Promise<simResult<theory>> {
       sim2.variables[5].configureCap(1);
     }
     if (data2.strat === "T4C3d" || data2.strat === "T4C3" || data2.strat === "T4C356dC12rcv") {
-      console.log("Last C3 prev: "+lastC3);
       sim2.variables[2].setOriginalCap(lastC3);
       sim2.variables[2].configureCap(3);
     }
@@ -65,10 +64,10 @@ async function t4(data: theoryData<theory>): Promise<simResult<theory>> {
     }
     sim2.variables[6].setOriginalCap(lastQ1);
     if(data2.strat.includes("T4C3d")) {
-      sim2.variables[6].configureCap(1);
+      sim2.variables[6].configureCap(3);
     }
     else {
-      sim2.variables[6].configureCap(1);
+      sim2.variables[6].configureCap(4);
     }
     sim2.variables[7].setOriginalCap(lastQ2);
     sim2.variables[7].configureCap(1);
