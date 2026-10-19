@@ -376,9 +376,7 @@ class t4Sim extends traditionalTheoryClass<theory> {
         [2, 6, 7].includes(id) &&
         this.strat.includes("Coast") &&
         this.variables[id].shouldBuy &&
-        this.variables[id].coastingCapReached() &&
-        // For this strat, there is almost never use to get levels above cap. We can skip simming that for faster sim:
-        !this.variables[id].aboveOriginalCap()
+        this.variables[id].coastingCapReached()
     ) {
       this.variables[id].shouldFork = true;
     }
