@@ -382,7 +382,7 @@ function parseSimAll(): SimAllQuery {
 
     const sigmaStr = split.shift() ?? "";
     if (split.length < 1) throw "Student count and at least one theory value that is not 0 is required.";
-    if (split.length > Object.keys(jsonData.theories).length) {
+    if (split.length > Object.keys(jsonData.theories).length + 1) {
         throw `Invalid value ${split[Object.keys(jsonData.theories).length + 1]} does not match any theory.`;
     }
 
