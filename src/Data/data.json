@@ -935,20 +935,22 @@
         "BD": {
           "stratFilterCondition": "false"
         },
-        "BDd": {
+        "BDCoast": {
+          "stratFilterCondition": "true"
+        },
+        
+        "BD2": {
           "stratFilterCondition": "false"
         },
-        "BDCoast": {
-          "stratFilterCondition": "(Semi-Idle || Idle) && rho > 1499"
+        "BD2Coast": {
+          "stratFilterCondition": "Active || Very-Active"
         },
-        "BDPTCoast": {
-          "stratFilterCondition": "(Semi-Idle || Idle) && rho <= 1499"
+
+        "BDKoala": {
+          "stratFilterCondition": "false"
         },
-        "BDdCoast": {
-          "stratFilterCondition": "(Active || Very-Active) && rho > 1499"
-        },
-        "BDdPTCoast": {
-          "stratFilterCondition": "(Active || Very-Active) && rho <= 1499"
+        "BDKoalaCoast": {
+          "stratFilterCondition": "rho >= 775 && (Active || Very-Active)"
         }
       }
     },

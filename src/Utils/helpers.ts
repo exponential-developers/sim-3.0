@@ -142,6 +142,54 @@ export function subtract(value1: number, value2: number): number {
   return max != -Infinity ? max + l10(1 - 10**(min-max)) : max;
 }
 
+export type SignedLogNumber = { isNegative: boolean, value: number };
+
+/**
+ * Adds multiple signed log10 values
+ * @returns the result as a signed log10 value
+ */
+export function adds(...values: (number | SignedLogNumber)[]): SignedLogNumber {
+  if (values.length === 0) return { isNegative: false, value: -Infinity };
+  const result = typeof values[0] === 'number' ? { isNegative: false, value: values[0] } : { ...values[0] };
+  if (values.length === 1) return result;
+  for (let i = 1; i < values.length; i++) {
+    const adder = typeof values[i] === 'number' ? { isNegative: false, value: values[i] as number } : values[i] as SignedLogNumber;
+    if (result.isNegative === adder.isNegative) {
+      result.value = add2(result.value, adder.value);
+    } else {
+      result.isNegative = adder.isNegative ? adder.value > result.value : result.value > adder.value;
+      result.value = subtract(result.value, adder.value);
+    }
+  }
+  return result;
+}
+
+/**
+ * Multiplies multiple signed log10 values
+ * @returns the result as a signed log10 value
+ */
+export function muls(...values: (number | SignedLogNumber)[]): SignedLogNumber {
+  if (values.length === 0) return { isNegative: false, value: 0 };
+  const result = typeof values[0] === 'number' ? { isNegative: false, value: values[0] } : { ...values[0] };
+  if (values.length === 1) return result;
+  for (let i = 1; i < values.length; i++) {
+    const adder = typeof values[i] === 'number' ? { isNegative: false, value: values[i] as number } : values[i] as SignedLogNumber;
+    result.value += adder.value;
+    if (adder.isNegative) result.isNegative = !result.isNegative;
+  }
+  return result;
+}
+
+/**
+ * Multiplies a signed log10 value by -1
+ * @returns the result as a signed log10 value
+ */
+export function mulm1(value: (number | SignedLogNumber)): SignedLogNumber {
+  const result: SignedLogNumber = typeof value === 'number' ? { isNegative: false, value: value } : { ...value };
+  result.isNegative = !result.isNegative;
+  return result;
+}
+
 /**
  * Regular sum
  */
