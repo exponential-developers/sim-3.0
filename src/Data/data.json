@@ -933,23 +933,23 @@
       "UI_visible":false,
       "strats": {
         "BD": {
-          "stratFilterCondition": "false"
+          "stratFilterCondition": "Idle"
         },
         "BDCoast": {
-          "stratFilterCondition": "true"
+          "stratFilterCondition": "Semi-Idle"
         },
         
         "BD2": {
           "stratFilterCondition": "false"
         },
         "BD2Coast": {
-          "stratFilterCondition": "Active || Very-Active"
+          "stratFilterCondition": "Semi-Idle || Active || Very-Active"
         },
 
-        "BDKoala": {
+        "BDManageKSingleMS": {
           "stratFilterCondition": "false"
         },
-        "BDKoalaCoast": {
+        "BDManageKSingleMSCoast": {
           "stratFilterCondition": "rho >= 775 && (Active || Very-Active)"
         }
       }

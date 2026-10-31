@@ -84,7 +84,7 @@ class bdSim extends traditionalTheoryClass<theory> {
       () => true,
     ];
 
-    const koala = [
+    const manageKSingleMS = [
       () => this.variables[0].shouldBuy,
       () => true,
       () => this.variables[2].shouldBuy && (this.milestones[4] > 0 || (10 ** this.k) >= Math.floor(this.variables[6].value / 2) - 0.001 && this.variables[2].value + this.variables[3].value < this.variables[4].value + this.variables[5].value - 1),
@@ -101,8 +101,8 @@ class bdSim extends traditionalTheoryClass<theory> {
       BD2: BD2,
       BD2Coast: BD2,
 
-      BDKoala: koala,
-      BDKoalaCoast: koala,
+      BDManageKSingleMS: manageKSingleMS,
+      BDManageKSingleMSCoast: manageKSingleMS,
     };
     return toCallables(conditions[this.strat]);
   }
@@ -119,7 +119,7 @@ class bdSim extends traditionalTheoryClass<theory> {
     return conditions;
   }
   getMilestonePriority(): number[] {
-    if (this.strat.includes("BDKoala") && this.koalaSwap === 0) {
+    if (this.strat.includes("SingleMS") && this.koalaSwap === 0) {
       if (this.koalaB1Purchased > 20) return [1, 2, 0, 3];
       this.koalaSwap = this.variables[2].level;
     }
@@ -157,7 +157,7 @@ class bdSim extends traditionalTheoryClass<theory> {
     return changed;
   }
   updateMilestones(): void {
-    if (this.strat.startsWith("BDKoala")) {
+    if (this.strat.includes("SingleMS")) {
       super.updateMilestones();
       this.updatedCachedValues();
       this.rowTermIsDirty = true;
@@ -180,7 +180,7 @@ class bdSim extends traditionalTheoryClass<theory> {
     }
     let stratExtra = '';
     this.trimBoughtVars();
-    if (this.strat.includes("Koala") && this.koalaSwap > 0) {
+    if (this.strat.includes("SingleMS") && this.koalaSwap > 0) {
       stratExtra += ` ${this.koalaSwap}`;
     }
     if (this.strat.includes("Coast")) {
@@ -282,7 +282,7 @@ class bdSim extends traditionalTheoryClass<theory> {
     }
     if (id == 6) this.rowTermIsDirty = true;
 
-    if (id == 2 && this.strat.includes("BDKoala") && this.koalaSwap === 0) {
+    if (id == 2 && this.strat.includes("SingleMS") && this.koalaSwap === 0) {
       if (this.koalaB1Purchased === Infinity) this.koalaB1Purchased = 0;
       this.koalaB1Purchased++;
     }
