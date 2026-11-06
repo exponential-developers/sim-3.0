@@ -51,6 +51,7 @@ function cacheFilterQueryAll(query: SimAllQuery): SimAllQuery {
         .filter((val) => !(val instanceof String))
         .map((val, i) => {
             const theory = getTheoryFromIndex(i);
+            if (cachedQuery.values[i] === undefined) return val;
             if (isMainTheory(theory) && query.sigma !== cachedQuery.sigma) return val;
             if (!isMainTheory(theory) && 
                 (query.settings.completedCTs === "no") 
