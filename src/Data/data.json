@@ -66,6 +66,12 @@
         },
         "T2Haxolotl":  {
           "stratFilterCondition": "false"
+        },
+        "T2ROI": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 250"
+        },
+        "T2ROIMS": {
+          "stratFilterCondition": "(Active || Very-Active) && rho < 250"
         }
       }
     },

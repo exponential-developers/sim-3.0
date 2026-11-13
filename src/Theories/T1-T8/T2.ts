@@ -2,7 +2,7 @@ import { global } from "../../Sim/main";
 import Variable from "../../Utils/variable";
 import { StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { add, l10, getR9multiplier, toCallables, getBestResult, defaultResult } from "../../Utils/helpers";
+import { add, l10, toCallables, getBestResult, defaultResult, add2, subtract, mulm1, muls, adds, SignedLogNumber } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 
@@ -82,6 +82,30 @@ async function t2(data: theoryData<theory>): Promise<simResult<theory>> {
       bestSimRes = await bestSim.simulate();
     }
   }
+  else if (data.strat === "T2ROI" || data.strat === "T2ROIMS") {
+    const sim1 = new t2Sim(data);
+    const res1 = await sim1.simulate();
+
+    const sim = new t2Sim(data);
+    sim.timeToPub = res1.time;
+    let res = await sim.simulate();
+    /*for (let i = 0; i < 10; i++) {
+      const sim2 = new t2Sim(data);
+      sim2.timeToPub = res1.time * 2;
+      const res2 = await sim2.simulate();
+
+      const sim3 = new t2Sim(data);
+      sim3.timeToPub = res.time;
+      const res3 = await sim3.simulate();
+
+      let bestResult = getBestResult<theory>(res3, res2);
+      bestResult = getBestResult<theory>(bestResult, res);
+      if (bestResult === res) break;
+      res = bestResult;
+    }*/
+
+    bestSimRes = res;
+  }
   else {
     bestSim = new t2Sim(data);
     bestSimRes = await bestSim.simulate();
@@ -106,6 +130,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
   stop3: number;
   stop2: number;
   stop1: number;
+  timeToPub: number = Infinity;
 
   getBuyingConditions(): conditionFunction[] {
     const getMax = (index: number): number => {
@@ -170,6 +195,8 @@ class t2Sim extends traditionalTheoryClass<theory> {
       ],
       T2MS: new Array(8).fill(true),
       T2QS: new Array(8).fill(true),
+      T2ROI: new Array(8).fill(true),
+      T2ROIMS: new Array(8).fill(true),
     };
     return toCallables(conditions[this.strat]);
   }
@@ -187,7 +214,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
     return conditions;
   }
   getMilestonePriority(): number[] {
-    if (this.strat === "T2MS") {
+    if (this.strat === "T2MS" || this.strat === "T2ROIMS") {
       const tm100 = this.t % 100;
       if (tm100 < 10) return [2, 3, 0, 1];
       else if (tm100 < 50) return [0, 1, 2, 3];
@@ -279,5 +306,164 @@ class t2Sim extends traditionalTheoryClass<theory> {
 
     const rhodot = this.q1 * (1 + 0.05 * this.milestones[2]) + this.r1 * (1 + 0.05 * this.milestones[3]) + this.totMult + logdt;
     this.rho.add(rhodot);
+  }
+  
+  buyVariables(): void {
+    if ((this.strat === "T2ROI" || this.strat === "T2ROIMS") && this.timeToPub !== Infinity) { if (this.t < this.timeToPub) this.buyVariablesROI(); }
+    else { super.buyVariables(); }
+  }
+  buyVariablesROI(): void {
+    let anyAvailable = false;
+    for (let i = 0; i < 8; i++) {
+      if (this.variableAvailability[i]() && this.variables[i].cost <= this.rho.value) {
+        anyAvailable = true; break;
+      }
+    }
+    if (!anyAvailable) return;
+
+    const buyVariable = (index: number): boolean => {
+      const variable = this.variables[index];
+      const currency = variable.currency ?? this.rho;
+      if (currency.value > variable.cost) {
+        this.recordPurchase(variable);
+        currency.subtract(variable.cost);
+        variable.buy();
+        this.onVariablePurchased(index);
+        return true;
+      }
+      return false;
+    };
+
+    const t0 = l10(this.t), t = l10(this.timeToPub);
+    const remainingTime = l10(this.timeToPub - t);
+
+    let integrate = (f: (x: number) => number, a: number, b: number, tol: number = 1e-10, maxDepth: number = 50) => {
+      const swapSigns = a > b;
+      if (swapSigns) {
+        const temp = a;
+        a = b;
+        b = temp;
+      }
+
+      const simp = (x0: number, x1: number, f0: number, fm: number, f1: number): SignedLogNumber => {
+        return muls(add(f0, l10(4) + fm, f1) - l10(6), adds(x1, mulm1(x0)));
+      };
+
+      function recurse(a: number, b: number, fa: number, fm: number, fb: number, whole: SignedLogNumber, tol: number, depth: number): SignedLogNumber {
+        const m = add2(a, b) - l10(2);
+        const lm = add2(a, m) - l10(2);
+        const rm = add2(m, b) - l10(2);
+        const flm = f(lm);
+        const frm = f(rm);
+
+        const left  = simp(a, m, fa, flm, fm);
+        const right = simp(m, b, fm, frm, fb);
+        const delta = adds(adds(left, right), mulm1(whole));
+
+        if (depth <= 0 || delta.value <= l10(15 * tol)) {
+          return adds(adds(left, right, delta.value - l10(15)));
+        }
+
+        return adds(recurse(a, m, fa, flm, fm, left, tol / 2, depth - 1), recurse(m, b, fm, frm, fb, right, tol / 2, depth - 1));
+      }
+
+      const m = add2(a, b) - l10(2);
+      const fa = f(a), fb = f(b), fm = f(m);
+      let result = recurse(a, b, fa, fm, fb, simp(a, b, fa, fm, fb), tol, maxDepth);
+      if (swapSigns) result = mulm1(result);
+      return result;
+    };
+
+    let ft2Func = (t: number, dq1: number, dq2: number, q1: number, q2: number) => {
+      return add2(dq1 + add2(dq2 + t * 2 - l10(2), q2 + t), q1);
+    };
+
+    let ft3Func = (t: number, dq1: number, dq2: number, dq3: number, q1: number, q2: number, q3: number) => {
+      return add2(dq1 + add2(dq2 + add2(dq3 + t * 3 - l10(6), q3 + t * 2 - l10(2)), q2 + t), q1 + t);
+    };
+
+    let ft4Func = (t: number, dq1: number, dq2: number, dq3: number, dq4: number, q1: number, q2: number, q3: number, q4: number) => {
+      return add2(dq1 + add2(dq2 + add2(dq3 + add2(dq4 + t * 4 - l10(24), q4 + t * 3 - l10(6)), q3 + t * 2 - l10(2)), q2 + t), q1 + t);
+    };
+
+    for (let i = 0; i < 8; i++) {
+      if (this.variableAvailability[i]() && this.variables[i].level === 0)
+        buyVariable(i);
+    }
+
+    let bought: boolean;
+    do {
+      bought = false;
+
+      let varIncrease = new Array(this.variables.length);
+      for (let i = 0; i < this.variables.length; i++) {
+        if (!this.variableAvailability[i]()) {
+          varIncrease[i] = -Infinity;
+          continue;
+        }
+        varIncrease[i] = subtract(this.variables[i].valueScaling.recomputeValue(this.variables[i].level + 1), this.variables[i].value);
+      }
+      
+      const calculateRoi = (params: any): number => {
+        params.dq1VarIncrease ??= -Infinity; params.dr1VarIncrease ??= -Infinity;
+        params.dq2VarIncrease ??= -Infinity; params.dr2VarIncrease ??= -Infinity;
+        params.dq3VarIncrease ??= -Infinity; params.dr3VarIncrease ??= -Infinity;
+        params.dq4VarIncrease ??= -Infinity; params.dr4VarIncrease ??= -Infinity;
+
+        const dq1 = add2(params.dq1VarIncrease, this.variables[0].value), dr1 = add2(params.dr1VarIncrease, this.variables[4].value);
+        const dq2 = add2(params.dq2VarIncrease, this.variables[1].value), dr2 = add2(params.dr2VarIncrease, this.variables[5].value);
+        const dq3 = add2(params.dq3VarIncrease, this.variables[2].value), dr3 = add2(params.dr3VarIncrease, this.variables[6].value);
+        const dq4 = add2(params.dq4VarIncrease, this.variables[3].value), dr4 = add2(params.dr4VarIncrease, this.variables[7].value);
+        const q1exp = 1 + 0.05 * this.milestones[2];
+        const r1exp = 1 + 0.05 * this.milestones[3];
+
+        let g = (x: number, exp: number, milestoneCount: number,
+          dq1: number, dq2: number, dq3: number, dq4: number, q1: number, q2: number, q3: number, q4: number
+        ) => {
+          let value: number = -Infinity;
+          switch (milestoneCount) {
+            case 0: value = ft2Func(x, dq1, dq2, q1, q2); break;
+            case 1: value = ft3Func(x, dq1, dq2, dq3, q1, q2, q3); break;
+            case 2: value = ft4Func(x, dq1, dq2, dq3, dq4, q1, q2, q3, q4); break;
+          }
+          return value * exp;
+        };
+        let f = (x: number): number => {
+          let newRhoDot = g(x, q1exp, this.milestones[0], dq1, dq2, dq3, dq4, this.q1, this.q2, this.q3, this.q4) + g(x, r1exp, this.milestones[1], dr1, dr2, dr3, dr4, this.r1, this.r2, this.r3, this.r4);
+          let oldRhoDot = g(x, q1exp, this.milestones[0], this.variables[0].value, this.variables[1].value, this.variables[2].value, this.variables[3].value, this.q1, this.q2, this.q3, this.q4) + g(x, r1exp, this.milestones[1], this.variables[4].value, this.variables[5].value, this.variables[6].value, this.variables[7].value, this.r1, this.r2, this.r3, this.r4);
+          return this.totMult + subtract(newRhoDot, oldRhoDot);
+        };
+
+        const value = integrate(f, t0, t, 1e-1, 1);
+        if (value.isNegative) return -Infinity;
+        return value.value;
+      };
+
+      const roi2: number[] = new Array(this.variables.length);
+      roi2[0] = calculateRoi({ dq1VarIncrease: varIncrease[0] });
+      roi2[1] = calculateRoi({ dq2VarIncrease: varIncrease[1] });
+      roi2[2] = this.milestones[0] > 0 ? calculateRoi({ dq3VarIncrease: varIncrease[2] }) : -Infinity;
+      roi2[3] = this.milestones[0] > 1 ? calculateRoi({ dq4VarIncrease: varIncrease[3] }) : -Infinity;
+      roi2[4] = calculateRoi({ dr1VarIncrease: varIncrease[4] });
+      roi2[5] = calculateRoi({ dr2VarIncrease: varIncrease[5] });
+      roi2[6] = this.milestones[1] > 0 ? calculateRoi({ dr3VarIncrease: varIncrease[6] }) : -Infinity;
+      roi2[7] = this.milestones[1] > 1 ? calculateRoi({ dr4VarIncrease: varIncrease[7] }) : -Infinity;
+      const roi = roi2
+        .map((val, i) => adds(muls(val, -this.variables[i].cost), mulm1(0)))
+        .map((val, i) => this.variables[i].shouldBuy && this.variableAvailability[i]() && !val.isNegative ? val.value : -Infinity);
+      
+      const arr = roi;
+      switch (Math.max(...arr)) {
+        case -Infinity: { break; }
+        case arr[7]: { if (arr[7] !== -Infinity) bought = buyVariable(7); break; }
+        case arr[6]: { if (arr[6] !== -Infinity) bought = buyVariable(6); break; }
+        case arr[5]: { if (arr[5] !== -Infinity) bought = buyVariable(5); break; }
+        case arr[4]: { if (arr[4] !== -Infinity) bought = buyVariable(4); break; }
+        case arr[3]: { if (arr[3] !== -Infinity) bought = buyVariable(3); break; }
+        case arr[2]: { if (arr[2] !== -Infinity) bought = buyVariable(2); break; }
+        case arr[1]: { if (arr[1] !== -Infinity) bought = buyVariable(1); break; }
+        case arr[0]: { if (arr[0] !== -Infinity) bought = buyVariable(0); break; }
+      }
+    } while (bought);
   }
 }
