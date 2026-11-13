@@ -335,7 +335,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
         return muls(add(f0, l10(4) + fm, f1) - l10(6), adds(x1, mulm1(x0)));
       };
 
-      function recurse(a: number, b: number, fa: number, fm: number, fb: number, whole: SignedLogNumber, tol: number, depth: number): SignedLogNumber {
+      function recurse(a: number, b: number, fa: number, fm: number, fb: number, whole: SignedLogNumber, precision: number, depth: number): SignedLogNumber {
         const m = add2(a, b) - l10(2);
         const lm = add2(a, m) - l10(2);
         const rm = add2(m, b) - l10(2);
@@ -346,16 +346,16 @@ class t2Sim extends traditionalTheoryClass<theory> {
         const right = simp(m, b, fm, frm, fb);
         const delta = adds(adds(left, right), mulm1(whole));
 
-        if (depth <= 0 || delta.value <= l10(15 * tol)) {
+        if (depth <= 0 || delta.value <= l10(15 * precision)) {
           return adds(adds(left, right, delta.value - l10(15)));
         }
 
-        return adds(recurse(a, m, fa, flm, fm, left, tol / 2, depth - 1), recurse(m, b, fm, frm, fb, right, tol / 2, depth - 1));
+        return adds(recurse(a, m, fa, flm, fm, left, precision / 2, depth - 1), recurse(m, b, fm, frm, fb, right, precision / 2, depth - 1));
       }
 
       const m = add2(a, b) - l10(2);
       const fa = f(a), fb = f(b), fm = f(m);
-      let result = recurse(a, b, fa, fm, fb, simp(a, b, fa, fm, fb), tol, maxDepth);
+      let result = recurse(a, b, fa, fm, fb, simp(a, b, fa, fm, fb), precision, maxDepth);
       if (swapSigns) result = mulm1(result);
       return result;
     };
@@ -390,6 +390,9 @@ class t2Sim extends traditionalTheoryClass<theory> {
         varIncrease[i] = subtract(this.variables[i].valueScaling.recomputeValue(this.variables[i].level + 1), this.variables[i].value);
       }
       
+      // calculates the ROI value, aka [rho*(t) - rho(t)]dt from t0 to t1, where
+      // rho(t) is the original function (the function if the variable is not bought),
+      // rho*(t) is the new function after the variable is bought.
       const calculateRoi = (params: any): number => {
         params.dq1VarIncrease ??= -Infinity; params.dr1VarIncrease ??= -Infinity;
         params.dq2VarIncrease ??= -Infinity; params.dr2VarIncrease ??= -Infinity;
