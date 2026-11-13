@@ -22,7 +22,7 @@
         },
         "T1C4Coast": {
           "stratFilterCondition": "Semi-Idle && rho > 625",
-          "forcedCondition": "rho >= 950"
+          "forcedCondition": "rho >= 50"
         },
         "T1Ratio": {
           "stratFilterCondition": "(Very-Active && rho < 250) || Active"
@@ -165,7 +165,7 @@
           "stratFilterCondition": "(Idle || Semi-Idle) && rho > 200"
         },
         "T4C3dC12rcv": {
-          "stratFilterCondition": "(Active || Very-Active) && rho >= 175 && (lastStrat !== \"T4C3d66\" || rho < 225)",
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 175 && (lastStrat !== \"T4C3d\" || rho < 225)",
           "forcedCondition": "rho >= 75"
         },
         "T4C356dC12rcv": {
@@ -185,13 +185,13 @@
           "forcedCondition": "rho >= 25"
         },
         "T4C123d": {
-          "stratFilterCondition": "(Active || Very-Active) && rho < 700 && rho >= 175 && (lastStrat !== \"T4C3d66\" || rho < 225)"
+          "stratFilterCondition": "(Active || Very-Active) && rho < 700 && rho >= 175 && (lastStrat !== \"T4C3d\" || rho < 225)"
         },
         "T4C123": {
           "stratFilterCondition": "(Idle || Semi-Idle) && rho < 700 && rho >= 175 && (lastStrat !== \"T4C3\" || rho < 225)"
         },
         "T4C12d": {
-          "stratFilterCondition": "(Active || Very-Active) && rho < 700 && lastStrat !== \"T4C3d66\" && lastStrat !== \"T4C123d\""
+          "stratFilterCondition": "(Active || Very-Active) && rho < 700 && lastStrat !== \"T4C3d\" && lastStrat !== \"T4C123d\""
         },
         "T4C12": {
           "stratFilterCondition": "(Idle || Semi-Idle) && lastStrat !== \"T4C3\""
@@ -856,7 +856,7 @@
         },
         "BaPAIMS2": {
           "UI_visible":false,
-          "stratFilterCondition": "(Active || Very-Active) && rho < 250 && false"
+          "stratFilterCondition": "false"
         },
         "BaPd": {
           "stratFilterCondition": "false"
