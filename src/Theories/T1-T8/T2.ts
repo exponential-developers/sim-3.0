@@ -88,21 +88,7 @@ async function t2(data: theoryData<theory>): Promise<simResult<theory>> {
 
     const sim = new t2Sim(data);
     sim.timeToPub = res1.time;
-    let res = await sim.simulate();
-    /*for (let i = 0; i < 10; i++) {
-      const sim2 = new t2Sim(data);
-      sim2.timeToPub = res1.time * 2;
-      const res2 = await sim2.simulate();
-
-      const sim3 = new t2Sim(data);
-      sim3.timeToPub = res.time;
-      const res3 = await sim3.simulate();
-
-      let bestResult = getBestResult<theory>(res3, res2);
-      bestResult = getBestResult<theory>(bestResult, res);
-      if (bestResult === res) break;
-      res = bestResult;
-    }*/
+    const res = await sim.simulate();
 
     bestSimRes = res;
   }
@@ -313,6 +299,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
     else { super.buyVariables(); }
   }
   buyVariablesROI(): void {
+    // skip if none of variables are currently affordable
     let anyAvailable = false;
     for (let i = 0; i < 8; i++) {
       if (this.variableAvailability[i]() && this.variables[i].cost <= this.rho.value) {
@@ -335,7 +322,6 @@ class t2Sim extends traditionalTheoryClass<theory> {
     };
 
     const t0 = l10(this.t), t = l10(this.timeToPub);
-    const remainingTime = l10(this.timeToPub - t);
 
     let integrate = (f: (x: number) => number, a: number, b: number, tol: number = 1e-10, maxDepth: number = 50) => {
       const swapSigns = a > b;
@@ -374,18 +360,18 @@ class t2Sim extends traditionalTheoryClass<theory> {
       return result;
     };
 
+    // integral functions of Q1(t) and R1(t) per milestone
     let ft2Func = (t: number, dq1: number, dq2: number, q1: number, q2: number) => {
       return add2(dq1 + add2(dq2 + t * 2 - l10(2), q2 + t), q1);
     };
-
     let ft3Func = (t: number, dq1: number, dq2: number, dq3: number, q1: number, q2: number, q3: number) => {
       return add2(dq1 + add2(dq2 + add2(dq3 + t * 3 - l10(6), q3 + t * 2 - l10(2)), q2 + t), q1 + t);
     };
-
     let ft4Func = (t: number, dq1: number, dq2: number, dq3: number, dq4: number, q1: number, q2: number, q3: number, q4: number) => {
       return add2(dq1 + add2(dq2 + add2(dq3 + add2(dq4 + t * 4 - l10(24), q4 + t * 3 - l10(6)), q3 + t * 2 - l10(2)), q2 + t), q1 + t);
     };
 
+    // buy level 0 upgrades just to be sure that all q and r are being generated
     for (let i = 0; i < 8; i++) {
       if (this.variableAvailability[i]() && this.variables[i].level === 0)
         buyVariable(i);
@@ -417,25 +403,29 @@ class t2Sim extends traditionalTheoryClass<theory> {
         const q1exp = 1 + 0.05 * this.milestones[2];
         const r1exp = 1 + 0.05 * this.milestones[3];
 
-        let g = (x: number, exp: number, milestoneCount: number,
+        let rhoDotTimeFactor = (t: number, exp: number, milestoneCount: number,
           dq1: number, dq2: number, dq3: number, dq4: number, q1: number, q2: number, q3: number, q4: number
         ) => {
           let value: number = -Infinity;
           switch (milestoneCount) {
-            case 0: value = ft2Func(x, dq1, dq2, q1, q2); break;
-            case 1: value = ft3Func(x, dq1, dq2, dq3, q1, q2, q3); break;
-            case 2: value = ft4Func(x, dq1, dq2, dq3, dq4, q1, q2, q3, q4); break;
+            case 0: value = ft2Func(t, dq1, dq2, q1, q2); break;
+            case 1: value = ft3Func(t, dq1, dq2, dq3, q1, q2, q3); break;
+            case 2: value = ft4Func(t, dq1, dq2, dq3, dq4, q1, q2, q3, q4); break;
           }
           return value * exp;
         };
-        let f = (x: number): number => {
-          let newRhoDot = g(x, q1exp, this.milestones[0], dq1, dq2, dq3, dq4, this.q1, this.q2, this.q3, this.q4) + g(x, r1exp, this.milestones[1], dr1, dr2, dr3, dr4, this.r1, this.r2, this.r3, this.r4);
-          let oldRhoDot = g(x, q1exp, this.milestones[0], this.variables[0].value, this.variables[1].value, this.variables[2].value, this.variables[3].value, this.q1, this.q2, this.q3, this.q4) + g(x, r1exp, this.milestones[1], this.variables[4].value, this.variables[5].value, this.variables[6].value, this.variables[7].value, this.r1, this.r2, this.r3, this.r4);
-          return this.totMult + subtract(newRhoDot, oldRhoDot);
+        let rhoIntegral = (t: number): number => {
+          const newRhoDotQ = rhoDotTimeFactor(t, q1exp, this.milestones[0], dq1, dq2, dq3, dq4, this.q1, this.q2, this.q3, this.q4);
+          const newRhoDotR = rhoDotTimeFactor(t, r1exp, this.milestones[1], dr1, dr2, dr3, dr4, this.r1, this.r2, this.r3, this.r4);
+
+          const oldRhoDotQ = rhoDotTimeFactor(t, q1exp, this.milestones[0], this.variables[0].value, this.variables[1].value, this.variables[2].value, this.variables[3].value, this.q1, this.q2, this.q3, this.q4);
+          const oldRhoDotR = rhoDotTimeFactor(t, r1exp, this.milestones[1], this.variables[4].value, this.variables[5].value, this.variables[6].value, this.variables[7].value, this.r1, this.r2, this.r3, this.r4);
+          
+          return this.totMult + subtract(newRhoDotQ + newRhoDotR, oldRhoDotQ + oldRhoDotR);
         };
 
-        const value = integrate(f, t0, t, 1e-1, 1);
-        if (value.isNegative) return -Infinity;
+        const value = integrate(rhoIntegral, t0, t, 1e-1, 1);
+        if (value.isNegative) return -Infinity; // safeguard: value of the integral is negative
         return value.value;
       };
 
@@ -449,7 +439,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
       roi2[6] = this.milestones[1] > 0 ? calculateRoi({ dr3VarIncrease: varIncrease[6] }) : -Infinity;
       roi2[7] = this.milestones[1] > 1 ? calculateRoi({ dr4VarIncrease: varIncrease[7] }) : -Infinity;
       const roi = roi2
-        .map((val, i) => adds(muls(val, -this.variables[i].cost), mulm1(0)))
+        .map((val, i) => adds(muls(val, -this.variables[i].cost), mulm1(0))) // rescale: divide by variable cost and subtract 1
         .map((val, i) => this.variables[i].shouldBuy && this.variableAvailability[i]() && !val.isNegative ? val.value : -Infinity);
       
       const arr = roi;
