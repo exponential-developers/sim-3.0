@@ -46,6 +46,7 @@ async function simCall() {
     UI.outputs.log.textContent = "";
   }
   catch (err) {
+    if (global.simulating) console.error(err);
     UI.outputs.log.textContent = global.simulating ? String(err) : "Sim stopped.";
   }
   
