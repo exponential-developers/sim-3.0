@@ -323,7 +323,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
 
     const t0 = l10(this.t), t = l10(this.timeToPub);
 
-    let integrate = (f: (x: number) => number, a: number, b: number, tol: number = 1e-10, maxDepth: number = 50) => {
+    let integrate = (f: (x: number) => number, a: number, b: number, precision: number = 1e-10, maxDepth: number = 50) => {
       const swapSigns = a > b;
       if (swapSigns) {
         const temp = a;
