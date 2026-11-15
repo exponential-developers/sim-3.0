@@ -42,6 +42,19 @@
       }
     },
     "T2": {
+      "stratSpecificInputs": {
+        "idleRcvStop": {
+          "label": "Idle Recovery Stop (eXρ before recovery)",
+          "type": "slider",
+          "validation": {
+            "type": "int",
+            "min": -10,
+            "max": 10
+          },
+          "step": 1,
+          "hint": "start the active strategy eXρ before recovery"
+        }
+      },
       "strats": {
         "T2": {
           "stratFilterCondition": "Idle || rho < 25"
@@ -72,6 +85,16 @@
         },
         "T2ROIMS": {
           "stratFilterCondition": "(Active || Very-Active) && rho >= 25 && rho < 250"
+        },
+        "T2ROIIdleRecoveryM0": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 250"
+        },
+        "T2ROIIdleRecoveryM1": {
+          "stratFilterCondition": "(Active || Very-Active) && rho >= 250"
+        },
+        "T2ROIIdleRecovery": {
+          "stratFilterCondition": "false",
+          "specificInputs": {"idleRcvStop": null }
         }
       }
     },

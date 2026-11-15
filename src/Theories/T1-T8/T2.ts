@@ -82,7 +82,7 @@ async function t2(data: theoryData<theory>): Promise<simResult<theory>> {
       bestSimRes = await bestSim.simulate();
     }
   }
-  else if (data.strat === "T2ROI" || data.strat === "T2ROIMS") {
+  else if (data.strat === "T2ROI" || data.strat === "T2ROIMS" || data.strat.includes("IdleRecovery")) {
     const sim1 = new t2Sim(data);
     const res1 = await sim1.simulate();
 
@@ -116,7 +116,9 @@ class t2Sim extends traditionalTheoryClass<theory> {
   stop3: number;
   stop2: number;
   stop1: number;
+
   timeToPub: number = Infinity;
+  idleRecoveryStop: number = 0;
 
   getBuyingConditions(): conditionFunction[] {
     const getMax = (index: number): number => {
@@ -183,6 +185,9 @@ class t2Sim extends traditionalTheoryClass<theory> {
       T2QS: new Array(8).fill(true),
       T2ROI: new Array(8).fill(true),
       T2ROIMS: new Array(8).fill(true),
+      T2ROIIdleRecovery: new Array(8).fill(true),
+      T2ROIIdleRecoveryM0: new Array(8).fill(true),
+      T2ROIIdleRecoveryM1: new Array(8).fill(true),
     };
     return toCallables(conditions[this.strat]);
   }
@@ -225,6 +230,11 @@ class t2Sim extends traditionalTheoryClass<theory> {
     super(data, converter, {
       pubUnlockRho: 15
     });
+    switch (this.strat) {
+      case "T2ROIIdleRecoveryM0": { this.idleRecoveryStop = 0; break; }
+      case "T2ROIIdleRecoveryM1": { this.idleRecoveryStop = 1; break; }
+      default: { this.idleRecoveryStop = this.strat.includes("IdleRecovery") ? parseInt(this.stratSpecificInputs.idleRcvStop ?? "0") : 0; break; }
+    }
     this.q1 = -Infinity;
     this.q2 = 0;
     this.q3 = 0;
@@ -271,7 +281,9 @@ class t2Sim extends traditionalTheoryClass<theory> {
       this.pubTableCollector.collectData(this);
     }
     this.trimBoughtVars();
-    let stratExtra = ["T2MCAlt3", "T2Haxolotl"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
+    let stratExtra = "";
+    if (this.strat.includes("IdleRecovery") && !this.strat.includes("IdleRecoveryM") && this.idleRecoveryStop !== 0) stratExtra += "M" + this.idleRecoveryStop;
+    stratExtra += ["T2MCAlt3", "T2Haxolotl"].includes(this.strat) ? ` 4:${this.stop4} 3:${this.stop3} 2:${this.stop2} 1:${this.stop1}` : "";
     if(this.strat == "T2Haxolotl") {
       stratExtra += ` c1:${this.haxolotlC1} c2:${this.haxolotlC2} c3: ${this.haxolotlC3}`;
     }
@@ -295,7 +307,7 @@ class t2Sim extends traditionalTheoryClass<theory> {
   }
   
   buyVariables(): void {
-    if ((this.strat === "T2ROI" || this.strat === "T2ROIMS") && this.timeToPub !== Infinity) { if (this.t < this.timeToPub) this.buyVariablesROI(); }
+    if ((this.strat === "T2ROI" || this.strat === "T2ROIMS" || this.strat.includes("IdleRecovery") && this.maxRho + this.idleRecoveryStop >= this.lastPubRho) && this.timeToPub !== Infinity) { if (this.t < this.timeToPub) this.buyVariablesROI(); }
     else { super.buyVariables(); }
   }
   buyVariablesROI(): void {
