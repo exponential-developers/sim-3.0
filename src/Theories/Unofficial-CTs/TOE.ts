@@ -442,6 +442,8 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     super.copyFrom(other as this);
 
     this.rhoVariables = other.rhoVariables.map((value) => value.copy(this.rho));
+    // nt (tickspeed) is a permanent upgrade: it carries over between γ resets
+    this.rhoPermaVariables = other.rhoPermaVariables.map((value) => value.copy(this.rho));
 
     this.q1 = other.q1;
     this.q2 = other.q2;
@@ -577,12 +579,12 @@ class toePubSim extends toeGammaSim {
       const gammaSim = new toeGammaSim(this.getDataForCopy());
       gammaSim.copyFrom(this);
       const gammaSimResult = await gammaSim.simulateGamma();
-      this.gammaResets++;
-      //console.log(this.gammaResets);
 
       const old_t = this.t;
       this.copyFrom(gammaSim);
       this.t = old_t + gammaSimResult.gammaResetT;
+      // After copyFrom, which copies the γ run's (unchanged) reset count
+      this.gammaResets++;
       
       this.boughtVars.push({
         variable: `Reset at ${this.rho.symbol}=${logToExp(gammaSimResult.gammaResetCurrency)}`,
