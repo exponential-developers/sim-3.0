@@ -625,6 +625,7 @@ class toePubSim extends toeGammaSim {
       this.t = old_t + gammaSimResult.gammaResetT;
       // After copyFrom, which copies the γ run's (unchanged) reset count
       this.gammaResets++;
+      this.updateMilestones();
       
       this.boughtVars.push({
         variable: `Reset at ${this.rho.symbol}=${logToExp(gammaSimResult.gammaResetCurrency)}`,
