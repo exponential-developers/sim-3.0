@@ -416,8 +416,8 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
       if (this.activeConjecture.difficulty === 2) drho += this.q3;
       if (this.activeConjecture.difficulty === 3) drho += this.q4;
     } else {
-      // q1 exponent milestone: q1^(1 + 0.05 m) above 1
-      drho += this.q1 > 0 ? this.q1 * (1 + 0.05 * this.milestones[3]) : this.q1;
+      // q1 exponent milestone: q1^(1 + m) above 1
+      drho += this.q1 > 0 ? this.q1 * (1 + this.milestones[3]) : this.q1;
       if (this.completedConjectures[2] > 0) drho += Math.max(this.q2, 0);
       if (this.completedConjectures[2] > 1) drho += Math.max(this.q3, 0);
       if (this.completedConjectures[2] > 2) drho += Math.max(this.q4, 0);
