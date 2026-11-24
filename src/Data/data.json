@@ -1033,7 +1033,7 @@
           "stratFilterCondition": "true"
         },
         "TOEMS": {
-          "stratFilterCondition": "(Active || Very-Active) && rho < 67.5"
+          "stratFilterCondition": "(Active || Very-Active) && rho < 100"
         }
       }
     }
