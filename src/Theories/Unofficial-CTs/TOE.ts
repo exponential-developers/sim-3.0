@@ -611,14 +611,14 @@ class toePubSim extends toeGammaSim {
               this.completedConjectures[i]++;
               
               this.boughtVars.push({
-                variable: `Entered Conjecture ${conjSim.activeConjecture.id}`,
+                variable: `Entered Conjecture ${conjSim.activeConjecture.id + 1}`,
                 level: conjSim.activeConjecture.difficulty,
                 cost: 0,
                 timeStamp: this.t
               });
               this.t += result.gammaResetT;
               this.boughtVars.push({
-                variable: `Completed Conjecture ${conjSim.activeConjecture.id}`,
+                variable: `Completed Conjecture ${conjSim.activeConjecture.id + 1}`,
                 level: conjSim.activeConjecture.difficulty,
                 cost: 0,
                 timeStamp: this.t
