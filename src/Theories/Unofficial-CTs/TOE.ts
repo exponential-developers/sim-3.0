@@ -199,6 +199,8 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
 
     this.milestoneUnlocks = [];
     this.milestonesMax = [];
+    // No milestones until the publication sim sets them (tickRho and getGammaPending read them)
+    this.milestones = [0, 0, 0, 0, 0, 0];
 
     this.softcapFn = [
       (value) => {
@@ -414,7 +416,8 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
       if (this.activeConjecture.difficulty === 2) drho += this.q3;
       if (this.activeConjecture.difficulty === 3) drho += this.q4;
     } else {
-      drho += this.q1 > 0 ? this.q1 * (1 + this.milestones[3]) : this.q1;
+      // q1 exponent milestone: q1^(1 + 0.05 m) above 1
+      drho += this.q1 > 0 ? this.q1 * (1 + 0.05 * this.milestones[3]) : this.q1;
       if (this.completedConjectures[2] > 0) drho += Math.max(this.q2, 0);
       if (this.completedConjectures[2] > 1) drho += Math.max(this.q3, 0);
       if (this.completedConjectures[2] > 2) drho += Math.max(this.q4, 0);
@@ -457,6 +460,8 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     this.gammaResets = other.gammaResets;
     this.activeConjecture = { ...other.activeConjecture };
     this.completedConjectures = [...other.completedConjectures];
+    // γ and conjecture runs use the publication's milestones
+    this.milestones = [...other.milestones];
 
     this.gammaH = other.gammaH;
     this.maxGammaH = other.maxGammaH;
@@ -484,7 +489,12 @@ class toePubSim extends toeGammaSim {
     ];
     this.milestonesMax = [1, 7, 4, 4, 2, 2];
 
-    this.forcedPubConditions = [() => this.completedConjectures[0] >= 2 && this.completedConjectures[1] >= 2 && this.completedConjectures[2] >= 2 && this.completedConjectures[3] === 3];
+    this.forcedPubConditions = [
+      () => this.completedConjectures[0] >= 2 && this.completedConjectures[1] >= 2 && this.completedConjectures[2] >= 2 && this.completedConjectures[3] === 3,
+      // Publishing only counts once γ passes the last publication. Without this, a publication
+      // that keeps every conjecture (milestones) ended after its first γ reset with no result.
+      () => this.maxGamma > this.lastPubRho,
+    ];
     this.pubConditions = [() => this.maxRho >= this.rhoCap];
     this.simEndConditions = [() => this.t > this.pubT * 10];
     this.doSimEndConditions = () => true;
@@ -521,14 +531,18 @@ class toePubSim extends toeGammaSim {
   }
 
   async simulate(): Promise<simResult<theory>> {
-    if (this.lastPubRho >= this.milestoneUnlocks[0] && this.lastPubRho <= this.milestoneUnlocks[3]) {
-      if (this.lastPubRho < this.milestoneUnlocks[1]) this.completedConjectures[0] = 3;
-      else if (this.lastPubRho < this.milestoneUnlocks[2]) this.completedConjectures[1] = 3;
-      else if (this.lastPubRho < this.milestoneUnlocks[3]) this.completedConjectures[2] = 3;
-      else this.completedConjectures[3] = 3;
+    // Milestones from the last publication
+    this.updateMilestones();
+    // Conjecture keeping milestone: the first m conjectures start completed
+    for (let i = 0; i < this.milestones[2]; i++) {
+      this.completedConjectures[i] = 3;
     }
     if (this.lastPubRho > 0) {
-      this.rhoPermaVariables[0].level = 4;
+      // nt starts maxed; set its value and cost too (the tickspeed reads the value)
+      const nt = this.rhoPermaVariables[0];
+      nt.level = 4;
+      nt.reCalculate();
+      nt.cost = nt.getCostForLevel(nt.level);
     }
 
     while (!this.endSimulation()) {
@@ -635,6 +649,8 @@ class toePubSim extends toeGammaSim {
       this.gamma.add(this.getGammaPending(gammaSimResult.gammaResetCurrency));
 
       this.updateSimStatus();
+      // More γ can unlock more milestones for the next γ runs
+      this.updateMilestones();
       this.buyGammaVariables();
       this.pubTableCollector.collectData(this);
     }
