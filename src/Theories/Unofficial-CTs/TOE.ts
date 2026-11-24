@@ -2,7 +2,7 @@ import { global } from "../../Sim/main";
 import Variable from "../../Utils/variable";
 import { ExponentialValue, LinearValue, StepwisePowerSumValue } from "../../Utils/value";
 import { ExponentialCost, FirstFreeCost } from '../../Utils/cost';
-import { toCallables, adds, l10, add2, subtract, logToExp } from "../../Utils/helpers";
+import { toCallables, adds, l10, add2, subtract, logToExp, binaryInsertionSearch } from "../../Utils/helpers";
 import { traditionalConverter } from "../../Utils/progressConversion";
 import traditionalTheoryClass from "../traditionalTheory";
 import Currency from "../../Utils/currency";
@@ -408,13 +408,13 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
 
   tickRho(dt: number) {
     // 1 + 1e-6 * γ2 * t^3, with the game's t
-    let drho = this.gammaVariables[0].value + add2(0, this.gammaVariables[1].value + 3 * l10(this.tGame / 100));
+    let drho = this.gammaVariables[0].value + add2(0, this.gammaVariables[1].value + (3 + this.milestones[5]) * l10(this.tGame / 100));
     if (this.activeConjecture.id === 2) {
       if (this.activeConjecture.difficulty === 1) drho += this.q2;
       if (this.activeConjecture.difficulty === 2) drho += this.q3;
       if (this.activeConjecture.difficulty === 3) drho += this.q4;
     } else {
-      drho += this.q1;
+      drho += this.q1 > 0 ? this.q1 * (1 + this.milestones[3]) : this.q1;
       if (this.completedConjectures[2] > 0) drho += Math.max(this.q2, 0);
       if (this.completedConjectures[2] > 1) drho += Math.max(this.q3, 0);
       if (this.completedConjectures[2] > 2) drho += Math.max(this.q4, 0);
@@ -426,7 +426,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
 
   getGammaPending(rho = this.gammaMaxRho): number {
     const threshold = l10(1000);
-    const gammaExpScaling = 0.2 + this.gammaVariables[5].value;
+    const gammaExpScaling = 0.2 + this.gammaVariables[5].value + 0.01 * this.milestones[4];
     if (rho < threshold) {
       return -Infinity;
     } else {
@@ -472,10 +472,26 @@ class toePubSim extends toeGammaSim {
     super(data);
     this.maxGamma = 0;
 
+    this.milestoneUnlocks = [
+        8, 10, 12, 14, // q1 exp
+        16, 18, // dgamma exp
+        20, 22, // gamma2 exp
+        ... [
+            8, // auto gamma
+            9, 10, 11, 12, 13, 14, 15, // gamma auto buyers
+            16, 17, 18, 20, // conjecture keeping
+        ].map(value => value - 8 + 24)
+    ];
+    this.milestonesMax = [1, 7, 4, 4, 2, 2];
+
     this.forcedPubConditions = [() => this.completedConjectures[0] >= 2 && this.completedConjectures[1] >= 2 && this.completedConjectures[2] >= 2 && this.completedConjectures[3] === 3];
     this.pubConditions = [() => this.maxRho >= this.rhoCap];
     this.simEndConditions = [() => this.t > this.pubT * 10];
     this.doSimEndConditions = () => true;
+  }
+
+  getMilestonePriority(): number[] {
+    return [3, 4, 5, 2, 0, 1];
   }
 
   updateSimStatus(): void {
@@ -489,8 +505,32 @@ class toePubSim extends toeGammaSim {
       this.pubRho = this.maxGamma;
     }
   }
+  updateMilestones(): void {
+    const gamma = Math.max(this.maxGamma, this.lastPubRho);
+    const priority = this.getMilestonePriority();
+    let milestoneCount = this.milestoneUnlockSteps > 0
+      ? Math.floor(gamma / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, gamma);
+    this.milestones = new Array(this.milestonesMax.length).fill(0);
+    for (let i = 0; i < priority.length; i++) {
+      while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+        this.milestones[priority[i]]++;
+        milestoneCount--;
+      }
+    }
+  }
 
   async simulate(): Promise<simResult<theory>> {
+    if (this.lastPubRho >= this.milestoneUnlocks[0] && this.lastPubRho <= this.milestoneUnlocks[3]) {
+      if (this.lastPubRho < this.milestoneUnlocks[1]) this.completedConjectures[0] = 3;
+      else if (this.lastPubRho < this.milestoneUnlocks[2]) this.completedConjectures[1] = 3;
+      else if (this.lastPubRho < this.milestoneUnlocks[3]) this.completedConjectures[2] = 3;
+      else this.completedConjectures[3] = 3;
+    }
+    if (this.lastPubRho > 0) {
+      this.rhoPermaVariables[0].level = 4;
+    }
+
     while (!this.endSimulation()) {
       if (!global.simulating) break;
 
