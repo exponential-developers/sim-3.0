@@ -1031,6 +1031,9 @@
       "strats": {
         "TOE": {
           "stratFilterCondition": "true"
+        },
+        "TOEMS": {
+          "stratFilterCondition": "(Active || Very-Active) && rho < 67.5"
         }
       }
     }

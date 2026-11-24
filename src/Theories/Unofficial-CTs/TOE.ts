@@ -102,6 +102,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
   /** The game's own t (grows by dt * tickspeed, 1.5 * tickspeed per second), used by γ2's t^3 */
   tGame: number;
   gamma: Currency;
+  maxGamma: number;
   gammaVariables: Variable[];
   gammaVariableAvailability: conditionFunction[];
   gammaMaxRho: number;
@@ -141,6 +142,12 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
   getRhoBuyingConditions(): conditionFunction[] {
     const conditions: Record<stratType[theory], (boolean | conditionFunction)[]> = {
       TOE: [
+        true,
+        true,
+        true,
+        true,
+      ],
+      TOEMS: [
         true,
         true,
         true,
@@ -233,6 +240,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     this.tGamma = 0;
     this.tGame = 0;
     this.gamma = new Currency("γ");
+    this.maxGamma = -Infinity;
     this.gammaVariables = [
       new Variable({ name: `γ1`, currency: this.gamma, cost: new ExponentialCost(1, 1.85), valueScaling: new ExponentialValue(1.8) }),
       new Variable({ name: `γ2`, currency: this.gamma, cost: new ExponentialCost(1, 1.7), valueScaling: new StepwisePowerSumValue() }),
@@ -252,8 +260,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     this.maxGammaH = 0;
     this.gammaResetT = 0;
     this.gammaResetCurrency = -Infinity;
-    // Reset once the γ left over plus the pending γ buys the cheapest available γ upgrade (or the
-    // q's have all decayed)
+    // Reset once the γ left over plus the pending γ buys the cheapest available γ upgrade (or the q's have all decayed)
     this.gammaForcedPubConditions = [() => add2(this.gamma.value, this.getGammaPending(this.gammaMaxRho)) >= Math.min(...[0, 1, 2, 3, 4, 5, 6].map(i => this.gammaVariableAvailability[i]() ? this.gammaVariables[i].cost : Infinity)) || this.q1 < -10 && this.q2 < -10 && this.q3 < -10 && this.q4 < -10];
     this.gammaPubConditions = [() => true];
     this.gammaSimEndConditions = [() => this.q1 < -10 && this.q2 < -10 && this.q3 < -10 && this.q4 < -10];
@@ -272,7 +279,29 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
   }
 
   getMilestonePriority(): number[] {
-    return [];
+    if (this.strat === "TOEMS") {
+      if (l10(this.tGame / 100) >= this.q1) {
+        return [5, 3, 4, 2, 0, 1];
+      } else {
+        return [3, 5, 4, 2, 0, 1];
+      }
+    }
+    return [3, 4, 5, 2, 0, 1];
+  }
+
+  updateMilestones(): void {
+    const gamma = Math.max(this.maxGamma, this.lastPubRho);
+    const priority = this.getMilestonePriority();
+    let milestoneCount = this.milestoneUnlockSteps > 0
+      ? Math.floor(gamma / this.milestoneUnlockSteps)
+      : binaryInsertionSearch(this.milestoneUnlocks, gamma);
+    this.milestones = new Array(this.milestonesMax.length).fill(0);
+    for (let i = 0; i < priority.length; i++) {
+      while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
+        this.milestones[priority[i]]++;
+        milestoneCount--;
+      }
+    }
   }
 
   buySingleVariable(variable: Variable): boolean {
@@ -337,6 +366,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
   async simulateGamma(): Promise<{ gammaResetT: number, gammaResetCurrency: number }> {
     while (!this.endGammaSimulation()) {
       this.tickGamma();
+      this.updateMilestones();
       this.updateSimStatus();
       this.buyRhoVariables();
     }
@@ -429,7 +459,13 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
 
   getGammaPending(rho = this.gammaMaxRho): number {
     const threshold = l10(1000);
-    const gammaExpScaling = 0.2 + this.gammaVariables[5].value + 0.01 * this.milestones[4];
+    let gammaExpScaling = 0.2 + this.gammaVariables[5].value + 0.01 * this.milestones[4];
+    if (this.strat === "TOEMS") {
+      let milestoneCount = this.maxGamma >= this.milestoneUnlocks[1] ? 2 : this.maxGamma >= this.milestoneUnlocks[0] ? 1 : 0;
+      milestoneCount -= this.milestones[4];
+      gammaExpScaling += 0.01 * milestoneCount;
+    }
+
     if (rho < threshold) {
       return -Infinity;
     } else {
@@ -456,12 +492,15 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     this.tGamma = other.tGamma;
     this.tGame = other.tGame;
     this.gamma = other.gamma.copy();
+    this.maxGamma = other.maxGamma;
     this.gammaVariables = other.gammaVariables.map((value) => value.copy(this.gamma));
     this.gammaResets = other.gammaResets;
     this.activeConjecture = { ...other.activeConjecture };
     this.completedConjectures = [...other.completedConjectures];
     // γ and conjecture runs use the publication's milestones
     this.milestones = [...other.milestones];
+    this.milestoneUnlocks = [...other.milestoneUnlocks];
+    this.milestonesMax = [...other.milestonesMax];
 
     this.gammaH = other.gammaH;
     this.maxGammaH = other.maxGammaH;
@@ -471,7 +510,6 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
 }
 
 class toePubSim extends toeGammaSim {
-  maxGamma: number;
 
   constructor(data: theoryData<theory>) {
     super(data);
@@ -486,11 +524,11 @@ class toePubSim extends toeGammaSim {
             9, 10, 11, 12, 13, 14, 15, // gamma auto buyers
             16, 17, 18, 20, // conjecture keeping
         ].map(value => value - 8 + 24)
-    ];
+    ].map(value => value / 0.4);
     this.milestonesMax = [1, 7, 4, 4, 2, 2];
 
     this.forcedPubConditions = [
-      () => this.completedConjectures[0] >= 2 && this.completedConjectures[1] >= 2 && this.completedConjectures[2] >= 2 && this.completedConjectures[3] === 3,
+      () => this.completedConjectures[0] >= 3 && this.completedConjectures[1] >= 3 && this.completedConjectures[2] >= 3 && this.completedConjectures[3] >= 3,
       // Publishing only counts once γ passes the last publication. Without this, a publication
       // that keeps every conjecture (milestones) ended after its first γ reset with no result.
       () => this.maxGamma > this.lastPubRho,
@@ -515,22 +553,15 @@ class toePubSim extends toeGammaSim {
       this.pubRho = this.maxGamma;
     }
   }
-  updateMilestones(): void {
-    const gamma = Math.max(this.maxGamma, this.lastPubRho);
-    const priority = this.getMilestonePriority();
-    let milestoneCount = this.milestoneUnlockSteps > 0
-      ? Math.floor(gamma / this.milestoneUnlockSteps)
-      : binaryInsertionSearch(this.milestoneUnlocks, gamma);
-    this.milestones = new Array(this.milestonesMax.length).fill(0);
-    for (let i = 0; i < priority.length; i++) {
-      while (this.milestones[priority[i]] < this.milestonesMax[priority[i]] && milestoneCount > 0) {
-        this.milestones[priority[i]]++;
-        milestoneCount--;
-      }
-    }
-  }
 
   async simulate(): Promise<simResult<theory>> {
+    if (this.strat === "TOEMS" && this.lastPubRho >= this.milestoneUnlocks[0]) {
+      if (this.lastPubRho < this.milestoneUnlocks[1]) this.completedConjectures[0] = 3;
+      else if (this.lastPubRho < this.milestoneUnlocks[2]) this.completedConjectures[1] = 3;
+      else if (this.lastPubRho < this.milestoneUnlocks[3]) this.completedConjectures[2] = 3;
+      else this.completedConjectures[3] = 3;
+    }
+
     // Milestones from the last publication
     this.updateMilestones();
     // Conjecture keeping milestone: the first m conjectures start completed
@@ -545,6 +576,7 @@ class toePubSim extends toeGammaSim {
       nt.cost = nt.getCostForLevel(nt.level);
     }
 
+    let lastGammaTime = 0;
     while (!this.endSimulation()) {
       if (!global.simulating) break;
 
@@ -631,12 +663,15 @@ class toePubSim extends toeGammaSim {
       this.q4 += this.completedConjectures[1] * l10(2);
 
       const gammaSim = new toeGammaSim(this.getDataForCopy());
+      gammaSim.gammaSimEndConditions.push(() => gammaSim.tGamma >= lastGammaTime * 2);
       gammaSim.copyFrom(this);
       const gammaSimResult = await gammaSim.simulateGamma();
+      //console.log(`${lastGammaTime} ${gammaSim.tGamma}`);
 
       const old_t = this.t;
       this.copyFrom(gammaSim);
       this.t = old_t + gammaSimResult.gammaResetT;
+      lastGammaTime = gammaSimResult.gammaResetT;
       // After copyFrom, which copies the γ run's (unchanged) reset count
       this.gammaResets++;
       
