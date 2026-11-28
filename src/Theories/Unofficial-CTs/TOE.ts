@@ -282,6 +282,8 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     if (this.strat === "TOEMS") {
       if (l10(this.tGame / 100) >= this.q1) {
         return [5, 3, 4, 2, 0, 1];
+      } else if (this.tGame < 100) {
+        return [3, 4, 2, 0, 1];
       } else {
         return [3, 5, 4, 2, 0, 1];
       }
@@ -366,7 +368,6 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
   async simulateGamma(): Promise<{ gammaResetT: number, gammaResetCurrency: number }> {
     while (!this.endGammaSimulation()) {
       this.tickGamma();
-      this.updateMilestones();
       this.updateSimStatus();
       this.buyRhoVariables();
     }
@@ -396,6 +397,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
     const stepDt = gameDt / steps;
     const l10_step = l10(stepDt);
     for (let i = 0; i < steps; i++) {
+      this.updateMilestones();
       this.tickQ(l10_step);
       this.tickRho(l10_step);
       this.tGame += stepDt;
@@ -472,7 +474,7 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
       let result = (rho - threshold) * gammaExpScaling;
       // Achievement 3 ("Decay Was Too Strong", unlocked by the first γ reset) doubles γ gain. With a
       // previous publication it is already unlocked.
-      if (this.gammaResets > 0 || this.data.input.value !== -Infinity) result += l10(2);
+      if (this.gammaResets > 0 || this.data.input.value > 0) result += l10(2);
       return result + this.totMult;
     }
   }
@@ -510,7 +512,6 @@ class toeGammaSim extends traditionalTheoryClass<theory> {
 }
 
 class toePubSim extends toeGammaSim {
-
   constructor(data: theoryData<theory>) {
     super(data);
     this.maxGamma = 0;
@@ -533,7 +534,7 @@ class toePubSim extends toeGammaSim {
       // that keeps every conjecture (milestones) ended after its first γ reset with no result.
       () => this.maxGamma > this.lastPubRho,
     ];
-    this.pubConditions = [() => this.maxRho >= this.rhoCap];
+    this.pubConditions = [() => this.maxGamma >= this.rhoCap];
     this.simEndConditions = [() => this.t > this.pubT * 10];
     this.doSimEndConditions = () => true;
   }
@@ -637,22 +638,27 @@ class toePubSim extends toeGammaSim {
             } else if (i === 3) {
               if (conjSim.activeConjecture.difficulty >= 3) conjSim.q2 = 0;
             }
-            const result = await conjSim.simulateGamma();
+            await conjSim.simulateGamma();
             if (conjSim.gammaMaxRho >= rhoGoal) {
+              //console.log(`completed conjecture ${i + 1}x${conjSim.activeConjecture.difficulty}`);
               completedAny = true;
               this.completedConjectures[i]++;
               
+              while (conjSim.boughtVars.length && conjSim.boughtVars[conjSim.boughtVars.length - 1].timeStamp > this.t + conjSim.tGamma) conjSim.boughtVars.pop();
+
               this.boughtVars.push({
                 variable: `Entered Conjecture ${conjSim.activeConjecture.id + 1}`,
                 level: conjSim.activeConjecture.difficulty,
-                cost: 0,
+                cost: -Infinity,
+                symbol: ``,
                 timeStamp: this.t
               });
-              this.t += result.gammaResetT;
+              this.t += conjSim.tGamma;
               this.boughtVars.push({
                 variable: `Completed Conjecture ${conjSim.activeConjecture.id + 1}`,
                 level: conjSim.activeConjecture.difficulty,
-                cost: 0,
+                cost: -Infinity,
+                symbol: ``,
                 timeStamp: this.t
               });
             }
@@ -663,10 +669,11 @@ class toePubSim extends toeGammaSim {
       this.q4 += this.completedConjectures[1] * l10(2);
 
       const gammaSim = new toeGammaSim(this.getDataForCopy());
-      gammaSim.gammaSimEndConditions.push(() => gammaSim.tGamma >= lastGammaTime * 2);
       gammaSim.copyFrom(this);
       const gammaSimResult = await gammaSim.simulateGamma();
-      //console.log(`${lastGammaTime} ${gammaSim.tGamma}`);
+      while (gammaSim.boughtVars.length && gammaSim.boughtVars[gammaSim.boughtVars.length - 1].timeStamp > this.t + gammaSim.gammaResetT) gammaSim.boughtVars.pop();
+      const gammaPending = gammaSim.getGammaPending(gammaSimResult.gammaResetCurrency);
+      //console.log(`gamma reset for ${gammaPending}`);
 
       const old_t = this.t;
       this.copyFrom(gammaSim);
@@ -676,12 +683,12 @@ class toePubSim extends toeGammaSim {
       this.gammaResets++;
       
       this.boughtVars.push({
-        variable: `Reset at ${this.rho.symbol}=${logToExp(gammaSimResult.gammaResetCurrency)}`,
+        variable: `Reset for ${logToExp(gammaPending)} ${this.gamma.symbol}`,
         level: this.gammaResets,
         cost: gammaSimResult.gammaResetCurrency,
         timeStamp: this.t
       });
-      this.gamma.add(this.getGammaPending(gammaSimResult.gammaResetCurrency));
+      this.gamma.add(gammaPending);
 
       this.updateSimStatus();
       // More γ can unlock more milestones for the next γ runs
